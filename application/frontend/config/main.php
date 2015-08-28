@@ -29,18 +29,17 @@ return [
             'enableCookieValidation' => true,
             'enableCsrfValidation' => true,
             'cookieValidationKey' => $FRONT_COOKIE_KEY,
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser'
+            ]
         ],
         'urlManager' => [
-            'class' => 'yii\web\UrlManager',
-            // Disable index.php
-            'showScriptName' => false,
-            // Disable r= routes
             'enablePrettyUrl' => true,
-            'rules' => array(
-                    '<controller:\w+>/<id:\d+>' => '<controller>/view',
-                    '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
-                    '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
-            ),
+            'enableStrictingParsing' => true,
+            'showScriptName' => false,
+            'rules' => [
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'job'],
+            ]
         ],
     ],
     'params' => [],
