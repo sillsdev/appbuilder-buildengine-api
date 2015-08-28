@@ -1,0 +1,101 @@
+data:
+    image: silintl/data-volume:latest
+    volumes:
+        - /data:/data
+db:
+    image: silintl/mariadb:latest
+    ports:
+        - "3306"
+    env_file:
+        - ./common.env
+        - ./local.env
+testDb:
+    image: silintl/mariadb:latest
+    ports:
+        - "3306"
+    env_file:
+        - ./common.env
+        - ./local.env
+    environment:
+        MYSQL_DATABASE: test
+web:
+    build: .
+    volumes_from:
+        - data
+    ports:
+        - "80:80"
+    links:
+        - db
+    env_file:
+        - ./common.env
+        - ./local.env
+composer:
+    image: silintl/php-cli:latest
+    volumes_from:
+        - data
+    working_dir: /data
+    command: composer install --prefer-dist
+yiimigrate:
+    image: silintl/php-cli:latest
+    volumes_from:
+        - data
+    links:
+        - db
+    env_file:
+        - ./common.env
+        - ./local.env
+    working_dir: /data
+    command: whenavail db 3306 20 ./yii migrate --interactive=0
+yiimigratelocal:
+    image: silintl/php-cli:latest
+    volumes_from:
+        - data
+    links:
+        - db
+    env_file:
+        - ./common.env
+        - ./local.env
+    working_dir: /data
+    command: whenavail db 3306 20 ./yii migrate --migrationPath=console/migrations-local/ --interactive=0
+yiimigratetestDb:
+    image: silintl/php-cli:latest
+    volumes_from:
+        - data
+    links:
+        - testDb
+    env_file:
+        - ./common.env
+        - ./local.env
+    environment:
+        MYSQL_HOST: testDb
+        MYSQL_DATABASE: test
+    working_dir: /data
+    command: whenavail testDb 3306 20 ./yii migrate --interactive=0 --db=testDb
+yiimigratetestDblocal:
+    image: silintl/php-cli:latest
+    volumes_from:
+        - data
+    links:
+        - testDb
+    env_file:
+        - ./common.env
+        - ./local.env
+    environment:
+        MYSQL_HOST: testDb
+        MYSQL_DATABASE: test
+    working_dir: /data
+    command: whenavail testDb 3306 20 ./yii migrate --migrationPath=console/migrations-test/ --interactive=0 --db=testDb
+codecept:
+    image: silintl/php-cli:latest
+    volumes_from:
+        - data
+    links:
+        - testDb
+    env_file:
+        - ./common.env
+        - ./local.env
+    environment:
+        MYSQL_HOST: testDb
+        MYSQL_DATABASE: test
+    working_dir: /data
+    entrypoint: codecept

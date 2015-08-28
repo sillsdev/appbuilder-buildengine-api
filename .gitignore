@@ -1,0 +1,5 @@
+# Vagrant folder
+.vagrant/
+
+# phpstorm project files
+.idea/
