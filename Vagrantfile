@@ -55,7 +55,7 @@ Vagrant.configure(2) do |config|
     # Enable gui for troubleshooting with boot
     # v.gui = true
     # Create a private network for accessing VM without NAT
-    override.vm.network "private_network", ip: "192.168.70.21", id: "default-network", nic_type: "virtio"
+    override.vm.network "private_network", ip: "192.168.70.121", id: "default-network", nic_type: "virtio"
   end
 
   # Share an additional folder to the guest VM. The first argument is
