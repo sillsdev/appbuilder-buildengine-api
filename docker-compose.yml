@@ -6,9 +6,11 @@ db:
     image: silintl/mariadb:latest
     ports:
         - "3306"
-    env_file:
-        - ./common.env
-        - ./local.env
+    environment:
+        MYSQL_ROOT_PASSWORD: r00tp@ss!
+        MYSQL_DATABASE: appbuilder
+        MYSQL_USER: appbuilder
+        MYSQL_PASSWORD: appbuilder
 testDb:
     image: silintl/mariadb:latest
     ports:
@@ -18,6 +20,9 @@ testDb:
         - ./local.env
     environment:
         MYSQL_DATABASE: test
+        MYSQL_ROOT_PASSWORD: r00tp@ss!
+        MYSQL_USER: appbuilder
+        MYSQL_PASSWORD: appbuilder
 web:
     build: .
     volumes_from:
