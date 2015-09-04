@@ -11,7 +11,6 @@ $TEST_MYSQL_DATABASE = getenv('TEST_MYSQL_DATABASE') ?: 'example';
 $TEST_MYSQL_USER = getenv('TEST_MYSQL_USER') ?: 'example';
 $TEST_MYSQL_PASSWORD = getenv('TEST_MYSQL_PASSWORD') ?: 'example';
 $ADMIN_EMAIL = getenv('ADMIN_EMAIL') ?: 'nobody@nowhere.com';
-$BUILD_ENGINE_REPO = getenv('BUILD_ENGINE_REPO') ?: "git@bitbucket.org:silintl/appbuilder-ci-scripts";
 
 return [
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
@@ -40,6 +39,5 @@ return [
     ],
     'params' => [
         'adminEmail' => $ADMIN_EMAIL,
-        'buildEngineRepo' => $BUILD_ENGINE_REPO,
     ],
 ];

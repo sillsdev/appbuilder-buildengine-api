@@ -3,7 +3,11 @@ MAINTAINER Phillip Shipley <phillip_shipley@sil.org>
 
 ENV REFRESHED_AT 2015-05-26
 
-COPY build/example.conf /etc/apache2/sites-enabled/
+COPY build/appbuilder.conf /etc/apache2/sites-enabled/
+
+# Copy in cron configuration
+COPY build/appbuilder-cron /etc/cron.d/
+RUN chmod 0644 /etc/cron.d/appbuilder-cron
 
 RUN mkdir -p /data
 VOLUME ["/data"]
