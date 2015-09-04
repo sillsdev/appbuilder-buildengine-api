@@ -3,6 +3,8 @@
 
 # local settings
 local.env
+*.aes
+aws.env
 
 # IDE project files
 .idea/

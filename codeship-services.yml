@@ -1,0 +1,24 @@
+db:
+    image: silintl/mariadb:latest
+    environment:
+        MYSQL_ROOT_PASSWORD: r00tp@ss!
+        MYSQL_DATABASE: test
+        MYSQL_USER: appbuilder
+        MYSQL_PASSWORD: appbuilder
+
+web:
+    build:
+        image: docker.sil.org/appbuilder-buildengine-api
+        dockerfile_path: Dockerfile
+    links:
+        - db
+    environment:
+        MYSQL_HOST: db
+        MYSQL_DATABASE: test
+        MYSQL_USER: appbuilder
+        MYSQL_PASSWORD: appbuilder
+    working_dir: /data
+
+ecsdeploy:
+    image: silintl/ecs-deploy:latest
+    encrypted_env_file: aws.env.encrypted

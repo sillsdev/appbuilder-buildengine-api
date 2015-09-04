@@ -1,0 +1,17 @@
+- name: test
+  service: web
+  command: /data/run-tests.sh
+
+- name: push_develop
+  service: web
+  type: push
+  image_name: docker.sil.org/appbuilder-buildengine-api
+  image_tag: latest
+  tag: develop
+  registry: docker.sil.org
+  encrypted_dockercfg_path: dockercfg.encrypted
+
+- name: deploy_staging
+  service: ecsdeploy
+  tag: develop
+  command: "-c staging1 -n staging-appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest"
