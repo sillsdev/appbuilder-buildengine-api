@@ -1,6 +1,9 @@
 # Vagrant folder
 .vagrant/
 
-# phpstorm project files
+# local settings
+local.env
+
+# IDE project files
 .idea/
 nbproject/
