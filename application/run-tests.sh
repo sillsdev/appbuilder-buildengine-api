@@ -6,4 +6,6 @@
 
 # Run codeception tests
 cd /data
-codecept run unit
+echo "Installing dev dependencies..."
+composer install --prefer-dist --no-interaction
+./vendor/bin/codecept run unit
