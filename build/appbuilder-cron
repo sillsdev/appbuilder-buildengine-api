@@ -1,7 +1,3 @@
 # m h dom mon dow user	command
-* * * * * root /data/yii cron/doorman-queue
-0 * * * * root /data/yii cron/doorman-queue true
-* * * * * root /data/yii cron/send-emails
-0 * * * * root /data/yii cron/send-emails true
-0 4 * * * root /data/yii cron/service-user-renewal 2>&1 | /usr/bin/logger -t cron/service-user-renewal
-0 0 * * 0 root /data/yii cron/pull-division-codes 2>&1 | /usr/bin/logger -t cron/pull-division-codes
+*/5 * * * * root /data/yii cron/sync-scripts
+
