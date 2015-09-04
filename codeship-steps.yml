@@ -7,11 +7,11 @@
   type: push
   image_name: docker.sil.org/appbuilder-buildengine-api
   image_tag: latest
-  tag: develop
+  tag: master
   registry: docker.sil.org
   encrypted_dockercfg_path: dockercfg.encrypted
 
 - name: deploy_staging
   service: ecsdeploy
-  tag: develop
+  tag: master
   command: "-c staging1 -n staging-appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest"
