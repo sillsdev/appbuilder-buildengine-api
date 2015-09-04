@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
 # Run database migrations
-/data/yii migrate --interactive=0
+#/data/yii migrate --interactive=0
 #/data/yii migrate --interactive=0 --migrationPath=console/migrations-test
 
 # Run codeception tests
-cd /data
-echo "Installing dev dependencies..."
-composer install --prefer-dist --no-interaction
-./vendor/bin/codecept run unit
+#cd /data
+#echo "Installing dev dependencies..."
+#composer install --prefer-dist --no-interaction
+#./vendor/bin/codecept run unit
+
+echo "There are no tests yet, this is a placeholder for codeship"
+exit 0
