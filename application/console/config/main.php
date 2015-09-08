@@ -5,6 +5,7 @@ $BUILD_ENGINE_REPO_URL = getenv('BUILD_ENGINE_REPO_URL') ?: "git@bitbucket.org:s
 $BUILD_ENGINE_REPO_PRIVATE_KEY = getenv('BUILD_ENGINE_REPO_PRIVATE_KEY') ?: "/data/.ssh/id_rsa";
 $BUILD_ENGINE_REPO_BRANCH = getenv('BUILD_ENGINE_REPO_BRANCH') ?: "master";
 $BUILD_ENGINE_REPO_LOCAL_PATH = getenv('BUILD_ENGINE_REPO_LOCAL_PATH') ?: "/tmp/appbuilder/appbuilder-ci-scripts";
+$BUILD_ENGINE_REPO_SCRIPT_DIR = getenv('BUILD_ENGINE_REPO_SCRIPT_DIR') ?: "groovy";
 $BUILD_REQUEST_CALLBACK_URL = getenv('BUILD_REQUEST_CALLBACK_URL') ?: "not set";
 
 return [
@@ -32,6 +33,7 @@ return [
         'buildEngineRepoBranch' => $BUILD_ENGINE_REPO_BRANCH,
         'buildEngineRepoPrivateKey' => $BUILD_ENGINE_REPO_PRIVATE_KEY,
         'buildEngineRepoLocalPath' => $BUILD_ENGINE_REPO_LOCAL_PATH,
+        'buildEngineRepoScriptDir' => $BUILD_ENGINE_REPO_SCRIPT_DIR,
         'buildRequestCallbackUrl' => $BUILD_REQUEST_CALLBACK_URL,
     ],
 ];
