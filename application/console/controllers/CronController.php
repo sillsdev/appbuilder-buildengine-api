@@ -69,6 +69,9 @@ class CronController extends Controller
 
         $git = $this->getRepo();
 
+        $jobs = [];
+        $apps = [];
+        $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
         foreach (Job::find()->each(50) as $job)
         {
             $publisherName = $job->publisher_id;
@@ -81,11 +84,31 @@ class CronController extends Controller
                 'gitUrl' => $gitUrl,
             ]);
 
-            $file = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir . DIRECTORY_SEPARATOR . $jobName . ".groovy";
+            $file = $localScriptDir . DIRECTORY_SEPARATOR . $jobName . ".groovy";
             $handle = fopen($file, "w");
             fwrite($handle, $script);
             fclose($handle);
             $git->add($file);
+
+            $jobs[$jobName] = 1;
+            $apps[$job->app_id] = 1;
+        }
+
+        // Remove Scripts that are not in the database
+        $globFileName = "*_*.groovy";
+        foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)
+        {
+            $jobName = basename($scriptFile, ".groovy");
+            list($app_id, $request_id) = explode("_", $jobName);
+            echo "job: $jobName, app_id: $app_id, request_id: $request_id\n";
+            if (!array_key_exists($app_id, $apps))
+            {
+                continue;
+            }
+            if (!array_key_exists($jobName, $jobs))
+            {
+                $git->rm($scriptFile);
+            }
         }
 
         if ($git->hasChanges())
