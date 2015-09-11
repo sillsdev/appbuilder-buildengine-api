@@ -71,10 +71,12 @@ class CronController extends Controller
 
         foreach (Job::find()->each(50) as $job)
         {
+            $publisherName = $job->publisher_id;
             $jobName = $job->app_id . "_" . $job->request_id;
             $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
             $script = $this->renderPartial("scripts/$job->app_id", [
+                'publisherName' => $publisherName,
                 'jobName' => $jobName,
                 'gitUrl' => $gitUrl,
             ]);

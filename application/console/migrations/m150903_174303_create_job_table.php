@@ -7,15 +7,16 @@ class m150903_174303_create_job_table extends Migration
 {
     public function up()
     {
-	$this->createTable('{{job}}', [
+        $this->createTable('{{job}}', [
             'id' => Schema::TYPE_PK,
             'request_id' => Schema::TYPE_INTEGER . " NOT NULL",
             'git_url' => 'varchar(2083) NOT NULL',
             'app_id'=> Schema::TYPE_STRING . " NOT NULL",
-            
+            'publisher_id'=> Schema::TYPE_STRING . " NOT NULL",
+
             'created' => 'datetime null',
             'updated' => 'datetime null',            
-	],"ENGINE=InnoDB DEFAULT CHARSET=utf8");
+        ],"ENGINE=InnoDB DEFAULT CHARSET=utf8");
         $this->createIndex("idx_request_id", "{{job}}", "request_id");
     }
 

@@ -34,6 +34,13 @@ class Job extends JobBase implements Linkable
                 },
             ],
             [
+                'publisher_id', 'in', 'range' => [
+                    'wycliffeusa',
+                    'kalaammedia',
+                    'internetpublishingservice',
+                    ]
+            ],
+            [
                 // This should come from another model
                 // 'app_id', 'exist', 'targetClass' => 'common\models\App', 'targetAttribute' => 'id',
                 // message => \Yii::t('app', 'Invalid App ID'),
@@ -54,6 +61,7 @@ class Job extends JobBase implements Linkable
             'request_id',
             'git_url',
             'app_id',
+            'publisher_id',
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },

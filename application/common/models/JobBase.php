@@ -11,6 +11,7 @@ use Yii;
  * @property integer $request_id
  * @property string $git_url
  * @property string $app_id
+ * @property string $publisher_id
  * @property string $created
  * @property string $updated
  */
@@ -30,11 +31,11 @@ class JobBase extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['request_id', 'git_url', 'app_id'], 'required'],
+            [['request_id', 'git_url', 'app_id', 'publisher_id'], 'required'],
             [['request_id'], 'integer'],
             [['created', 'updated'], 'safe'],
             [['git_url'], 'string', 'max' => 2083],
-            [['app_id'], 'string', 'max' => 255]
+            [['app_id', 'publisher_id'], 'string', 'max' => 255]
         ];
     }
 
@@ -48,6 +49,7 @@ class JobBase extends \yii\db\ActiveRecord
             'request_id' => 'Request ID',
             'git_url' => 'Git Url',
             'app_id' => 'App ID',
+            'publisher_id' => 'Publisher ID',
             'created' => 'Created',
             'updated' => 'Updated',
         ];
