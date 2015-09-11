@@ -4,26 +4,11 @@ namespace common\models;
 
 use Yii;
 use yii\helpers\ArrayHelper;
-use yii\validators\UrlValidator;
 
 
-//use yii\web\BadRequestHttpException;
-//use yii\web\ConflictHttpException;
-//use yii\web\ForbiddenHttpException;
-//use yii\web\HttpException;
 use yii\web\Link;
 use yii\web\Linkable;
 use yii\helpers\Url;
-
-//use common\helpers\Utils;
-//use common\models\Service;
-//use common\models\ServiceStep;
-//use common\models\ServiceUser;
-//use common\models\ServiceUserStep;
-//use common\components\EmailUtils;
-//use common\components\MultipleErrorException;
-//use yii\web\NotFoundHttpException;
-//use yii\web\ServerErrorHttpException;
 
 use common\helpers\Utils;
 
@@ -54,10 +39,12 @@ class Job extends JobBase implements Linkable
                 // message => \Yii::t('app', 'Invalid App ID'),
                 'app_id', 'in', 'range' => ['scriptureappbuilder'],
             ],
-            // This should be a rule to verify Git URL
+            // The currently supported Git Urls are for AWS Codecommit
             [
-                'git_url', 'url', 'validSchemes' => ['ssh'], 'message' => \Yii::t('app', 'Git SSH Url is required.')
-            ]
+                'git_url', 'url',
+                'pattern' => '/^ssh:\/\/[A-Za-z0-9]+@git-codecommit\./',
+                'message' => \Yii::t('app', 'Git SSH Url is required.')
+            ],
         ]);
     }
     public function fields()

@@ -7,5 +7,5 @@ import scriptureappbuilder.jobs;
 def jobName = '<?= $jobName ?>'
 def gitUrl = '<?= $gitUrl ?>'
 job(jobName) {
-    jobs.gitBuildJob(delegate, gitUrl);
+    jobs.codecommitBuildJob(delegate, gitUrl, publisherName)
 }

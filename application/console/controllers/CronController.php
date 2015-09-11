@@ -46,6 +46,15 @@ class CronController extends Controller
         $git = $this->getRepo();
     }
 
+    public function doReplacements($subject, $patterns)
+    {
+        foreach ($patterns as $pattern => $replacement )
+        {
+            $subject = preg_replace($pattern, $replacement, $subject);
+        }
+        return $subject;
+    }
+
     public function actionSyncScripts()
     {
         $logMsg = 'cron/sync-scripts - ';
@@ -53,15 +62,21 @@ class CronController extends Controller
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
 
+        // When using Codecommit, the user portion in the url has to be changed
+        // to the User associated with the public key in AWS.
+        $buildAgentCodecommitSshUser = \Yii::$app->params['buildEngineBuildAgentCodecommitGitSshUser'];
+        $gitSubstPatterns = [ '/([0-9A-Za-z]*)@git-codecommit/' => "$buildAgentCodecommitSshUser@git-codecommit" ];
+
         $git = $this->getRepo();
 
         foreach (Job::find()->each(50) as $job)
         {
             $jobName = $job->app_id . "_" . $job->request_id;
+            $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
             $script = $this->renderPartial("scripts/$job->app_id", [
                 'jobName' => $jobName,
-                'gitUrl' => $job->git_url
+                'gitUrl' => $gitUrl,
             ]);
 
             $file = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir . DIRECTORY_SEPARATOR . $jobName . ".groovy";
@@ -78,4 +93,3 @@ class CronController extends Controller
         }
     }
  }
-

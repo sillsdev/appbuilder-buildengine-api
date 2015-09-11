@@ -1,6 +1,7 @@
 <?php
 $BUILD_ENGINE_GIT_USER_NAME = getenv('BUILD_ENGINE_GIT_USER_NAME') ?: 'SIL AppBuilder Build Agent';
 $BUILD_ENGINE_GIT_USER_EMAIL = getenv('BUILD_ENGINE_GIT_USER_EMAIL') ?: 'appbuilder_buildagent@sil.org';
+$BUILD_ENGINE_BUILD_AGENT_CODECOMMIT_GIT_SSH_USER = getenv('BUILD_ENGINE_BUILD_AGENT_CODECOMMIT_GIT_SSH_USER') ?: 'APKAJWRTYGFR4FSZTFNQ';
 $BUILD_ENGINE_REPO_URL = getenv('BUILD_ENGINE_REPO_URL') ?: "git@bitbucket.org:silintl/appbuilder-ci-scripts";
 $BUILD_ENGINE_REPO_PRIVATE_KEY = getenv('BUILD_ENGINE_REPO_PRIVATE_KEY') ?: "/data/.ssh/id_rsa";
 $BUILD_ENGINE_REPO_BRANCH = getenv('BUILD_ENGINE_REPO_BRANCH') ?: "master";
@@ -29,6 +30,7 @@ return [
     'params' => [
         'buildEngineGitUserName' => $BUILD_ENGINE_GIT_USER_NAME,
         'buildEngineGitUserEmail' => $BUILD_ENGINE_GIT_USER_EMAIL,
+        'buildEngineBuildAgentCodecommitGitSshUser' => $BUILD_ENGINE_BUILD_AGENT_CODECOMMIT_GIT_SSH_USER,
         'buildEngineRepoUrl' => $BUILD_ENGINE_REPO_URL,
         'buildEngineRepoBranch' => $BUILD_ENGINE_REPO_BRANCH,
         'buildEngineRepoPrivateKey' => $BUILD_ENGINE_REPO_PRIVATE_KEY,
