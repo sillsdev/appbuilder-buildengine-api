@@ -67,7 +67,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.synced_folder "./application", "/data",
    # 33 is the www-data user/group in the ubuntu container
-   mount_options: ["uid=33","gid=33"] 
+   mount_options: ["uid=33","gid=33", "fmode=755", "dmode=755"] 
 
   # Note:
   #   By default Vagrant syncs the project directory to /vagrant. This
