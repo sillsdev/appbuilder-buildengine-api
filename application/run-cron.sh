@@ -34,8 +34,8 @@ cat /etc/cron.d/appbuilder-cron >> /etc/cron.d/appbuilder
 # Remove original cron file without env vars
 rm -f /etc/cron.d/appbuilder-cron
 
-# initialize git config
-cd /data && ./yii cron/set-git-config
+# update git repo
+cd /data && ./yii cron/get-repo
 
 # Start cron daemon
 cron -f
