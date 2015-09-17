@@ -88,7 +88,7 @@ class CronController extends Controller
         foreach (Job::find()->each(50) as $job)
         {
             $publisherName = $job->publisher_id;
-            $jobName = $job->app_id . "_" . $job->request_id;
+            $jobName = $job->name();
             $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
             $artifactUrlBase = $job->artifact_url_base;
             

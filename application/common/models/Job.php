@@ -21,7 +21,7 @@ class Job extends JobBase implements Linkable
         ]);
     }
 
-       public function rules()
+    public function rules()
     {
         $appEnv = \Yii::$app->params['appEnv'];
         return ArrayHelper::merge(parent::rules(),[
@@ -63,6 +63,7 @@ class Job extends JobBase implements Linkable
             ],
         ]);
     }
+
     public function fields()
     {
         return [
@@ -96,5 +97,10 @@ class Job extends JobBase implements Linkable
         }
 
         return $links;
+    }
+    
+    public function name()
+    {
+        return $this->app_id."_".$this->request_id;
     }
 }
