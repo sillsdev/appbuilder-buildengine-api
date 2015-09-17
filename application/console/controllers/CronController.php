@@ -71,18 +71,21 @@ class CronController extends Controller
         $git = $this->getRepo();
 
         $jobs = [];
-        $apps = [];
+        // TODO: Apps should be pulled from a database?
+        $apps = ['scriptureappbuilder' => 1];
         $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
         foreach (Job::find()->each(50) as $job)
         {
             $publisherName = $job->publisher_id;
             $jobName = $job->app_id . "_" . $job->request_id;
             $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
-
+            $artifactUrlBase = $job->artifact_url_base;
+            
             $script = $this->renderPartial("scripts/$job->app_id", [
                 'publisherName' => $publisherName,
                 'jobName' => $jobName,
                 'gitUrl' => $gitUrl,
+                'artifactUrlBase' => $artifactUrlBase,
             ]);
 
             $file = $localScriptDir . DIRECTORY_SEPARATOR . $jobName . ".groovy";
@@ -92,7 +95,6 @@ class CronController extends Controller
             $git->add($file);
 
             $jobs[$jobName] = 1;
-            $apps[$job->app_id] = 1;
         }
 
         // Remove Scripts that are not in the database
