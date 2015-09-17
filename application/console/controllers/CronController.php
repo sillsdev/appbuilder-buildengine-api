@@ -27,7 +27,8 @@ class CronController extends Controller
             $git = $wrapper->clone($repoUrl, $repoLocalPath);
         } else {
             $git = $wrapper->init($repoLocalPath);
-            $git->pull();
+            $git->fetchAll();
+            $git->reset("--hard", "origin/master");
         }
 
         $userName = \Yii::$app->params['buildEngineGitUserName'];
