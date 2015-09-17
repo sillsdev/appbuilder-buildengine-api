@@ -14,6 +14,9 @@ use Yii;
  * @property string $publisher_id
  * @property string $created
  * @property string $updated
+ * @property string $artifact_url_base
+ *
+ * @property Build[] $builds
  */
 class JobBase extends \yii\db\ActiveRecord
 {
@@ -35,7 +38,8 @@ class JobBase extends \yii\db\ActiveRecord
             [['request_id'], 'integer'],
             [['created', 'updated'], 'safe'],
             [['git_url'], 'string', 'max' => 2083],
-            [['app_id', 'publisher_id'], 'string', 'max' => 255]
+            [['app_id', 'publisher_id'], 'string', 'max' => 255],
+            [['artifact_url_base'], 'string', 'max' => 1024]
         ];
     }
 
@@ -52,6 +56,15 @@ class JobBase extends \yii\db\ActiveRecord
             'publisher_id' => 'Publisher ID',
             'created' => 'Created',
             'updated' => 'Updated',
+            'artifact_url_base' => 'Artifact Url Base',
         ];
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getBuilds()
+    {
+        return $this->hasMany(Build::className(), ['job_id' => 'id']);
     }
 }

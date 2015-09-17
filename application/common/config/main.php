@@ -11,6 +11,7 @@ $TEST_MYSQL_DATABASE = getenv('TEST_MYSQL_DATABASE') ?: 'example';
 $TEST_MYSQL_USER = getenv('TEST_MYSQL_USER') ?: 'example';
 $TEST_MYSQL_PASSWORD = getenv('TEST_MYSQL_PASSWORD') ?: 'example';
 $ADMIN_EMAIL = getenv('ADMIN_EMAIL') ?: 'nobody@nowhere.com';
+$APP_ENV = getenv('APP_ENV') ?: "not set";
 
 return [
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
@@ -39,5 +40,6 @@ return [
     ],
     'params' => [
         'adminEmail' => $ADMIN_EMAIL,
+        'appEnv' => $APP_ENV,
     ],
 ];

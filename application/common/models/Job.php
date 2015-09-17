@@ -23,6 +23,7 @@ class Job extends JobBase implements Linkable
 
        public function rules()
     {
+        $appEnv = \Yii::$app->params['appEnv'];
         return ArrayHelper::merge(parent::rules(),[
             [
                 ['created','updated'],'default', 'value' => Utils::getDatetime(),
@@ -32,6 +33,9 @@ class Job extends JobBase implements Linkable
                     // always return true so it get set on every save
                     return true;
                 },
+            ],
+            [
+                'artifact_url_base', 'default', 'value' => "s3://gtis-appbuilder/$appEnv/"
             ],
             [
                 'publisher_id', 'in', 'range' => [
@@ -52,6 +56,11 @@ class Job extends JobBase implements Linkable
                 'pattern' => '/^ssh:\/\/[A-Za-z0-9]+@git-codecommit\./',
                 'message' => \Yii::t('app', 'Git SSH Url is required.')
             ],
+            [
+                'artifact_url_base', 'url',
+                'pattern' => '/^s3:\/\/gtis-appbuilder/',
+                'message' => \Yii::t('app', 'Artifact Url must be S3 Url for gtis-appbuilder bucket.')
+            ],
         ]);
     }
     public function fields()
@@ -62,6 +71,7 @@ class Job extends JobBase implements Linkable
             'git_url',
             'app_id',
             'publisher_id',
+            'artifact_url_base',
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },
