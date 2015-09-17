@@ -2,9 +2,11 @@
 namespace console\controllers;
 
 use common\models\Job;
+use common\models\Build;
 
 use yii\console\Controller;
 use common\helpers\Utils;
+use yii\web\BadRequestHttpException;
 
 use GitWrapper\GitWrapper;
 
@@ -56,6 +58,15 @@ class CronController extends Controller
         return $subject;
     }
 
+    public function createBuild($jobId)
+    {
+        $build = new Build();
+        $build->job_id = $jobId;
+        if(!$build->save()){
+            throw new BadRequestHttpException("Failed to create build for new job");
+        }
+    }
+
     public function actionSyncScripts()
     {
         $logMsg = 'cron/sync-scripts - ';
@@ -92,7 +103,11 @@ class CronController extends Controller
             $handle = fopen($file, "w");
             fwrite($handle, $script);
             fclose($handle);
-            $git->add($file);
+            if ($git->getStatus($file))
+            {
+                $git->add($file);
+                $this->createBuild($job->id);
+            }
 
             $jobs[$jobName] = 1;
         }
