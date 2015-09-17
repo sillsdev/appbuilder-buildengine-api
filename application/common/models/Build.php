@@ -79,7 +79,7 @@ class Build extends BuildBase implements Linkable
             ],
             [
                 'artifact_url', 'url', 
-                'pattern' => '/^s3:\/\/gtis-appbuilder/',
+                'pattern' => '/^s3:\/\/gtis-appbuilder\//',
                 'message' => \Yii::t('app', 'Artifact Url must be S3 Url for gti-appbuilder bucket.')
             ],            
             [

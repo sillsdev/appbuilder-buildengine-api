@@ -58,7 +58,7 @@ class Job extends JobBase implements Linkable
             ],
             [
                 'artifact_url_base', 'url',
-                'pattern' => '/^s3:\/\/gtis-appbuilder/',
+                'pattern' => '/^s3:\/\/gtis-appbuilder\//',
                 'message' => \Yii::t('app', 'Artifact Url must be S3 Url for gtis-appbuilder bucket.')
             ],
         ]);
