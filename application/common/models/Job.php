@@ -86,6 +86,13 @@ class Job extends JobBase implements Linkable
         $links = [];
         if($this->id){
             $links[Link::REL_SELF] = Url::toRoute(['/job/'.$this->id], true);
+            $build = Build::find()
+                    ->where(['job_id' => $this->id])
+                    ->orderBy('created DESC')
+                    ->one();
+            if($build) {
+                $links['newest_build'] = Url::toRoute(['/build/'.$build->id], true);
+            }
         }
 
         return $links;
