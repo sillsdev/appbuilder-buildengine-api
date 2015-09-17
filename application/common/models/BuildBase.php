@@ -35,7 +35,7 @@ class BuildBase extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['job_id', 'build_number', 'build_result', 'artifact_url'], 'required'],
+            [['job_id'], 'required'],
             [['job_id', 'build_number'], 'integer'],
             [['created', 'updated'], 'safe'],
             [['status', 'build_result', 'build_error'], 'string', 'max' => 255],

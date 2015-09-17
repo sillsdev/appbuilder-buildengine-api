@@ -11,10 +11,10 @@ class m150914_144408_create_build_table extends Migration
             'id' => Schema::TYPE_PK,
             'job_id' => 'int(11) not null',
             'status' => Schema::TYPE_STRING . " null",
-            'build_number'=> Schema::TYPE_INTEGER . " NOT NULL",
-            'build_result' => Schema::TYPE_STRING . " NOT NULL",
+            'build_number'=> Schema::TYPE_INTEGER . " null",
+            'build_result' => Schema::TYPE_STRING . " null",
             'build_error' => Schema::TYPE_STRING . " null",
-            'artifact_url'=> 'varchar(2083) NOT NULL',
+            'artifact_url'=> 'varchar(2083) null',
 
             'created' => 'datetime null',
             'updated' => 'datetime null',            

@@ -46,6 +46,11 @@ return [
                     'controller' => 'job',
                     'pluralize' => false
                 ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'build',
+                    'pluralize' => false
+                ],
             ]
         ],
     ],

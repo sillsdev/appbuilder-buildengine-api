@@ -12,7 +12,7 @@ use yii\helpers\Url;
 
 use common\helpers\Utils;
 
-class Job extends JobBase implements Linkable
+class Build extends BuildBase implements Linkable
 {
     
     const STATUS_INITIALIZED = 'initialized';
@@ -74,6 +74,10 @@ class Job extends JobBase implements Linkable
                 'status', 'default', 'value' => self::STATUS_INITIALIZED,
             ],
             [
+                'job_id', 'exist', 'targetClass' => 'common\models\Job', 'targetAttribute' => 'id',
+                'message' => \Yii::t('app', 'Invalid Job ID'),
+            ],
+            [
                 'artifact_url', 'url', 
                 'pattern' => '/^s3:\/\/gtis-appbuilder/',
                 'message' => \Yii::t('app', 'Artifact Url must be S3 Url for gti-appbuilder bucket.')
@@ -109,8 +113,8 @@ class Job extends JobBase implements Linkable
     {
         $links = [];
         if($this->id){
-            $links[Link::REL_SELF] = Url::toRoute(['/job/'.$this->job_id.'build/'.$this->id], true);
-            $links['job'] = Url::toRoute(['/job/'.$this->id], true);
+            $links[Link::REL_SELF] = Url::toRoute(['/build/'.$this->id], true);
+            $links['job'] = Url::toRoute(['/job/'.$this->job_id], true);
         }
 
         return $links;
