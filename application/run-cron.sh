@@ -25,7 +25,10 @@ chmod a+r /opt/ssl/logentries.all.crt
 # Dump env to a file
 touch /etc/cron.d/appbuilder
 env | while read line ; do
-   echo "$line" >> /etc/cron.d/appbuilder
+   if [[ "${line: -1}" != "=" ]] 
+   then
+     echo "$line" >> /etc/cron.d/appbuilder
+   fi
 done
 
 # Add env vars to doorman-cron to make available to scripts
@@ -33,9 +36,6 @@ cat /etc/cron.d/appbuilder-cron >> /etc/cron.d/appbuilder
 
 # Remove original cron file without env vars
 rm -f /etc/cron.d/appbuilder-cron
-
-# update git repo
-cd /data && ./yii cron/get-repo
 
 # Start cron daemon
 cron -f

@@ -12,13 +12,13 @@ use GitWrapper\GitWrapper;
 
 class CronController extends Controller 
 {
-    public function getRepo()
+    private function getRepo()
     {
         $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
         $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
         $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
 
-        require_once 'vendor/autoload.php';
+        require_once __DIR__ . '/../../vendor/autoload.php';
         $wrapper = new GitWrapper();
 
         $wrapper->setEnvVar('HOME', '/data');
@@ -49,7 +49,7 @@ class CronController extends Controller
         $git = $this->getRepo();
     }
 
-    public function doReplacements($subject, $patterns)
+    private function doReplacements($subject, $patterns)
     {
         foreach ($patterns as $pattern => $replacement )
         {
@@ -58,7 +58,7 @@ class CronController extends Controller
         return $subject;
     }
 
-    public function createBuild($jobId)
+    private function createBuild($jobId)
     {
         $build = new Build();
         $build->job_id = $jobId;
@@ -70,7 +70,8 @@ class CronController extends Controller
     public function actionSyncScripts()
     {
         $logMsg = 'cron/sync-scripts - ';
-
+        $date = date('Y-m-d H:i:s');
+ 
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
 
@@ -105,6 +106,7 @@ class CronController extends Controller
             fclose($handle);
             if ($git->getStatus($file))
             {
+                echo "[$date] Updated: $jobName\n";
                 $git->add($file);
                 $this->createBuild($job->id);
             }
@@ -118,19 +120,20 @@ class CronController extends Controller
         {
             $jobName = basename($scriptFile, ".groovy");
             list($app_id, $request_id) = explode("_", $jobName);
-            echo "job: $jobName, app_id: $app_id, request_id: $request_id\n";
             if (!array_key_exists($app_id, $apps))
             {
                 continue;
             }
             if (!array_key_exists($jobName, $jobs))
             {
+                echo "[$date] Removing: $jobName\n";
                 $git->rm($scriptFile);
             }
         }
 
         if ($git->hasChanges())
         {
+            echo "[$date] Changes detected...committing...\n";
             $git->commit('cron update scripts');
             $git->push();
         }

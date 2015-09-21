@@ -34,6 +34,16 @@ web:
     env_file:
         - ./common.env
         - ./local.env
+cron:
+    build: .
+    volumes_from:
+        - data
+    links:
+        - db
+    env_file:
+        - ./common.env
+        - ./local.env
+    command: /data/run-cron.sh
 composer:
     image: silintl/php-cli:latest
     volumes_from:
