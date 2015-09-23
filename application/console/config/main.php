@@ -7,7 +7,7 @@ $BUILD_ENGINE_REPO_PRIVATE_KEY = getenv('BUILD_ENGINE_REPO_PRIVATE_KEY') ?: "/da
 $BUILD_ENGINE_REPO_BRANCH = getenv('BUILD_ENGINE_REPO_BRANCH') ?: "master";
 $BUILD_ENGINE_REPO_LOCAL_PATH = getenv('BUILD_ENGINE_REPO_LOCAL_PATH') ?: "/tmp/appbuilder/appbuilder-ci-scripts";
 $BUILD_ENGINE_REPO_SCRIPT_DIR = getenv('BUILD_ENGINE_REPO_SCRIPT_DIR') ?: "groovy";
-$BUILD_REQUEST_CALLBACK_URL = getenv('BUILD_REQUEST_CALLBACK_URL') ?: "not set";
+$BUILD_ENGINE_JENKINS_MASTER_URL = getenv('BUILD_ENGINE_JENKINS_MASTER_URL') ?: "http://192.168.70.241";
 
 return [
     'id' => 'app-console',
@@ -36,6 +36,6 @@ return [
         'buildEngineRepoPrivateKey' => $BUILD_ENGINE_REPO_PRIVATE_KEY,
         'buildEngineRepoLocalPath' => $BUILD_ENGINE_REPO_LOCAL_PATH,
         'buildEngineRepoScriptDir' => $BUILD_ENGINE_REPO_SCRIPT_DIR,
-        'buildRequestCallbackUrl' => $BUILD_REQUEST_CALLBACK_URL,
+        'buildEngineJenkinsMasterUrl' => $BUILD_ENGINE_JENKINS_MASTER_URL,
     ],
 ];
