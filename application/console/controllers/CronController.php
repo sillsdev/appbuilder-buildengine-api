@@ -9,6 +9,7 @@ use common\helpers\Utils;
 use yii\web\BadRequestHttpException;
 
 use GitWrapper\GitWrapper;
+use JenkinsKhan\Jenkins;
 
 class CronController extends Controller 
 {
@@ -40,6 +41,13 @@ class CronController extends Controller
         $git->config('user.email', $userEmail);
         return $git;
     }
+    
+    private function getJenkins(){
+        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
+        $jenkins = new Jenkins($jenkinsUrl);
+        return $jenkins;
+    }
+
 
     public function actionGetRepo()
     {
@@ -64,6 +72,14 @@ class CronController extends Controller
         $build->job_id = $jobId;
         if(!$build->save()){
             throw new BadRequestHttpException("Failed to create build for new job");
+        }
+    }
+    
+    private function updateJenkinsJobs()
+    {
+        $jenkins = $this->getJenkins();
+        if ($jenkins){
+            $jenkins->launchJob("Job-Wrapper-Seed");
         }
     }
 
@@ -136,6 +152,47 @@ class CronController extends Controller
             echo "[$date] Changes detected...committing...\n";
             $git->commit('cron update scripts');
             $git->push();
+            $this->updateJenkinsJobs();
         }
+    }
+    
+    
+    private function checkBuildStatus($build){
+         $job = Job::findById($build->job_id);
+         if ($job){
+            $jenkins = $this->getJenkins();
+            $jenkinsJob = $jenkins->getJob($job->name());
+            foreach ($jenkinsJob->getBuilds() as $jenkinsBuild){
+                $build->build_number = $jenkinsBuild->getNumber();
+                $build->build_result = $jenkinsBuild->getResult();
+                if ($build->build_result == "SUCCESS"){
+                    //$build->artifact_url = "$job->artifact_base_url/$job->name/$build->build_number/";
+                }
+            }
+         }
+    }
+    
+    private function startBuild($build)
+    {
+        $job = Job::findById($build->job_id);
+        if ($job){
+            $jenkins = $this->getJenkins();
+            $jenkins->launchJob($job->name());
+            
+            $job->status = Build::STATUS_REQUEST_IN_PROGRESS;
+            $job->save();
+        }
+    }
+    
+    public function actionManageBuilds()
+    {
+        foreach (Build::find()->each(50) as $build){
+            switch ($build->status){
+                case Build::STATUS_INITIALIZED:
+                    $this->startBuild($build);
+                    break;
+            }
+        }
+        
     }
  }

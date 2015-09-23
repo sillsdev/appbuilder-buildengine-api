@@ -103,4 +103,9 @@ class Job extends JobBase implements Linkable
     {
         return $this->app_id."_".$this->request_id;
     }
+    
+    public static function findById($id)
+    {
+        return self::findOne(['id' => $id]);
+    }
 }
