@@ -9,10 +9,15 @@ use common\helpers\Utils;
 use yii\web\BadRequestHttpException;
 
 use GitWrapper\GitWrapper;
-use JenkinsKhan\Jenkins;
+use JenkinsApi\Jenkins;
+
 
 class CronController extends Controller 
 {
+    /**
+     *
+     * @return \GitWrapper\GitWorkingCopy
+     */
     private function getRepo()
     {
         $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
@@ -42,6 +47,10 @@ class CronController extends Controller
         return $git;
     }
     
+    /**
+     *
+     * @return Jenkins
+     */
     private function getJenkins(){
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $jenkins = new Jenkins($jenkinsUrl);
@@ -57,6 +66,12 @@ class CronController extends Controller
         $git = $this->getRepo();
     }
 
+    /**
+     *
+     * @param string $subject
+     * @param string $patterns
+     * @return string
+     */
     private function doReplacements($subject, $patterns)
     {
         foreach ($patterns as $pattern => $replacement )
@@ -66,20 +81,31 @@ class CronController extends Controller
         return $subject;
     }
 
-    private function createBuild($jobId)
+    /**
+     *
+     * @param Job $job
+     * @throws BadRequestHttpException
+     */
+    private function createBuild($job)
     {
-        $build = new Build();
-        $build->job_id = $jobId;
-        if(!$build->save()){
-            throw new BadRequestHttpException("Failed to create build for new job");
+        // TODO: Create a new build if there hasn't been one already started
+        $build = $job->getLatestBuild();
+        if (!$build || $build->status == Build::STATUS_COMPLETED){
+            $build = new Build();
+            $build->job_id = $job->id;
+            if(!$build->save()){
+                throw new BadRequestHttpException("Failed to create build for new job");
+            }
         }
     }
     
     private function updateJenkinsJobs()
     {
+        $date = date('Y-m-d H:i:s');
         $jenkins = $this->getJenkins();
         if ($jenkins){
-            $jenkins->launchJob("Job-Wrapper-Seed");
+            echo "[$date] Telling Jenkins to regenerate Jobs\n";
+            $jenkins->getJob("Job-Wrapper-Seed")->launch();
         }
     }
 
@@ -124,7 +150,7 @@ class CronController extends Controller
             {
                 echo "[$date] Updated: $jobName\n";
                 $git->add($file);
-                $this->createBuild($job->id);
+                $this->createBuild($job);
             }
 
             $jobs[$jobName] = 1;
@@ -156,32 +182,82 @@ class CronController extends Controller
         }
     }
     
-    
+    /**
+     *
+     * @param Build $build
+     */
     private function checkBuildStatus($build){
-         $job = Job::findById($build->job_id);
-         if ($job){
-            $jenkins = $this->getJenkins();
-            $jenkinsJob = $jenkins->getJob($job->name());
-            foreach ($jenkinsJob->getBuilds() as $jenkinsBuild){
-                $build->build_number = $jenkinsBuild->getNumber();
-                $build->build_result = $jenkinsBuild->getResult();
-                if ($build->build_result == "SUCCESS"){
-                    //$build->artifact_url = "$job->artifact_base_url/$job->name/$build->build_number/";
-                }
-            }
-         }
-    }
-    
-    private function startBuild($build)
-    {
-        $job = Job::findById($build->job_id);
+        $job = $build->job;
         if ($job){
             $jenkins = $this->getJenkins();
-            $jenkins->launchJob($job->name());
-            
-            $job->status = Build::STATUS_REQUEST_IN_PROGRESS;
-            $job->save();
+            $jenkinsJob = $jenkins->getJob($job->name());
+            $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
+            if ($jenkinsBuild){
+                $build->build_result = $jenkinsBuild->getResult();
+                if (!$jenkinsBuild->isBuilding()){
+                    $build->status = Build::STATUS_COMPLETED;
+                }
+                $build->save();
+                echo "Job=$job->id, Build=$build->build_number, Result=$build->build_result\n";
+            }
         }
+    }
+    
+    /**
+     *
+     * @param \JenkinsApi\Item\Job $job
+     * @param array $parameters 
+     * @param int $timeoutSeconds
+     * @param int $checkIntervalSeconds 
+     */
+    private function startNewBuildAndWaitUntilBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
+    {
+        // If there is currently a build running, wait for it to finish.
+        if ($job->isCurrentlyBuilding()){
+            $startWait = time();
+            echo "There is a current build ".$job->getLastBuild()->getNumber().". Wait for it to complete.\n";
+            while ($job->getLastBuild()->isBuilding()){
+                sleep($checkIntervalSeconds);
+                echo "...waited ". (time() - $startWait)."\n";
+                $job->refresh();
+            }
+        }
+
+        $lastNumber = $job->getLastBuild()->getNumber();
+        $startTime = time();
+        $job->launch($params);
+        
+        while ( time() < ($startTime + $timeoutSeconds))
+        {
+            sleep($checkIntervalSeconds);
+            $job->refresh();
+
+            $build = $job->getLastBuild();
+            if ($build->getNumber() > $lastNumber && $build->isBuilding())
+            {
+                return $build;
+            }
+        }
+    }
+    /**
+     *
+     * @param Build $build
+     */
+    private function startBuild($build)
+    {
+        $job = $build->job;
+        if ($job){
+            $jenkins = $this->getJenkins();
+            $jenkinsJob = $jenkins->getJob($job->name());
+            echo "Starting Build of ".$job->name()."\n";
+            
+            if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
+                $build->build_number = $jenkinsBuild->getNumber();
+                echo "Started Build $build->build_number\n";
+                $build->status = Build::STATUS_ACTIVE;
+                $build->save();
+            }
+        }           
     }
     
     public function actionManageBuilds()
@@ -191,8 +267,10 @@ class CronController extends Controller
                 case Build::STATUS_INITIALIZED:
                     $this->startBuild($build);
                     break;
+                case Build::STATUS_ACTIVE:
+                    $this->checkBuildStatus($build);
+                    break;
             }
         }
-        
     }
  }
