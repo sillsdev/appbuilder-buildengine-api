@@ -16,7 +16,6 @@ class Build extends BuildBase implements Linkable
 {
     
     const STATUS_INITIALIZED = 'initialized';
-    const STATUS_REQUEST_IN_PROGRESS = 'request_in_progress';
     const STATUS_ACTIVE = 'active';
     const STATUS_EXPIRED = 'expired';
     const STATUS_COMPLETED = 'completed';
@@ -28,9 +27,6 @@ class Build extends BuildBase implements Linkable
      */
     public $validStatusTransitions = [
         self::STATUS_INITIALIZED => [
-            self::STATUS_REQUEST_IN_PROGRESS
-        ],
-        self::STATUS_REQUEST_IN_PROGRESS => [
             self::STATUS_ACTIVE,
         ],
         self::STATUS_ACTIVE => [
@@ -67,7 +63,6 @@ class Build extends BuildBase implements Linkable
                     self::STATUS_COMPLETED,
                     self::STATUS_EXPIRED,
                     self::STATUS_INITIALIZED,
-                    self::STATUS_REQUEST_IN_PROGRESS
                 ],
             ],
             [

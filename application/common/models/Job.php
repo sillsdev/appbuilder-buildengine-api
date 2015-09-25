@@ -14,6 +14,19 @@ use common\helpers\Utils;
 
 class Job extends JobBase implements Linkable
 {
+    public function __construct($config = array()) {
+        parent::__construct($config);
+
+        $this->on(\yii\db\ActiveRecord::EVENT_AFTER_INSERT, [$this,'createInitialBuild']);
+    }
+
+    public function createInitialBuild($event)
+    {
+        $build = new Build();
+        $build->job_id = $this->id;
+        $build->save();
+    }
+
     public function scenarios()
     {
         return ArrayHelper::merge(parent::scenarios(),[
@@ -35,7 +48,7 @@ class Job extends JobBase implements Linkable
                 },
             ],
             [
-                'artifact_url_base', 'default', 'value' => "s3://gtis-appbuilder/$appEnv/"
+                'artifact_url_base', 'default', 'value' => "s3://gtis-appbuilder/$appEnv"
             ],
             [
                 'publisher_id', 'in', 'range' => [
@@ -82,17 +95,26 @@ class Job extends JobBase implements Linkable
         ];
     }
 
+    /**
+     * 
+     * @return Build
+     */
+    public function getLatestBuild()
+    {
+        return Build::find()
+                    ->where(['job_id' => $this->id])
+                    ->orderBy('created DESC')
+                    ->one();
+    }
+    
     public function getLinks()
     {
         $links = [];
         if($this->id){
             $links[Link::REL_SELF] = Url::toRoute(['/job/'.$this->id], true);
-            $build = Build::find()
-                    ->where(['job_id' => $this->id])
-                    ->orderBy('created DESC')
-                    ->one();
+            $build = $this->getLatestBuild();
             if($build) {
-                $links['newest_build'] = Url::toRoute(['/build/'.$build->id], true);
+                $links['latest_build'] = Url::toRoute(['/job/'.$this->id.'/build/latest'], true);
             }
         }
 

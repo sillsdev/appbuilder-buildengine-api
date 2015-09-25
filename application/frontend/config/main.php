@@ -38,13 +38,14 @@ return [
             'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                '<controller:\w+>/<id:\d+>' => '<controller>/view',
-                '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
-                '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'job',
-                    'pluralize' => false
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'GET <id>/build/latest' => 'latest-build',
+                        'GET <id>/build/<build_id:\d+>' => 'view-build',
+                    ]
                 ],
                 [
                     'class' => 'yii\rest\UrlRule',
