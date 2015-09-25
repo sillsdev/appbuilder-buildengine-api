@@ -47,6 +47,10 @@ class CronController extends Controller
         return $git;
     }
     
+    private function getPrefix()
+    {
+        return date('Y-m-d H:i:s');
+    }
     /**
      *
      * @return Jenkins
@@ -101,10 +105,10 @@ class CronController extends Controller
     
     private function updateJenkinsJobs()
     {
-        $date = date('Y-m-d H:i:s');
+        $prefix = $this->getPrefix();
         $jenkins = $this->getJenkins();
         if ($jenkins){
-            echo "[$date] Telling Jenkins to regenerate Jobs\n";
+            echo "[$prefix] Telling Jenkins to regenerate Jobs\n";
             $jenkins->getJob("Job-Wrapper-Seed")->launch();
         }
     }
@@ -112,7 +116,7 @@ class CronController extends Controller
     public function actionSyncScripts()
     {
         $logMsg = 'cron/sync-scripts - ';
-        $date = date('Y-m-d H:i:s');
+        $prefix = $this->getPrefix();
  
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
@@ -148,7 +152,7 @@ class CronController extends Controller
             fclose($handle);
             if ($git->getStatus($file))
             {
-                echo "[$date] Updated: $jobName\n";
+                echo "[$prefix] Updated: $jobName\n";
                 $git->add($file);
                 $this->createBuild($job);
             }
@@ -168,14 +172,14 @@ class CronController extends Controller
             }
             if (!array_key_exists($jobName, $jobs))
             {
-                echo "[$date] Removing: $jobName\n";
+                echo "[$prefix] Removing: $jobName\n";
                 $git->rm($scriptFile);
             }
         }
 
         if ($git->hasChanges())
         {
-            echo "[$date] Changes detected...committing...\n";
+            echo "[$prefix] Changes detected...committing...\n";
             $git->commit('cron update scripts');
             $git->push();
             $this->updateJenkinsJobs();
@@ -213,7 +217,9 @@ class CronController extends Controller
     private function startNewBuildAndWaitUntilBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
     {
         // If there is currently a build running, wait for it to finish.
-        if ($job->isCurrentlyBuilding()){
+        echo "...checking if job is running\n";
+        $lastBuild = $job->getLastBuild();
+        if ($lastBuild && $lastBuild->isBuilding()){
             $startWait = time();
             echo "There is a current build ".$job->getLastBuild()->getNumber().". Wait for it to complete.\n";
             while ($job->getLastBuild()->isBuilding()){
@@ -223,8 +229,10 @@ class CronController extends Controller
             }
         }
 
-        $lastNumber = $job->getLastBuild()->getNumber();
+        echo "...checking last build\n";
+        $lastNumber = ($lastBuild ? $lastBuild->getNumber() : 0);
         $startTime = time();
+        echo "...lastNumber=$lastNumber, startTime=$startTime\n";
         $job->launch($params);
         
         while ( time() < ($startTime + $timeoutSeconds))
@@ -233,9 +241,13 @@ class CronController extends Controller
             $job->refresh();
 
             $build = $job->getLastBuild();
-            if ($build->getNumber() > $lastNumber && $build->isBuilding())
-            {
-                return $build;
+            if ($build){
+                echo "...build=".$build->getNumber().". Is building?\n";
+                if ($build->getNumber() > $lastNumber && $build->isBuilding())
+                {
+                    echo "...is building.  Returning build.\n";
+                    return $build;
+                }
             }
         }
     }
@@ -245,15 +257,16 @@ class CronController extends Controller
      */
     private function startBuild($build)
     {
+        $prefix = $this->getPrefix();
         $job = $build->job;
         if ($job){
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($job->name());
-            echo "Starting Build of ".$job->name()."\n";
+            echo "[$prefix] Starting Build of ".$job->name()."\n";
             
             if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
                 $build->build_number = $jenkinsBuild->getNumber();
-                echo "Started Build $build->build_number\n";
+                echo "[$prefix] Started Build $build->build_number\n";
                 $build->status = Build::STATUS_ACTIVE;
                 $build->save();
             }
