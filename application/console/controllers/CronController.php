@@ -188,6 +188,88 @@ class CronController extends Controller
     
     /**
      *
+     * @param \JenkinsApi\Item\Build $jenkinsBuild
+     * @return string
+     */
+    private function getArtifactUrl($jenkinsBuild)
+    {
+        $artifact = $jenkinsBuild->get("artifacts")[0];
+
+        $relativePath = $artifact->relativePath;
+        return $jenkinsBuild->getBuildUrl()."artifact/$relativePath";
+    }
+
+    public function actionGetBuildInfo()
+    {
+        $jenkins = $this->getJenkins();
+        foreach (Build::find()->each(50) as $build){
+            if ($build->status == Build::STATUS_COMPLETED
+                && $build->build_result == \JenkinsApi\Item\Build::SUCCESS)
+            {
+                $jobName = $build->job->name();
+                $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
+                $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
+
+                echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl\n";
+            }
+        }
+    }
+
+	public function actionUploadBuilds()
+    {
+        $jenkins = $this->getJenkins();
+        foreach (Build::find()->each(50) as $build){
+            if ($build->status == Build::STATUS_COMPLETED
+                && $build->build_result == \JenkinsApi\Item\Build::SUCCESS)
+            {
+                $jobName = $build->job->name();
+                $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
+                echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number\n";
+                $this->saveBuild($build, $jenkinsBuild);
+            }
+        }        
+    }
+
+    
+    /**
+     *
+     * @return \Aws\S3\S3Client
+     */
+    private function getS3Client()
+    {
+        $client = new \Aws\S3\S3Client([
+            'region' => 'us-east-1',
+            'version' => '2006-03-01'
+            ]);
+        $client->registerStreamWrapper();
+        return $client;
+    }
+
+    /**
+     *
+     * @param Build $build
+     * @param \JenkinsApi\Item\Build $jenkinBuild
+     */
+    private function saveBuild($build, $jenkinsBuild)
+    {
+        $artifactUrl =  $this->getArtifactUrl($jenkinsBuild);
+        $client = $this->getS3Client();
+
+        $job = $build->job;
+        $s3Url = $job->artifact_url_base."/jobs/".$job->name()."/$build->build_number/".basename($artifactUrl);
+        echo "..copy:\n.... $artifactUrl\n.... $s3Url\n";
+
+        $apk = file_get_contents($artifactUrl);
+        $client->putObject([
+            'Bucket' => "gtis-appbuilder",
+            'Key' => "development/jobs/".$job->name()."/$build->build_number/".basename($artifactUrl),
+            'Body' => $apk,
+            'ACL' => 'public-read'
+        ]);
+    }
+
+    /**
+     *
      * @param Build $build
      */
     private function checkBuildStatus($build){
@@ -200,6 +282,9 @@ class CronController extends Controller
                 $build->build_result = $jenkinsBuild->getResult();
                 if (!$jenkinsBuild->isBuilding()){
                     $build->status = Build::STATUS_COMPLETED;
+                    if ($build->build_result == \JenkinsApi\Item\Build::SUCCESS){
+                        $this->saveBuild($build, $jenkinsBuild);
+                    }
                 }
                 $build->save();
                 echo "Job=$job->id, Build=$build->build_number, Result=$build->build_result\n";
