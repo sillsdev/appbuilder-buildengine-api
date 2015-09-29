@@ -92,15 +92,9 @@ class CronController extends Controller
      */
     private function createBuild($job)
     {
-        // TODO: Create a new build if there hasn't been one already started
-        $build = $job->getLatestBuild();
-        if (!$build || $build->status == Build::STATUS_COMPLETED){
-            $build = new Build();
-            $build->job_id = $job->id;
-            if(!$build->save()){
+            if(!$job->createBuild()){
                 throw new BadRequestHttpException("Failed to create build for new job");
             }
-        }
     }
     
     private function updateJenkinsJobs()

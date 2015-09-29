@@ -107,6 +107,19 @@ class Job extends JobBase implements Linkable
                     ->one();
     }
     
+    /**
+     * 
+     * @return Build
+     */
+    public function createBuild()
+    {
+            $build = new Build();
+            $build->job_id = $this->id;
+            $build->save();
+            
+            return $build;
+    }
+    
     public function getLinks()
     {
         $links = [];

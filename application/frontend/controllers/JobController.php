@@ -31,6 +31,15 @@ class JobController extends ActiveController
        }
        return $build;
     }
+    
+    public function actionNewBuild($id) {
+       $job = Job::findById($id);
+       $build = $job->createBuild();
+       if (!$build){
+           throw new \yii\web\NotFoundHttpException();
+       }
+       return $build;
+    }
 
     public function behaviors()
     {

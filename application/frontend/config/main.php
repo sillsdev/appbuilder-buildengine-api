@@ -45,6 +45,7 @@ return [
                     'extraPatterns' => [
                         'GET <id>/build/latest' => 'latest-build',
                         'GET <id>/build/<build_id:\d+>' => 'view-build',
+                        'PUT <id>' => 'new-build',
                     ]
                 ],
                 [
