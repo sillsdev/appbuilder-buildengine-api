@@ -282,7 +282,7 @@ class CronController extends Controller
     private function getS3Client()
     {
         $client = new \Aws\S3\S3Client([
-            'region' => 'us-east-1',
+            'region' => 'us-west-2',
             'version' => '2006-03-01'
             ]);
         $client->registerStreamWrapper();
