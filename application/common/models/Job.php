@@ -20,11 +20,13 @@ class Job extends JobBase implements Linkable
         $this->on(\yii\db\ActiveRecord::EVENT_AFTER_INSERT, [$this,'createInitialBuild']);
     }
 
+    /**
+     * When a job is created, also create a build
+     * @param Event $event
+     */
     public function createInitialBuild($event)
     {
-        $build = new Build();
-        $build->job_id = $this->id;
-        $build->save();
+        $this->createBuild();
     }
 
     public function scenarios()
@@ -95,31 +97,6 @@ class Job extends JobBase implements Linkable
         ];
     }
 
-    /**
-     * 
-     * @return Build
-     */
-    public function getLatestBuild()
-    {
-        return Build::find()
-                    ->where(['job_id' => $this->id])
-                    ->orderBy('created DESC')
-                    ->one();
-    }
-    
-    /**
-     * 
-     * @return Build
-     */
-    public function createBuild()
-    {
-            $build = new Build();
-            $build->job_id = $this->id;
-            $build->save();
-            
-            return $build;
-    }
-    
     public function getLinks()
     {
         $links = [];
@@ -133,12 +110,46 @@ class Job extends JobBase implements Linkable
 
         return $links;
     }
-    
+
+    /**
+     * Get the most recent build (by date created)
+     * @return Build
+     */
+    public function getLatestBuild()
+    {
+        return Build::find()
+                    ->where(['job_id' => $this->id])
+                    ->orderBy('created DESC')
+                    ->one();
+    }
+
+    /**
+     *
+     * @return Build
+     */
+    public function createBuild()
+    {
+            $build = new Build();
+            $build->job_id = $this->id;
+            $build->save();
+
+            return $build;
+    }
+
+    /**
+     * Return the name of the job to use with Jenkins
+     * @return string
+     */
     public function name()
     {
         return $this->app_id."_".$this->request_id;
     }
-    
+
+    /**
+     * Convenience method to find the job by Id
+     * @param integer $id
+     * @return type Job
+     */
     public static function findById($id)
     {
         return self::findOne(['id' => $id]);

@@ -7,12 +7,15 @@ use common\models\Build;
 use yii\console\Controller;
 use common\helpers\Utils;
 use yii\web\BadRequestHttpException;
+use yii\web\ServerErrorHttpException;
 
 use GitWrapper\GitWrapper;
 use JenkinsApi\Jenkins;
+use JenkinsApi\Item\Build as JenkinsBuild;
+use JenkinsApi\Item\Job as JenkinsJob;
 
 
-class CronController extends Controller 
+class CronController extends Controller
 {
     /**
      *
@@ -46,7 +49,7 @@ class CronController extends Controller
         $git->config('user.email', $userEmail);
         return $git;
     }
-    
+
     private function getPrefix()
     {
         return date('Y-m-d H:i:s');
@@ -59,15 +62,6 @@ class CronController extends Controller
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
-    }
-
-
-    public function actionGetRepo()
-    {
-        $logMsg = 'cron/get-repo - ';
-        echo "starting cron/get-repo. \n";
-
-        $git = $this->getRepo();
     }
 
     /**
@@ -86,17 +80,24 @@ class CronController extends Controller
     }
 
     /**
-     *
+     * Create a new Build.  If there is a Build in the initialized state,
+     * then it is OK to use that as the build.
      * @param Job $job
-     * @throws BadRequestHttpException
+     * @throws ServerErrorHttpException
+     * @return Build
      */
     private function createBuild($job)
     {
-            if(!$job->createBuild()){
-                throw new BadRequestHttpException("Failed to create build for new job");
+        $build = $job->getLatestBuild();
+        if (!$build || $build->status != Build::STATUS_INITIALIZED){
+            $build = $job->createBuild();
+            if(!$build){
+                throw new ServerErrorHttpException("Failed to create build for job $job->id", 1443811601);
             }
+        }
+        return $build;
     }
-    
+
     private function updateJenkinsJobs()
     {
         $prefix = $this->getPrefix();
@@ -107,11 +108,14 @@ class CronController extends Controller
         }
     }
 
+    /**
+     * Synchronize the Job configuration in database with groovy scripts.
+     */
     public function actionSyncScripts()
     {
         $logMsg = 'cron/sync-scripts - ';
         $prefix = $this->getPrefix();
- 
+
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
 
@@ -132,7 +136,7 @@ class CronController extends Controller
             $jobName = $job->name();
             $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
             $artifactUrlBase = $job->artifact_url_base;
-            
+
             $script = $this->renderPartial("scripts/$job->app_id", [
                 'publisherName' => $publisherName,
                 'jobName' => $jobName,
@@ -179,10 +183,10 @@ class CronController extends Controller
             $this->updateJenkinsJobs();
         }
     }
-    
+
     /**
-     *
-     * @param \JenkinsApi\Item\Build $jenkinsBuild
+     * Extract the Artifact Url from the Jenkins Build information.
+     * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
     private function getArtifactUrl($jenkinsBuild)
@@ -193,40 +197,86 @@ class CronController extends Controller
         return $jenkinsBuild->getBuildUrl()."artifact/$relativePath";
     }
 
-    public function actionGetBuildInfo()
+    /**
+     * Get Confiuration (Dev only)
+     */
+    public function actionGetConfig()
+    {
+        $prefix = $this->getPrefix();
+        echo "[$prefix] Get Configuration...\n";
+
+        $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
+        $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
+        $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
+        $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
+        $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
+        $userName = \Yii::$app->params['buildEngineGitUserName'];
+        $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
+
+        echo "Repo:\n  URL:$repoUrl\n  Path:$repoLocalPath\n  Scripts:$scriptDir\n  Key:$privateKey\n";
+        echo "Git:\n  Name:$userName\n  Email:$userEmail\n";
+    }
+    /**
+     * Return the builds that have not completed. (Dev only)
+     * Note: This should only be used during developement for diagnosis.
+     */
+    public function actionGetBuildsRemaining()
     {
         $jenkins = $this->getJenkins();
-        foreach (Build::find()->each(50) as $build){
-            if ($build->status == Build::STATUS_COMPLETED
-                && $build->build_result == \JenkinsApi\Item\Build::SUCCESS)
-            {
+        $prefix = $this->getPrefix();
+        echo "[$prefix] Remaining Builds...\n";
+        $complete = Build::STATUS_COMPLETED;
+        foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
+            $jobName = $build->job->name();
+            $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
+            $buildResult = $jenkinsBuild->getResult();
+            $buildArtifact = $this->getArtifactUrl($jenkinsBuild);
+            $s3Url = $this->getS3Url($build, $jenkinsBuild);
+            echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n"
+                . "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
+                . "  S3: Url=$s3Url\n";
+        }
+    }
+    /**
+     * Get completed build information. (Dev only)
+     * Note: This should only be used during development for diagnosis.
+     */
+    public function actionGetBuildsCompleted()
+    {
+        $jenkins = $this->getJenkins();
+        foreach (Build::find()->where([
+            'status' => Build::STATUS_COMPLETED,
+            'build_result' => JenkinsBuild::SUCCESS])->each(50) as $build){
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
 
                 echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl\n";
-            }
         }
     }
 
-	public function actionUploadBuilds()
+    /**
+     * Force the completed successful builds to upload the builds to S3. (Dev only)
+     * Note: This should only be used during development to test whether
+     *       S3 configuration is correct.
+     */
+	public function actionForceUploadBuilds()
     {
         $jenkins = $this->getJenkins();
         foreach (Build::find()->each(50) as $build){
             if ($build->status == Build::STATUS_COMPLETED
-                && $build->build_result == \JenkinsApi\Item\Build::SUCCESS)
+                && $build->build_result == JenkinsBuild::SUCCESS)
             {
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number\n";
                 $this->saveBuild($build, $jenkinsBuild);
             }
-        }        
+        }
     }
 
-    
     /**
-     *
+     * Configure and get the S3 Client
      * @return \Aws\S3\S3Client
      */
     private function getS3Client()
@@ -240,9 +290,20 @@ class CronController extends Controller
     }
 
     /**
-     *
+     * Get the S3 Url to use to archive a build
      * @param Build $build
-     * @param \JenkinsApi\Item\Build $jenkinBuild
+     * @param JenkinsBuild $jenkinsBuild
+     */
+    private function getS3Url($build, $jenkinsBuild)
+    {
+        $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
+        $job = $build->job;
+        return $job->artifact_url_base."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
+    }
+    /**
+     * Save the build to S3.
+     * @param Build $build
+     * @param JenkinsBuild $jenkinBuild
      */
     private function saveBuild($build, $jenkinsBuild)
     {
@@ -250,16 +311,19 @@ class CronController extends Controller
         $client = $this->getS3Client();
 
         $job = $build->job;
-        $s3Url = $job->artifact_url_base."/jobs/".$job->name()."/$build->build_number/".basename($artifactUrl);
+        $s3Url = $this->getS3Url($build, $jenkinsBuild);
         echo "..copy:\n.... $artifactUrl\n.... $s3Url\n";
 
         $apk = file_get_contents($artifactUrl);
+        file_put_contents($s3Url, $apk);
+        /*
         $client->putObject([
             'Bucket' => "gtis-appbuilder",
             'Key' => "development/jobs/".$job->name()."/$build->build_number/".basename($artifactUrl),
             'Body' => $apk,
             'ACL' => 'public-read'
         ]);
+         */
     }
 
     /**
@@ -276,7 +340,7 @@ class CronController extends Controller
                 $build->build_result = $jenkinsBuild->getResult();
                 if (!$jenkinsBuild->isBuilding()){
                     $build->status = Build::STATUS_COMPLETED;
-                    if ($build->build_result == \JenkinsApi\Item\Build::SUCCESS){
+                    if ($build->build_result == JenkinsBuild::SUCCESS){
                         $this->saveBuild($build, $jenkinsBuild);
                     }
                 }
@@ -285,13 +349,13 @@ class CronController extends Controller
             }
         }
     }
-    
+
     /**
      *
-     * @param \JenkinsApi\Item\Job $job
-     * @param array $parameters 
+     * @param JenkinsJob $job
+     * @param array $parameters
      * @param int $timeoutSeconds
-     * @param int $checkIntervalSeconds 
+     * @param int $checkIntervalSeconds
      */
     private function startNewBuildAndWaitUntilBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
     {
@@ -313,7 +377,7 @@ class CronController extends Controller
         $startTime = time();
         echo "...lastNumber=$lastNumber, startTime=$startTime\n";
         $job->launch($params);
-        
+
         while ( time() < ($startTime + $timeoutSeconds))
         {
             sleep($checkIntervalSeconds);
@@ -342,19 +406,24 @@ class CronController extends Controller
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($job->name());
             echo "[$prefix] Starting Build of ".$job->name()."\n";
-            
+
             if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
                 $build->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $build->build_number\n";
                 $build->status = Build::STATUS_ACTIVE;
                 $build->save();
             }
-        }           
+        }
     }
-    
+
+    /**
+     * Manage the state of the builds and process the current state
+     * until the status is complete.
+     */
     public function actionManageBuilds()
     {
-        foreach (Build::find()->each(50) as $build){
+        $complete = Build::STATUS_COMPLETED;
+        foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
                     $this->startBuild($build);
