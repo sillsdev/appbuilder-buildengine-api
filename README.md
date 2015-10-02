@@ -24,7 +24,7 @@ BuildEngine uses git to synchronize the appbuilder-ci-scripts.  It uses ssh keys
 
     ssh-keygen -t rsa -b 4096 -f application/.ssh/id_rsa
 
-3. Add ssh public (application/.ssh/id_rsa.pub) to your user account (see "Install the public key on your Bitbucket account" on [Set up SSH for Git](https://confluence.atlassian.com/bitbucket/set-up-ssh-for-git-728138079.html))
+3. Add ssh public key (application/.ssh/id_rsa.pub) to your user account (see "Install the public key on your Bitbucket account" on [Set up SSH for Git](https://confluence.atlassian.com/bitbucket/set-up-ssh-for-git-728138079.html))
 
     https://bitbucket.org/account/user/your_username_goes_here/ssh-keys  
 
