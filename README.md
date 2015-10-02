@@ -24,7 +24,7 @@ BuildEngine uses git to synchronize the appbuilder-ci-scripts.  It uses ssh keys
 
     ssh-keygen -t rsa -b 4096 -f application/.ssh/id_rsa
 
-3. Add ssh public to your user account
+3. Add ssh public (application/.ssh/id_rsa.pub) to your user account (see "Install the public key on your Bitbucket account" on [Set up SSH for Git](https://confluence.atlassian.com/bitbucket/set-up-ssh-for-git-728138079.html))
 
     https://bitbucket.org/account/user/your_username_goes_here/ssh-keys  
 
@@ -35,7 +35,11 @@ Copy local.env.dist to local.env and set the following variables:
     BUILD_ENGINE_REPO_URL=git@bitbucket.org:your_username_goes_here/appbuilder-ci-scripts
     BUILD_ENGINE_JENKINS_MASTER_URL=http://url_to_jenkins
     API_ACCESS_TOKEN=some_string_used_to_authenticate_requests
+    AWS_ACCESS_KEY_ID=XXXX
+    AWS_SECRET_ACCESS_KEY=YYYY
 
 If you are using vagrant/docker development environment of appbuilder-docker, then the url will be:
 
     http://192.168.70.241
+
+Contact @fillup or @chrishubbard for the AWS_* configuration for appbuilder_buildagent.
