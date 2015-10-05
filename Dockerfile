@@ -10,7 +10,6 @@ COPY build/appbuilder-cron /etc/cron.d/
 RUN chmod 0644 /etc/cron.d/appbuilder-cron
 
 RUN mkdir -p /data
-VOLUME ["/data"]
 
 # Copy in syslog config
 RUN rm -f /etc/rsyslog.d/*
