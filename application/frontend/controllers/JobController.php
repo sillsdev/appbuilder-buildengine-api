@@ -29,7 +29,7 @@ class JobController extends ActiveController
         }
 
         $build = $job->getLatestBuild();
-        if (!build){
+        if (!$build){
             throw new NotFoundHttpException("Lastest Build not found for Job $id", 1443797572);
         }
 
@@ -46,7 +46,7 @@ class JobController extends ActiveController
     
     public function actionNewBuild($id) {
        $job = Job::findById($id);
-       if (!job){
+       if (!$job){
            throw new NotFoundHttpException("Job $id not found", 1443810472);
        }
        $build = $job->createBuild();
