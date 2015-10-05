@@ -6,7 +6,7 @@ $FRONT_COOKIE_KEY = getenv('FRONT_COOKIE_KEY') ?: null;
 return [
     'id' => 'app-frontend',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log', 'gii'],
+    'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
         'user' => [
@@ -57,7 +57,7 @@ return [
         ],
     ],
     'modules' => [
-      
+
     ],
     'params' => [],
 ];
