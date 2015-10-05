@@ -4,7 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "41fa71fe02ac9d78f88a0982b4c69e3e",
+    "hash": "4a6aa8f4bf4060e7bedd05b7a67e6581",
+    "content-hash": "38e1034beefa63d00ce5553a87a4c6a2",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -821,6 +822,43 @@
                 "response"
             ],
             "time": "2015-05-04 20:22:00"
+        },
+        {
+            "name": "silinternational/yii2-jsonsyslog",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/silinternational/yii2-jsonsyslog.git",
+                "reference": "d3a9326deff4ececbdbc84d0963185f5849c94cc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/silinternational/yii2-jsonsyslog/zipball/d3a9326deff4ececbdbc84d0963185f5849c94cc",
+                "reference": "d3a9326deff4ececbdbc84d0963185f5849c94cc",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0",
+                "yiisoft/yii2": "2.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sil\\JsonSyslog\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Yii2 log target for sending data to Syslog as a JSON encoded string",
+            "keywords": [
+                "json",
+                "log",
+                "syslog",
+                "yii2"
+            ],
+            "time": "2015-08-19 15:07:38"
         },
         {
             "name": "swiftmailer/swiftmailer",

@@ -37,6 +37,28 @@ return [
             "charset" => "utf8",
             "tablePrefix" => "",
         ],
+        'log' => [
+            'traceLevel' => 0,
+            'targets' => [
+                [
+                    'class' => 'Sil\JsonSyslog\JsonSyslogTarget',
+                    'levels' => ['error', 'warning'],
+                    'except' => [
+                        'yii\web\HttpException:401',
+                        'yii\web\HttpException:404',
+                    ],
+                    'logVars' => [], // Disable logging of _SERVER, _POST, etc.
+                    'prefix' => function($message) use ($APP_ENV) {
+                        $prefixData = array(
+                            'env' => $APP_ENV,
+                        );
+                        if (! \Yii::$app->user->isGuest) {
+                            $prefixData['user'] = \Yii::$app->user->identity->email;
+                        }
+                        return \yii\helpers\Json::encode($prefixData);
+                    },
+                ],
+          ],
     ],
     'params' => [
         'adminEmail' => $ADMIN_EMAIL,

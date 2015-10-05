@@ -8,7 +8,8 @@
         "yiisoft/yii2-swiftmailer": "*",
         "cpliakas/git-wrapper": "*",
         "chbiel/jenkins-php-api": "*",
-        "aws/aws-sdk-php": "^3.4"
+        "aws/aws-sdk-php": "^3.4",
+        "silinternational/yii2-jsonsyslog": "*"
     },
     "require-dev": {
         "yiisoft/yii2-codeception": "*",
