@@ -43,6 +43,10 @@ cron:
     env_file:
         - ./common.env
         - ./local.env
+    environment:
+        - "EXPAND_S3_KEY=AKIAJMYELQKUPZFMPEHQ"
+        - "EXPAND_S3_SECRET=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"
+        - "EXPAND_S3_FOLDERS=gtis-appbuilder/staging/build-engine-api/ssh/|/data/.ssh/"
     command: /data/run-cron.sh
 composer:
     image: silintl/php-cli:latest
