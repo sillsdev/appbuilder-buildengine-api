@@ -91,9 +91,8 @@ class Build extends BuildBase implements Linkable
             'id',
             'job_id',
             'status',
-            'build_number',
-            'build_result',
-            'build_error',
+            'result',
+            'error',
             'artifact_url',
             'created' => function(){
                 return Utils::getIso8601($this->created);

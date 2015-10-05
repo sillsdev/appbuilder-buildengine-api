@@ -11,8 +11,8 @@ use Yii;
  * @property integer $job_id
  * @property string $status
  * @property integer $build_number
- * @property string $build_result
- * @property string $build_error
+ * @property string $result
+ * @property string $error
  * @property string $artifact_url
  * @property string $created
  * @property string $updated
@@ -38,7 +38,7 @@ class BuildBase extends \yii\db\ActiveRecord
             [['job_id'], 'required'],
             [['job_id', 'build_number'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'build_result', 'build_error'], 'string', 'max' => 255],
+            [['status', 'result', 'error'], 'string', 'max' => 255],
             [['artifact_url'], 'string', 'max' => 2083]
         ];
     }
@@ -53,8 +53,8 @@ class BuildBase extends \yii\db\ActiveRecord
             'job_id' => 'Job ID',
             'status' => 'Status',
             'build_number' => 'Build Number',
-            'build_result' => 'Build Result',
-            'build_error' => 'Build Error',
+            'result' => 'Result',
+            'error' => 'Error',
             'artifact_url' => 'Artifact Url',
             'created' => 'Created',
             'updated' => 'Updated',

@@ -246,7 +246,7 @@ class CronController extends Controller
         $jenkins = $this->getJenkins();
         foreach (Build::find()->where([
             'status' => Build::STATUS_COMPLETED,
-            'build_result' => JenkinsBuild::SUCCESS])->each(50) as $build){
+            'result' => JenkinsBuild::SUCCESS])->each(50) as $build){
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
@@ -265,7 +265,7 @@ class CronController extends Controller
         $jenkins = $this->getJenkins();
         foreach (Build::find()->each(50) as $build){
             if ($build->status == Build::STATUS_COMPLETED
-                && $build->build_result == JenkinsBuild::SUCCESS)
+                && $build->result == JenkinsBuild::SUCCESS)
             {
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
@@ -356,15 +356,15 @@ class CronController extends Controller
             $jenkinsJob = $jenkins->getJob($job->name());
             $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
             if ($jenkinsBuild){
-                $build->build_result = $jenkinsBuild->getResult();
+                $build->result = $jenkinsBuild->getResult();
                 if (!$jenkinsBuild->isBuilding()){
                     $build->status = Build::STATUS_COMPLETED;
-                    if ($build->build_result == JenkinsBuild::SUCCESS){
+                    if ($build->result == JenkinsBuild::SUCCESS){
                         $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
                     }
                 }
                 $build->save();
-                echo "Job=$job->id, Build=$build->build_number, Result=$build->build_result\n";
+                echo "Job=$job->id, Build=$build->build_number, Result=$build->result\n";
             }
         }
     }
