@@ -3,16 +3,16 @@
     "require": {
         "php": ">=5.4.0",
         "yiisoft/yii2": "*",
+        "yiisoft/yii2-gii": "*",
         "yiisoft/yii2-bootstrap": "*",
         "yiisoft/yii2-swiftmailer": "*",
         "cpliakas/git-wrapper": "*",
-	"chbiel/jenkins-php-api": "*",
+        "chbiel/jenkins-php-api": "*",
         "aws/aws-sdk-php": "^3.4"
     },
     "require-dev": {
         "yiisoft/yii2-codeception": "*",
         "yiisoft/yii2-debug": "*",
-        "yiisoft/yii2-gii": "*",
         "yiisoft/yii2-faker": "*",
         "roave/security-advisories": "dev-master",
         "fillup/phpmyadmin-minimal": "dev-master"
