@@ -10,11 +10,14 @@ COPY build/appbuilder-cron /etc/cron.d/
 RUN chmod 0644 /etc/cron.d/appbuilder-cron
 
 RUN mkdir -p /data
-VOLUME ["/data"]
 
 # Copy in syslog config
 RUN rm -f /etc/rsyslog.d/*
 COPY build/rsyslog.conf /etc/rsyslog.conf
+
+# Copy in updated php.ini
+COPY build/php.ini /etc/php5/apache2/
+COPY build/php.ini /etc/php5/cli/
 
 # It is expected that /data is = application/ in project folder
 COPY application/ /data/
