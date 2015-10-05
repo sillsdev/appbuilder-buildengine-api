@@ -300,6 +300,24 @@ class CronController extends Controller
         $job = $build->job;
         return $job->artifact_url_base."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
     }
+
+    /**
+     * Get the S3 Bucket and Key to use to archive a build
+     * @param string s3Url
+     * @return [string,string] Bucket, Key
+     */
+    private function getS3BucketKey($s3Url)
+    {
+        $pattern = '/s3:\/\/([^\/]*)\/(.*)$/';
+        if (preg_match($pattern, $s3Url, $matches)){
+            $bucket = $matches[1];
+            $key = $matches[2];
+            return [$bucket, $key];
+        }
+
+        throw new ServerErrorHttpException("Failed to match $s3Url", 1444051300);
+    }
+
     /**
      * Save the build to S3.
      * @param Build $build
@@ -312,18 +330,19 @@ class CronController extends Controller
 
         $job = $build->job;
         $s3Url = $this->getS3Url($build, $jenkinsBuild);
-        echo "..copy:\n.... $artifactUrl\n.... $s3Url\n";
+        list ($s3bucket, $s3key) = $this->getS3BucketKey($s3Url);
+        echo "..copy:\n.... $artifactUrl\n.... $s3bucket $s3key\n";
 
         $apk = file_get_contents($artifactUrl);
-        file_put_contents($s3Url, $apk);
-        /*
+
         $client->putObject([
-            'Bucket' => "gtis-appbuilder",
-            'Key' => "development/jobs/".$job->name()."/$build->build_number/".basename($artifactUrl),
+            'Bucket' => $s3bucket,
+            'Key' => $s3key,
             'Body' => $apk,
             'ACL' => 'public-read'
         ]);
-         */
+
+        return $s3Url;
     }
 
     /**
@@ -341,7 +360,7 @@ class CronController extends Controller
                 if (!$jenkinsBuild->isBuilding()){
                     $build->status = Build::STATUS_COMPLETED;
                     if ($build->build_result == JenkinsBuild::SUCCESS){
-                        $this->saveBuild($build, $jenkinsBuild);
+                        $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
                     }
                 }
                 $build->save();
