@@ -1,15 +1,15 @@
 # appbuilder-buildengine-api #
 This is the Web Service interface for App Publishing Service to provide build
-services.  Doorman will request jobs to be created. BuildEngine will create 
+services.  Doorman will request jobs to be created. BuildEngine will create
 entries in its database and synchronize the data to appbuilder-ci-scripts.
 
 ## API Specs ##
-https://docs.google.com/a/sil.org/document/d/1FtHLCEOvOuSnBC1ryeEUH3Vx2Y5XqF_WhpkPpjWteqs/edit?usp=sharing 
+https://docs.google.com/a/sil.org/document/d/1FtHLCEOvOuSnBC1ryeEUH3Vx2Y5XqF_WhpkPpjWteqs/edit?usp=sharing
 
 ## Development Environment ##
-1. Install requirements 
+1. Install requirements
 2. Fork git@bitbucket.org:silintl/appbuilder-ci-scripts
-3. Create ssh-key 
+3. Create ssh-key
 4. Configuration
 
 ### Install Requirements ###
