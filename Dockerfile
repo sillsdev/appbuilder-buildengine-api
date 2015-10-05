@@ -11,6 +11,9 @@ RUN chmod 0644 /etc/cron.d/appbuilder-cron
 
 RUN mkdir -p /data
 
+RUN curl https://raw.githubusercontent.com/silinternational/s3-expand/master/s3-expand > /usr/local/bin/s3-expand
+RUN chmod a+x /usr/local/bin/s3-expand
+
 # Copy in syslog config
 RUN rm -f /etc/rsyslog.d/*
 COPY build/rsyslog.conf /etc/rsyslog.conf
