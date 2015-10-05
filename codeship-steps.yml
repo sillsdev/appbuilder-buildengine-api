@@ -14,4 +14,4 @@
 - name: deploy_staging
   service: ecsdeploy
   tag: master
-  command: "-c staging1 -n staging-appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest"
+  command: "-c staging1 -n staging-appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest -t 240"

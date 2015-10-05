@@ -14,6 +14,8 @@ RUN mkdir -p /data
 # Copy in syslog config
 RUN rm -f /etc/rsyslog.d/*
 COPY build/rsyslog.conf /etc/rsyslog.conf
+RUN mkdir -p /opt/ssl
+COPY build/logentries.all.crt /opt/ssl/logentries.all.crt
 
 # Copy in updated php.ini
 COPY build/php.ini /etc/php5/apache2/
@@ -34,4 +36,5 @@ RUN chown -R www-data:www-data \
 RUN composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
 EXPOSE 80
-CMD ["apache2ctl", "-D", "FOREGROUND"]
+ENTRYPOINT ["s3-expand"]
+CMD ["/data/run.sh"]
