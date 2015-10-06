@@ -58,7 +58,8 @@ return [
                         return \yii\helpers\Json::encode($prefixData);
                     },
                 ],
-          ],
+            ],
+        ],
     ],
     'params' => [
         'adminEmail' => $ADMIN_EMAIL,
