@@ -25,6 +25,7 @@ class CronController extends Controller
     {
         $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
         $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
+        $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
         $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
 
         require_once __DIR__ . '/../../vendor/autoload.php';
@@ -36,12 +37,17 @@ class CronController extends Controller
         if (!file_exists($repoLocalPath))
         {
             $git = $wrapper->clone($repoUrl, $repoLocalPath);
+            $git->config('push.default', 'simple');
         } else {
             $git = $wrapper->init($repoLocalPath);
             $git->fetchAll();
-            $git->reset("--hard", "origin/master");
+            $git->reset("--hard", "origin/$repoBranch");
         }
+        $git->checkout($repoBranch);
 
+        // Set afterwards in case the configuration changes after
+        // the repo has been cloned (i.e. services has been restarted
+        // with different configuration).
         $userName = \Yii::$app->params['buildEngineGitUserName'];
         $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
 
@@ -108,6 +114,10 @@ class CronController extends Controller
         }
     }
 
+    public function actionGetRepo()
+    {
+        $this->getRepo();
+    }
     /**
      * Synchronize the Job configuration in database with groovy scripts.
      */
@@ -209,11 +219,12 @@ class CronController extends Controller
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
         $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
         $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
+        $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
         $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
         $userName = \Yii::$app->params['buildEngineGitUserName'];
         $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
 
-        echo "Repo:\n  URL:$repoUrl\n  Path:$repoLocalPath\n  Scripts:$scriptDir\n  Key:$privateKey\n";
+        echo "Repo:\n  URL:$repoUrl\n  Branch:$repoBranch\n  Path:$repoLocalPath\n  Scripts:$scriptDir\n  Key:$privateKey\n";
         echo "Git:\n  Name:$userName\n  Email:$userEmail\n";
     }
     /**
