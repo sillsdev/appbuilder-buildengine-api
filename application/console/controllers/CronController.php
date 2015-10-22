@@ -394,22 +394,29 @@ class CronController extends Controller
      * @param Build $build
      */
     private function checkBuildStatus($build){
-        $job = $build->job;
-        if ($job){
-            $jenkins = $this->getJenkins();
-            $jenkinsJob = $jenkins->getJob($job->name());
-            $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
-            if ($jenkinsBuild){
-                $build->result = $jenkinsBuild->getResult();
-                if (!$jenkinsBuild->isBuilding()){
-                    $build->status = Build::STATUS_COMPLETED;
-                    if ($build->result == JenkinsBuild::SUCCESS){
-                        $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
+        try {
+            $job = $build->job;
+            if ($job){
+                $jenkins = $this->getJenkins();
+                $jenkinsJob = $jenkins->getJob($job->name());
+                $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
+                if ($jenkinsBuild){
+                    $build->result = $jenkinsBuild->getResult();
+                    if (!$jenkinsBuild->isBuilding()){
+                        $build->status = Build::STATUS_COMPLETED;
+                        if ($build->result == JenkinsBuild::SUCCESS){
+                            $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
+                        }
                     }
+                    $build->save();
+                    echo "Job=$job->id, Build=$build->build_number, Result=$build->result\n";
                 }
-                $build->save();
-                echo "Job=$job->id, Build=$build->build_number, Result=$build->result\n";
             }
+        } catch (\Exception $e) {
+            $build->status = Build::STATUS_COMPLETED;
+            $build->result = JenkinsBuild::SUCCESS;
+            $build->error = $e->getMessage();
+            $build->save();
         }
     }
 
