@@ -204,7 +204,10 @@ class CronController extends Controller
         $artifact = $jenkinsBuild->get("artifacts")[0];
 
         $relativePath = $artifact->relativePath;
-        return $jenkinsBuild->getBuildUrl()."artifact/$relativePath";
+        $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
+        $buildUrl = $jenkinsBuild->getBuildUrl();
+        $pieces = explode("job", $buildUrl);
+        return $baseUrl."job".$pieces[1]."artifact/".$relativePath;
     }
 
     /**
