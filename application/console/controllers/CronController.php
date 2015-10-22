@@ -236,6 +236,29 @@ class CronController extends Controller
         echo "Git:\n  Name:$userName\n  Email:$userEmail\n";
     }
     /**
+     * Return all the builds. (Dev only)
+     * Note: This should only be used during developement for diagnosis.
+     */
+    public function actionGetBuilds()
+    {
+        $jenkins = $this->getJenkins();
+        $prefix = $this->getPrefix();
+        echo "[$prefix] All Builds...\n";
+        $complete = Build::STATUS_COMPLETED;
+        foreach (Build::find()->each(50) as $build){
+            $jobName = $build->job->name();
+            echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, Result=$build->result, ArtifactUrl=$build->artifact_url\n";
+            if ($build->build_number > 0) {
+                $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
+                $buildResult = $jenkinsBuild->getResult();
+                $buildArtifact = $this->getArtifactUrl($jenkinsBuild);
+                $s3Url = $this->getS3Url($build, $jenkinsBuild);
+                echo "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
+                    . "  S3: Url=$s3Url\n";
+            }
+        }
+    }
+    /**
      * Return the builds that have not completed. (Dev only)
      * Note: This should only be used during developement for diagnosis.
      */
