@@ -224,7 +224,12 @@ class CronController extends Controller
         $userName = \Yii::$app->params['buildEngineGitUserName'];
         $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
 
+        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
+        $jenkins = $this->getJenkins();
+        $jenkinsBaseUrl = $jenkins->getBaseUrl();
+
         echo "Repo:\n  URL:$repoUrl\n  Branch:$repoBranch\n  Path:$repoLocalPath\n  Scripts:$scriptDir\n  Key:$privateKey\n";
+        echo "Jenkins:\n  BuildEngineJenkinsMasterUrl: $jenkinsUrl\n  Jenkins.baseUrl: $jenkinsBaseUrl\n ";
         echo "Git:\n  Name:$userName\n  Email:$userEmail\n";
     }
     /**
