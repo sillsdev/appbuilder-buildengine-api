@@ -50,6 +50,9 @@ class Job extends JobBase implements Linkable
                 },
             ],
             [
+                ['request_id'], 'unique',
+            ],
+            [
                 'artifact_url_base', 'default', 'value' => "s3://gtis-appbuilder/$appEnv"
             ],
             [
