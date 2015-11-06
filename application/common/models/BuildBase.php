@@ -49,15 +49,15 @@ class BuildBase extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'job_id' => 'Job ID',
-            'status' => 'Status',
-            'build_number' => 'Build Number',
-            'result' => 'Result',
-            'error' => 'Error',
-            'artifact_url' => 'Artifact Url',
-            'created' => 'Created',
-            'updated' => 'Updated',
+            'id' => Yii::t('app', 'ID'),
+            'job_id' => Yii::t('app', 'Job ID'),
+            'status' => Yii::t('app', 'Status'),
+            'build_number' => Yii::t('app', 'Build Number'),
+            'result' => Yii::t('app', 'Result'),
+            'error' => Yii::t('app', 'Error'),
+            'artifact_url' => Yii::t('app', 'Artifact Url'),
+            'created' => Yii::t('app', 'Created'),
+            'updated' => Yii::t('app', 'Updated'),
         ];
     }
 

@@ -8,7 +8,7 @@ use Yii;
  * This is the model class for table "job".
  *
  * @property integer $id
- * @property integer $request_id
+ * @property string $request_id
  * @property string $git_url
  * @property string $app_id
  * @property string $publisher_id
@@ -35,10 +35,9 @@ class JobBase extends \yii\db\ActiveRecord
     {
         return [
             [['request_id', 'git_url', 'app_id', 'publisher_id'], 'required'],
-            [['request_id'], 'integer'],
             [['created', 'updated'], 'safe'],
+            [['request_id', 'app_id', 'publisher_id'], 'string', 'max' => 255],
             [['git_url'], 'string', 'max' => 2083],
-            [['app_id', 'publisher_id'], 'string', 'max' => 255],
             [['artifact_url_base'], 'string', 'max' => 1024]
         ];
     }
@@ -49,14 +48,14 @@ class JobBase extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'request_id' => 'Request ID',
-            'git_url' => 'Git Url',
-            'app_id' => 'App ID',
-            'publisher_id' => 'Publisher ID',
-            'created' => 'Created',
-            'updated' => 'Updated',
-            'artifact_url_base' => 'Artifact Url Base',
+            'id' => Yii::t('app', 'ID'),
+            'request_id' => Yii::t('app', 'Request ID'),
+            'git_url' => Yii::t('app', 'Git Url'),
+            'app_id' => Yii::t('app', 'App ID'),
+            'publisher_id' => Yii::t('app', 'Publisher ID'),
+            'created' => Yii::t('app', 'Created'),
+            'updated' => Yii::t('app', 'Updated'),
+            'artifact_url_base' => Yii::t('app', 'Artifact Url Base'),
         ];
     }
 
