@@ -43,9 +43,10 @@ return [
                     'controller' => 'job',
                     'pluralize' => false,
                     'extraPatterns' => [
-                        'GET <id>/build/latest' => 'latest-build',
+                        'GET <id>/build' => 'list-builds',
                         'GET <id>/build/<build_id:\d+>' => 'view-build',
-                        'PUT <id>' => 'new-build',
+                        'PUT <id>/build/<build_id:\d+>' => 'publish-build',
+                        'POST <id>/build' => 'new-build',
                     ]
                 ],
                 [
