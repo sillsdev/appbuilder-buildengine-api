@@ -32,7 +32,7 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  # config.vm.box = "ubuntu/trust64"
+  # config.vm.box = "ubuntu/trusty64"
   config.vm.box = "AlbanMontaigu/boot2docker"
   config.vm.box_version = "= 1.8.2"
 
@@ -42,10 +42,17 @@ Vagrant.configure(2) do |config|
   config.ssh.password = "tcuser"
   config.ssh.insert_key = true
 
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   # config.vm.network "private_network", ip: "192.168.33.10"
-  #config.vm.network "private_network", ip: "192.168.70.21"
+  #config.vm.network "private_network", ip: "192.168.70.249", nic_type: "virtio"
 
   # These lines override a virtual NIC that the AlbanMontaigu/boot2docker box
   # creates by default. If you need to change the the box's IP address (which
@@ -58,6 +65,19 @@ Vagrant.configure(2) do |config|
     override.vm.network "private_network", ip: "192.168.70.121", id: "default-network", nic_type: "virtio"
   end
 
+  # Set memory to VM to 512M. boot2docker default is 1.5G
+  # Limit CPU usage to up to 50% of host CPU
+  config.vm.provider "virtualbox" do |v|
+    #v.memory = 768
+    #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+  end
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
@@ -67,7 +87,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.synced_folder "./application", "/data",
    # 33 is the www-data user/group in the ubuntu container
-   mount_options: ["uid=33","gid=33", "fmode=755", "dmode=755"] 
+   mount_options: ["uid=33","gid=33","fmode=755","dmode=755"]
 
   # Note:
   #   By default Vagrant syncs the project directory to /vagrant. This
@@ -86,10 +106,14 @@ Vagrant.configure(2) do |config|
          "images into docker's image-store" + snorm
   end
   
+  config.vm.provider "virtualbox" do |vb|
   # A fix for speed issues with DNS resolution:
   #   http://serverfault.com/questions/453185/vagrant-virtualbox-dns-10-0-2-3-not-working?rq=1
-  config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+
+    # Set the timesync threshold to 59 seconds, instead of the default 20 minutes.
+    # 59 seconds chosen to ensure SimpleSAML never gets too far out of date.
+    vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 59000]
   end
 
 
@@ -100,7 +124,7 @@ Vagrant.configure(2) do |config|
      cp -r /home/docker /mnt/sda2/home
      chown -R docker.staff /mnt/sda2/home/docker
 
-     #Switcheroo 
+     #Switcheroo
      mount --bind /mnt/sda2/home/docker /home/docker
      cd /home/docker
 
@@ -112,12 +136,6 @@ Vagrant.configure(2) do |config|
      mount --bind /mnt/sda2/tce-persist /mnt/sda2/tmp/tce/optional
      sudo -u tc tce-load -w python
      umount /mnt/sda2/tmp/tce/optional
-
-     mkdir /mnt/sda2/pip
-     cd /mnt/sda2/pip
-
-     curl https://bootstrap.pypa.io/get-pip.py > get-pip.py
-     chmod u+x get-pip.py
 
      # Configure boot2docker's running of docker
      # (Mixing of tabs and spaces is intentional, used for the <<- operator)
@@ -142,13 +160,19 @@ Vagrant.configure(2) do |config|
   # `vagrant up`), reinstalling from local directories
   config.vm.provision "recompose", type: "shell",
    run: "always", inline: <<-SHELL
-     #Switcheroo 
+     #Switcheroo
      mount --bind /mnt/sda2/home/docker /home/docker
      cd /home/docker
 
-     # Install Docker-Compose
-     curl -L https://github.com/docker/compose/releases/download/1.4.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-     chmod 755 /usr/local/bin/docker-compose
+     # Install python and Docker-Compose
+     mount --bind /mnt/sda2/tce-persist /mnt/sda2/tmp/tce/optional
+     sudo -u tc tce-load -ic python
+     umount /mnt/sda2/tmp/tce/optional
+
+     # Use curl to install docker-compose (rather than pip, due to
+     # "https://github.com/boot2docker/boot2docker/issues/1055").
+     curl -L https://github.com/docker/compose/releases/download/1.4.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+     chmod +x /usr/local/bin/docker-compose
 
      # Preload docker with images (but only if the synced folder is mounted)
      if mount | grep /preload-images 1>/dev/null; then
@@ -161,7 +185,7 @@ Vagrant.configure(2) do |config|
          name=$( basename $file .tar )
 
          # Scan through the images we have and check if they are already loaded
-         for i in $allready_images; do 
+         for i in $allready_images; do
            if [[ $i == $name ]]; then
              # Skip this file
              echo "--> Skipping $name.tar (already loaded)"
@@ -177,6 +201,8 @@ Vagrant.configure(2) do |config|
      # Run docker-compose (which will update preloaded images, and
      # pulls any images not preloaded)
      cd /vagrant
+
+     # Start services
      docker-compose up -d
 
      # Update the preload image directory with any new (or changed) images
