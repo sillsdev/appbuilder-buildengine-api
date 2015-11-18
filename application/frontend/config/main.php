@@ -49,11 +49,6 @@ return [
                         'POST <id>/build' => 'new-build',
                     ]
                 ],
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'build',
-                    'pluralize' => false
-                ],
             ]
         ],
     ],
