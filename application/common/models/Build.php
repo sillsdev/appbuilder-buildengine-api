@@ -38,6 +38,26 @@ class Build extends BuildBase implements Linkable
         ],
     ];
 
+    const CHANNEL_DEV = 'dev';
+    const CHANNEL_ALPHA = 'alpha';
+    const CHANNEL_BETA = 'beta';
+    const CHANNEL_PRODUCTION = 'production';
+
+    public $validChannelTransitions = [
+        self::CHANNEL_DEV => [
+            self::CHANNEL_ALPHA,
+            self::CHANNEL_BETA,
+            self::CHANNEL_PRODUCTION,
+        ],
+        self::CHANNEL_ALPHA => [
+            self::CHANNEL_BETA,
+            self::CHANNEL_PRODUCTION,
+        ],
+        self::CHANNEL_BETA => [
+            self::CHANNEL_PRODUCTION,
+        ],
+    ];
+
     public function scenarios()
     {
         return ArrayHelper::merge(parent::scenarios(),[
@@ -83,6 +103,17 @@ class Build extends BuildBase implements Linkable
                     return true;
                 },
             ],
+            [
+                'channel', 'in', 'range' => [
+                    self::CHANNEL_DEV,
+                    self::CHANNEL_ALPHA,
+                    self::CHANNEL_BETA,
+                    self::CHANNEL_PRODUCTION,
+                ],
+            ],
+            [
+                'channel', 'default', 'value' => self::CHANNEL_DEV,
+            ]
         ]);
     }
     public function fields()
@@ -94,6 +125,7 @@ class Build extends BuildBase implements Linkable
             'result',
             'error',
             'artifact_url',
+            'channel',
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },
@@ -130,5 +162,13 @@ class Build extends BuildBase implements Linkable
         return false;
     }
 
-    
+    public function isValidChannelTransition($new, $current = null)
+    {
+        $current = $current ?: $this->channel;
+        if (in_array($new, $this->validChannelTransitions[$current])){
+            return true;
+        }
+
+        return false;
+    }
 }
