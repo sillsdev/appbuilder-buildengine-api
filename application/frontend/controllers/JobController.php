@@ -23,7 +23,7 @@ class JobController extends ActiveController
 {
     public $modelClass = 'common\models\Job';
 
-    public function actionListBuilds($id) {
+    public function actionIndexBuilds($id) {
        $builds = Build::findAll(['job_id' => $id]);
        if (!$builds){
            throw new NotFoundHttpException();

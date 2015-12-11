@@ -43,7 +43,7 @@ return [
                     'controller' => 'job',
                     'pluralize' => false,
                     'extraPatterns' => [
-                        'GET <id>/build' => 'list-builds',
+                        'GET <id>/build' => 'index-builds',
                         'GET <id>/build/<build_id:\d+>' => 'view-build',
                         'PUT <id>/build/<build_id:\d+>' => 'publish-build',
                         'POST <id>/build' => 'new-build',
