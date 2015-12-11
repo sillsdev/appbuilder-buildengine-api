@@ -53,7 +53,7 @@ class Job extends JobBase implements Linkable
                 ['request_id'], 'unique',
             ],
             [
-                'artifact_url_base', 'default', 'value' => "s3://gtis-appbuilder/$appEnv"
+                'artifact_url_base', 'default', 'value' => "s3://sil-appbuilder-artifacts/$appEnv"
             ],
             [
                 'publisher_id', 'in', 'range' => [
@@ -73,11 +73,6 @@ class Job extends JobBase implements Linkable
                 'git_url', 'url',
                 'pattern' => '/^ssh:\/\/[A-Za-z0-9]+@git-codecommit\./',
                 'message' => \Yii::t('app', 'Git SSH Url is required.')
-            ],
-            [
-                'artifact_url_base', 'url',
-                'pattern' => '/^s3:\/\/gtis-appbuilder\//',
-                'message' => \Yii::t('app', 'Artifact Url must be S3 Url for gtis-appbuilder bucket.')
             ],
         ]);
     }
