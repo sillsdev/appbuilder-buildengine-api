@@ -386,7 +386,9 @@ class CronController extends Controller
             'ACL' => 'public-read'
         ]);
 
-        return $s3Url;
+        $s3PublicUrl = $client->getObjectUrl($s3bucket, $s3key);
+        echo "returning: $s3PublicUrl\n";
+        return $s3PublicUrl;
     }
 
     /**
@@ -408,11 +410,14 @@ class CronController extends Controller
                             $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
                         }
                     }
-                    $build->save();
-                    echo "Job=$job->id, Build=$build->build_number, Result=$build->result\n";
+                    if (!$build->save()){
+                        throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
+                    }
+                    echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
                 }
             }
         } catch (\Exception $e) {
+            echo "Exception: " . $e->getMessage() . "\n";
             $build->status = Build::STATUS_COMPLETED;
             $build->result = JenkinsBuild::SUCCESS;
             $build->error = $e->getMessage();
@@ -494,6 +499,8 @@ class CronController extends Controller
     {
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
+            $job = $build->job;
+            echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
                     $this->startBuild($build);

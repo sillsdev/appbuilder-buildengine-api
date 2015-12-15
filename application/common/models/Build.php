@@ -94,8 +94,8 @@ class Build extends BuildBase implements Linkable
             ],
             [
                 'artifact_url', 'url', 
-                'pattern' => '/^s3:\/\/gtis-appbuilder\//',
-                'message' => \Yii::t('app', 'Artifact Url must be S3 Url for gti-appbuilder bucket.')
+                'pattern' => '/^https:\/\/s3-/',
+                'message' => \Yii::t('app', 'Artifact Url must be an https S3 Url.')
             ],            
             [
                 'updated', 'default', 'value' => Utils::getDatetime(), 'isEmpty' => function(){
