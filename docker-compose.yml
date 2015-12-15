@@ -32,9 +32,9 @@ cron:
         - ./common.env
         - ./local.env
     environment:
-        - "EXPAND_S3_KEY=AKIAJMYELQKUPZFMPEHQ"
-        - "EXPAND_S3_SECRET=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"
-        - "EXPAND_S3_FILES=gtis-appbuilder/staging/build-engine-api/ssh/id_rsa|/data/.ssh/id_rsa[600,] gtis-appbuilder/staging/build-engine-api/ssh/id_rsa.pub|/data/.ssh/id_rsa.pub[600,]"
+        - "EXPAND_S3_KEY=AKIAJLPR4553Z5ZURUFQ"
+        - "EXPAND_S3_SECRET=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"
+        - "EXPAND_S3_FILES=sil-appbuilder-secrets/staging/buildengine_api/ssh/id_rsa|/data/.ssh/id_rsa[600,] sil-appbuilder-secrets/staging/buildengine_api/ssh/id_rsa.pub|/data/.ssh/id_rsa.pub[600,]"
     command: /data/run-cron.sh
 composer:
     image: silintl/php-cli:latest
