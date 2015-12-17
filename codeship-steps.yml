@@ -11,7 +11,7 @@
   registry: docker.sil.org
   encrypted_dockercfg_path: dockercfg.encrypted
 
-- name: deploy_staging
-  service: ecsdeploy
-  tag: master
-  command: "-c staging1 -n staging-appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest -t 360"
+#- name: deploy_staging
+#  service: ecsdeploy
+#  tag: master
+#  command: "-c default -n appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest -t 360"
