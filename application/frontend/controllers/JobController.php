@@ -49,8 +49,7 @@ class JobController extends ActiveController
            throw new ServerErrorHttpException("Could not create Build for Job $id", 1443810508);
        }
 
-       \Yii::$app->response->statusCode = 204;
-       return [];
+       return $build;
     }
 
     public function actionPublishBuild($id, $build_id) {
