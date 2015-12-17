@@ -70,6 +70,10 @@ class CronController extends Controller
         return $jenkins;
     }
 
+    private function getArtifactUrlBase(){
+        return \Yii::$app->params['buildEngineArtifactUrlBase'] . "/" . \Yii::$app->params['appEnv'];
+    }
+
     /**
      *
      * @param string $subject
@@ -128,6 +132,7 @@ class CronController extends Controller
 
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
+        $artifactUrlBase = $this->getArtifactUrlBase();
 
         // When using Codecommit, the user portion in the url has to be changed
         // to the User associated with the public key in AWS.
@@ -145,7 +150,6 @@ class CronController extends Controller
             $publisherName = $job->publisher_id;
             $jobName = $job->name();
             $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
-            $artifactUrlBase = $job->artifact_url_base;
 
             $script = $this->renderPartial("scripts/$job->app_id", [
                 'publisherName' => $publisherName,
@@ -231,9 +235,13 @@ class CronController extends Controller
         $jenkins = $this->getJenkins();
         $jenkinsBaseUrl = $jenkins->getBaseUrl();
 
+        $artifactUrlBase = $this->getArtifactUrlBase();
+        $appEnv = \Yii::$app->params['appEnv'];
+
         echo "Repo:\n  URL:$repoUrl\n  Branch:$repoBranch\n  Path:$repoLocalPath\n  Scripts:$scriptDir\n  Key:$privateKey\n";
-        echo "Jenkins:\n  BuildEngineJenkinsMasterUrl: $jenkinsUrl\n  Jenkins.baseUrl: $jenkinsBaseUrl\n ";
+        echo "Jenkins:\n  BuildEngineJenkinsMasterUrl: $jenkinsUrl\n  Jenkins.baseUrl: $jenkinsBaseUrl\n";
         echo "Git:\n  Name:$userName\n  Email:$userEmail\n";
+        echo "Artifacts:\n  UrlBase:$artifactUrlBase\n";
     }
     /**
      * Return all the builds. (Dev only)
@@ -340,9 +348,10 @@ class CronController extends Controller
      */
     private function getS3Url($build, $jenkinsBuild)
     {
+
         $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
         $job = $build->job;
-        return $job->artifact_url_base."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
+        return $this->getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
     }
 
     /**

@@ -38,7 +38,6 @@ class Job extends JobBase implements Linkable
 
     public function rules()
     {
-        $appEnv = \Yii::$app->params['appEnv'];
         return ArrayHelper::merge(parent::rules(),[
             [
                 ['created','updated'],'default', 'value' => Utils::getDatetime(),
@@ -51,9 +50,6 @@ class Job extends JobBase implements Linkable
             ],
             [
                 ['request_id'], 'unique',
-            ],
-            [
-                'artifact_url_base', 'default', 'value' => "s3://sil-appbuilder-artifacts/$appEnv"
             ],
             [
                 'publisher_id', 'in', 'range' => [
@@ -85,7 +81,6 @@ class Job extends JobBase implements Linkable
             'git_url',
             'app_id',
             'publisher_id',
-            'artifact_url_base',
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },
