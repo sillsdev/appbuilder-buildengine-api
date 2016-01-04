@@ -19,6 +19,7 @@ use Yii;
  * @property string $channel
  *
  * @property Job $job
+ * @property Publish[] $publishes
  */
 class BuildBase extends \yii\db\ActiveRecord
 {
@@ -69,5 +70,13 @@ class BuildBase extends \yii\db\ActiveRecord
     public function getJob()
     {
         return $this->hasOne(Job::className(), ['id' => 'job_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPublishes()
+    {
+        return $this->hasMany(Publish::className(), ['build_id' => 'id']);
     }
 }
