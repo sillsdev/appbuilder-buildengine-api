@@ -5,3 +5,4 @@
 *.sh text eol=lf
 application/init text eol=lf
 application/yii text eol=lf
+build/* text eol=lf
