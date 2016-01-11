@@ -59,9 +59,13 @@ class JobController extends ActiveController
        }
 
        $channel = \Yii::$app->request->getBodyParam('channel', null);
+       $title = \Yii::$app->request->getBodyParam('title', null);
+       $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);
 
-       //TODO: Implement Publish Build in model
-       //$build->publishBuild($channel);
+       $release = $build->createRelease($channel);
+       $release->title = $title;
+       $release->defaultLanguage = $defaultLanguage;
+       $release->save();
 
        \Yii::$app->response->statusCode = 204;
        return [];

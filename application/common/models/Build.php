@@ -38,6 +38,15 @@ class Build extends BuildBase implements Linkable
         ],
     ];
 
+    public function createRelease($channel) {
+        $release = new Release();
+        $release->build_id = $this->id;
+        $release->channel = $channel;
+        $release->save();
+
+        return $release;
+    }
+
     public function scenarios()
     {
         return ArrayHelper::merge(parent::scenarios(),[
