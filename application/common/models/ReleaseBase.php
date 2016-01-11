@@ -5,24 +5,29 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "publish".
+ * This is the model class for table "release".
  *
  * @property integer $id
  * @property integer $build_id
  * @property string $status
  * @property string $created
  * @property string $updated
+ * @property string $result
+ * @property string $error
+ * @property string $channel
+ * @property string $title
+ * @property string $defaultLanguage
  *
  * @property Build $build
  */
-class PublishBase extends \yii\db\ActiveRecord
+class ReleaseBase extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return 'publish';
+        return 'release';
     }
 
     /**
@@ -31,10 +36,11 @@ class PublishBase extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['build_id'], 'required'],
+            [['build_id', 'channel'], 'required'],
             [['build_id'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status'], 'string', 'max' => 255]
+            [['status', 'result', 'error', 'channel', 'defaultLanguage'], 'string', 'max' => 255],
+            [['title'], 'string', 'max' => 30]
         ];
     }
 
@@ -49,6 +55,11 @@ class PublishBase extends \yii\db\ActiveRecord
             'status' => Yii::t('app', 'Status'),
             'created' => Yii::t('app', 'Created'),
             'updated' => Yii::t('app', 'Updated'),
+            'result' => Yii::t('app', 'Result'),
+            'error' => Yii::t('app', 'Error'),
+            'channel' => Yii::t('app', 'Channel'),
+            'title' => Yii::t('app', 'Title'),
+            'defaultLanguage' => Yii::t('app', 'Default Language'),
         ];
     }
 

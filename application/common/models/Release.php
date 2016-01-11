@@ -12,7 +12,7 @@ use yii\helpers\Url;
 
 use common\helpers\Utils;
 
-class Publish extends PublishBase implements Linkable
+class Release extends ReleaseBase implements Linkable
 {
     
     const STATUS_INITIALIZED = 'initialized';
@@ -42,21 +42,6 @@ class Publish extends PublishBase implements Linkable
     const CHANNEL_ALPHA = 'alpha';
     const CHANNEL_BETA = 'beta';
     const CHANNEL_PRODUCTION = 'production';
-
-    public $validChannelTransitions = [
-        self::CHANNEL_DEV => [
-            self::CHANNEL_ALPHA,
-            self::CHANNEL_BETA,
-            self::CHANNEL_PRODUCTION,
-        ],
-        self::CHANNEL_ALPHA => [
-            self::CHANNEL_BETA,
-            self::CHANNEL_PRODUCTION,
-        ],
-        self::CHANNEL_BETA => [
-            self::CHANNEL_PRODUCTION,
-        ],
-    ];
 
     public function scenarios()
     {
@@ -89,12 +74,15 @@ class Publish extends PublishBase implements Linkable
                 'status', 'default', 'value' => self::STATUS_INITIALIZED,
             ],
             [
+                'build_id', 'exist', 'targetClass' => 'common\models\Build', 'targetAttribute' => 'id',
+                'message' => \Yii::t('app', 'Invalid Build ID'),
+            ],
+            [
                 'updated', 'default', 'value' => Utils::getDatetime(), 'isEmpty' => function(){
                     // always return true so it get set on every save
                     return true;
                 },
             ],
-                        /*
             [
                 'channel', 'in', 'range' => [
                     self::CHANNEL_DEV,
@@ -106,7 +94,6 @@ class Publish extends PublishBase implements Linkable
             [
                 'channel', 'default', 'value' => self::CHANNEL_DEV,
             ]
-                         */
         ]);
     }
     public function fields()
@@ -115,7 +102,11 @@ class Publish extends PublishBase implements Linkable
             'id',
             'build_id',
             'status',
-//            'channel',
+            'result',
+            'error',
+            'title',
+            'defaultLanguage',
+            'channel',
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },
@@ -129,8 +120,7 @@ class Publish extends PublishBase implements Linkable
     {
         $links = [];
         if($this->id){
-//            $links[Link::REL_SELF] = Url::toRoute(['/build/'.$this->id], true);
-//            $links['job'] = Url::toRoute(['/job/'.$this->job_id], true);
+            //$links[Link::REL_SELF] = Url::toRoute(['/release/'.$this->id], true);
         }
 
         return $links;
@@ -151,15 +141,4 @@ class Publish extends PublishBase implements Linkable
 
         return false;
     }
-
-/*    public function isValidChannelTransition($new, $current = null)
-    {
-        $current = $current ?: $this->channel;
-        if (in_array($new, $this->validChannelTransitions[$current])){
-            return true;
-        }
-
-        return false;
-    }
- */
 }
