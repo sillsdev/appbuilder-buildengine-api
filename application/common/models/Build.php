@@ -139,7 +139,7 @@ class Build extends BuildBase implements Linkable
     {
         $links = [];
         if($this->id){
-            $links[Link::REL_SELF] = Url::toRoute(['/build/'.$this->id], true);
+            $links[Link::REL_SELF] = Url::toRoute(['/job/'.$this->job_id.'/build/'.$this->id], true);
             $links['job'] = Url::toRoute(['/job/'.$this->job_id], true);
         }
 
