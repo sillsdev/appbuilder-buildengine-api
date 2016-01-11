@@ -59,9 +59,6 @@ class JobController extends ActiveController
        }
 
        $channel = \Yii::$app->request->getBodyParam('channel', null);
-       if (!$build->isValidChannelTransition($channel)){
-           throw new BadRequestHttpException("Invalid channel transition", 1447793755);
-       }
 
        //TODO: Implement Publish Build in model
        //$build->publishBuild($channel);
