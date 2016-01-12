@@ -3,6 +3,7 @@ namespace console\controllers;
 
 use common\models\Job;
 use common\models\Build;
+use common\models\Release;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -148,12 +149,13 @@ class CronController extends Controller
         foreach (Job::find()->each(50) as $job)
         {
             $publisherName = $job->publisher_id;
-            $jobName = $job->name();
+            $buildJobName = $job->name();
             $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
             $script = $this->renderPartial("scripts/$job->app_id", [
                 'publisherName' => $publisherName,
-                'jobName' => $jobName,
+                'buildJobName' => $buildJobName,
+                'publishJobName' => Release::jobNameForBuild($buildJobName),
                 'gitUrl' => $gitUrl,
                 'artifactUrlBase' => $artifactUrlBase,
             ]);

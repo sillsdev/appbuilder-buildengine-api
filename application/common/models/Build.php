@@ -138,4 +138,9 @@ class Build extends BuildBase implements Linkable
 
         return false;
     }
+
+    public function jobName()
+    {
+        return $this->job->name();
+    }
 }

@@ -50,7 +50,7 @@ class Release extends ReleaseBase implements Linkable
         ]);
     }
 
-       public function rules()
+    public function rules()
     {
         return ArrayHelper::merge(parent::rules(),[
             [
@@ -140,5 +140,15 @@ class Release extends ReleaseBase implements Linkable
         }
 
         return false;
+    }
+
+    public static function jobNameForBuild($buildJobName)
+    {
+        return "publish_".$buildJobName;
+    }
+
+    public function jobName()
+    {
+        return Release::jobNameForBuild($this->build->jobName());
     }
 }

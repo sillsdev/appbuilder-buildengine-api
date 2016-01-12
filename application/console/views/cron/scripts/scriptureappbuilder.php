@@ -1,17 +1,19 @@
 <?php
-    /* @var $jobName string */
+    /* @var $buildJobName string */
+    /* @var $publishJobName string */
     /* @var $gitUrl string */
     /* @var $publisherName string */
     /* @var $artifactUrlBase string */
 ?>
 import scriptureappbuilder.jobs
-def jobName = '<?= $jobName ?>'
+def buildJobName = '<?= $buildJobName ?>'
+def publishJobName = '<?= $publishJobName ?>'
 def gitUrl = '<?= $gitUrl ?>'
 def publisherName = '<?= $publisherName ?>'
 def artifactUrlBase = '<?= $artifactUrlBase ?>'
-job(jobName) {
+job(buildJobName) {
     jobs.codecommitBuildJob(delegate, gitUrl, publisherName, artifactUrlBase)
 }
-job("publish_${jobName}") {
+job(publishJobName) {
     jobs.googleplayPublishJob(delegate, gitUrl, publisherName, jobName)
 }
