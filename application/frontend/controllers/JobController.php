@@ -3,6 +3,7 @@ namespace frontend\controllers;
 
 use common\models\Job;
 use common\models\Build;
+use common\models\Release;
 
 use yii\rest\ActiveController;
 use yii\helpers\ArrayHelper;
@@ -53,22 +54,23 @@ class JobController extends ActiveController
     }
 
     public function actionPublishBuild($id, $build_id) {
-       $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
-       if (!$build){
-           throw new NotFoundHttpException();
-       }
+        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+        if (!$build){
+            throw new NotFoundHttpException();
+        }
 
-       $channel = \Yii::$app->request->getBodyParam('channel', null);
-       $title = \Yii::$app->request->getBodyParam('title', null);
-       $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);
+        $channel = \Yii::$app->request->getBodyParam('channel', null);
+        $title = \Yii::$app->request->getBodyParam('title', null);
+        $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);
 
-       $release = $build->createRelease($channel);
-       $release->title = $title;
-       $release->defaultLanguage = $defaultLanguage;
-       $release->save();
+        $release = $build->createRelease($channel);
+        $release->title = $title;
+        $release->defaultLanguage = $defaultLanguage;
+        $release->save();
 
-       \Yii::$app->response->statusCode = 204;
-       return [];
+        return $release;
+    }
+
     }
 
     public function behaviors()

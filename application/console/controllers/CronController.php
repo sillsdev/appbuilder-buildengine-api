@@ -486,12 +486,13 @@ class CronController extends Controller
      */
     private function startBuild($build)
     {
-        $prefix = $this->getPrefix();
-        $job = $build->job;
-        if ($job){
+        try
+        {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] Starting Build of ".$build->jobName()."\n";
+
             $jenkins = $this->getJenkins();
-            $jenkinsJob = $jenkins->getJob($job->name());
-            echo "[$prefix] Starting Build of ".$job->name()."\n";
+            $jenkinsJob = $jenkins->getJob($build->jobName());
 
             if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
                 $build->build_number = $jenkinsBuild->getNumber();
@@ -499,6 +500,9 @@ class CronController extends Controller
                 $build->status = Build::STATUS_ACTIVE;
                 $build->save();
             }
+        } catch (\Exception $e) {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] Exception: " . $e->getMessage() . "\n";
         }
     }
 
@@ -522,4 +526,79 @@ class CronController extends Controller
             }
         }
     }
- }
+
+    /**
+     *
+     * @param Release $release
+     */
+    private function startRelease($release)
+    {
+        try {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] Starting Build of ".$release->jobName()."\n";
+            $jenkins = $this->getJenkins();
+            $jenkinsJob = $jenkins->getJob($release->jobName());
+
+            if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
+                $release->build_number = $jenkinsBuild->getNumber();
+                echo "[$prefix] Started Build $release->build_number\n";
+                $release->status = Release::STATUS_ACTIVE;
+                $release->save();
+            }
+        } catch (\Exception $e) {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] Exception: " . $e->getMessage() . "\n";
+        }
+    }
+
+    /**
+     *
+     * @param Release $release
+     */
+    private function checkReleaseStatus($release)
+    {
+        try {
+            $jenkins = $this->getJenkins();
+            $jenkinsJob = $jenkins->getJob($release->jobName());
+            $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
+            if ($jenkinsBuild){
+                $release->result = $jenkinsBuild->getResult();
+                if (!$jenkinsBuild->isBuilding()){
+                    $release->status = Build::STATUS_COMPLETED;
+                }
+                if (!$release->save()){
+                    throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
+                }
+                echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result\n";
+            }
+        } catch (\Exception $e) {
+            echo "Exception: " . $e->getMessage() . "\n";
+            $release->status = Build::STATUS_COMPLETED;
+            $release->result = JenkinsBuild::SUCCESS;
+            $release->error = $e->getMessage();
+            $release->save();
+        }
+    }
+
+    /**
+     * Manage the state of the releases and process the current state
+     * until the status is complete.
+     */
+    public function actionManageReleases()
+    {
+        $complete = Release::STATUS_COMPLETED;
+        foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
+            $build = $release->build;
+            $job = $build->job;
+            echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result\n";
+            switch ($release->status){
+                case Release::STATUS_INITIALIZED:
+                    $this->startRelease($release);
+                    break;
+                case Release::STATUS_ACTIVE:
+                    $this->checkReleaseStatus($release);
+                    break;
+            }
+        }
+    }
+}
