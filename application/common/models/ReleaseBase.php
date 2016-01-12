@@ -17,6 +17,7 @@ use Yii;
  * @property string $channel
  * @property string $title
  * @property string $defaultLanguage
+ * @property integer $build_number
  *
  * @property Build $build
  */
@@ -37,7 +38,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
     {
         return [
             [['build_id', 'channel'], 'required'],
-            [['build_id'], 'integer'],
+            [['build_id', 'build_number'], 'integer'],
             [['created', 'updated'], 'safe'],
             [['status', 'result', 'error', 'channel', 'defaultLanguage'], 'string', 'max' => 255],
             [['title'], 'string', 'max' => 30]
@@ -60,6 +61,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
             'channel' => Yii::t('app', 'Channel'),
             'title' => Yii::t('app', 'Title'),
             'defaultLanguage' => Yii::t('app', 'Default Language'),
+            'build_number' => Yii::t('app', 'Build Number'),
         ];
     }
 
