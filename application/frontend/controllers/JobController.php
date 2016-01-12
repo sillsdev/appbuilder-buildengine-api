@@ -71,6 +71,19 @@ class JobController extends ActiveController
         return $release;
     }
 
+    public function actionViewRelease($id, $build_id, $release_id) {
+        // Do we need to verify that the job id, build id are correct???
+        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+        if (!$build){
+            throw new NotFoundHttpException();
+        }
+
+        $release = Release::findOne(['id' => $release_id, 'build_id' => $build_id]);
+        if (!$release){
+            throw new NotFoundHttpException();
+        }
+
+        return $release;
     }
 
     public function behaviors()
