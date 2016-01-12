@@ -160,18 +160,18 @@ class CronController extends Controller
                 'artifactUrlBase' => $artifactUrlBase,
             ]);
 
-            $file = $localScriptDir . DIRECTORY_SEPARATOR . $jobName . ".groovy";
+            $file = $localScriptDir . DIRECTORY_SEPARATOR . $buildJobName . ".groovy";
             $handle = fopen($file, "w");
             fwrite($handle, $script);
             fclose($handle);
             if ($git->getStatus($file))
             {
-                echo "[$prefix] Updated: $jobName\n";
+                echo "[$prefix] Updated: $buildJobName\n";
                 $git->add($file);
                 $this->createBuild($job);
             }
 
-            $jobs[$jobName] = 1;
+            $jobs[$buildJobName] = 1;
         }
 
         // Remove Scripts that are not in the database
