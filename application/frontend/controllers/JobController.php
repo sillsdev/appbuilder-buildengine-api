@@ -44,8 +44,10 @@ class JobController extends ActiveController
     public function actionViewBuildError($id, $build_id) {
         $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
         if ($build && filter_var($build->error, FILTER_VALIDATE_URL)) {
+            $contents = file_get_contents($build->error);
             \Yii::$app->response->format = Response::FORMAT_RAW;
-            return file_get_contents($build->error);
+            \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
+            return $contents;
         }
 
         return new NotFoundHttpException();
@@ -90,8 +92,10 @@ class JobController extends ActiveController
     public function actionViewReleaseError($id, $build_id, $release_id) {
         $release = $this->lookupRelease($id, $build_id, $release_id);
         if ($release && filter_var($release->error, FILTER_VALIDATE_URL)) {
+            $contents = file_get_contents($release->error);
             \Yii::$app->response->format = Response::FORMAT_RAW;
-            return file_get_contents($release->error);
+            \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
+            return $contents;
         }
 
         return new NotFoundHttpException();
