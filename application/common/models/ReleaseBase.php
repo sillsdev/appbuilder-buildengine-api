@@ -40,7 +40,8 @@ class ReleaseBase extends \yii\db\ActiveRecord
             [['build_id', 'channel'], 'required'],
             [['build_id', 'build_number'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'error', 'channel', 'defaultLanguage'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'defaultLanguage'], 'string', 'max' => 255],
+            [['error'], 'string', 'max' => 2083],
             [['title'], 'string', 'max' => 30]
         ];
     }
