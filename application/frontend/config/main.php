@@ -45,9 +45,11 @@ return [
                     'extraPatterns' => [
                         'GET <id>/build' => 'index-builds',
                         'GET <id>/build/<build_id:\d+>' => 'view-build',
+                        'GET <id>/build/<build_id:\d+>/error' => 'view-build-error',
                         'PUT <id>/build/<build_id:\d+>' => 'publish-build',
                         'POST <id>/build' => 'new-build',
                         'GET <id>/build/<build_id:\d+>/release/<release_id:\d+>' => 'view-release',
+                        'GET <id>/build/<build_id:\d+>/release/<release_id:\d+>/error' => 'view-release-error',
                     ]
                 ],
             ]

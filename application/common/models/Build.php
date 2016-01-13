@@ -120,6 +120,10 @@ class Build extends BuildBase implements Linkable
             $links['job'] = Url::toRoute(['/job/'.$this->job_id], true);
         }
 
+        if (filter_var($this->error, FILTER_VALIDATE_URL)) {
+            $links['error'] = Url::toRoute([sprintf('/job/%s/build/%s/error',$this->job->id, $this->id)], true);
+        }
+
         return $links;
     }
     
