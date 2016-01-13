@@ -103,7 +103,11 @@ class Release extends ReleaseBase implements Linkable
             'build_id',
             'status',
             'result',
-            'error',
+            'error' => function(){
+                return  (filter_var($this->error, FILTER_VALIDATE_URL))
+                    ? "see link" :
+                    $this->error;
+            },
             'title',
             'defaultLanguage',
             'channel',

@@ -101,7 +101,11 @@ class Build extends BuildBase implements Linkable
             'job_id',
             'status',
             'result',
-            'error',
+            'error' => function(){
+                return  (filter_var($this->error, FILTER_VALIDATE_URL))
+                    ? "see link" :
+                    $this->error;
+            },
             'artifact_url',
             'created' => function(){
                 return Utils::getIso8601($this->created);
