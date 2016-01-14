@@ -207,7 +207,9 @@ class CronController extends Controller
      */
     private function getArtifactUrl($jenkinsBuild)
     {
-        $artifact = $jenkinsBuild->get("artifacts")[0];
+        $artifacts = $jenkinsBuild->get("artifacts");
+        if (!$artifacts) { return null; }
+        $artifact = $artifacts[0];
 
         $relativePath = $artifact->relativePath;
         $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
@@ -376,7 +378,8 @@ class CronController extends Controller
     /**
      * Save the build to S3.
      * @param Build $build
-     * @param JenkinsBuild $jenkinBuild
+     * @param JenkinsBuild $jenkinsBuild
+     * @return string
      */
     private function saveBuild($build, $jenkinsBuild)
     {
@@ -442,54 +445,43 @@ class CronController extends Controller
     }
 
     /**
-     *
+     * We can only get the build_number until the build has actually started.  So, if there is currently
+     * a build running, wait until the next cycle before trying.
      * @param JenkinsJob $job
-     * @param array $parameters
-     * @param int $timeoutSeconds
-     * @param int $checkIntervalSeconds
+     * @param array $params
+     * @return JenkinsBuild|null
      */
-    private function startNewBuildAndWaitUntilBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
+    private function startBuildIfNotBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
     {
-        // If there is currently a build running, wait for it to finish.
-        echo "...checking if job is running\n";
-        $lastBuild = $job->getLastBuild();
-        if ($lastBuild && $lastBuild->isBuilding()){
-            $startWait = time();
-            echo "There is a current build ".$job->getLastBuild()->getNumber().". Wait for it to complete.\n";
-            while ($job->getLastBuild()->isBuilding()){
+        if (!$job->isCurrentlyBuilding())
+        {
+            echo "...not building, so launch a build\n";
+            $lastBuild = $job->getLastBuild();
+            $lastNumber = ($lastBuild ? $lastBuild->getNumber() : 0);
+            $startTime = time();
+
+            $job->launch($params);
+
+            while ((time() < $startTime + $timeoutSeconds)
+                && ($job->getLastBuild()->getNumber() == $lastNumber))
+            {
                 sleep($checkIntervalSeconds);
-                echo "...waited ". (time() - $startWait)."\n";
                 $job->refresh();
             }
-        }
-
-        echo "...checking last build\n";
-        $lastNumber = ($lastBuild ? $lastBuild->getNumber() : 0);
-        $startTime = time();
-        echo "...lastNumber=$lastNumber, startTime=$startTime\n";
-        $job->launch($params);
-
-        while ( time() < ($startTime + $timeoutSeconds))
-        {
-            sleep($checkIntervalSeconds);
-            $job->refresh();
 
             $build = $job->getLastBuild();
-            if ($build){
-                echo "...build=".$build->getNumber().". Is building?\n";
-                if ($build->getNumber() > $lastNumber && $build->isBuilding())
-                {
-                    echo "...is building.  Returning build.\n";
-                    return $build;
-                }
-            }
+            echo "...is building. Returning build ". $build->getNumber() . "\n";
+            return $job->getLastBuild();
         }
+
+        return null;
     }
+
     /**
-     *
+     * Try to start a build.  If it starts, then update the database.
      * @param Build $build
      */
-    private function startBuild($build)
+    private function tryStartBuild($build)
     {
         try
         {
@@ -499,7 +491,7 @@ class CronController extends Controller
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
 
-            if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
+            if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob)){
                 $build->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $build->build_number\n";
                 $build->status = Build::STATUS_ACTIVE;
@@ -523,7 +515,7 @@ class CronController extends Controller
             echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
-                    $this->startBuild($build);
+                    $this->tryStartBuild($build);
                     break;
                 case Build::STATUS_ACTIVE:
                     $this->checkBuildStatus($build);
@@ -536,15 +528,16 @@ class CronController extends Controller
      *
      * @param Release $release
      */
-    private function startRelease($release)
+    private function tryStartRelease($release)
     {
         try {
             $prefix = $this->getPrefix();
             echo "[$prefix] Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
+            $parameters = array("CHANNEL" => $release->channel);
 
-            if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob, array("CHANNEL" => $release->channel))){
+            if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
                 $release->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $release->build_number\n";
                 $release->status = Release::STATUS_ACTIVE;
@@ -603,7 +596,7 @@ class CronController extends Controller
             echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result\n";
             switch ($release->status){
                 case Release::STATUS_INITIALIZED:
-                    $this->startRelease($release);
+                    $this->tryStartRelease($release);
                     break;
                 case Release::STATUS_ACTIVE:
                     $this->checkReleaseStatus($release);
