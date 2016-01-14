@@ -535,11 +535,11 @@ class CronController extends Controller
     {
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] Starting Build of ".$release->jobName()."\n";
+            echo "[$prefix] Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
 
-            if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob)){
+            if ($jenkinsBuild = $this->startNewBuildAndWaitUntilBuilding($jenkinsJob, array("CHANNEL" => $release->channel))){
                 $release->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $release->build_number\n";
                 $release->status = Release::STATUS_ACTIVE;
