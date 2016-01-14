@@ -6,3 +6,4 @@
 application/init text eol=lf
 application/yii text eol=lf
 build/* text eol=lf
+application/common/models/*Base.php text eol=lf
