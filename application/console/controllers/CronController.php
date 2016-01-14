@@ -417,8 +417,13 @@ class CronController extends Controller
                     $build->result = $jenkinsBuild->getResult();
                     if (!$jenkinsBuild->isBuilding()){
                         $build->status = Build::STATUS_COMPLETED;
-                        if ($build->result == JenkinsBuild::SUCCESS){
-                            $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
+                        switch($build->result){
+                            case JenkinsBuild::FAILURE:
+                                $build->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $build->jobName(), $build->build_number);
+                                break;
+                            case JenkinsBuild::SUCCESS:
+                                $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
+                                break;
                         }
                     }
                     if (!$build->save()){
@@ -430,7 +435,7 @@ class CronController extends Controller
         } catch (\Exception $e) {
             echo "Exception: " . $e->getMessage() . "\n";
             $build->status = Build::STATUS_COMPLETED;
-            $build->result = JenkinsBuild::SUCCESS;
+            $build->result = "EXCEPTION";
             $build->error = $e->getMessage();
             $build->save();
         }
@@ -565,6 +570,11 @@ class CronController extends Controller
                 $release->result = $jenkinsBuild->getResult();
                 if (!$jenkinsBuild->isBuilding()){
                     $release->status = Build::STATUS_COMPLETED;
+                    switch($release->result){
+                        case JenkinsBuild::FAILURE:
+                            $release->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $release->jobName(), $release->build_number);
+                            break;
+                    }
                 }
                 if (!$release->save()){
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
@@ -574,7 +584,7 @@ class CronController extends Controller
         } catch (\Exception $e) {
             echo "Exception: " . $e->getMessage() . "\n";
             $release->status = Build::STATUS_COMPLETED;
-            $release->result = JenkinsBuild::SUCCESS;
+            $release->result = "EXCEPTION";
             $release->error = $e->getMessage();
             $release->save();
         }

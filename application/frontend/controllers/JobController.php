@@ -14,6 +14,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 use yii\web\UnauthorizedHttpException;
+use yii\web\Response;
 use yii\web\BadRequestHttpException;
 
 
@@ -38,6 +39,18 @@ class JobController extends ActiveController
            throw new NotFoundHttpException();
        }
        return $build;
+    }
+
+    public function actionViewBuildError($id, $build_id) {
+        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+        if ($build && filter_var($build->error, FILTER_VALIDATE_URL)) {
+            $contents = file_get_contents($build->error);
+            \Yii::$app->response->format = Response::FORMAT_RAW;
+            \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
+            return $contents;
+        }
+
+        return new NotFoundHttpException();
     }
 
     public function actionNewBuild($id) {
@@ -72,18 +85,20 @@ class JobController extends ActiveController
     }
 
     public function actionViewRelease($id, $build_id, $release_id) {
-        // Do we need to verify that the job id, build id are correct???
-        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
-        if (!$build){
-            throw new NotFoundHttpException();
-        }
-
-        $release = Release::findOne(['id' => $release_id, 'build_id' => $build_id]);
-        if (!$release){
-            throw new NotFoundHttpException();
-        }
-
+        $release = $this->lookupRelease($id, $build_id, $release_id);
         return $release;
+    }
+
+    public function actionViewReleaseError($id, $build_id, $release_id) {
+        $release = $this->lookupRelease($id, $build_id, $release_id);
+        if ($release && filter_var($release->error, FILTER_VALIDATE_URL)) {
+            $contents = file_get_contents($release->error);
+            \Yii::$app->response->format = Response::FORMAT_RAW;
+            \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
+            return $contents;
+        }
+
+        return new NotFoundHttpException();
     }
 
     public function behaviors()
@@ -112,5 +127,27 @@ class JobController extends ActiveController
                 },
             ]
         ]);
+    }
+
+    /**
+     * @param $id
+     * @param $build_id
+     * @param $release_id
+     * @return null|static
+     * @throws NotFoundHttpException
+     */
+    private function lookupRelease($id, $build_id, $release_id)
+    {
+        // Do we need to verify that the job id, build id are correct???
+        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+        if (!$build) {
+            throw new NotFoundHttpException();
+        }
+
+        $release = Release::findOne(['id' => $release_id, 'build_id' => $build_id]);
+        if (!$release) {
+            throw new NotFoundHttpException();
+        }
+        return $release;
     }
 }

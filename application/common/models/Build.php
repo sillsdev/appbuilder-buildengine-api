@@ -101,7 +101,11 @@ class Build extends BuildBase implements Linkable
             'job_id',
             'status',
             'result',
-            'error',
+            'error' => function(){
+                return  (filter_var($this->error, FILTER_VALIDATE_URL))
+                    ? "see link" :
+                    $this->error;
+            },
             'artifact_url',
             'created' => function(){
                 return Utils::getIso8601($this->created);
@@ -118,6 +122,10 @@ class Build extends BuildBase implements Linkable
         if($this->id){
             $links[Link::REL_SELF] = Url::toRoute(['/job/'.$this->job_id.'/build/'.$this->id], true);
             $links['job'] = Url::toRoute(['/job/'.$this->job_id], true);
+        }
+
+        if (filter_var($this->error, FILTER_VALIDATE_URL)) {
+            $links['error'] = Url::toRoute([sprintf('/job/%s/build/%s/error',$this->job->id, $this->id)], true);
         }
 
         return $links;

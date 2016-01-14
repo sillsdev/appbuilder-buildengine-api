@@ -39,8 +39,8 @@ class BuildBase extends \yii\db\ActiveRecord
             [['job_id'], 'required'],
             [['job_id', 'build_number'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'error'], 'string', 'max' => 255],
-            [['artifact_url'], 'string', 'max' => 2083]
+            [['status', 'result'], 'string', 'max' => 255],
+            [['error', 'artifact_url'], 'string', 'max' => 2083]
         ];
     }
 

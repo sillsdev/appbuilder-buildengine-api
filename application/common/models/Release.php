@@ -103,7 +103,11 @@ class Release extends ReleaseBase implements Linkable
             'build_id',
             'status',
             'result',
-            'error',
+            'error' => function(){
+                return  (filter_var($this->error, FILTER_VALIDATE_URL))
+                    ? "see link" :
+                    $this->error;
+            },
             'title',
             'defaultLanguage',
             'channel',
@@ -123,6 +127,10 @@ class Release extends ReleaseBase implements Linkable
             //$links[Link::REL_SELF] = Url::toRoute(['/release/'.$this->id], true);
         }
 
+        if (filter_var($this->error, FILTER_VALIDATE_URL)) {
+            $job = $this->build->job;
+            $links['error'] = Url::toRoute([sprintf('/job/%s/build/%s/release/%s/error',$job->id, $this->build->id, $this->id)], true);
+        }
         return $links;
     }
     
