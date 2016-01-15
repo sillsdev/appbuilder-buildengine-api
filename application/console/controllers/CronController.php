@@ -472,12 +472,26 @@ class CronController extends Controller
      */
     private function startBuildIfNotBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
     {
-        if (!$job->isCurrentlyBuilding())
+        // Note: JenkinsJob::isCurrentlyBuilding doesn't check for getLastBuild return null :-(
+        $startTime = time();
+        if (!$job->getLastBuild())
+        {
+            echo "...not built at all, so launch a build\n";
+            $job->launch($params);
+            $lastBuild = null;
+            while ((time() < $startTime + $timeoutSeconds)
+                    && !$lastBuild)
+            {
+                sleep($checkIntervalSeconds);
+                $job->refresh();
+                $lastBuild = $job->getLastBuild();
+            }
+        }
+        else if (!$job->isCurrentlyBuilding())
         {
             echo "...not building, so launch a build\n";
-            $lastBuild = $job->getLastBuild();
-            $lastNumber = ($lastBuild ? $lastBuild->getNumber() : 0);
-            $startTime = time();
+
+            $lastNumber = $job->getLastBuild()->getNumber();
 
             $job->launch($params);
 
@@ -487,13 +501,16 @@ class CronController extends Controller
                 sleep($checkIntervalSeconds);
                 $job->refresh();
             }
-
-            $build = $job->getLastBuild();
-            echo "...is building. Returning build ". $build->getNumber() . "\n";
-            return $job->getLastBuild();
+        }
+        else
+        {
+            // Currently building so wait for next cycle
+            return null;
         }
 
-        return null;
+        $build = $job->getLastBuild();
+        echo "...is building now. Returning build ". $build->getNumber() . "\n";
+        return $build;
     }
 
     /**
