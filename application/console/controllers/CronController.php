@@ -535,7 +535,7 @@ class CronController extends Controller
             echo "[$prefix] Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
-            $parameters = array("CHANNEL" => $release->channel);
+            $parameters = array("CHANNEL" => $release->channel, "BUILD_NUMBER" => $release->build->build_number);
 
             if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
                 $release->build_number = $jenkinsBuild->getNumber();
