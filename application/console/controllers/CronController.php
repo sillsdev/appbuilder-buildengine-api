@@ -205,12 +205,31 @@ class CronController extends Controller
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-    private function getArtifactUrl($jenkinsBuild)
+    private function getApkArtifactUrl($jenkinsBuild)
+    {
+       return $this->getArtifactUrl($jenkinsBuild, "/\.apk$/");
+    }
+    /**
+     * Extract the Artifact Url from the Jenkins Build information.
+     * @param JenkinsBuild $jenkinsBuild
+     * @param string $artifactPattern
+     * @return string
+     */
+    private function getArtifactUrl($jenkinsBuild, $artifactPattern)
     {
         $artifacts = $jenkinsBuild->get("artifacts");
         if (!$artifacts) { return null; }
-        $artifact = $artifacts[0];
-
+        $artifact = null;
+        foreach ($artifacts as $testArtifact) {
+            if(preg_match($artifactPattern,$testArtifact->relativePath)) {
+                $artifact = $testArtifact;
+                break;
+            }
+        }
+        if (!$artifact) {
+            echo "getArtifactURL: No artifact matching ".$artifactPattern."\n";
+            return null;
+        }
         $relativePath = $artifact->relativePath;
         $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
         $buildUrl = $jenkinsBuild->getBuildUrl();
@@ -219,7 +238,7 @@ class CronController extends Controller
     }
 
     /**
-     * Get Confiuration (Dev only)
+     * Get Configuration (Dev only)
      */
     public function actionGetConfig()
     {
@@ -263,7 +282,7 @@ class CronController extends Controller
             if ($build->build_number > 0) {
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 $buildResult = $jenkinsBuild->getResult();
-                $buildArtifact = $this->getArtifactUrl($jenkinsBuild);
+                $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
                 $s3Url = $this->getS3Url($build, $jenkinsBuild);
                 echo "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
                     . "  S3: Url=$s3Url\n";
@@ -285,7 +304,7 @@ class CronController extends Controller
             if ($build->build_number > 0) {
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 $buildResult = $jenkinsBuild->getResult();
-                $buildArtifact = $this->getArtifactUrl($jenkinsBuild);
+                $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
                 $s3Url = $this->getS3Url($build, $jenkinsBuild);
                 echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n"
                     . "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
@@ -305,7 +324,7 @@ class CronController extends Controller
             'result' => JenkinsBuild::SUCCESS])->each(50) as $build){
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
-                $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
+                $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
 
                 echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl\n";
         }
@@ -353,7 +372,7 @@ class CronController extends Controller
     private function getS3Url($build, $jenkinsBuild)
     {
 
-        $artifactUrl = $this->getArtifactUrl($jenkinsBuild);
+        $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
         $job = $build->job;
         return $this->getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
     }
@@ -383,7 +402,7 @@ class CronController extends Controller
      */
     private function saveBuild($build, $jenkinsBuild)
     {
-        $artifactUrl =  $this->getArtifactUrl($jenkinsBuild);
+        $artifactUrl =  $this->getApkArtifactUrl($jenkinsBuild);
         $client = $this->getS3Client();
 
         $job = $build->job;
