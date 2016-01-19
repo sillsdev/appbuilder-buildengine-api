@@ -16,6 +16,8 @@ use Yii;
  * @property string $artifact_url
  * @property string $created
  * @property string $updated
+ * @property string $channel
+ * @property integer $version_code
  *
  * @property Job $job
  * @property Release[] $releases
@@ -37,9 +39,9 @@ class BuildBase extends \yii\db\ActiveRecord
     {
         return [
             [['job_id'], 'required'],
-            [['job_id', 'build_number'], 'integer'],
+            [['job_id', 'build_number', 'version_code'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result'], 'string', 'max' => 255],
+            [['status', 'result', 'channel'], 'string', 'max' => 255],
             [['error', 'artifact_url'], 'string', 'max' => 2083]
         ];
     }
@@ -59,6 +61,8 @@ class BuildBase extends \yii\db\ActiveRecord
             'artifact_url' => Yii::t('app', 'Artifact Url'),
             'created' => Yii::t('app', 'Created'),
             'updated' => Yii::t('app', 'Updated'),
+            'channel' => Yii::t('app', 'Channel'),
+            'version_code' => Yii::t('app', 'Version Code'),
         ];
     }
 

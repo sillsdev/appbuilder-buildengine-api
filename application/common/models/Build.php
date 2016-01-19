@@ -20,6 +20,11 @@ class Build extends BuildBase implements Linkable
     const STATUS_EXPIRED = 'expired';
     const STATUS_COMPLETED = 'completed';
 
+    const CHANNEL_DEV = 'dev';
+    const CHANNEL_ALPHA = 'alpha';
+    const CHANNEL_BETA = 'beta';
+    const CHANNEL_PRODUCTION = 'production';
+
         /**
      * Array of valid status transitions. The key is the starting
      * status and the values are valid options to be changed to.
@@ -92,6 +97,18 @@ class Build extends BuildBase implements Linkable
                     return true;
                 },
             ],
+            [
+                'channel', 'in', 'range' => [
+                    self::CHANNEL_DEV,
+                    self::CHANNEL_ALPHA,
+                    self::CHANNEL_BETA,
+                    self::CHANNEL_PRODUCTION,
+                ],
+            ],
+            [
+                'channel', 'default', 'value' => self::CHANNEL_DEV,
+            ]
+
         ]);
     }
     public function fields()
