@@ -212,6 +212,15 @@ class CronController extends Controller
     /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
+     * @return string
+     */
+     private function getVersionCodeArtifactUrl($jenkinsBuild)
+     {
+         return $this->getArtifactUrl($jenkinsBuild, "/version_code.txt/");
+     }
+    /**
+     * Extract the Artifact Url from the Jenkins Build information.
+     * @param JenkinsBuild $jenkinsBuild
      * @param string $artifactPattern
      * @return string
      */
@@ -305,7 +314,7 @@ class CronController extends Controller
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 $buildResult = $jenkinsBuild->getResult();
                 $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
-                $s3Url = $this->getS3Url($build, $jenkinsBuild);
+                $s3Url = $this->getS3Url($build,$buildArtifact);
                 echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n"
                     . "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
                     . "  S3: Url=$s3Url\n";
@@ -335,7 +344,7 @@ class CronController extends Controller
      * Note: This should only be used during development to test whether
      *       S3 configuration is correct.
      */
-	public function actionForceUploadBuilds()
+    public function actionForceUploadBuilds()
     {
         $jenkins = $this->getJenkins();
         foreach (Build::find()->each(50) as $build){
@@ -369,10 +378,9 @@ class CronController extends Controller
      * @param Build $build
      * @param JenkinsBuild $jenkinsBuild
      */
-    private function getS3Url($build, $jenkinsBuild)
+    private function getS3Url($build, $artifactUrl)
     {
 
-        $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
         $job = $build->job;
         return $this->getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
     }
@@ -405,23 +413,37 @@ class CronController extends Controller
         $artifactUrl =  $this->getApkArtifactUrl($jenkinsBuild);
         $client = $this->getS3Client();
 
-        $job = $build->job;
-        $s3Url = $this->getS3Url($build, $jenkinsBuild);
-        list ($s3bucket, $s3key) = $this->getS3BucketKey($s3Url);
-        echo "..copy:\n.... $artifactUrl\n.... $s3bucket $s3key\n";
+        $apkS3Url = $this->getS3Url($build, $artifactUrl);
+        list ($apkS3bucket, $apkS3key) = $this->getS3BucketKey($apkS3Url);
+        echo "..copy:\n.... $artifactUrl\n.... $apkS3bucket $apkS3Url\n";
 
         $apk = file_get_contents($artifactUrl);
 
         $client->putObject([
-            'Bucket' => $s3bucket,
-            'Key' => $s3key,
+            'Bucket' => $apkS3bucket,
+            'Key' => $apkS3key,
             'Body' => $apk,
             'ACL' => 'public-read'
         ]);
 
-        $s3PublicUrl = $client->getObjectUrl($s3bucket, $s3key);
-        echo "returning: $s3PublicUrl\n";
-        return $s3PublicUrl;
+        $apkPublicUrl = $client->getObjectUrl($apkS3bucket, $apkS3key);
+
+        $versionCodeArtifactUrl = $this->getVersionCodeArtifactUrl($jenkinsBuild);
+        $versionS3Url = $this->getS3Url($build, $versionCodeArtifactUrl);
+        list ($versionCodeS3bucket, $versionCodeS3key) = $this->getS3BucketKey($versionS3Url);
+
+        $versionCode = file_get_contents($versionCodeArtifactUrl);
+
+        $client->putObject([
+            'Bucket' => $versionCodeS3bucket,
+            'Key' => $versionCodeS3key,
+            'Body' => $versionCode,
+            'ACL' => 'public-read'
+        ]);
+
+        echo "returning: $apkPublicUrl version: $versionCode\n";
+
+        return [$apkPublicUrl, $versionCode];
     }
 
     /**
@@ -444,7 +466,7 @@ class CronController extends Controller
                                 $build->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $build->jobName(), $build->build_number);
                                 break;
                             case JenkinsBuild::SUCCESS:
-                                $build->artifact_url = $this->saveBuild($build, $jenkinsBuild);
+                                list($build->artifact_url, $build->version_code) = $this->saveBuild($build, $jenkinsBuild);
                                 break;
                         }
                     }
@@ -598,7 +620,7 @@ class CronController extends Controller
             if ($jenkinsBuild){
                 $release->result = $jenkinsBuild->getResult();
                 if (!$jenkinsBuild->isBuilding()){
-                    $release->status = Build::STATUS_COMPLETED;
+                    $release->status = Release::STATUS_COMPLETED;
                     switch($release->result){
                         case JenkinsBuild::FAILURE:
                             $release->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $release->jobName(), $release->build_number);
@@ -612,7 +634,7 @@ class CronController extends Controller
             }
         } catch (\Exception $e) {
             echo "Exception: " . $e->getMessage() . "\n";
-            $release->status = Build::STATUS_COMPLETED;
+            $release->status = Release::STATUS_COMPLETED;
             $release->result = "EXCEPTION";
             $release->error = $e->getMessage();
             $release->save();
