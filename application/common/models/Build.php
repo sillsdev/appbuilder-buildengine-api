@@ -168,4 +168,35 @@ class Build extends BuildBase implements Linkable
     {
         return $this->job->name();
     }
+    /**
+     * Returns the build specified by $build_id.  The inclusion of the $job_id
+     * is done for validation purposes since this is also passed into the actions
+     * that use this method
+     *
+     * @param type $job_id
+     * @param type $build_id
+     * @return type Build
+     */
+    public static function findOneById($job_id, $build_id)
+    {
+        $build = Build::findOne(['id' => $build_id, 'job_id' => $job_id]);
+        if ($build) {
+            if ($build->status == Build::STATUS_EXPIRED) {
+                $build = null;
+            }
+       }
+       return $build;
+    }
+    /**
+     * Returns array of all non expired builds associated with the specified job
+     *
+     * @param type $job_id
+     * @return type array of Build
+     */
+    public static function findAllByJobId($job_id)
+    {
+       $builds = Build::find()->where('job_id = :job_id and status != :status',
+               ['job_id'=>$job_id, 'status'=>Build::STATUS_EXPIRED])->all();
+       return $builds;
+    }
 }

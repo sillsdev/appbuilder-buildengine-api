@@ -26,7 +26,7 @@ class JobController extends ActiveController
     public $modelClass = 'common\models\Job';
 
     public function actionIndexBuilds($id) {
-       $builds = Build::findAll(['job_id' => $id]);
+       $builds = Build::findAllByJobId($id);
        if (!$builds){
            throw new NotFoundHttpException();
        }
@@ -34,7 +34,7 @@ class JobController extends ActiveController
     }
 
     public function actionViewBuild($id, $build_id) {
-       $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+       $build = Build::findOneById($id, $build_id);
        if (!$build){
            throw new NotFoundHttpException();
        }
@@ -42,15 +42,14 @@ class JobController extends ActiveController
     }
 
     public function actionViewBuildError($id, $build_id) {
-        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+        $build = Build::findOneById($id, $build_id);
         if ($build && filter_var($build->error, FILTER_VALIDATE_URL)) {
             $contents = file_get_contents($build->error);
             \Yii::$app->response->format = Response::FORMAT_RAW;
             \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
             return $contents;
         }
-
-        return new NotFoundHttpException();
+        throw new NotFoundHttpException();
     }
 
     public function actionNewBuild($id) {
@@ -67,11 +66,10 @@ class JobController extends ActiveController
     }
 
     public function actionPublishBuild($id, $build_id) {
-        $build = Build::findOne(['id' => $build_id, 'job_id' => $id]);
+        $build = Build::findOneById($id, $build_id);
         if (!$build){
             throw new NotFoundHttpException();
         }
-
         $channel = \Yii::$app->request->getBodyParam('channel', null);
         $title = \Yii::$app->request->getBodyParam('title', null);
         $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);
@@ -100,7 +98,7 @@ class JobController extends ActiveController
             return $contents;
         }
 
-        return new NotFoundHttpException();
+        throw new NotFoundHttpException();
     }
 
     public function behaviors()
