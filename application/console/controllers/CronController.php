@@ -359,6 +359,15 @@ class CronController extends Controller
         }
     }
 
+    private function getBuild($id)
+    {
+        $build = Build::findOne(['id' => $id]);
+        if (!$build){
+            echo "Build not found \n";
+            throw new NotFoundHttpException();
+        }
+        return $build;
+    }
     /**
      * Configure and get the S3 Client
      * @return \Aws\S3\S3Client
@@ -624,6 +633,13 @@ class CronController extends Controller
                     switch($release->result){
                         case JenkinsBuild::FAILURE:
                             $release->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $release->jobName(), $release->build_number);
+                            break;
+                        case JenkinsBuild::SUCCESS:
+                           if ($build = $this->getBuild($release->build_id))
+                            {
+                                $build->channel = $release->channel;
+                                $build->save();
+                            }
                             break;
                     }
                 }
