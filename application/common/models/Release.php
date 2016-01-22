@@ -38,7 +38,6 @@ class Release extends ReleaseBase implements Linkable
         ],
     ];
 
-    const CHANNEL_DEV = 'dev';
     const CHANNEL_ALPHA = 'alpha';
     const CHANNEL_BETA = 'beta';
     const CHANNEL_PRODUCTION = 'production';
@@ -85,14 +84,10 @@ class Release extends ReleaseBase implements Linkable
             ],
             [
                 'channel', 'in', 'range' => [
-                    self::CHANNEL_DEV,
                     self::CHANNEL_ALPHA,
                     self::CHANNEL_BETA,
                     self::CHANNEL_PRODUCTION,
                 ],
-            ],
-            [
-                'channel', 'default', 'value' => self::CHANNEL_DEV,
             ]
         ]);
     }

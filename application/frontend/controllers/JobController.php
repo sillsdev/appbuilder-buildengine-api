@@ -75,7 +75,9 @@ class JobController extends ActiveController
         $channel = \Yii::$app->request->getBodyParam('channel', null);
         $title = \Yii::$app->request->getBodyParam('title', null);
         $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);
+        $version_code = $build->version_code;
 
+        $this->verifyChannel($id, $channel, $version_code);
         $release = $build->createRelease($channel);
         $release->title = $title;
         $release->defaultLanguage = $defaultLanguage;
@@ -149,5 +151,28 @@ class JobController extends ActiveController
             throw new NotFoundHttpException();
         }
         return $release;
+    }
+/**
+ * @param $id - The job id
+ * @param $channel - The channel the build is being released to
+ * @param $version_code - The version currently being released
+ * @throws ServerErrorHttpException
+ * $return true if not already released to another channel
+ */
+    private function verifyChannel($id, $channel, $version_code)
+    {
+        $retval = true;
+        foreach (Build::find()->where([
+            'job_id' => $id,
+            'status' => Build::STATUS_COMPLETED,
+            'result' => "SUCCESS"])->each(50) as $build){
+               if ($build->channel && ($build->version_code)
+                       && ($build->channel != Build::CHANNEL_UNPUBLISHED)
+                       && ($build->channel != $channel)
+                       && ($version_code == $build->version_code)) {
+                    throw new ServerErrorHttpException("Job $id already released under channel $build->channel for version $version_code", 1453326645);            
+                }
+        }
+        return $retval;
     }
 }
