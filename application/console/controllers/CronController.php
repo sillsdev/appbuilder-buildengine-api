@@ -462,7 +462,7 @@ class CronController extends Controller
     private function checkBuildStatus($build){
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] checkBuildStatus: Check Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+            echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName()."\n";
 
             $job = $build->job;
             if ($job){
