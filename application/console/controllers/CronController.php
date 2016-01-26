@@ -461,6 +461,9 @@ class CronController extends Controller
      */
     private function checkBuildStatus($build){
         try {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] checkBuildStatus: Check Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+
             $job = $build->job;
             if ($job){
                 $jenkins = $this->getJenkins();
@@ -486,11 +489,8 @@ class CronController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            echo "Exception: " . $e->getMessage() . "\n";
-            $build->status = Build::STATUS_COMPLETED;
-            $build->result = "EXCEPTION";
-            $build->error = $e->getMessage();
-            $build->save();
+            $prefix = $this->getPrefix();
+            echo "[$prefix] checkBuildStatus: Exception:\n" . (string)$e . "\n";
         }
     }
 
@@ -550,10 +550,9 @@ class CronController extends Controller
      */
     private function tryStartBuild($build)
     {
-        try
-        {
+        try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] Starting Build of ".$build->jobName()."\n";
+            echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName()."\n";
 
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
@@ -566,7 +565,7 @@ class CronController extends Controller
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
-            echo "[$prefix] Exception: " . $e->getMessage() . "\n";
+            echo "[$prefix] tryStartBuild: Exception:\n" . (string)$e . "\n";
         }
     }
 
@@ -599,7 +598,8 @@ class CronController extends Controller
     {
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+            echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
             $parameters = array("CHANNEL" => $release->channel, "BUILD_NUMBER" => $release->build->build_number);
@@ -612,7 +612,7 @@ class CronController extends Controller
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
-            echo "[$prefix] Exception: " . $e->getMessage() . "\n";
+            echo "[$prefix] tryStartRelease: Exception:\n" . (string)$e . "\n";
         }
     }
 
@@ -623,6 +623,9 @@ class CronController extends Controller
     private function checkReleaseStatus($release)
     {
         try {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
             $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
@@ -649,11 +652,9 @@ class CronController extends Controller
                 echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result\n";
             }
         } catch (\Exception $e) {
+            $prefix = $this->getPrefix();
+            echo "[$prefix] checkReleaseStatus Exception:\n" . (string)$e . "\n";
             echo "Exception: " . $e->getMessage() . "\n";
-            $release->status = Release::STATUS_COMPLETED;
-            $release->result = "EXCEPTION";
-            $release->error = $e->getMessage();
-            $release->save();
         }
     }
 
