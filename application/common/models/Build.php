@@ -199,4 +199,13 @@ class Build extends BuildBase implements Linkable
                ['job_id'=>$job_id, 'status'=>Build::STATUS_EXPIRED])->all();
        return $builds;
     }
+
+    /**
+     * Clears the artifact url for a build
+     */
+    public function clearArtifactUrl()
+    {
+        $this->artifact_url = null;
+        $this->save();
+    }
 }

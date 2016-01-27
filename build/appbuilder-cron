@@ -2,4 +2,5 @@
 * * * * * root /data/yii cron/sync-scripts  2>&1 >> /var/log/syncscripts.log
 * * * * * root /data/yii cron/manage-builds  2>&1 >> /var/log/managebuilds.log
 * * * * * root /data/yii cron/manage-releases  2>&1 >> /var/log/managereleases.log
+30 0 * * * root /data/yii cron/remove-expired-builds  2>&1 >> /var/log/expiredbuilds.log
 

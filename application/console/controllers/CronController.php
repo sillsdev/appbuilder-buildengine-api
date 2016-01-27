@@ -4,6 +4,7 @@ namespace console\controllers;
 use common\models\Job;
 use common\models\Build;
 use common\models\Release;
+use common\components\S3;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -293,7 +294,7 @@ class CronController extends Controller
                     $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                     $buildResult = $jenkinsBuild->getResult();
                     $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
-                    $s3Url = $this->getS3Url($build, $buildArtifact);
+                    $s3Url = S3::getS3Url($build, $buildArtifact);
                     echo "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
                         . "  S3: Url=$s3Url\n";
                 }
@@ -320,7 +321,7 @@ class CronController extends Controller
                     $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                     $buildResult = $jenkinsBuild->getResult();
                     $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
-                    $s3Url = $this`>getS3Url($build,$buildArtifact);
+                    $s3Url = S3::getS3Url($build,$buildArtifact);
                     echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n"
                         . "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
                         . "  S3: Url=$s3Url\n";
@@ -374,6 +375,24 @@ class CronController extends Controller
         }
     }
 
+    /**
+     * Remove expired builds from S3
+    */
+    public function actionRemoveExpiredBuilds()
+    {
+        $prefix = $this->getPrefix();
+        echo "[$prefix] actionRemoveExpiredBuilds: Started"\n";
+        foreach (Build::find()->where([
+            'status' => Build::STATUS_EXPIRED])->each(50) as $build){
+            if ($build->artifact_url != null) {
+                echo "...Remove expired job $build->job_id id $build->id \n";
+                $this-removeS3Artifacts($build);
+                $build->clearArtifactUrl();
+            }
+        }
+        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted"\n";
+
+    }
     private function getBuild($id)
     {
         $build = Build::findOne(['id' => $id]);
@@ -382,48 +401,6 @@ class CronController extends Controller
             throw new NotFoundHttpException();
         }
         return $build;
-    }
-    /**
-     * Configure and get the S3 Client
-     * @return \Aws\S3\S3Client
-     */
-    private function getS3Client()
-    {
-        $client = new \Aws\S3\S3Client([
-            'region' => 'us-west-2',
-            'version' => '2006-03-01'
-            ]);
-        $client->registerStreamWrapper();
-        return $client;
-    }
-
-    /**
-     * Get the S3 Url to use to archive a build
-     * @param Build $build
-     * @param JenkinsBuild $jenkinsBuild
-     */
-    private function getS3Url($build, $artifactUrl)
-    {
-
-        $job = $build->job;
-        return $this->getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
-    }
-
-    /**
-     * Get the S3 Bucket and Key to use to archive a build
-     * @param string s3Url
-     * @return [string,string] Bucket, Key
-     */
-    private function getS3BucketKey($s3Url)
-    {
-        $pattern = '/s3:\/\/([^\/]*)\/(.*)$/';
-        if (preg_match($pattern, $s3Url, $matches)){
-            $bucket = $matches[1];
-            $key = $matches[2];
-            return [$bucket, $key];
-        }
-
-        throw new ServerErrorHttpException("Failed to match $s3Url", 1444051300);
     }
 
     /**
@@ -435,35 +412,8 @@ class CronController extends Controller
     private function saveBuild($build, $jenkinsBuild)
     {
         $artifactUrl =  $this->getApkArtifactUrl($jenkinsBuild);
-        $client = $this->getS3Client();
-
-        $apkS3Url = $this->getS3Url($build, $artifactUrl);
-        list ($apkS3bucket, $apkS3key) = $this->getS3BucketKey($apkS3Url);
-        echo "..copy:\n.... $artifactUrl\n.... $apkS3bucket $apkS3Url\n";
-
-        $apk = file_get_contents($artifactUrl);
-
-        $client->putObject([
-            'Bucket' => $apkS3bucket,
-            'Key' => $apkS3key,
-            'Body' => $apk,
-            'ACL' => 'public-read'
-        ]);
-
-        $apkPublicUrl = $client->getObjectUrl($apkS3bucket, $apkS3key);
-
         $versionCodeArtifactUrl = $this->getVersionCodeArtifactUrl($jenkinsBuild);
-        $versionS3Url = $this->getS3Url($build, $versionCodeArtifactUrl);
-        list ($versionCodeS3bucket, $versionCodeS3key) = $this->getS3BucketKey($versionS3Url);
-
-        $versionCode = file_get_contents($versionCodeArtifactUrl);
-
-        $client->putObject([
-            'Bucket' => $versionCodeS3bucket,
-            'Key' => $versionCodeS3key,
-            'Body' => $versionCode,
-            'ACL' => 'public-read'
-        ]);
+        list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl);
 
         echo "returning: $apkPublicUrl version: $versionCode\n";
 
