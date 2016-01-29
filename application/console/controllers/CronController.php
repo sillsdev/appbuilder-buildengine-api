@@ -381,7 +381,7 @@ class CronController extends Controller
     public function actionRemoveExpiredBuilds()
     {
         $prefix = $this->getPrefix();
-        echo "[$prefix] actionRemoveExpiredBuilds: Started"\n";
+        echo "[$prefix] actionRemoveExpiredBuilds: Started\n";
         foreach (Build::find()->where([
             'status' => Build::STATUS_EXPIRED])->each(50) as $build){
             if ($build->artifact_url != null) {
@@ -390,7 +390,7 @@ class CronController extends Controller
                 $build->clearArtifactUrl();
             }
         }
-        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted"\n";
+        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted\n";
 
     }
     private function getBuild($id)
