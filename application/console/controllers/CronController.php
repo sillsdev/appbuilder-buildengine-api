@@ -288,7 +288,6 @@ class CronController extends Controller
         echo "[$prefix] All Builds...\n";
         foreach (Build::find()->each(50) as $build){
             $jobName = $build->job->name();
-            echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, Result=$build->result, ArtifactUrl=$build->artifact_url\n";
             $logBuildDetails = $this->getlogBuildDetails($build);
             $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
             try {
@@ -373,6 +372,10 @@ class CronController extends Controller
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number\n";
+                $logBuildDetails = $this->getlogBuildDetails($build);
+                $logBuildDetails['NOTE: ']='Force the completed successful builds to upload the builds to S3.';
+                $logBuildDetails['NOTE2: ']='Attempting to save Build.';
+                $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionForceUploadBuilds');
                 $this->saveBuild($build, $jenkinsBuild);
             }
         }
@@ -418,6 +421,12 @@ class CronController extends Controller
         $versionCodeArtifactUrl = $this->getVersionCodeArtifactUrl($jenkinsBuild);
         list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl);
 
+        $log = $this->getlogBuildDetails($build);
+        $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
+        $log['jenkins_ArtifactUrl'] = $artifactUrl;
+        $log['apkPublicUrl'] = $apkPublicUrl;
+        $log['version'] = $versionCode;
+        $this->outputToLogger($log, Logger::LEVEL_WARNING, 'Cron-saveBuild');
         echo "returning: $apkPublicUrl version: $versionCode\n";
 
         return [$apkPublicUrl, $versionCode];
@@ -453,6 +462,9 @@ class CronController extends Controller
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
                     }
+                    $log = $this->getlogBuildDetails($build);
+                    $log['job id'] = $job->id;
+                    $this->outputToLogger($log, Logger::LEVEL_WARNING, 'Cron-checkBuildStatus');
                     echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
                 }
             }
@@ -683,14 +695,8 @@ class CronController extends Controller
         $log['buildResult'] = $build->result;
         $log['buildArtifactUrl'] = $build->artifact_url;
 
-        $job = $build->job;
-        $log['job_id'] = $job->id;
-        $log['request_id'] = $job->request_id;
-
-            echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
+        echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
                     . "Result=$build->result, ArtifactUrl=$build->artifact_url\n";
-            echo "job_id=$job->id, request_id=$job->request_id\n";
-
         return $log;
     }
 
