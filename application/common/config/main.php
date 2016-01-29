@@ -52,9 +52,9 @@ return [
                         $prefixData = array(
                             'env' => $APP_ENV,
                         );
-                        if (! \Yii::$app->user->isGuest) {
+                        /*if (! \Yii::$app->user->isGuest) {
                             $prefixData['user'] = \Yii::$app->user->identity->email;
-                        }
+                        }*/
                         return \yii\helpers\Json::encode($prefixData);
                     },
                 ],

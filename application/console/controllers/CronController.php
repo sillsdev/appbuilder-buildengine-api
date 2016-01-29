@@ -16,6 +16,8 @@ use JenkinsApi\Jenkins;
 use JenkinsApi\Item\Build as JenkinsBuild;
 use JenkinsApi\Item\Job as JenkinsJob;
 
+use Yii;
+use yii\log\Logger;
 
 class CronController extends Controller
 {
@@ -282,26 +284,27 @@ class CronController extends Controller
      */
     public function actionGetBuilds()
     {
-        $jenkins = $this->getJenkins();
         $prefix = $this->getPrefix();
         echo "[$prefix] All Builds...\n";
         foreach (Build::find()->each(50) as $build){
             $jobName = $build->job->name();
             echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, Result=$build->result, ArtifactUrl=$build->artifact_url\n";
+            $logBuildDetails = $this->getlogBuildDetails($build);
+            $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
             try {
                 if ($build->build_number > 0) {
-                    $jenkinsJob = $jenkins->getJob($build->job->name());
-                    $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
-                    $buildResult = $jenkinsBuild->getResult();
-                    $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
-                    $s3Url = S3::getS3Url($build, $buildArtifact);
-                    echo "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
-                        . "  S3: Url=$s3Url\n";
+                    $logJenkinsS3 = $this->getlogJenkinsS3Details($build);
+                    $this->outputToLogger($logJenkinsS3, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
                 }
             } catch (\Exception $e) {
+                $log = [
+                    'logType' => 'Exception',
+                    'problem' => 'build->build_number is not > 0',
+                    'jobName' => $jobName
+                        ];
+                $this->outputToLogger($log, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
                 echo "... Not found \n";
             }
-
         }
     }
     /**
@@ -643,5 +646,81 @@ class CronController extends Controller
                     break;
             }
         }
+    }
+
+    /*===============================================  logging ============================================*/
+    /**
+      *
+      * Creates a log to be submitted to logentries.com
+      */
+    public function outputToLogger($log, $level, $category)
+    {
+        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
+        $prefix = $this->getPrefix();
+        $logPrefix = [
+            'date' => $prefix,
+            'jenkinsUrl' => $jenkinsUrl
+        ];
+        $mergedLog = array_merge($logPrefix, $log);
+        \Yii::getLogger()->log($mergedLog, $level, $category);
+    }
+
+    /**
+     *
+     * get build details for logging.
+     * @param Build $build
+     * @return Array
+     */
+    public function getlogBuildDetails($build)
+    {
+        $jobName = $build->job->name();
+        $log = [
+            'jobName' => $jobName
+        ];
+        $log['buildId'] = $build->id;
+        $log['buildStatus'] = $build->status;
+        $log['buildNumber'] = $build->build_number;
+        $log['buildResult'] = $build->result;
+        $log['buildArtifactUrl'] = $build->artifact_url;
+
+        $job = $build->job;
+        $log['job_id'] = $job->id;
+        $log['request_id'] = $job->request_id;
+
+            echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
+                    . "Result=$build->result, ArtifactUrl=$build->artifact_url\n";
+            echo "job_id=$job->id, request_id=$job->request_id\n";
+
+        return $log;
+    }
+
+    /**
+     * get Jenkins and S3 details
+     * @param Build $build
+     * @return Array
+     */
+    public function getlogJenkinsS3Details($build)
+    {
+        $jobName = $build->job->name();
+        $log = [
+            'logType' => 'S3 details',
+            'jobName' => $jobName
+        ];
+        $log['request_id'] = $build->job->request_id;
+
+        $jenkins = $this->getJenkins();
+        $jenkinsJob = $jenkins->getJob($build->job->name());
+        $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
+        $buildResult = $jenkinsBuild->getResult();
+        $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
+        $s3Url = S3::getS3Url($build, $buildArtifact);
+
+        $log['jenkins_buildResult'] = $buildResult;
+        $log['jenkins_ArtifactUrl'] = $buildArtifactUrl;
+        $log['S3: Url'] = $s3Url;
+
+        echo "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
+            . "  S3: Url=$s3Url\n";
+        return $log;
     }
 }
