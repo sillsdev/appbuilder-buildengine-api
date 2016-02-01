@@ -149,6 +149,15 @@ class CronController extends Controller
         // TODO: Apps should be pulled from a database?
         $apps = ['scriptureappbuilder' => 1];
         $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
+        $dataScriptDir = $this->getViewPath().DIRECTORY_SEPARATOR."scripts";
+        $utilitiesSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR."utilities";
+        $utilitiesDestDir = $localScriptDir . DIRECTORY_SEPARATOR . "utilities";
+        $this->recurse_copy($utilitiesSourceDir, $utilitiesDestDir, $git);
+        foreach (array_keys($apps) as $app) {
+            $appSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR.$app;
+            $appDestDir = $localScriptDir . DIRECTORY_SEPARATOR .$app;
+             $this->recurse_copy($appSourceDir, $appDestDir, $git);
+        }
         foreach (Job::find()->each(50) as $job)
         {
             $publisherName = $job->publisher_id;
@@ -659,7 +668,29 @@ class CronController extends Controller
             }
         }
     }
-
+    function recurse_copy($src,$dst, $git) {
+        $dir = opendir($src);
+        if (!file_exists($dst)) {
+            echo "mkdir $dst \n";
+            if (mkdir($dst, 0777, true)){
+                echo "failed to mkdir $dst \n";
+            }
+        }
+        while(false !== ( $file = readdir($dir)) ) {
+            if (( $file != '.' ) && ( $file != '..' )) {
+                $srcFile = $src .DIRECTORY_SEPARATOR. $file;
+                $dstFile = $dst .DIRECTORY_SEPARATOR. $file;
+                if ( is_dir($srcFile) ) {
+                    recurse_copy($srcFile,$dstFile, $git);
+                }
+                else {
+                    copy($srcFile,$dstFile);
+                    $git->add($dstFile);
+                }
+            }
+        }
+        closedir($dir);
+    }
     /*===============================================  logging ============================================*/
     /**
       *
