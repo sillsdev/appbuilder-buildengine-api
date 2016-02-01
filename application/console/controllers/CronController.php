@@ -305,13 +305,14 @@ class CronController extends Controller
                     $this->outputToLogger($logJenkinsS3, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
                 }
             } catch (\Exception $e) {
-                $log = [
+                $logException = [
                     'logType' => 'Exception',
                     'problem' => 'build->build_number is not > 0',
                     'jobName' => $jobName
                         ];
-                $this->outputToLogger($log, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
-                echo "... Not found \n";
+                $logException['NOTE:'] = "checkBuildStatus: Exception:". (string)$e;
+                $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-actionGetBuilds');
+                echo 'Exception: in actionGetBuilds build->build_number is not > 0 for job' . " $jobName\n\n";
             }
         }
     }
@@ -338,6 +339,15 @@ class CronController extends Controller
                         . "  S3: Url=$s3Url\n";
                 }
             } catch (\Exception $e) {
+                $logException = [
+                    'logType' => 'Exception',
+                    'problem' => 'BuildNotFound',
+                    'jobName' => $jobName
+                        ];
+                $logException['Number'] = $build->build_number;
+                $logException['Status'] = $build->status;
+                $logException['NOTE:'] = "actionGetBuildsRemaining: Exception:". (string)$e;
+                $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-actionGetBuilds');
                 echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n....Not found \n";
             }
 
@@ -361,6 +371,11 @@ class CronController extends Controller
                     echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl\n";
                 } catch (\Exception $e) {
                     echo "Job=$jobName, BuildNumber=$build->build_number \n....Not found \n";
+                    $logException = $this->getlogBuildDetails($build);
+                    $logException['logType'] = 'Exception';
+                    $logException['problem'] = 'BuildNotFound';
+                    $logException['NOTE:'] = "actionGetBuildsCompleted: Exception:". (string)$e;
+                    $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-actionGetBuildsCompleted');
                 }
 
         }
@@ -480,6 +495,9 @@ class CronController extends Controller
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
             echo "[$prefix] checkBuildStatus: Exception:\n" . (string)$e . "\n";
+            $logException = $this->getlogBuildDetails($build);
+            $logException['NOTE:'] = "checkBuildStatus: Exception:". (string)$e;
+            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-tryStartBuild');
         }
     }
 
@@ -555,6 +573,9 @@ class CronController extends Controller
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
             echo "[$prefix] tryStartBuild: Exception:\n" . (string)$e . "\n";
+            $logException = $this->getlogBuildDetails($build);
+            $logException['NOTE:'] = "tryStartBuild: Exception:". (string)$e;
+            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-tryStartBuild');
         }
     }
 
@@ -568,6 +589,9 @@ class CronController extends Controller
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $job = $build->job;
             echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
+            $logBuildDetails = $this->getlogBuildDetails($build);
+            $logBuildDetails['NOTE:'] = 'cron/manage-builds';
+            $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionManageBuilds');
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
                     $this->tryStartBuild($build);
@@ -602,6 +626,9 @@ class CronController extends Controller
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
             echo "[$prefix] tryStartRelease: Exception:\n" . (string)$e . "\n";
+            $logException = getlogReleaseDetails($release);
+            $logException['Exception:'] = "[$prefix] tryStartRelease: Exception:" . (string)$e;
+            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-tryStartRelease');
         }
     }
 
@@ -639,11 +666,16 @@ class CronController extends Controller
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
                 }
                 echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result\n";
+                $logException = getlogReleaseDetails($release);
+                $this->outputToLogger($logException, Logger::LEVEL_WARNING, 'debug-Cron-checkReleaseStatus');
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
             echo "[$prefix] checkReleaseStatus Exception:\n" . (string)$e . "\n";
             echo "Exception: " . $e->getMessage() . "\n";
+            $logException = getlogReleaseDetails($release);
+            $logException['Exception:'] = "[$prefix] checkReleaseStatus: Exception:" . (string)$e;
+            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-checkReleaseStatus');
         }
     }
 
@@ -658,6 +690,9 @@ class CronController extends Controller
             $build = $release->build;
             $job = $build->job;
             echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result\n";
+            $logReleaseDetails = getlogReleaseDetails($release);
+            $logReleaseDetails['NOTE:'] = 'cron/manage-releases';
+            $this->outputToLogger($logReleaseDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionManageReleases');
             switch ($release->status){
                 case Release::STATUS_INITIALIZED:
                     $this->tryStartRelease($release);
@@ -706,6 +741,29 @@ class CronController extends Controller
         ];
         $mergedLog = array_merge($logPrefix, $log);
         \Yii::getLogger()->log($mergedLog, $level, $category);
+    }
+
+    /**
+     *
+     * get release details for logging.
+     * @param Release $release
+     * @return Array
+     */
+    public function getlogReleaseDetails($release)
+    {
+        $build = $release->build;
+        $job = $build->job;
+
+        $jobName = $build->job->name();
+        $log = [
+            'jobName' => $jobName,
+            'jobId' => $job->id
+        ];
+        $log['Status'] = $release->status;
+        $log['Release'] = $release->build_number;
+        $log['Result'] = $release->result;
+
+        return $log;
     }
 
     /**
