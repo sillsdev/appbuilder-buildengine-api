@@ -5,6 +5,7 @@ use common\models\Job;
 use common\models\Build;
 use common\models\Release;
 use common\components\S3;
+use common\components\Appbuilder_logger;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -15,9 +16,6 @@ use GitWrapper\GitWrapper;
 use JenkinsApi\Jenkins;
 use JenkinsApi\Item\Build as JenkinsBuild;
 use JenkinsApi\Item\Job as JenkinsJob;
-
-use Yii;
-use yii\log\Logger;
 
 class CronController extends Controller
 {
@@ -293,25 +291,25 @@ class CronController extends Controller
      */
     public function actionGetBuilds()
     {
+        $logger = new Appbuilder_logger("CronController");
         $prefix = $this->getPrefix();
         echo "[$prefix] All Builds...\n";
         foreach (Build::find()->each(50) as $build){
             $jobName = $build->job->name();
             $logBuildDetails = $this->getlogBuildDetails($build);
-            $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
+            $logger->appbuilderWarningLog($logBuildDetails);
             try {
                 if ($build->build_number > 0) {
+                    //$logentries = new appbuilder_logger("cron-actionGetBuilds");
                     $logJenkinsS3 = $this->getlogJenkinsS3Details($build);
-                    $this->outputToLogger($logJenkinsS3, Logger::LEVEL_WARNING, 'debug-Cron-actionGetBuilds');
+                    $logger->appbuilderWarningLog($logJenkinsS3);
                 }
             } catch (\Exception $e) {
                 $logException = [
-                    'logType' => 'Exception',
                     'problem' => 'build->build_number is not > 0',
                     'jobName' => $jobName
                         ];
-                $logException['NOTE:'] = "checkBuildStatus: Exception:". (string)$e;
-                $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-actionGetBuilds');
+                $logger->appbuilderExceptionLog($logException, $e);
                 echo 'Exception: in actionGetBuilds build->build_number is not > 0 for job' . " $jobName\n\n";
             }
         }
@@ -322,6 +320,7 @@ class CronController extends Controller
      */
     public function actionGetBuildsRemaining()
     {
+        $logger = new Appbuilder_logger("CronController");
         $jenkins = $this->getJenkins();
         $prefix = $this->getPrefix();
         echo "[$prefix] Remaining Builds...\n";
@@ -340,14 +339,12 @@ class CronController extends Controller
                 }
             } catch (\Exception $e) {
                 $logException = [
-                    'logType' => 'Exception',
-                    'problem' => 'BuildNotFound',
-                    'jobName' => $jobName
+                    'problem' => 'Build not found.',
+                    'jobName' => $jobName,
+                    'Number' => $build->build_number,
+                    'Status' => $build->status
                         ];
-                $logException['Number'] = $build->build_number;
-                $logException['Status'] = $build->status;
-                $logException['NOTE:'] = "actionGetBuildsRemaining: Exception:". (string)$e;
-                $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-actionGetBuilds');
+                $logger->appbuilderExceptionLog($logException, $e);
                 echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n....Not found \n";
             }
 
@@ -359,6 +356,7 @@ class CronController extends Controller
      */
     public function actionGetBuildsCompleted()
     {
+        $logger = new Appbuilder_logger("CronController");
         $jenkins = $this->getJenkins();
         foreach (Build::find()->where([
             'status' => Build::STATUS_COMPLETED,
@@ -370,12 +368,13 @@ class CronController extends Controller
 
                     echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl\n";
                 } catch (\Exception $e) {
-                    echo "Job=$jobName, BuildNumber=$build->build_number \n....Not found \n";
-                    $logException = $this->getlogBuildDetails($build);
-                    $logException['logType'] = 'Exception';
-                    $logException['problem'] = 'BuildNotFound';
-                    $logException['NOTE:'] = "actionGetBuildsCompleted: Exception:". (string)$e;
-                    $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-actionGetBuildsCompleted');
+                    $logException = [
+                    'problem' => 'Build not found.',
+                    'jobName' => $jobName,
+                    'Number' => $build->build_number,
+                        ];
+                    $logger->appbuilderExceptionLog($logException, $e);
+                    echo "\nException Job=$jobName, BuildNumber=$build->build_number \n....Not found \n";
                 }
 
         }
@@ -388,6 +387,7 @@ class CronController extends Controller
      */
     public function actionForceUploadBuilds()
     {
+        $logger = new Appbuilder_logger("CronController");
         $jenkins = $this->getJenkins();
         foreach (Build::find()->each(50) as $build){
             if ($build->status == Build::STATUS_COMPLETED
@@ -399,7 +399,7 @@ class CronController extends Controller
                 $logBuildDetails = $this->getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Force the completed successful builds to upload the builds to S3.';
                 $logBuildDetails['NOTE2: ']='Attempting to save Build.';
-                $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionForceUploadBuilds');
+                $logger->appbuilderWarningLog($logBuildDetails);
                 $this->saveBuild($build, $jenkinsBuild);
             }
         }
@@ -410,6 +410,7 @@ class CronController extends Controller
     */
     public function actionRemoveExpiredBuilds()
     {
+        $logger = new Appbuilder_logger("CronController");
         $prefix = $this->getPrefix();
         echo "[$prefix] actionRemoveExpiredBuilds: Started\n";
         foreach (Build::find()->where([
@@ -418,6 +419,9 @@ class CronController extends Controller
                 echo "...Remove expired job $build->job_id id $build->id \n";
                 $this-removeS3Artifacts($build);
                 $build->clearArtifactUrl();
+                $logBuildDetails = $this->getlogBuildDetails($build);
+                $logBuildDetails['NOTE: ']='Remove expired S3 Atrtifacts for an expired build.';
+                $logger->appbuilderWarningLog($logBuildDetails);
             }
         }
         echo "[$prefix] actionRemoveExpiredBuilds: Conpleted\n";
@@ -441,6 +445,7 @@ class CronController extends Controller
      */
     private function saveBuild($build, $jenkinsBuild)
     {
+        $logger = new Appbuilder_logger("CronController");
         $artifactUrl =  $this->getApkArtifactUrl($jenkinsBuild);
         $versionCodeArtifactUrl = $this->getVersionCodeArtifactUrl($jenkinsBuild);
         list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl);
@@ -450,7 +455,7 @@ class CronController extends Controller
         $log['jenkins_ArtifactUrl'] = $artifactUrl;
         $log['apkPublicUrl'] = $apkPublicUrl;
         $log['version'] = $versionCode;
-        $this->outputToLogger($log, Logger::LEVEL_WARNING, 'Cron-saveBuild');
+        $logger->appbuilderWarningLog($log);
         echo "returning: $apkPublicUrl version: $versionCode\n";
 
         return [$apkPublicUrl, $versionCode];
@@ -461,6 +466,7 @@ class CronController extends Controller
      * @param Build $build
      */
     private function checkBuildStatus($build){
+        $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
             echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName()."\n";
@@ -488,7 +494,7 @@ class CronController extends Controller
                     }
                     $log = $this->getlogBuildDetails($build);
                     $log['job id'] = $job->id;
-                    $this->outputToLogger($log, Logger::LEVEL_WARNING, 'Cron-checkBuildStatus');
+                    $logger->appbuilderWarningLog($log);
                     echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
                 }
             }
@@ -496,8 +502,7 @@ class CronController extends Controller
             $prefix = $this->getPrefix();
             echo "[$prefix] checkBuildStatus: Exception:\n" . (string)$e . "\n";
             $logException = $this->getlogBuildDetails($build);
-            $logException['NOTE:'] = "checkBuildStatus: Exception:". (string)$e;
-            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-tryStartBuild');
+            $logger->appbuilderExceptionLog($logException, $e);
         }
     }
 
@@ -557,6 +562,7 @@ class CronController extends Controller
      */
     private function tryStartBuild($build)
     {
+        $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
             echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName()."\n";
@@ -574,8 +580,7 @@ class CronController extends Controller
             $prefix = $this->getPrefix();
             echo "[$prefix] tryStartBuild: Exception:\n" . (string)$e . "\n";
             $logException = $this->getlogBuildDetails($build);
-            $logException['NOTE:'] = "tryStartBuild: Exception:". (string)$e;
-            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-tryStartBuild');
+            $logger->appbuilderExceptionLog($logException, $e);
         }
     }
 
@@ -585,13 +590,13 @@ class CronController extends Controller
      */
     public function actionManageBuilds()
     {
+        $logger = new Appbuilder_logger("CronController");
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $job = $build->job;
             echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
             $logBuildDetails = $this->getlogBuildDetails($build);
-            $logBuildDetails['NOTE:'] = 'cron/manage-builds';
-            $this->outputToLogger($logBuildDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionManageBuilds');
+            $logger->appbuilderWarningLog($logBuildDetails);
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
                     $this->tryStartBuild($build);
@@ -609,6 +614,7 @@ class CronController extends Controller
      */
     private function tryStartRelease($release)
     {
+        $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
             echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
@@ -626,9 +632,8 @@ class CronController extends Controller
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
             echo "[$prefix] tryStartRelease: Exception:\n" . (string)$e . "\n";
-            $logException = getlogReleaseDetails($release);
-            $logException['Exception:'] = "[$prefix] tryStartRelease: Exception:" . (string)$e;
-            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-tryStartRelease');
+            $logException = $this->getlogReleaseDetails($release);
+            $logger->appbuilderExceptionLog($logException, $e);
         }
     }
 
@@ -638,6 +643,7 @@ class CronController extends Controller
      */
     private function checkReleaseStatus($release)
     {
+        $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
             echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel."\n";
@@ -666,16 +672,15 @@ class CronController extends Controller
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
                 }
                 echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result\n";
-                $logException = getlogReleaseDetails($release);
-                $this->outputToLogger($logException, Logger::LEVEL_WARNING, 'debug-Cron-checkReleaseStatus');
+                $log = $this->getlogReleaseDetails($release);
+                $logger->appbuilderWarningLog($log);
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
             echo "[$prefix] checkReleaseStatus Exception:\n" . (string)$e . "\n";
             echo "Exception: " . $e->getMessage() . "\n";
-            $logException = getlogReleaseDetails($release);
-            $logException['Exception:'] = "[$prefix] checkReleaseStatus: Exception:" . (string)$e;
-            $this->outputToLogger($logException, Logger::LEVEL_ERROR, 'debug-Cron-checkReleaseStatus');
+            $logException = $this->getlogReleaseDetails($release);
+            $logger->appbuilderExceptionLog($logException, $e);
         }
     }
 
@@ -685,14 +690,14 @@ class CronController extends Controller
      */
     public function actionManageReleases()
     {
+        $logger = new Appbuilder_logger("CronController");
         $complete = Release::STATUS_COMPLETED;
         foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
             $build = $release->build;
             $job = $build->job;
             echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result\n";
-            $logReleaseDetails = getlogReleaseDetails($release);
-            $logReleaseDetails['NOTE:'] = 'cron/manage-releases';
-            $this->outputToLogger($logReleaseDetails, Logger::LEVEL_WARNING, 'debug-Cron-actionManageReleases');
+            $logReleaseDetails = $this->getlogReleaseDetails($release);
+            $logger->appbuilderWarningLog($logReleaseDetails);
             switch ($release->status){
                 case Release::STATUS_INITIALIZED:
                     $this->tryStartRelease($release);
@@ -727,22 +732,6 @@ class CronController extends Controller
         closedir($dir);
     }
     /*===============================================  logging ============================================*/
-    /**
-      *
-      * Creates a log to be submitted to logentries.com
-      */
-    public function outputToLogger($log, $level, $category)
-    {
-        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
-        $prefix = $this->getPrefix();
-        $logPrefix = [
-            'date' => $prefix,
-            'jenkinsUrl' => $jenkinsUrl
-        ];
-        $mergedLog = array_merge($logPrefix, $log);
-        \Yii::getLogger()->log($mergedLog, $level, $category);
-    }
-
     /**
      *
      * get release details for logging.
