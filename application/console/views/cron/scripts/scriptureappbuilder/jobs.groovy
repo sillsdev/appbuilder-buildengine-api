@@ -7,9 +7,8 @@ class jobs {
 	static gitBranch = '*/master'
 	static buildJobScript = '''
 rm -rf output/*
-
 { set +x; } 2>/dev/null
-/usr/share/scripture-app-builder/sab.sh -load *.appDef -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output
+/usr/share/scripture-app-builder/sab.sh -load *.appDef -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc +1
 set -x
 echo $(awk -F '[<>]' '/package/{print $3}' *.appDef) > output/package_name.txt
 echo $(grep "version code=" *.appDef|awk -F"\\"" '{print $2}') > output/version_code.txt
@@ -17,6 +16,8 @@ echo $(grep "version code=" *.appDef|awk -F"\\"" '{print $2}') > output/version_
 if [ -d "metadata" ]; then
   tar -cvzf "output/metadata.tar.gz" "metadata"
 fi
+git add *.appDef
+git commit -m "Update Version Code"
 '''
 	static artifactFiles = 'output/*'
 
@@ -36,6 +37,13 @@ fi
 						credentials('appbuilder-buildagent')
 					}
 					branch(gitBranch)
+                                        localBranch("master")
+                                        configure { node ->
+                                            node / 'extensions' / 'hudson.plugins.git.extensions.impl.UserIdentity' << {
+                                                delegate.name('AppBuilder_BuildAgent')
+                                                email('appbuilder_buildagent@sil.org')
+                                            }
+                                        }
 				}
 			}
 
@@ -45,6 +53,12 @@ fi
 
 			publishers {
 				archiveArtifacts(artifactFiles)
+                                git {
+                                    pushMerge(true)
+                                    pushOnlyIfSuccess(true)
+                                    forcePush(false)
+                                    branch('origin', 'master')
+                                }
 			}
 
 			logRotator {
