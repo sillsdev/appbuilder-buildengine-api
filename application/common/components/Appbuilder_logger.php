@@ -36,7 +36,7 @@ class Appbuilder_logger {
         $length = count($trace);
          for ($i = 0; $i < $length; $i++)
         {
-            echo "$trace[$i]\n";
+            echo "$trace[$i]" . PHP_EOL;
         }
     }
     
@@ -130,7 +130,7 @@ class Appbuilder_logger {
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $prefix = self::getPrefix();
         $callingFunction = $this->get_calling_function();
-        echo "\n callingFunction is:\n $callingFunction\n\n";
+        echo PHP_EOL . " callingFunction is:" .PHP_EOL ." $callingFunction" . PHP_EOL . PHP_EOL;
         $logPrefix = [
             'date' => $prefix,
             'jenkinsUrl' => $jenkinsUrl,

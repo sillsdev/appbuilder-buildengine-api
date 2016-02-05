@@ -34,7 +34,7 @@ class S3 {
         $client = self::getS3Client();
         $apkS3Url = self::getS3Url($build, $artifactUrl);
         list ($apkS3bucket, $apkS3key) = self::getS3BucketKey($apkS3Url);
-        echo "..copy:\n.... $artifactUrl\n.... $apkS3bucket $apkS3Url\n";
+        echo "..copy:" .PHP_EOL .".... $artifactUrl" .PHP_EOL .".... $apkS3bucket $apkS3Url" .PHP_EOL;
 
         $apk = file_get_contents($artifactUrl);
 
@@ -103,7 +103,7 @@ class S3 {
         $key = substr($path, strpos($path, '/', 1) + 1);
         $s3 = $this->getS3Client();
         $s3->deleteMatchingObjects($bucket, $key);
-        echo "Deleted S3 bucket $bucket key $key \n";
+        echo "Deleted S3 bucket $bucket key $key " . PHP_EOL;
     }
 
     private static function getArtifactUrlBase(){

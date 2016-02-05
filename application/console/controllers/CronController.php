@@ -117,7 +117,7 @@ class CronController extends Controller
         $prefix = $this->getPrefix();
         $jenkins = $this->getJenkins();
         if ($jenkins){
-            echo "[$prefix] Telling Jenkins to regenerate Jobs\n";
+            echo "[$prefix] Telling Jenkins to regenerate Jobs" . PHP_EOL;
             $jenkins->getJob("Job-Wrapper-Seed")->launch();
         }
     }
@@ -178,7 +178,7 @@ class CronController extends Controller
             fclose($handle);
             if ($git->getStatus($file))
             {
-                echo "[$prefix] Updated: $buildJobName\n";
+                echo "[$prefix] Updated: $buildJobName" . PHP_EOL;
                 $git->add($file);
                 $this->createBuild($job);
             }
@@ -198,14 +198,14 @@ class CronController extends Controller
             }
             if (!array_key_exists($jobName, $jobs))
             {
-                echo "[$prefix] Removing: $jobName\n";
+                echo "[$prefix] Removing: $jobName" . PHP_EOL;
                 $git->rm($scriptFile);
             }
         }
 
         if ($git->hasChanges())
         {
-            echo "[$prefix] Changes detected...committing...\n";
+            echo "[$prefix] Changes detected...committing..." . PHP_EOL;
             $git->commit('cron update scripts');
             $git->push();
             $this->updateJenkinsJobs();
@@ -248,7 +248,7 @@ class CronController extends Controller
             }
         }
         if (!$artifact) {
-            echo "getArtifactURL: No artifact matching ".$artifactPattern."\n";
+            echo "getArtifactURL: No artifact matching ".$artifactPattern . PHP_EOL;
             return null;
         }
         $relativePath = $artifact->relativePath;
@@ -273,7 +273,7 @@ class CronController extends Controller
         $mail->subject = 'New test message';
         $mail->html_body = $body;
         if(!$mail->save()){
-            echo "Failed to send email\n";
+            echo "Failed to send email" . PHP_EOL;
         }
     }
     /**
@@ -282,7 +282,7 @@ class CronController extends Controller
     public function actionGetConfig()
     {
         $prefix = $this->getPrefix();
-        echo "[$prefix] Get Configuration...\n";
+        echo "[$prefix] Get Configuration..." . PHP_EOL;
 
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
@@ -300,10 +300,10 @@ class CronController extends Controller
         $artifactUrlBase = $this->getArtifactUrlBase();
         $appEnv = \Yii::$app->params['appEnv'];
 
-        echo "Repo:\n  URL:$repoUrl\n  Branch:$repoBranch\n  Path:$repoLocalPath\n  Scripts:$scriptDir\n  Key:$privateKey\n";
-        echo "Jenkins:\n  BuildEngineJenkinsMasterUrl: $jenkinsUrl\n  Jenkins.baseUrl: $jenkinsBaseUrl\n";
-        echo "Git:\n  Name:$userName\n  Email:$userEmail\n";
-        echo "Artifacts:\n  UrlBase:$artifactUrlBase\n";
+        echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL;
+        echo "Jenkins:". PHP_EOL."  BuildEngineJenkinsMasterUrl: $jenkinsUrl". PHP_EOL."  Jenkins.baseUrl: $jenkinsBaseUrl". PHP_EOL;
+        echo "Git:". PHP_EOL."  Name:$userName". PHP_EOL."  Email:$userEmail". PHP_EOL;
+        echo "Artifacts:". PHP_EOL."  UrlBase:$artifactUrlBase". PHP_EOL;
     }
     /**
      * Return all the builds. (Dev only)
@@ -313,7 +313,7 @@ class CronController extends Controller
     {
         $logger = new Appbuilder_logger("CronController");
         $prefix = $this->getPrefix();
-        echo "[$prefix] All Builds...\n";
+        echo "[$prefix] All Builds...". PHP_EOL;
         foreach (Build::find()->each(50) as $build){
             $jobName = $build->job->name();
             $logBuildDetails = $this->getlogBuildDetails($build);
@@ -330,7 +330,7 @@ class CronController extends Controller
                     'jobName' => $jobName
                         ];
                 $logger->appbuilderExceptionLog($logException, $e);
-                echo 'Exception: in actionGetBuilds build->build_number is not > 0 for job' . " $jobName\n\n";
+                echo 'Exception: in actionGetBuilds build->build_number is not > 0 for job' . " $jobName". PHP_EOL . PHP_EOL;
             }
         }
     }
@@ -343,7 +343,7 @@ class CronController extends Controller
         $logger = new Appbuilder_logger("CronController");
         $jenkins = $this->getJenkins();
         $prefix = $this->getPrefix();
-        echo "[$prefix] Remaining Builds...\n";
+        echo "[$prefix] Remaining Builds...". PHP_EOL;
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $jobName = $build->job->name();
@@ -353,9 +353,9 @@ class CronController extends Controller
                     $buildResult = $jenkinsBuild->getResult();
                     $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
                     $s3Url = S3::getS3Url($build,$buildArtifact);
-                    echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n"
-                        . "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
-                        . "  S3: Url=$s3Url\n";
+                    echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
+                        . "  Build: Result=$buildResult, Artifact=$buildArtifact". PHP_EOL
+                        . "  S3: Url=$s3Url". PHP_EOL;
                 }
             } catch (\Exception $e) {
                 $logException = [
@@ -365,7 +365,7 @@ class CronController extends Controller
                     'Status' => $build->status
                         ];
                 $logger->appbuilderExceptionLog($logException, $e);
-                echo "Job=$jobName, Number=$build->build_number, Status=$build->status\n....Not found \n";
+                echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL ."....Not found ". PHP_EOL;
             }
 
         }
@@ -386,7 +386,7 @@ class CronController extends Controller
                     $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                     $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
 
-                    echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl\n";
+                    echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl". PHP_EOL;
                 } catch (\Exception $e) {
                     $logException = [
                     'problem' => 'Build not found.',
@@ -394,7 +394,7 @@ class CronController extends Controller
                     'Number' => $build->build_number,
                         ];
                     $logger->appbuilderExceptionLog($logException, $e);
-                    echo "\nException Job=$jobName, BuildNumber=$build->build_number \n....Not found \n";
+                    echo PHP_EOL . "Exception Job=$jobName, BuildNumber=$build->build_number ". PHP_EOL ."....Not found ". PHP_EOL;
                 }
 
         }
@@ -407,15 +407,15 @@ class CronController extends Controller
         $emailCount = EmailQueue::find()->count();
 
         if($emailCount && is_numeric($emailCount)){
-            echo "cron/send-emails - Count: " . $emailCount . ". \n";
+            echo "cron/send-emails - Count: " . $emailCount . ". ". PHP_EOL;
         }
 
         list($emails_sent, $errors) = EmailUtils::sendEmailQueue();
         if (count($emails_sent) > 0) {
-            echo "... sent=".count($emails_sent)."\n";
+            echo "... sent=".count($emails_sent). PHP_EOL;
         }
         if ($errors && count($errors) > 0) {
-            echo '... errors='.count($errors).' messages=['.join(',',$errors).']\n';
+            echo '... errors='.count($errors).' messages=['.join(',',$errors).']' . PHP_EOL;
         }
     }
 
@@ -434,7 +434,7 @@ class CronController extends Controller
             {
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
-                echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number\n";
+                echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number". PHP_EOL;
                 $logBuildDetails = $this->getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Force the completed successful builds to upload the builds to S3.';
                 $logBuildDetails['NOTE2: ']='Attempting to save Build.';
@@ -451,11 +451,11 @@ class CronController extends Controller
     {
         $logger = new Appbuilder_logger("CronController");
         $prefix = $this->getPrefix();
-        echo "[$prefix] actionRemoveExpiredBuilds: Started\n";
+        echo "[$prefix] actionRemoveExpiredBuilds: Started". PHP_EOL;
         foreach (Build::find()->where([
             'status' => Build::STATUS_EXPIRED])->each(50) as $build){
             if ($build->artifact_url != null) {
-                echo "...Remove expired job $build->job_id id $build->id \n";
+                echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
                 $this-removeS3Artifacts($build);
                 $build->clearArtifactUrl();
                 $logBuildDetails = $this->getlogBuildDetails($build);
@@ -463,14 +463,14 @@ class CronController extends Controller
                 $logger->appbuilderWarningLog($logBuildDetails);
             }
         }
-        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted\n";
+        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted". PHP_EOL;
 
     }
     private function getBuild($id)
     {
         $build = Build::findOne(['id' => $id]);
         if (!$build){
-            echo "Build not found \n";
+            echo "Build not found ". PHP_EOL;
             throw new NotFoundHttpException();
         }
         return $build;
@@ -495,7 +495,7 @@ class CronController extends Controller
         $log['apkPublicUrl'] = $apkPublicUrl;
         $log['version'] = $versionCode;
         $logger->appbuilderWarningLog($log);
-        echo "returning: $apkPublicUrl version: $versionCode\n";
+        echo "returning: $apkPublicUrl version: $versionCode". PHP_EOL;
 
         return [$apkPublicUrl, $versionCode];
     }
@@ -508,7 +508,7 @@ class CronController extends Controller
         $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName()."\n";
+            echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName(). PHP_EOL;
 
             $job = $build->job;
             if ($job){
@@ -534,12 +534,12 @@ class CronController extends Controller
                     $log = $this->getlogBuildDetails($build);
                     $log['job id'] = $job->id;
                     $logger->appbuilderWarningLog($log);
-                    echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
+                    echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
                 }
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
-            echo "[$prefix] checkBuildStatus: Exception:\n" . (string)$e . "\n";
+            echo "[$prefix] checkBuildStatus: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
         }
@@ -558,7 +558,7 @@ class CronController extends Controller
         $startTime = time();
         if (!$job->getLastBuild())
         {
-            echo "...not built at all, so launch a build\n";
+            echo "...not built at all, so launch a build". PHP_EOL;
             $job->launch($params);
             $lastBuild = null;
             while ((time() < $startTime + $timeoutSeconds)
@@ -571,7 +571,7 @@ class CronController extends Controller
         }
         else if (!$job->isCurrentlyBuilding())
         {
-            echo "...not building, so launch a build\n";
+            echo "...not building, so launch a build". PHP_EOL;
 
             $lastNumber = $job->getLastBuild()->getNumber();
 
@@ -591,7 +591,7 @@ class CronController extends Controller
         }
 
         $build = $job->getLastBuild();
-        echo "...is building now. Returning build ". $build->getNumber() . "\n";
+        echo "...is building now. Returning build ". $build->getNumber() . PHP_EOL;
         return $build;
     }
 
@@ -604,20 +604,20 @@ class CronController extends Controller
         $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName()."\n";
+            echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
 
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
 
             if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob)){
                 $build->build_number = $jenkinsBuild->getNumber();
-                echo "[$prefix] Started Build $build->build_number\n";
+                echo "[$prefix] Started Build $build->build_number". PHP_EOL;
                 $build->status = Build::STATUS_ACTIVE;
                 $build->save();
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
-            echo "[$prefix] tryStartBuild: Exception:\n" . (string)$e . "\n";
+            echo "[$prefix] tryStartBuild: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
         }
@@ -633,7 +633,7 @@ class CronController extends Controller
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $job = $build->job;
-            echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result\n";
+            echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
             $logBuildDetails = $this->getlogBuildDetails($build);
             $logger->appbuilderWarningLog($logBuildDetails);
             switch ($build->status){
@@ -656,7 +656,7 @@ class CronController extends Controller
         $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+            echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
 
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
@@ -664,13 +664,13 @@ class CronController extends Controller
 
             if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
                 $release->build_number = $jenkinsBuild->getNumber();
-                echo "[$prefix] Started Build $release->build_number\n";
+                echo "[$prefix] Started Build $release->build_number". PHP_EOL;
                 $release->status = Release::STATUS_ACTIVE;
                 $release->save();
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
-            echo "[$prefix] tryStartRelease: Exception:\n" . (string)$e . "\n";
+            echo "[$prefix] tryStartRelease: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
         }
@@ -685,7 +685,7 @@ class CronController extends Controller
         $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = $this->getPrefix();
-            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel."\n";
+            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
 
             $jenkins = $this->getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
@@ -710,14 +710,14 @@ class CronController extends Controller
                 if (!$release->save()){
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
                 }
-                echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result\n";
+                echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
                 $log = $this->getlogReleaseDetails($release);
                 $logger->appbuilderWarningLog($log);
             }
         } catch (\Exception $e) {
             $prefix = $this->getPrefix();
-            echo "[$prefix] checkReleaseStatus Exception:\n" . (string)$e . "\n";
-            echo "Exception: " . $e->getMessage() . "\n";
+            echo "[$prefix] checkReleaseStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            echo "Exception: " . $e->getMessage() . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
         }
@@ -734,7 +734,7 @@ class CronController extends Controller
         foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
             $build = $release->build;
             $job = $build->job;
-            echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result\n";
+            echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
             $logReleaseDetails = $this->getlogReleaseDetails($release);
             $logger->appbuilderWarningLog($logReleaseDetails);
             switch ($release->status){
@@ -750,9 +750,9 @@ class CronController extends Controller
     function recurse_copy($src,$dst, $git) {
         $dir = opendir($src);
         if (!file_exists($dst)) {
-            echo "mkdir $dst \n";
+            echo "mkdir $dst ". PHP_EOL;
             if (mkdir($dst, 0777, true)){
-                echo "failed to mkdir $dst \n";
+                echo "failed to mkdir $dst ". PHP_EOL;
             }
         }
         while(false !== ( $file = readdir($dir)) ) {
@@ -813,7 +813,7 @@ class CronController extends Controller
         $log['buildArtifactUrl'] = $build->artifact_url;
 
         echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
-                    . "Result=$build->result, ArtifactUrl=$build->artifact_url\n";
+                    . "Result=$build->result, ArtifactUrl=$build->artifact_url". PHP_EOL;
         return $log;
     }
 
@@ -842,8 +842,8 @@ class CronController extends Controller
         $log['jenkins_ArtifactUrl'] = $buildArtifactUrl;
         $log['S3: Url'] = $s3Url;
 
-        echo "  Build: Result=$buildResult, Artifact=$buildArtifact\n"
-            . "  S3: Url=$s3Url\n";
+        echo "  Build: Result=$buildResult, Artifact=$buildArtifact" . PHP_EOL
+            . "  S3: Url=$s3Url". PHP_EOL;
         return $log;
     }
 }
