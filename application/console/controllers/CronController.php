@@ -349,13 +349,8 @@ class CronController extends Controller
             $jobName = $build->job->name();
             try {
                 if ($build->build_number > 0) {
-                    $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
-                    $buildResult = $jenkinsBuild->getResult();
-                    $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
-                    $s3Url = S3::getS3Url($build,$buildArtifact);
-                    echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
-                        . "  Build: Result=$buildResult, Artifact=$buildArtifact". PHP_EOL
-                        . "  S3: Url=$s3Url". PHP_EOL;
+                    $log = getlogJenkinsS3Details($build);
+                    $logger->appbuilderInfoLog($log);
                 }
             } catch (\Exception $e) {
                 $logException = [
@@ -385,8 +380,8 @@ class CronController extends Controller
                 try {
                     $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                     $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
-
-                    echo "Job=$jobName, BuildNumber=$build->build_number, Url=$artifactUrl". PHP_EOL;
+                    $logBuildDetails = $this->getlogBuildDetails($build);
+                    $logger->appbuilderWarningLog($logBuildDetails);
                 } catch (\Exception $e) {
                     $logException = [
                     'problem' => 'Build not found.',
@@ -633,7 +628,7 @@ class CronController extends Controller
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $job = $build->job;
-            echo "cron/manage-builds: Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
+            echo "cron/manage-builds: ". PHP_EOL;
             $logBuildDetails = $this->getlogBuildDetails($build);
             $logger->appbuilderWarningLog($logBuildDetails);
             switch ($build->status){
@@ -710,7 +705,6 @@ class CronController extends Controller
                 if (!$release->save()){
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
                 }
-                echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
                 $log = $this->getlogReleaseDetails($release);
                 $logger->appbuilderWarningLog($log);
             }
@@ -734,7 +728,7 @@ class CronController extends Controller
         foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
             $build = $release->build;
             $job = $build->job;
-            echo "cron/manage-releases: Job=$job->id, Release=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
+            echo "cron/manage-releases: Job=$job->id, ". PHP_EOL;
             $logReleaseDetails = $this->getlogReleaseDetails($release);
             $logger->appbuilderWarningLog($logReleaseDetails);
             switch ($release->status){
@@ -787,9 +781,12 @@ class CronController extends Controller
             'jobName' => $jobName,
             'jobId' => $job->id
         ];
-        $log['Status'] = $release->status;
-        $log['Release'] = $release->build_number;
-        $log['Result'] = $release->result;
+        $log['Release-id'] = $release->id;
+        $log['Release-Status'] = $release->status;
+        $log['Release-Build'] = $release->build_number;
+        $log['Release-Result'] = $release->result;
+
+        echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
 
         return $log;
     }
@@ -841,9 +838,10 @@ class CronController extends Controller
         $log['jenkins_buildResult'] = $buildResult;
         $log['jenkins_ArtifactUrl'] = $buildArtifactUrl;
         $log['S3: Url'] = $s3Url;
-
-        echo "  Build: Result=$buildResult, Artifact=$buildArtifact" . PHP_EOL
-            . "  S3: Url=$s3Url". PHP_EOL;
+        
+        echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
+                        . "  Build: Result=$buildResult, Artifact=$buildArtifact". PHP_EOL
+                        . "  S3: Url=$s3Url". PHP_EOL;
         return $log;
     }
 }
