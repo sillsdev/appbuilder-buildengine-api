@@ -4,8 +4,10 @@ namespace console\controllers;
 use common\models\Job;
 use common\models\Build;
 use common\models\Release;
+use common\models\EmailQueue;
 use common\components\S3;
 use common\components\Appbuilder_logger;
+use common\components\EmailUtils;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -257,6 +259,24 @@ class CronController extends Controller
     }
 
     /**
+     * Test email action. Requires email adddress as parameter (Dev only)
+     */
+    public function actionTestEmail($sendToAddress)
+    {
+        $body = \Yii::$app->mailer->render('@common/mail/operations/Test/enduser-testmsg',[
+            'name' => "Whom it may concern",
+            'crashPlanUrl' => "www.google.com",
+        ]);
+        $mail = new EmailQueue();
+        $mail->to = $sendToAddress;
+    //    $mail->cc = 'dmoore1768@yahoo.com';
+        $mail->subject = 'New test message';
+        $mail->html_body = $body;
+        if(!$mail->save()){
+            echo "Failed to send email\n";
+        }
+    }
+    /**
      * Get Configuration (Dev only)
      */
     public function actionGetConfig()
@@ -377,6 +397,25 @@ class CronController extends Controller
                     echo "\nException Job=$jobName, BuildNumber=$build->build_number \n....Not found \n";
                 }
 
+        }
+    }
+    /**
+     * Send queued emails
+    */
+    public function actionSendEmails($verbose=false)
+    {
+        $emailCount = EmailQueue::find()->count();
+
+        if($emailCount && is_numeric($emailCount)){
+            echo "cron/send-emails - Count: " . $emailCount . ". \n";
+        }
+
+        list($emails_sent, $errors) = EmailUtils::sendEmailQueue();
+        if (count($emails_sent) > 0) {
+            echo "... sent=".count($emails_sent)."\n";
+        }
+        if ($errors && count($errors) > 0) {
+            echo '... errors='.count($errors).' messages=['.join(',',$errors).']\n';
         }
     }
 

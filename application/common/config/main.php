@@ -10,6 +10,10 @@ $TEST_MYSQL_HOST = getenv('TEST_MYSQL_HOST') ?: 'localhost';
 $TEST_MYSQL_DATABASE = getenv('TEST_MYSQL_DATABASE') ?: 'example';
 $TEST_MYSQL_USER = getenv('TEST_MYSQL_USER') ?: 'example';
 $TEST_MYSQL_PASSWORD = getenv('TEST_MYSQL_PASSWORD') ?: 'example';
+$MAILER_USEFILES = getenv('MAILER_USERFILES') ?: false;
+$MAILER_HOST = getenv('MAILER_HOST') ?: 'smtp.gmail.com';
+$MAILER_USERNAME = getenv('MAILER_USERNAME'); // No default, must be provided as env var
+$MAILER_PASSWORD = getenv('MAILER_PASSWORD'); // No default, must be provided as env var
 $ADMIN_EMAIL = getenv('ADMIN_EMAIL') ?: 'nobody@nowhere.com';
 $APP_ENV = getenv('APP_ENV') ?: "not set";
 
@@ -60,9 +64,23 @@ return [
                 ],
             ],
         ],
+        "mailer" => [
+            "class" => 'yii\swiftmailer\Mailer',
+            "useFileTransport" => $MAILER_USEFILES,
+            "transport" => [
+                "class" => "Swift_SmtpTransport",
+                "host" => $MAILER_HOST,
+                "username" => $MAILER_USERNAME,
+                "password" => $MAILER_PASSWORD,
+                "port" => "465",
+                "encryption" => "ssl",
+            ],
+        ],
     ],
     'params' => [
         'adminEmail' => $ADMIN_EMAIL,
         'appEnv' => $APP_ENV,
+        'max_email_attempts' => 5,
+        'max_emails_per_try' => 20,
     ],
 ];

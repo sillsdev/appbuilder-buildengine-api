@@ -114,6 +114,14 @@ class Appbuilder_logger {
     }
     
     /**
+      *
+      * Creates an info log to be submitted to logentries.com
+    */
+    public function appbuilderInfoLog($log)
+    {
+        $this->outputToLogger($log, Logger::LEVEL_INFO);
+    }
+    /**
     *
     * Creates a log to be submitted to logentries.com
     */
