@@ -2,15 +2,6 @@
 
 namespace common\components;
 
-//use common\models\Job;
-use common\models\Build;
-use common\models\Release;
-
-use JenkinsApi\Jenkins;
-use JenkinsApi\Item\Build as JenkinsBuild;
-//use JenkinsApi\Item\Job as JenkinsJob;
-
-use Yii;
 use yii\log\Logger;
 
 /* 
@@ -84,7 +75,7 @@ class Appbuilder_logger {
     */
     public function appbuilderErrorLog($log)
     {
-        $this->outputToLogger($log, Logger::LEVEL_ERROR);
+        $this->outputToLogger($log, Logger::LEVEL_ERROR, "ERROR-");
     }
     
     /**
@@ -97,11 +88,11 @@ class Appbuilder_logger {
     public function appbuilderExceptionLog($log, $e)
     {
         $this->echo_stackTrace($e);
-        $log = $this->get_stackTraceDetails($e);
-        $log['LogType'] = 'EXCEPTION';
-        $log['LINE NUMBER:'] = $e->getLine();
-        $log['MESSAGE:'] = $e->getMessage();
-        $this->outputToLogger($log, Logger::LEVEL_ERROR);
+        $logExceptionDetails = $this->get_stackTraceDetails($e);
+        $logExceptionDetails['LINE NUMBER:'] = $e->getLine();
+        $logExceptionDetails['MESSAGE:'] = $e->getMessage();
+        $mergedLog = array_merge($logExceptionDetails, $log);
+        $this->outputToLogger($mergedLog, Logger::LEVEL_ERROR, "EXCEPTION-");
     }
     
     /**
@@ -110,7 +101,7 @@ class Appbuilder_logger {
     */
     public function appbuilderWarningLog($log)
     {
-        $this->outputToLogger($log, Logger::LEVEL_WARNING);
+        $this->outputToLogger($log, Logger::LEVEL_WARNING, "WARNING-");
     }
     
     /**
@@ -119,13 +110,14 @@ class Appbuilder_logger {
     */
     public function appbuilderInfoLog($log)
     {
-        $this->outputToLogger($log, Logger::LEVEL_INFO);
+        //NOTE: rsyslog is not configured to log INFO level to avoid to many logs
+        $this->outputToLogger($log, Logger::LEVEL_WARNING, "INFO-");
     }
     /**
     *
     * Creates a log to be submitted to logentries.com
     */
-    public function outputToLogger($log, $level)
+    public function outputToLogger($log, $level, $logtype)
     {
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $prefix = self::getPrefix();
@@ -136,7 +128,7 @@ class Appbuilder_logger {
             'jenkinsUrl' => $jenkinsUrl,
             'functionAndClass' => $callingFunction
         ];
-        $category = "$this->area" . '-' . "$this->functionName";
+        $category = "$logtype" . "$this->area" . '-' . "$this->functionName";
         $mergedLog = array_merge($logPrefix, $log);
         \Yii::getLogger()->log($mergedLog, $level, $category);
     }
