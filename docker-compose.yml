@@ -1,7 +1,8 @@
 data:
     image: silintl/data-volume:latest
     volumes:
-        - /data:/data
+        - ./application:/data
+
 db:
     image: silintl/mariadb:latest
     ports:
@@ -31,10 +32,6 @@ cron:
     env_file:
         - ./common.env
         - ./local.env
-    environment:
-        - "EXPAND_S3_KEY=AKIAJLPR4553Z5ZURUFQ"
-        - "EXPAND_S3_SECRET=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"
-        - "EXPAND_S3_FILES=sil-appbuilder-secrets/staging/buildengine_api/ssh/id_rsa|/root/.ssh/id_rsa[600,] sil-appbuilder-secrets/staging/buildengine_api/ssh/id_rsa.pub|/root/.ssh/id_rsa.pub[600,]"
     command: /data/run-cron.sh
 composer:
     image: silintl/php-cli:latest
@@ -44,6 +41,7 @@ composer:
     command: composer install --prefer-dist
 yiimigrate:
     image: silintl/php-cli:latest
+    user: "${DOCKER_UIDGID}"
     volumes_from:
         - data
     links:
