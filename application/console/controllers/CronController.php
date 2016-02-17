@@ -47,8 +47,6 @@ class CronController extends Controller
             $git->fetchAll();
             $git->reset("--hard", "origin/$repoBranch");
         }
-        $git->checkout($repoBranch);
-
         // Set afterwards in case the configuration changes after
         // the repo has been cloned (i.e. services has been restarted
         // with different configuration).
@@ -57,6 +55,16 @@ class CronController extends Controller
 
         $git->config('user.name', $userName);
         $git->config('user.email', $userEmail);
+
+        // Check to see if empty repo
+        try {
+            $git->checkout($repoBranch);
+
+        } catch (\Exception $e) {
+            echo "$repoBranch doesn't exist.  Trying to create it. \n";
+            $git->checkoutNewBranch($repoBranch);
+        }
+
         return $git;
     }
 
