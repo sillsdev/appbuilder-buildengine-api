@@ -8,11 +8,13 @@ class jobs {
 	static buildJobScript = '''
 rm -rf output/*
 { set +x; } 2>/dev/null
-/usr/share/scripture-app-builder/sab.sh -load *.appDef -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc +1
+PROJNAME=$(basename *.appDef .appDef)
+rename "s/$PROJNAME/build/" *
+/usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc +1
 set -x
-echo $(awk -F '[<>]' '/package/{print $3}' *.appDef) > output/package_name.txt
-echo $(grep "version code=" *.appDef|awk -F"\\"" '{print $2}') > output/version_code.txt
-
+echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
+echo $(grep "version code=" build.appDef|awk -F"\\"" '{print $2}') > output/version_code.txt
+rename "s/build/$PROJNAME/" build*
 if [ -d "metadata" ]; then
   tar -cvzf "output/metadata.tar.gz" "metadata"
 fi
