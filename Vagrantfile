@@ -89,23 +89,6 @@ Vagrant.configure(2) do |config|
    # 33 is the www-data user/group in the ubuntu container
    mount_options: ["uid=33","gid=33","fmode=755","dmode=755"]
 
-  # Note:
-  #   By default Vagrant syncs the project directory to /vagrant. This
-  #   Vagrantfile assumes this behavior, and also assumes that the
-  #   docker-compose.yml will then be located at /vagrant/docker-compose.yml
-  if ENV['DOCKER_IMAGEDIR_PATH']
-    config.vm.synced_folder ENV['DOCKER_IMAGEDIR_PATH'], "/preload-images"
-  else
-    # The escape sequences are for colored output
-    sred="\033[31m"
-    sgreen="\033[32m"
-    snorm="\033[0m"
-
-    puts sred + "Set " + sgreen + "DOCKER_IMAGEDIR_PATH " + sred +
-         "in your environment to import local tar archives\ncontaining " +
-         "images into docker's image-store" + snorm
-  end
-  
   config.vm.provider "virtualbox" do |vb|
   # A fix for speed issues with DNS resolution:
   #   http://serverfault.com/questions/453185/vagrant-virtualbox-dns-10-0-2-3-not-working?rq=1
@@ -174,74 +157,12 @@ Vagrant.configure(2) do |config|
      curl -L https://github.com/docker/compose/releases/download/1.4.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
      chmod +x /usr/local/bin/docker-compose
 
-     # Preload docker with images (but only if the synced folder is mounted)
-     if mount | grep /preload-images 1>/dev/null; then
-       echo "Preloading the docker-daemon with images"
-       cd /preload-images
-
-       allready_images=$(docker images -q)
-
-       for file in $(ls | egrep '.tar$' ); do
-         name=$( basename $file .tar )
-
-         # Scan through the images we have and check if they are already loaded
-         for i in $allready_images; do
-           if [[ $i == $name ]]; then
-             # Skip this file
-             echo "--> Skipping $name.tar (already loaded)"
-             continue 2
-           fi
-         done
-
-         echo "--> Loading $name.tar"
-         docker load < $file
-       done
-     fi
-
      # Run docker-compose (which will update preloaded images, and
      # pulls any images not preloaded)
      cd /vagrant
 
      # Start services
      docker-compose up -d
-
-     # Update the preload image directory with any new (or changed) images
-     if mount | grep /preload-images 1>/dev/null; then
-       echo "Adding images in /preload-images."
-       cd /preload-images
-
-       # First, construct a space-separated list of the images IDs that are
-       # running as a result of docker-compose
-       running=$(docker ps -q )
-       runids=""
-
-       for r in $running; do
-         newid=$(docker inspect --format='{{.Image}}' $r)
-
-         # The id must be truncated to the standard 12 characters
-         runids="$runids "$(echo $newid | egrep -o '^[0-9a-f]{12}')
-       done
-       
-       for i in $(docker images -q); do
-         if ! [[ -f $i.tar ]]; then
-           echo "--> Saving $i.tar"
-           docker save -o $i.tar $i
-         else
-           # Update the timestamps on the ones which have already been
-           # exported but which still used by the docker-compose.yml
-           for j in $runids; do
-             if [[ $j == $i ]]; then
-               echo "--> skipping $i.tar " \
-                 "(already exists: in-use, timestamp updated)"
-               touch $i.tar
-               continue 2
-             fi
-           done
-
-           echo "--> skipping $i.tar (already exists: unused)"
-         fi
-       done
-     fi
 
      # Propose possible ENV variable exports
      cat <<-EOF > /docker-connect.sh
