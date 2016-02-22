@@ -33,15 +33,6 @@ Vagrant.configure(2) do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
   config.vm.box = "ubuntu/trusty64"
-  #config.vm.box = "AlbanMontaigu/boot2docker"
-  # config.vm.box_version = "= 1.10.1"
-
-  # The AlbanMontaigu/boot2docker box has not been set up as a Vagrant
-  # 'base box', so it is necessary to specify how to SSH in.
-  # config.ssh.username = "docker"
-  # config.ssh.password = "tcuser"
-  # config.ssh.insert_key = true
-
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
@@ -62,14 +53,7 @@ Vagrant.configure(2) do |config|
     # Enable gui for troubleshooting with boot
     # v.gui = true
     # Create a private network for accessing VM without NAT
-    override.vm.network "private_network", ip: "192.168.70.121" #, id: "default-network", nic_type: "virtio"
-  end
-
-  # Set memory to VM to 512M. boot2docker default is 1.5G
-  # Limit CPU usage to up to 50% of host CPU
-  config.vm.provider "virtualbox" do |v|
-    #v.memory = 768
-    #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+    override.vm.network "private_network", ip: "192.168.70.121"
   end
 
   # Create a public network, which generally matched to bridged network.
@@ -84,13 +68,13 @@ Vagrant.configure(2) do |config|
   # argument is a set of non-required options.
 
   # Synced folders for container data.
-
+  # Note: override mount_options on default sync folder to fix permissions
   config.vm.synced_folder ".", "/vagrant",
    # 33 is the www-data user/group in the ubuntu container
    mount_options: ["uid=33","gid=33","fmode=755","dmode=755"]
 
   config.vm.provider "virtualbox" do |vb|
-    # Customize the amount of memory on the VM:
+    # Customize the amount of memory on the VM: database needs more memory
     vb.memory = "1024"
 
     # A fix for speed issues with DNS resolution:
@@ -122,8 +106,8 @@ Vagrant.configure(2) do |config|
     curl -sS -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
 
-    echo 'export DOCKER_UIDGID=$(id -u):$(id -g)' >> /home/vagrant/.profile
-    echo 'cd /vagrant'
+    echo 'export DOCKER_UIDGID=0:0' >> /home/vagrant/.profile
+    echo 'cd /vagrant' >> /home/vagrant/.profile
   SHELL
 
 
@@ -131,15 +115,11 @@ Vagrant.configure(2) do |config|
   # `vagrant up`), reinstalling from local directories
   config.vm.provision "recompose", type: "shell",
    run: "always", inline: <<-SHELL
-     set -x
      # Run docker-compose (which will update preloaded images, and
      # pulls any images not preloaded)
      cd /vagrant
 
      # Start services
-     GID=`id -g`
-
-     DOCKER_UIDGID="${UID}:${GID}" docker-compose up -d
-
+     DOCKER_UIDGID="0:0" docker-compose up -d
   SHELL
 end
