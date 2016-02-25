@@ -594,14 +594,7 @@ class CronController extends Controller
         }
 
         $build = $job->getLastBuild();
-        if (is_null($build))
-        {
-            echo '...There was no lastbuild for this job so $build is null {$job->getLastBuild()} '.  PHP_EOL;
-        }
-        else
-        {
-            echo "...is building now. Returning build ". $build->getNumber() . PHP_EOL;
-        }
+        echo "...is building now. Returning build ". $build->getNumber() . PHP_EOL;
         return $build;
     }
 
