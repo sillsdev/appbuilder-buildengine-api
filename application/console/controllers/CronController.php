@@ -851,7 +851,7 @@ class CronController extends Controller
         $s3Url = S3::getS3Url($build, $buildArtifact);
 
         $log['jenkins_buildResult'] = $buildResult;
-        $log['jenkins_ArtifactUrl'] = $buildArtifactUrl;
+        $log['jenkins_ArtifactUrl'] = $buildArtifact;
         $log['S3: Url'] = $s3Url;
         
         echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
