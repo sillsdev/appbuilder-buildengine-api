@@ -67,7 +67,7 @@ class Job extends JobBase implements Linkable
             // The currently supported Git Urls are for AWS Codecommit
             [
                 'git_url', 'url',
-                'pattern' => '/^ssh:\/\/[A-Za-z0-9]+@git-codecommit\./',
+                    'pattern' => '/^ssh:\/\/(\w+@)?git-codecommit\./',
                 'message' => \Yii::t('app', 'Git SSH Url is required.')
             ],
         ]);

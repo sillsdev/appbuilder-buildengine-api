@@ -2,8 +2,7 @@ data:
     image: silintl/data-volume:latest
     container_name: data
     volumes:
-        - /data:/data
-#       - ./application:/data
+        - ./application:/data
 db:
     image: silintl/mariadb:latest
     container_name: db
@@ -47,7 +46,7 @@ composer:
 yiimigrate:
     image: silintl/php-cli:latest
     container_name: yiimigrate
-    #user: "${DOCKER_UIDGID}"
+    user: "${DOCKER_UIDGID}"
     volumes_from:
         - data
     links:

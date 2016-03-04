@@ -32,16 +32,7 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  # config.vm.box = "ubuntu/trusty64"
-  config.vm.box = "AlbanMontaigu/boot2docker"
-  config.vm.box_version = "= 1.8.2"
-
-  # The AlbanMontaigu/boot2docker box has not been set up as a Vagrant
-  # 'base box', so it is necessary to specify how to SSH in.
-  config.ssh.username = "docker"
-  config.ssh.password = "tcuser"
-  config.ssh.insert_key = true
-
+  config.vm.box = "ubuntu/trusty64"
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
@@ -62,14 +53,7 @@ Vagrant.configure(2) do |config|
     # Enable gui for troubleshooting with boot
     # v.gui = true
     # Create a private network for accessing VM without NAT
-    override.vm.network "private_network", ip: "192.168.70.121", id: "default-network", nic_type: "virtio"
-  end
-
-  # Set memory to VM to 512M. boot2docker default is 1.5G
-  # Limit CPU usage to up to 50% of host CPU
-  config.vm.provider "virtualbox" do |v|
-    #v.memory = 768
-    #v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+    override.vm.network "private_network", ip: "192.168.70.121"
   end
 
   # Create a public network, which generally matched to bridged network.
@@ -84,14 +68,17 @@ Vagrant.configure(2) do |config|
   # argument is a set of non-required options.
 
   # Synced folders for container data.
-
-  config.vm.synced_folder "./application", "/data",
+  # Note: override mount_options on default sync folder to fix permissions
+  config.vm.synced_folder ".", "/vagrant",
    # 33 is the www-data user/group in the ubuntu container
    mount_options: ["uid=33","gid=33","fmode=755","dmode=755"]
 
   config.vm.provider "virtualbox" do |vb|
-  # A fix for speed issues with DNS resolution:
-  #   http://serverfault.com/questions/453185/vagrant-virtualbox-dns-10-0-2-3-not-working?rq=1
+    # Customize the amount of memory on the VM: database needs more memory
+    vb.memory = "1024"
+
+    # A fix for speed issues with DNS resolution:
+    # http://serverfault.com/questions/453185/vagrant-virtualbox-dns-10-0-2-3-not-working?rq=1
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 
     # Set the timesync threshold to 59 seconds, instead of the default 20 minutes.
@@ -102,109 +89,37 @@ Vagrant.configure(2) do |config|
 
   # This provisioner runs on the first `vagrant up`.
   config.vm.provision "install", type: "shell", inline: <<-SHELL
-     # Copy the home directory to persistent storage
-     mkdir /mnt/sda2/home
-     cp -r /home/docker /mnt/sda2/home
-     chown -R docker.staff /mnt/sda2/home/docker
+    # Add Docker apt repository
+    sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+    sudo sh -c 'echo deb https://apt.dockerproject.org/repo ubuntu-trusty main > /etc/apt/sources.list.d/docker.list'
+    sudo apt-get update -y
+    # Uninstall old lxc-docker
+    apt-get purge lxc-docker
+    apt-cache policy docker-engine
+    # Install docker and dependencies
+    sudo apt-get install -y linux-image-extra-$(uname -r)
+    sudo apt-get install -y docker-engine
+    # Add user vagrant to docker group
+    sudo groupadd docker
+    sudo usermod -aG docker vagrant
+    # Install Docker Compose
+    curl -sS -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
 
-     #Switcheroo
-     mount --bind /mnt/sda2/home/docker /home/docker
-     cd /home/docker
-
-     # Download Python and Pip
-     mkdir /mnt/sda2/tce-persist
-     chown docker.staff /mnt/sda2/tce-persist
-     chmod 775 /mnt/sda2/tce-persist
-
-     mount --bind /mnt/sda2/tce-persist /mnt/sda2/tmp/tce/optional
-     sudo -u tc tce-load -w python
-     umount /mnt/sda2/tmp/tce/optional
-
-     # Configure boot2docker's running of docker
-     # (Mixing of tabs and spaces is intentional, used for the <<- operator)
-     cat <<-EOF >> /var/lib/boot2docker/profile
-	EXTRA_ARGS="-icc=false"
-	DOCKER_TLS="no"
-
-	EOF
-
-     /etc/init.d/docker stop
-     iptables -F
-     /etc/init.d/docker start
-
-     # Convenience
-     if mount | grep /vagrant 1>/dev/null; then
-       ln -s /vagrant /home/docker/vagrant
-     fi
-   SHELL
+    echo 'export DOCKER_UIDGID=0:0' >> /home/vagrant/.profile
+    echo 'cd /vagrant' >> /home/vagrant/.profile
+  SHELL
 
 
   # This provisioner runs on every `vagrant reload' (as well as the first
   # `vagrant up`), reinstalling from local directories
   config.vm.provision "recompose", type: "shell",
    run: "always", inline: <<-SHELL
-     #Switcheroo
-     mount --bind /mnt/sda2/home/docker /home/docker
-     cd /home/docker
-
-     # Install python and Docker-Compose
-     mount --bind /mnt/sda2/tce-persist /mnt/sda2/tmp/tce/optional
-     sudo -u tc tce-load -ic python
-     umount /mnt/sda2/tmp/tce/optional
-
-     # Use curl to install docker-compose (rather than pip, due to
-     # "https://github.com/boot2docker/boot2docker/issues/1055").
-     curl -L https://github.com/docker/compose/releases/download/1.4.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-     chmod +x /usr/local/bin/docker-compose
-
      # Run docker-compose (which will update preloaded images, and
      # pulls any images not preloaded)
      cd /vagrant
 
      # Start services
-     docker-compose up -d
-
-     # Propose possible ENV variable exports
-     cat <<-EOF > /docker-connect.sh
-  #!/bin/sh
-  echo " "
-  echo "To connect to docker running on the Vagrant Box,"
-  echo "set your DOCKER_HOST ENV variable, one of:"
-  echo " "
-
-  regex='[0-9]\\{,3\\}\\.[0-9]\\{,3\\}\\.[0-9]\\{,3\\}\\.[0-9]\\{,3\\}'
-
-  ip -4 -o a | grep eth | sed -e "
-    /\\$regex/ {
-      s/\\$regex/\\n&/
-      s/.*\\n//
-      s/\\$regex/&\\n/
-      s/\\n.*//
-
-      s%.*%  export DOCKER_HOST=tcp://&:2375%
-      p
-    }
-
-    # If no match, delete the line
-          d
-  "
-  EOF
-     chmod u+x /docker-connect.sh
-
-     /docker-connect.sh
-
-     echo " "
-     echo "Or, just use 'vagrant ssh' to connect, and run commands"
-     echo "from inside the box, e.g.:"
-     echo " "
-     echo "  vagrant ssh"
-     echo "  cd /vagrant"
-     echo "  docker-compose ps"
-     echo "  docker images"
-
-     # Finally, and importantly, stop all running dhcp clients; this box is
-     # statically configured by Vagrant, and asking for dhcp will just
-     # override the network settings in this Vagrantfile.
-     killall udhcpc
+     DOCKER_UIDGID="0:0" docker-compose up -d
   SHELL
 end

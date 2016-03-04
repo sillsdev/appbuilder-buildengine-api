@@ -1,14 +1,16 @@
 <?php
 $BUILD_ENGINE_GIT_USER_NAME = getenv('BUILD_ENGINE_GIT_USER_NAME') ?: 'SIL AppBuilder Build Agent';
 $BUILD_ENGINE_GIT_USER_EMAIL = getenv('BUILD_ENGINE_GIT_USER_EMAIL') ?: 'appbuilder_buildagent@sil.org';
-$BUILD_ENGINE_BUILD_AGENT_CODECOMMIT_GIT_SSH_USER = getenv('BUILD_ENGINE_BUILD_AGENT_CODECOMMIT_GIT_SSH_USER') ?: 'APKAJWRTYGFR4FSZTFNQ';
-$BUILD_ENGINE_REPO_URL = getenv('BUILD_ENGINE_REPO_URL') ?: "git@bitbucket.org:silintl/appbuilder-ci-scripts";
+$BUILD_ENGINE_GIT_SSH_USER = getenv('BUILD_ENGINE_GIT_SSH_USER');
+$BUILD_ENGINE_REPO_URL = getenv('BUILD_ENGINE_REPO_URL');
 $BUILD_ENGINE_REPO_PRIVATE_KEY = getenv('BUILD_ENGINE_REPO_PRIVATE_KEY') ?: "/root/.ssh/id_rsa";
 $BUILD_ENGINE_REPO_BRANCH = getenv('BUILD_ENGINE_REPO_BRANCH') ?: "master";
 $BUILD_ENGINE_REPO_LOCAL_PATH = getenv('BUILD_ENGINE_REPO_LOCAL_PATH') ?: "/tmp/appbuilder/appbuilder-ci-scripts";
 $BUILD_ENGINE_REPO_SCRIPT_DIR = getenv('BUILD_ENGINE_REPO_SCRIPT_DIR') ?: "groovy";
 $BUILD_ENGINE_JENKINS_MASTER_URL = getenv('BUILD_ENGINE_JENKINS_MASTER_URL') ?: "unset";
 $BUILD_ENGINE_ARTIFACT_URL_BASE = getenv('BUILD_ENGINE_ARTIFACT_URL_BASE') ?: "unset";
+
+$APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
 
 return [
     'id' => 'app-console',
@@ -34,7 +36,7 @@ return [
     'params' => [
         'buildEngineGitUserName' => $BUILD_ENGINE_GIT_USER_NAME,
         'buildEngineGitUserEmail' => $BUILD_ENGINE_GIT_USER_EMAIL,
-        'buildEngineBuildAgentCodecommitGitSshUser' => $BUILD_ENGINE_BUILD_AGENT_CODECOMMIT_GIT_SSH_USER,
+        'buildEngineGitSshUser' => $BUILD_ENGINE_GIT_SSH_USER,
         'buildEngineRepoUrl' => $BUILD_ENGINE_REPO_URL,
         'buildEngineRepoBranch' => $BUILD_ENGINE_REPO_BRANCH,
         'buildEngineRepoPrivateKey' => $BUILD_ENGINE_REPO_PRIVATE_KEY,
@@ -42,5 +44,6 @@ return [
         'buildEngineRepoScriptDir' => $BUILD_ENGINE_REPO_SCRIPT_DIR,
         'buildEngineJenkinsMasterUrl' => $BUILD_ENGINE_JENKINS_MASTER_URL,
         'buildEngineArtifactUrlBase' => $BUILD_ENGINE_ARTIFACT_URL_BASE,
+        'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
     ],
 ];

@@ -32,6 +32,25 @@ class CronController extends Controller
         $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
         $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
 
+        // Verify buildEngineRepoUrl is a SSH Url
+        if (is_null($repoUrl) || !preg_match('/^ssh:\/\//', $repoUrl)) {
+            throw new ServerErrorHttpException("BUILD_ENGINE_REPO_URL must be SSH Url: $repoUrl", 1456850613);
+        }
+
+        echo "1) RepoUrl: $repoUrl\n";
+
+        // If buildEngineRepoUrl is CodeCommit, insert the userId
+        if (preg_match('/^ssh:\/\/git-codecommit/', $repoUrl)) {
+            // If using CodeCommit, GitSshUser is required
+            $sshUser = \Yii::$app->params['buildEngineGitSshUser'];
+            if (is_null($sshUser)) {
+                throw new ServerErrorHttpException("BUILD_ENGINE_GIT_SSH_USER must be set if using codecommit: $repoUrl", 1456850614);
+            }
+            $repoUrl = "ssh://" . $sshUser . "@" . substr($repoUrl, 6);
+        }
+
+        echo "2) RepoUrl: $repoUrl\n";
+
         require_once __DIR__ . '/../../vendor/autoload.php';
         $wrapper = new GitWrapper();
 
@@ -45,7 +64,11 @@ class CronController extends Controller
         } else {
             $git = $wrapper->init($repoLocalPath);
             $git->fetchAll();
-            $git->reset("--hard", "origin/$repoBranch");
+            try {
+                $git->reset("--hard", "origin/$repoBranch");
+            } catch (\Exception $e) {
+                echo "origin/$repoBranch doesn't exist yet. \n";
+            }
         }
         // Set afterwards in case the configuration changes after
         // the repo has been cloned (i.e. services has been restarted
@@ -147,9 +170,10 @@ class CronController extends Controller
         $artifactUrlBase = $this->getArtifactUrlBase();
 
         // When using Codecommit, the user portion in the url has to be changed
-        // to the User associated with the public key in AWS.
-        $buildAgentCodecommitSshUser = \Yii::$app->params['buildEngineBuildAgentCodecommitGitSshUser'];
-        $gitSubstPatterns = [ '/([0-9A-Za-z]*)@git-codecommit/' => "$buildAgentCodecommitSshUser@git-codecommit" ];
+        // to the User associated with the AppBuilder SSH Key
+        $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
+        $gitSubstPatterns = [ '/ssh:\/\/([0-9A-Za-z]*)@git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit",
+                              '/ssh:\/\/git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit" ];
 
         $git = $this->getRepo();
 
@@ -300,6 +324,7 @@ class CronController extends Controller
         $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
         $userName = \Yii::$app->params['buildEngineGitUserName'];
         $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
+        $sshUser = \Yii::$app->params['buildEngineGitSshUser'] ?: "";
 
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $jenkins = $this->getJenkins();
@@ -308,7 +333,7 @@ class CronController extends Controller
         $artifactUrlBase = $this->getArtifactUrlBase();
         $appEnv = \Yii::$app->params['appEnv'];
 
-        echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL;
+        echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL."  SshUser: $sshUser". PHP_EOL;
         echo "Jenkins:". PHP_EOL."  BuildEngineJenkinsMasterUrl: $jenkinsUrl". PHP_EOL."  Jenkins.baseUrl: $jenkinsBaseUrl". PHP_EOL;
         echo "Git:". PHP_EOL."  Name:$userName". PHP_EOL."  Email:$userEmail". PHP_EOL;
         echo "Artifacts:". PHP_EOL."  UrlBase:$artifactUrlBase". PHP_EOL;
