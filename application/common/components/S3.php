@@ -101,7 +101,7 @@ class S3 {
         $path = substr($apkpath, 0, strrpos( $apkpath, '/') + 1);
         $bucket = substr($path,1, strpos( $path, '/', 1) - 1);
         $key = substr($path, strpos($path, '/', 1) + 1);
-        $s3 = $this->getS3Client();
+        $s3 = self::getS3Client();
         $s3->deleteMatchingObjects($bucket, $key);
         echo "Deleted S3 bucket $bucket key $key " . PHP_EOL;
     }

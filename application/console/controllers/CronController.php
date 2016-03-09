@@ -484,7 +484,7 @@ class CronController extends Controller
             'status' => Build::STATUS_EXPIRED])->each(50) as $build){
             if ($build->artifact_url != null) {
                 echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
-                $this-removeS3Artifacts($build);
+                S3::removeS3Artifacts($build);
                 $build->clearArtifactUrl();
                 $logBuildDetails = $this->getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Remove expired S3 Atrtifacts for an expired build.';
