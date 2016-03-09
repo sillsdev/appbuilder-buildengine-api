@@ -8,6 +8,7 @@ use common\models\EmailQueue;
 use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
+use common\components\JenkinsUtils;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -91,20 +92,6 @@ class CronController extends Controller
         return $git;
     }
 
-    private function getPrefix()
-    {
-        return date('Y-m-d H:i:s');
-    }
-    /**
-     *
-     * @return Jenkins
-     */
-    private function getJenkins(){
-        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
-        $jenkins = new Jenkins($jenkinsUrl);
-        return $jenkins;
-    }
-
     private function getArtifactUrlBase(){
         return \Yii::$app->params['buildEngineArtifactUrlBase'] . "/" . \Yii::$app->params['appEnv'];
     }
@@ -162,8 +149,7 @@ class CronController extends Controller
      */
     public function actionSyncScripts()
     {
-        $logMsg = 'cron/sync-scripts - ';
-        $prefix = $this->getPrefix();
+        $prefix = Utils::getPrefix();
 
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
@@ -245,52 +231,6 @@ class CronController extends Controller
     }
 
     /**
-     * Extract the Artifact Url from the Jenkins Build information.
-     * @param JenkinsBuild $jenkinsBuild
-     * @return string
-     */
-    private function getApkArtifactUrl($jenkinsBuild)
-    {
-       return $this->getArtifactUrl($jenkinsBuild, "/\.apk$/");
-    }
-    /**
-     * Extract the Artifact Url from the Jenkins Build information.
-     * @param JenkinsBuild $jenkinsBuild
-     * @return string
-     */
-     private function getVersionCodeArtifactUrl($jenkinsBuild)
-     {
-         return $this->getArtifactUrl($jenkinsBuild, "/version_code.txt/");
-     }
-    /**
-     * Extract the Artifact Url from the Jenkins Build information.
-     * @param JenkinsBuild $jenkinsBuild
-     * @param string $artifactPattern
-     * @return string
-     */
-    private function getArtifactUrl($jenkinsBuild, $artifactPattern)
-    {
-        $artifacts = $jenkinsBuild->get("artifacts");
-        if (!$artifacts) { return null; }
-        $artifact = null;
-        foreach ($artifacts as $testArtifact) {
-            if(preg_match($artifactPattern,$testArtifact->relativePath)) {
-                $artifact = $testArtifact;
-                break;
-            }
-        }
-        if (!$artifact) {
-            echo "getArtifactURL: No artifact matching ".$artifactPattern . PHP_EOL;
-            return null;
-        }
-        $relativePath = $artifact->relativePath;
-        $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
-        $buildUrl = $jenkinsBuild->getBuildUrl();
-        $pieces = explode("job", $buildUrl);
-        return $baseUrl."job".$pieces[1]."artifact/".$relativePath;
-    }
-
-    /**
      * Test email action. Requires email adddress as parameter (Dev only)
      */
     public function actionTestEmail($sendToAddress)
@@ -313,7 +253,7 @@ class CronController extends Controller
      */
     public function actionGetConfig()
     {
-        $prefix = $this->getPrefix();
+        $prefix = Utils::getPrefix();
         echo "[$prefix] Get Configuration..." . PHP_EOL;
 
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
@@ -327,7 +267,7 @@ class CronController extends Controller
         $sshUser = \Yii::$app->params['buildEngineGitSshUser'] ?: "";
 
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
-        $jenkins = $this->getJenkins();
+        $jenkins = JenkinsUtils::getJenkins();
         $jenkinsBaseUrl = $jenkins->getBaseUrl();
 
         $artifactUrlBase = $this->getArtifactUrlBase();
@@ -345,11 +285,11 @@ class CronController extends Controller
     public function actionGetBuilds()
     {
         $logger = new Appbuilder_logger("CronController");
-        $prefix = $this->getPrefix();
+        $prefix = Utils::getPrefix();
         echo "[$prefix] All Builds...". PHP_EOL;
         foreach (Build::find()->each(50) as $build){
             $jobName = $build->job->name();
-            $logBuildDetails = $this->getlogBuildDetails($build);
+            $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
             $logger->appbuilderWarningLog($logBuildDetails);
             try {
                 if ($build->build_number > 0) {
@@ -375,7 +315,7 @@ class CronController extends Controller
     {
         $logger = new Appbuilder_logger("CronController");
         $jenkins = $this->getJenkins();
-        $prefix = $this->getPrefix();
+        $prefix = Utils::getPrefix();
         echo "[$prefix] Remaining Builds...". PHP_EOL;
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
@@ -413,7 +353,7 @@ class CronController extends Controller
                 try {
                     $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                     $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
-                    $logBuildDetails = $this->getlogBuildDetails($build);
+                    $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
                     $logger->appbuilderWarningLog($logBuildDetails);
                 } catch (\Exception $e) {
                     $logException = [
@@ -463,7 +403,7 @@ class CronController extends Controller
                 $jobName = $build->job->name();
                 $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number". PHP_EOL;
-                $logBuildDetails = $this->getlogBuildDetails($build);
+                $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Force the completed successful builds to upload the builds to S3.';
                 $logBuildDetails['NOTE2: ']='Attempting to save Build.';
                 $logger->appbuilderWarningLog($logBuildDetails);
@@ -478,7 +418,7 @@ class CronController extends Controller
     public function actionRemoveExpiredBuilds()
     {
         $logger = new Appbuilder_logger("CronController");
-        $prefix = $this->getPrefix();
+        $prefix = Utils::getPrefix();
         echo "[$prefix] actionRemoveExpiredBuilds: Started". PHP_EOL;
         foreach (Build::find()->where([
             'status' => Build::STATUS_EXPIRED])->each(50) as $build){
@@ -486,8 +426,8 @@ class CronController extends Controller
                 echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
                 S3::removeS3Artifacts($build);
                 $build->clearArtifactUrl();
-                $logBuildDetails = $this->getlogBuildDetails($build);
-                $logBuildDetails['NOTE: ']='Remove expired S3 Atrtifacts for an expired build.';
+                $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
+                $logBuildDetails['NOTE: ']='Remove expired S3 Artifacts for an expired build.';
                 $logger->appbuilderWarningLog($logBuildDetails);
             }
         }
@@ -535,12 +475,12 @@ class CronController extends Controller
     private function checkBuildStatus($build){
         $logger = new Appbuilder_logger("CronController");
         try {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName(). PHP_EOL;
 
             $job = $build->job;
             if ($job){
-                $jenkins = $this->getJenkins();
+                $jenkins = JenkinsUtils::getJenkins();
                 $jenkinsJob = $jenkins->getJob($job->name());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
@@ -559,16 +499,16 @@ class CronController extends Controller
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
                     }
-                    $log = $this->getlogBuildDetails($build);
+                    $log = JenkinsUtils::getlogBuildDetails($build);
                     $log['job id'] = $job->id;
                     $logger->appbuilderWarningLog($log);
                     echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
                 }
             }
         } catch (\Exception $e) {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] checkBuildStatus: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = $this->getlogBuildDetails($build);
+            $logException = JenkinsUtils::getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
         }
     }
@@ -638,10 +578,10 @@ class CronController extends Controller
     {
         $logger = new Appbuilder_logger("CronController");
         try {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
 
-            $jenkins = $this->getJenkins();
+            $jenkins = JenkinsUtils::getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
 
             if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob)){
@@ -651,9 +591,9 @@ class CronController extends Controller
                 $build->save();
             }
         } catch (\Exception $e) {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = $this->getlogBuildDetails($build);
+            $logException = JenkinsUtils::getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
         }
     }
@@ -669,7 +609,7 @@ class CronController extends Controller
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $job = $build->job;
             echo "cron/manage-builds: ". PHP_EOL;
-            $logBuildDetails = $this->getlogBuildDetails($build);
+            $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
             $logger->appbuilderWarningLog($logBuildDetails);
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
@@ -690,10 +630,10 @@ class CronController extends Controller
     {
         $logger = new Appbuilder_logger("CronController");
         try {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
 
-            $jenkins = $this->getJenkins();
+            $jenkins = JenkinsUtils::getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
             $parameters = array("CHANNEL" => $release->channel, "BUILD_NUMBER" => $release->build->build_number);
 
@@ -704,7 +644,7 @@ class CronController extends Controller
                 $release->save();
             }
         } catch (\Exception $e) {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartRelease: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
@@ -719,10 +659,10 @@ class CronController extends Controller
     {
         $logger = new Appbuilder_logger("CronController");
         try {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
 
-            $jenkins = $this->getJenkins();
+            $jenkins = JenkinsUtils::getJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
             $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
             if ($jenkinsBuild){
@@ -749,7 +689,7 @@ class CronController extends Controller
                 $logger->appbuilderWarningLog($log);
             }
         } catch (\Exception $e) {
-            $prefix = $this->getPrefix();
+            $prefix = Utils::getPrefix();
             echo "[$prefix] checkReleaseStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             echo "Exception: " . $e->getMessage() . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
@@ -832,29 +772,6 @@ class CronController extends Controller
     }
 
     /**
-     *
-     * get build details for logging.
-     * @param Build $build
-     * @return Array
-     */
-    public function getlogBuildDetails($build)
-    {
-        $jobName = $build->job->name();
-        $log = [
-            'jobName' => $jobName
-        ];
-        $log['buildId'] = $build->id;
-        $log['buildStatus'] = $build->status;
-        $log['buildNumber'] = $build->build_number;
-        $log['buildResult'] = $build->result;
-        $log['buildArtifactUrl'] = $build->artifact_url;
-
-        echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
-                    . "Result=$build->result, ArtifactUrl=$build->artifact_url". PHP_EOL;
-        return $log;
-    }
-
-    /**
      * get Jenkins and S3 details
      * @param Build $build
      * @return Array
@@ -868,11 +785,11 @@ class CronController extends Controller
         ];
         $log['request_id'] = $build->job->request_id;
 
-        $jenkins = $this->getJenkins();
+        $jenkins = JenkinsUtils::getJenkins();
         $jenkinsJob = $jenkins->getJob($build->job->name());
         $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
         $buildResult = $jenkinsBuild->getResult();
-        $buildArtifact = $this->getApkArtifactUrl($jenkinsBuild);
+        $buildArtifact = JenkinsUtils::getApkArtifactUrl($jenkinsBuild);
         $s3Url = S3::getS3Url($build, $buildArtifact);
 
         $log['jenkins_buildResult'] = $buildResult;

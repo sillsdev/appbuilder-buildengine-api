@@ -45,4 +45,9 @@ class Utils
         }
         return null;
     }
+    public static function getPrefix()
+    {
+        return date('Y-m-d H:i:s');
+    }
+
 }
