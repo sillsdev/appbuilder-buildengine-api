@@ -187,6 +187,17 @@ class Build extends BuildBase implements Linkable
        }
        return $build;
     }
+
+    public static function findOneByBuildId($build_id)
+    {
+        $build = Build::findOne(['id' => $build_id]);
+        if ($build) {
+            if ($build->status == Build::STATUS_EXPIRED) {
+                $build = null;
+            }
+       }
+       return $build;
+    }
     /**
      * Returns array of all non expired builds associated with the specified job
      *

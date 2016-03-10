@@ -5,6 +5,7 @@ use common\models\Job;
 use common\models\Build;
 use common\models\Release;
 use common\models\EmailQueue;
+use common\models\OperationQueue;
 use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
@@ -12,11 +13,9 @@ use common\components\JenkinsUtils;
 
 use yii\console\Controller;
 use common\helpers\Utils;
-use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
 
 use GitWrapper\GitWrapper;
-use JenkinsApi\Jenkins;
 use JenkinsApi\Item\Build as JenkinsBuild;
 use JenkinsApi\Item\Job as JenkinsJob;
 
@@ -132,12 +131,9 @@ class CronController extends Controller
 
     private function updateJenkinsJobs()
     {
-        $prefix = $this->getPrefix();
-        $jenkins = $this->getJenkins();
-        if ($jenkins){
-            echo "[$prefix] Telling Jenkins to regenerate Jobs" . PHP_EOL;
-            $jenkins->getJob("Job-Wrapper-Seed")->launch();
-        }
+        echo "updateJenkinsJobs starting". PHP_EOL;
+        $task = OperationQueue::UPDATEJOBS;
+        OperationQueue::findOrCreate($task, null, null);
     }
 
     public function actionGetRepo()
@@ -241,7 +237,6 @@ class CronController extends Controller
         ]);
         $mail = new EmailQueue();
         $mail->to = $sendToAddress;
-    //    $mail->cc = 'dmoore1768@yahoo.com';
         $mail->subject = 'New test message';
         $mail->html_body = $body;
         if(!$mail->save()){
@@ -261,7 +256,6 @@ class CronController extends Controller
         $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
         $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
         $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
-        $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
         $userName = \Yii::$app->params['buildEngineGitUserName'];
         $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
         $sshUser = \Yii::$app->params['buildEngineGitSshUser'] ?: "";
@@ -271,7 +265,6 @@ class CronController extends Controller
         $jenkinsBaseUrl = $jenkins->getBaseUrl();
 
         $artifactUrlBase = $this->getArtifactUrlBase();
-        $appEnv = \Yii::$app->params['appEnv'];
 
         echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL."  SshUser: $sshUser". PHP_EOL;
         echo "Jenkins:". PHP_EOL."  BuildEngineJenkinsMasterUrl: $jenkinsUrl". PHP_EOL."  Jenkins.baseUrl: $jenkinsBaseUrl". PHP_EOL;
@@ -314,7 +307,6 @@ class CronController extends Controller
     public function actionGetBuildsRemaining()
     {
         $logger = new Appbuilder_logger("CronController");
-        $jenkins = $this->getJenkins();
         $prefix = Utils::getPrefix();
         echo "[$prefix] Remaining Builds...". PHP_EOL;
         $complete = Build::STATUS_COMPLETED;
@@ -345,14 +337,11 @@ class CronController extends Controller
     public function actionGetBuildsCompleted()
     {
         $logger = new Appbuilder_logger("CronController");
-        $jenkins = $this->getJenkins();
         foreach (Build::find()->where([
             'status' => Build::STATUS_COMPLETED,
             'result' => JenkinsBuild::SUCCESS])->each(50) as $build){
                 $jobName = $build->job->name();
                 try {
-                    $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
-                    $artifactUrl = $this->getApkArtifactUrl($jenkinsBuild);
                     $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
                     $logger->appbuilderWarningLog($logBuildDetails);
                 } catch (\Exception $e) {
@@ -395,19 +384,19 @@ class CronController extends Controller
     public function actionForceUploadBuilds()
     {
         $logger = new Appbuilder_logger("CronController");
-        $jenkins = $this->getJenkins();
         foreach (Build::find()->each(50) as $build){
             if ($build->status == Build::STATUS_COMPLETED
                 && $build->result == JenkinsBuild::SUCCESS)
             {
                 $jobName = $build->job->name();
-                $jenkinsBuild = $jenkins->getBuild($jobName, $build->build_number);
                 echo "Attempting to save Build: Job=$jobName, BuildNumber=$build->build_number". PHP_EOL;
                 $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Force the completed successful builds to upload the builds to S3.';
                 $logBuildDetails['NOTE2: ']='Attempting to save Build.';
                 $logger->appbuilderWarningLog($logBuildDetails);
-                $this->saveBuild($build, $jenkinsBuild);
+                $task = OperationQueue::SAVETOS3;
+                $build_id = $build->id;
+                OperationQueue::findOrCreate($task, $build_id, null);
             }
         }
     }
@@ -445,30 +434,6 @@ class CronController extends Controller
     }
 
     /**
-     * Save the build to S3.
-     * @param Build $build
-     * @param JenkinsBuild $jenkinsBuild
-     * @return string
-     */
-    private function saveBuild($build, $jenkinsBuild)
-    {
-        $logger = new Appbuilder_logger("CronController");
-        $artifactUrl =  $this->getApkArtifactUrl($jenkinsBuild);
-        $versionCodeArtifactUrl = $this->getVersionCodeArtifactUrl($jenkinsBuild);
-        list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl);
-
-        $log = $this->getlogBuildDetails($build);
-        $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
-        $log['jenkins_ArtifactUrl'] = $artifactUrl;
-        $log['apkPublicUrl'] = $apkPublicUrl;
-        $log['version'] = $versionCode;
-        $logger->appbuilderWarningLog($log);
-        echo "returning: $apkPublicUrl version: $versionCode". PHP_EOL;
-
-        return [$apkPublicUrl, $versionCode];
-    }
-
-    /**
      *
      * @param Build $build
      */
@@ -492,9 +457,14 @@ class CronController extends Controller
                                 $build->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $build->jobName(), $build->build_number);
                                 break;
                             case JenkinsBuild::SUCCESS:
-                                list($build->artifact_url, $build->version_code) = $this->saveBuild($build, $jenkinsBuild);
+                                $task = OperationQueue::SAVETOS3;
+                                $build_id = $build->id;
+                                OperationQueue::findOrCreate($task, $build_id, null);
                                 break;
                         }
+                        $task = OperationQueue::FINDEXPIREDBUILDS;
+                        $job_id = $job->id;
+                        OperationQueue::findOrCreate($task, $job_id, null);
                     }
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
@@ -583,8 +553,9 @@ class CronController extends Controller
 
             $jenkins = JenkinsUtils::getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
-
-            if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob)){
+            $jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob);
+            echo "Got to isnull" . PHP_EOL;
+            if (!is_null($jenkinsBuild)){
                 $build->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $build->build_number". PHP_EOL;
                 $build->status = Build::STATUS_ACTIVE;
@@ -597,7 +568,63 @@ class CronController extends Controller
             $logger->appbuilderExceptionLog($logException, $e);
         }
     }
+    /**
+     * Process operation_queue
+     * This function will iterate up to the configured limit and for each iteration
+     * it will process the next job in queue
+     */
+    public function actionOperationQueue($verbose=false)
+    {
+        $logger = new Appbuilder_logger("CronController");
+    // $config = \Yii::$app->params['operation_queue'];
+         // Capture start time for log
+        $starttimestamp = time();
+        $starttime = Utils::getDatetime();
 
+        // Initialize variables
+        $successfulJobs = 0;
+        $failedJobs = 0;
+        $iterationsRun = 0;
+
+        $queuedJobs = OperationQueue::find()->count();
+        $batchCount = ($queuedJobs > 5)? 5: $queuedJobs;
+        // Do the work
+        for($i=0; $i<$batchCount; $i++){
+            $iterationsRun++;
+            try{
+                echo "Calling process next" . PHP_EOL;
+                $results = OperationQueue::processNext(null,50,10);
+                if($results) {
+                    $successfulJobs++;
+                } else {
+                    break;
+                }
+            } catch (\Exception $e) {
+                $failedJobs++;
+            }
+        }
+
+        // Capture endtime for log
+        $endtimestamp = time();
+        $endtime = Utils::getDatetime();
+        $totaltime = $endtimestamp-$starttimestamp;
+
+        $logMsg  = 'cron/operation-queue - queued='.$queuedJobs.' successful='.$successfulJobs.' failed='.$failedJobs;
+        $logMsg .= ' iterations='.$iterationsRun.' totaltime='.$totaltime;
+        $logArray = [$logMsg];
+        if($failedJobs > 0){
+            $logger->appbuilderErrorLog($logArray);
+        } else{
+            if($verbose && $verbose != 'false'){
+                $logger->appbuilderWarningLog($logArray);
+            } else {
+                $logger->appbuilderInfoLog($logArray);
+            }
+        }
+
+        echo PHP_EOL . $logMsg . PHP_EOL;
+
+    }
     /**
      * Manage the state of the builds and process the current state
      * until the status is complete.

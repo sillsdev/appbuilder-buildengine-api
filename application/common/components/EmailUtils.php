@@ -34,6 +34,16 @@ class EmailUtils
         return 21;
     }
 
+    public static function getAdminEmailAddress()
+    {
+        $adminEmailParam = 'adminEmail';
+        $config = \Yii::$app->params;
+        if (Utils::isArrayEntryTruthy($config, $adminEmailParam) ) {
+            return $config[$adminEmailParam];
+        }
+
+        return 'nobody@nowhere.com';
+    }
     /**
      * @param $email a Mailer email object
      * @return array with two elements ...

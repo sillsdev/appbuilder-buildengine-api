@@ -3,5 +3,6 @@
 * * * * * root /data/yii cron/manage-builds  2>&1 >> /var/log/managebuilds.log
 * * * * * root /data/yii cron/manage-releases  2>&1 >> /var/log/managereleases.log
 * * * * * root /data/yii cron/send-emails  2>&1 >> /var/log/sendemails.log
+* * * * * root /data/yii cron/operation-queue  2>&1 >> /var/log/operationqueue.log
 30 0 * * * root /data/yii cron/remove-expired-builds  2>&1 >> /var/log/expiredbuilds.log
 
