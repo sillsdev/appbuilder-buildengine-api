@@ -10,6 +10,7 @@ use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
+use common\components\MaxRetriesExceededException;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -576,8 +577,11 @@ class CronController extends Controller
     public function actionOperationQueue($verbose=false)
     {
         $logger = new Appbuilder_logger("CronController");
-    // $config = \Yii::$app->params['operation_queue'];
-         // Capture start time for log
+
+        // Set the maximum number of entries that may be attempted in one run
+        $batchSize = 10;
+
+        // Capture start time for log
         $starttimestamp = time();
         $starttime = Utils::getDatetime();
 
@@ -585,22 +589,35 @@ class CronController extends Controller
         $successfulJobs = 0;
         $failedJobs = 0;
         $iterationsRun = 0;
+        $maxRetriesExceeded = 0;
 
         $queuedJobs = OperationQueue::find()->count();
-        $batchCount = ($queuedJobs > 5)? 5: $queuedJobs;
         // Do the work
-        for($i=0; $i<$batchCount; $i++){
+        for($i=0; $i<$queuedJobs; $i++){
             $iterationsRun++;
             try{
-                echo "Calling process next" . PHP_EOL;
-                $results = OperationQueue::processNext(null,50,10);
+                $results = OperationQueue::processNext(null);
                 if($results) {
                     $successfulJobs++;
                 } else {
                     break;
                 }
-            } catch (\Exception $e) {
+            }
+            catch (MaxRetriesExceededException $e) {
+                // Don't count entries in the database that are now obsolete
+                // and are never deleted
+                echo "Caught max retry exception".PHP_EOL;
+                $maxRetriesExceeded++;
+            }
+
+            catch (\Exception $e) {
+                echo "Caught anothe exception".PHP_EOL;
+                echo $e->getMessage() .PHP_EOL;
                 $failedJobs++;
+             }
+            $attempts = $successfulJobs + $failedJobs;
+            if ($attempts >= $batchSize) {
+                break;
             }
         }
 
@@ -610,7 +627,7 @@ class CronController extends Controller
         $totaltime = $endtimestamp-$starttimestamp;
 
         $logMsg  = 'cron/operation-queue - queued='.$queuedJobs.' successful='.$successfulJobs.' failed='.$failedJobs;
-        $logMsg .= ' iterations='.$iterationsRun.' totaltime='.$totaltime;
+        $logMsg .= ' retries exceeded='.$maxRetriesExceeded.' iterations='.$iterationsRun.' totaltime='.$totaltime;
         $logArray = [$logMsg];
         if($failedJobs > 0){
             $logger->appbuilderErrorLog($logArray);
