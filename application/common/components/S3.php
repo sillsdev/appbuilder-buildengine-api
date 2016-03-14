@@ -2,10 +2,9 @@
 
 namespace common\components;
 
-use common\models\Job;
 use common\models\Build;
+use common\components\JenkinsUtils;
 
-use yii\console\Controller;
 use yii\web\ServerErrorHttpException;
 
 /*
@@ -71,7 +70,7 @@ class S3 {
     public static function getS3Url($build, $artifactUrl)
     {
         $job = $build->job;
-        return self::getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
+        return JenkinsUtils::getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
     }
 
     /**
@@ -104,9 +103,5 @@ class S3 {
         $s3 = self::getS3Client();
         $s3->deleteMatchingObjects($bucket, $key);
         echo "Deleted S3 bucket $bucket key $key " . PHP_EOL;
-    }
-
-    private static function getArtifactUrlBase(){
-        return \Yii::$app->params['buildEngineArtifactUrlBase'] . "/" . \Yii::$app->params['appEnv'];
     }
 }

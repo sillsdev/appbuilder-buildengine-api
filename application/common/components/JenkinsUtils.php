@@ -37,6 +37,13 @@ class JenkinsUtils
          return self::getArtifactUrl($jenkinsBuild, "/version_code.txt/");
      }
     /**
+     * Get the artifact url base string from the configured parameters
+     * @return string
+     */
+    public static function getArtifactUrlBase(){
+        return \Yii::$app->params['buildEngineArtifactUrlBase'] . "/" . \Yii::$app->params['appEnv'];
+    }
+    /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
      * @param string $artifactPattern

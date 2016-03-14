@@ -92,10 +92,6 @@ class CronController extends Controller
         return $git;
     }
 
-    private function getArtifactUrlBase(){
-        return \Yii::$app->params['buildEngineArtifactUrlBase'] . "/" . \Yii::$app->params['appEnv'];
-    }
-
     /**
      *
      * @param string $subject
@@ -150,7 +146,7 @@ class CronController extends Controller
 
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
-        $artifactUrlBase = $this->getArtifactUrlBase();
+        $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
 
         // When using Codecommit, the user portion in the url has to be changed
         // to the User associated with the AppBuilder SSH Key
@@ -265,7 +261,7 @@ class CronController extends Controller
         $jenkins = JenkinsUtils::getJenkins();
         $jenkinsBaseUrl = $jenkins->getBaseUrl();
 
-        $artifactUrlBase = $this->getArtifactUrlBase();
+        $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
 
         echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL."  SshUser: $sshUser". PHP_EOL;
         echo "Jenkins:". PHP_EOL."  BuildEngineJenkinsMasterUrl: $jenkinsUrl". PHP_EOL."  Jenkins.baseUrl: $jenkinsBaseUrl". PHP_EOL;
