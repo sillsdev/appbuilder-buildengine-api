@@ -12,6 +12,8 @@ use common\components\JenkinsUtils;
 
 use console\components\MaxRetriesExceededException;
 use console\components\SyncScriptsAction;
+use console\components\ManageBuildsAction;
+use console\components\ManageReleasesAction;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -92,11 +94,6 @@ class CronController extends Controller
 
         return $git;
     }
-
-    public function actionGetRepo()
-    {
-        $this->getRepo();
-    }
     /**
      * Synchronize the Job configuration in database with groovy scripts.
      */
@@ -108,6 +105,139 @@ class CronController extends Controller
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
         $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
         SyncScriptsAction::performAction($this, $viewPath, $git, $repoLocalPath, $scriptDir, $appBuilderGitSshUser);
+    }
+    /**
+     * Manage the state of the builds and process the current state
+     * until the status is complete.
+     */
+    public function actionManageBuilds()
+    {
+        ManageBuildsAction::performAction();
+    }
+
+    /**
+     * Manage the state of the releases and process the current state
+     * until the status is complete.
+     */
+    public function actionManageReleases()
+    {
+        ManageReleasesAction::performAction();
+    }
+    /**
+     * Send queued emails
+    */
+    public function actionSendEmails($verbose=false)
+    {
+        $emailCount = EmailQueue::find()->count();
+
+        if($emailCount && is_numeric($emailCount)){
+            echo "cron/send-emails - Count: " . $emailCount . ". ". PHP_EOL;
+        }
+
+        list($emails_sent, $errors) = EmailUtils::sendEmailQueue();
+        if (count($emails_sent) > 0) {
+            echo "... sent=".count($emails_sent). PHP_EOL;
+        }
+        if ($errors && count($errors) > 0) {
+            echo '... errors='.count($errors).' messages=['.join(',',$errors).']' . PHP_EOL;
+        }
+    }
+
+    /**
+     * Remove expired builds from S3
+    */
+    public function actionRemoveExpiredBuilds()
+    {
+        $logger = new Appbuilder_logger("CronController");
+        $prefix = Utils::getPrefix();
+        echo "[$prefix] actionRemoveExpiredBuilds: Started". PHP_EOL;
+        foreach (Build::find()->where([
+            'status' => Build::STATUS_EXPIRED])->each(50) as $build){
+            if ($build->artifact_url != null) {
+                echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
+                S3::removeS3Artifacts($build);
+                $build->clearArtifactUrl();
+                $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
+                $logBuildDetails['NOTE: ']='Remove expired S3 Artifacts for an expired build.';
+                $logger->appbuilderWarningLog($logBuildDetails);
+            }
+        }
+        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted". PHP_EOL;
+
+    }
+
+    /**
+     * Process operation_queue
+     * This function will iterate up to the configured limit and for each iteration
+     * it will process the next job in queue
+     */
+    public function actionOperationQueue($verbose=false)
+    {
+        $logger = new Appbuilder_logger("CronController");
+
+        // Set the maximum number of entries that may be attempted in one run
+        $batchSize = 10;
+
+        // Capture start time for log
+        $starttimestamp = time();
+        $starttime = Utils::getDatetime();
+
+        // Initialize variables
+        $successfulJobs = 0;
+        $failedJobs = 0;
+        $iterationsRun = 0;
+        $maxRetriesExceeded = 0;
+
+        $queuedJobs = OperationQueue::find()->count();
+        // Do the work
+        for($i=0; $i<$queuedJobs; $i++){
+            $iterationsRun++;
+            try{
+                $results = OperationQueue::processNext(null);
+                if($results) {
+                    $successfulJobs++;
+                } else {
+                    break;
+                }
+            }
+            catch (MaxRetriesExceededException $e) {
+                // Don't count entries in the database that are now obsolete
+                // and are never deleted
+                echo "Caught max retry exception".PHP_EOL;
+                $maxRetriesExceeded++;
+            }
+
+            catch (\Exception $e) {
+                echo "Caught anothe exception".PHP_EOL;
+                echo $e->getMessage() .PHP_EOL;
+                $failedJobs++;
+             }
+            $attempts = $successfulJobs + $failedJobs;
+            if ($attempts >= $batchSize) {
+                break;
+            }
+        }
+
+        // Capture endtime for log
+        $endtimestamp = time();
+        $endtime = Utils::getDatetime();
+        $totaltime = $endtimestamp-$starttimestamp;
+
+        $logMsg  = 'cron/operation-queue - queued='.$queuedJobs.' successful='.$successfulJobs.' failed='.$failedJobs;
+        $logMsg .= ' retries exceeded='.$maxRetriesExceeded.' iterations='.$iterationsRun.' totaltime='.$totaltime;
+        $logArray = [$logMsg];
+        if($failedJobs > 0){
+            $logger->appbuilderErrorLog($logArray);
+        } else{
+            if($verbose && $verbose != 'false'){
+                $logger->appbuilderWarningLog($logArray);
+            } else {
+                $logger->appbuilderInfoLog($logArray);
+            }
+        }
+
+        echo PHP_EOL . $logMsg . PHP_EOL;
+
     }
 
     /**
@@ -241,26 +371,6 @@ class CronController extends Controller
         }
     }
     /**
-     * Send queued emails
-    */
-    public function actionSendEmails($verbose=false)
-    {
-        $emailCount = EmailQueue::find()->count();
-
-        if($emailCount && is_numeric($emailCount)){
-            echo "cron/send-emails - Count: " . $emailCount . ". ". PHP_EOL;
-        }
-
-        list($emails_sent, $errors) = EmailUtils::sendEmailQueue();
-        if (count($emails_sent) > 0) {
-            echo "... sent=".count($emails_sent). PHP_EOL;
-        }
-        if ($errors && count($errors) > 0) {
-            echo '... errors='.count($errors).' messages=['.join(',',$errors).']' . PHP_EOL;
-        }
-    }
-
-    /**
      * Force the completed successful builds to upload the builds to S3. (Dev only)
      * Note: This should only be used during development to test whether
      *       S3 configuration is correct.
@@ -285,419 +395,7 @@ class CronController extends Controller
         }
     }
 
-    /**
-     * Remove expired builds from S3
-    */
-    public function actionRemoveExpiredBuilds()
-    {
-        $logger = new Appbuilder_logger("CronController");
-        $prefix = Utils::getPrefix();
-        echo "[$prefix] actionRemoveExpiredBuilds: Started". PHP_EOL;
-        foreach (Build::find()->where([
-            'status' => Build::STATUS_EXPIRED])->each(50) as $build){
-            if ($build->artifact_url != null) {
-                echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
-                S3::removeS3Artifacts($build);
-                $build->clearArtifactUrl();
-                $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
-                $logBuildDetails['NOTE: ']='Remove expired S3 Artifacts for an expired build.';
-                $logger->appbuilderWarningLog($logBuildDetails);
-            }
-        }
-        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted". PHP_EOL;
-
-    }
-    private function getBuild($id)
-    {
-        $build = Build::findOne(['id' => $id]);
-        if (!$build){
-            echo "Build not found ". PHP_EOL;
-            throw new NotFoundHttpException();
-        }
-        return $build;
-    }
-
-    /**
-     *
-     * @param Build $build
-     */
-    private function checkBuildStatus($build){
-        $logger = new Appbuilder_logger("CronController");
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName(). PHP_EOL;
-
-            $job = $build->job;
-            if ($job){
-                $jenkins = JenkinsUtils::getJenkins();
-                $jenkinsJob = $jenkins->getJob($job->name());
-                $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
-                if ($jenkinsBuild){
-                    $build->result = $jenkinsBuild->getResult();
-                    if (!$jenkinsBuild->isBuilding()){
-                        $build->status = Build::STATUS_COMPLETED;
-                        switch($build->result){
-                            case JenkinsBuild::FAILURE:
-                                $build->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $build->jobName(), $build->build_number);
-                                break;
-                            case JenkinsBuild::SUCCESS:
-                                $task = OperationQueue::SAVETOS3;
-                                $build_id = $build->id;
-                                OperationQueue::findOrCreate($task, $build_id, null);
-                                break;
-                        }
-                        $task = OperationQueue::FINDEXPIREDBUILDS;
-                        $job_id = $job->id;
-                        OperationQueue::findOrCreate($task, $job_id, null);
-                    }
-                    if (!$build->save()){
-                        throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
-                    }
-                    $log = JenkinsUtils::getlogBuildDetails($build);
-                    $log['job id'] = $job->id;
-                    $logger->appbuilderWarningLog($log);
-                    echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
-                }
-            }
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkBuildStatus: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = JenkinsUtils::getlogBuildDetails($build);
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
-
-    /**
-     * We can only get the build_number until the build has actually started.  So, if there is currently
-     * a build running, wait until the next cycle before trying.
-     * @param JenkinsJob $job
-     * @param array $params
-     * @return JenkinsBuild|null
-     */
-    private function startBuildIfNotBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
-    {
-        // Note: JenkinsJob::isCurrentlyBuilding doesn't check for getLastBuild return null :-(
-        $startTime = time();
-        if (!$job->getLastBuild())
-        {
-            echo "...not built at all, so launch a build". PHP_EOL;
-            $job->launch($params);
-            $lastBuild = null;
-            while ((time() < $startTime + $timeoutSeconds)
-                    && !$lastBuild)
-            {
-                sleep($checkIntervalSeconds);
-                $job->refresh();
-                $lastBuild = $job->getLastBuild();
-            }
-        }
-        else if (!$job->isCurrentlyBuilding())
-        {
-            echo "...not building, so launch a build". PHP_EOL;
-
-            $lastNumber = $job->getLastBuild()->getNumber();
-
-            $job->launch($params);
-
-            while ((time() < $startTime + $timeoutSeconds)
-                && ($job->getLastBuild()->getNumber() == $lastNumber))
-            {
-                sleep($checkIntervalSeconds);
-                $job->refresh();
-            }
-        }
-        else
-        {
-            // Currently building so wait for next cycle
-            return null;
-        }
-
-        $build = $job->getLastBuild();
-        if (is_null($build))
-        {
-            echo '...There was no lastbuild for this job so $build is null {$job->getLastBuild()} '.  PHP_EOL;
-        }
-        else
-        {
-            echo "...is building now. Returning build ". $build->getNumber() . PHP_EOL;
-        }
-        return $build;
-    }
-
-    /**
-     * Try to start a build.  If it starts, then update the database.
-     * @param Build $build
-     */
-    private function tryStartBuild($build)
-    {
-        $logger = new Appbuilder_logger("CronController");
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
-
-            $jenkins = JenkinsUtils::getJenkins();
-            $jenkinsJob = $jenkins->getJob($build->jobName());
-            $jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob);
-            echo "Got to isnull" . PHP_EOL;
-            if (!is_null($jenkinsBuild)){
-                $build->build_number = $jenkinsBuild->getNumber();
-                echo "[$prefix] Started Build $build->build_number". PHP_EOL;
-                $build->status = Build::STATUS_ACTIVE;
-                $build->save();
-            }
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] tryStartBuild: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = JenkinsUtils::getlogBuildDetails($build);
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
-    /**
-     * Process operation_queue
-     * This function will iterate up to the configured limit and for each iteration
-     * it will process the next job in queue
-     */
-    public function actionOperationQueue($verbose=false)
-    {
-        $logger = new Appbuilder_logger("CronController");
-
-        // Set the maximum number of entries that may be attempted in one run
-        $batchSize = 10;
-
-        // Capture start time for log
-        $starttimestamp = time();
-        $starttime = Utils::getDatetime();
-
-        // Initialize variables
-        $successfulJobs = 0;
-        $failedJobs = 0;
-        $iterationsRun = 0;
-        $maxRetriesExceeded = 0;
-
-        $queuedJobs = OperationQueue::find()->count();
-        // Do the work
-        for($i=0; $i<$queuedJobs; $i++){
-            $iterationsRun++;
-            try{
-                $results = OperationQueue::processNext(null);
-                if($results) {
-                    $successfulJobs++;
-                } else {
-                    break;
-                }
-            }
-            catch (MaxRetriesExceededException $e) {
-                // Don't count entries in the database that are now obsolete
-                // and are never deleted
-                echo "Caught max retry exception".PHP_EOL;
-                $maxRetriesExceeded++;
-            }
-
-            catch (\Exception $e) {
-                echo "Caught anothe exception".PHP_EOL;
-                echo $e->getMessage() .PHP_EOL;
-                $failedJobs++;
-             }
-            $attempts = $successfulJobs + $failedJobs;
-            if ($attempts >= $batchSize) {
-                break;
-            }
-        }
-
-        // Capture endtime for log
-        $endtimestamp = time();
-        $endtime = Utils::getDatetime();
-        $totaltime = $endtimestamp-$starttimestamp;
-
-        $logMsg  = 'cron/operation-queue - queued='.$queuedJobs.' successful='.$successfulJobs.' failed='.$failedJobs;
-        $logMsg .= ' retries exceeded='.$maxRetriesExceeded.' iterations='.$iterationsRun.' totaltime='.$totaltime;
-        $logArray = [$logMsg];
-        if($failedJobs > 0){
-            $logger->appbuilderErrorLog($logArray);
-        } else{
-            if($verbose && $verbose != 'false'){
-                $logger->appbuilderWarningLog($logArray);
-            } else {
-                $logger->appbuilderInfoLog($logArray);
-            }
-        }
-
-        echo PHP_EOL . $logMsg . PHP_EOL;
-
-    }
-    /**
-     * Manage the state of the builds and process the current state
-     * until the status is complete.
-     */
-    public function actionManageBuilds()
-    {
-        $logger = new Appbuilder_logger("CronController");
-        $complete = Build::STATUS_COMPLETED;
-        foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
-            $job = $build->job;
-            echo "cron/manage-builds: ". PHP_EOL;
-            $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
-            $logger->appbuilderWarningLog($logBuildDetails);
-            switch ($build->status){
-                case Build::STATUS_INITIALIZED:
-                    $this->tryStartBuild($build);
-                    break;
-                case Build::STATUS_ACTIVE:
-                    $this->checkBuildStatus($build);
-                    break;
-            }
-        }
-    }
-
-    /**
-     *
-     * @param Release $release
-     */
-    private function tryStartRelease($release)
-    {
-        $logger = new Appbuilder_logger("CronController");
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
-
-            $jenkins = JenkinsUtils::getJenkins();
-            $jenkinsJob = $jenkins->getJob($release->jobName());
-            $parameters = array("CHANNEL" => $release->channel, "BUILD_NUMBER" => $release->build->build_number);
-
-            if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
-                $release->build_number = $jenkinsBuild->getNumber();
-                echo "[$prefix] Started Build $release->build_number". PHP_EOL;
-                $release->status = Release::STATUS_ACTIVE;
-                $release->save();
-            }
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] tryStartRelease: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = $this->getlogReleaseDetails($release);
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
-
-    /**
-     *
-     * @param Release $release
-     */
-    private function checkReleaseStatus($release)
-    {
-        $logger = new Appbuilder_logger("CronController");
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
-
-            $jenkins = JenkinsUtils::getJenkins();
-            $jenkinsJob = $jenkins->getJob($release->jobName());
-            $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
-            if ($jenkinsBuild){
-                $release->result = $jenkinsBuild->getResult();
-                if (!$jenkinsBuild->isBuilding()){
-                    $release->status = Release::STATUS_COMPLETED;
-                    switch($release->result){
-                        case JenkinsBuild::FAILURE:
-                            $release->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $release->jobName(), $release->build_number);
-                            break;
-                        case JenkinsBuild::SUCCESS:
-                           if ($build = $this->getBuild($release->build_id))
-                            {
-                                $build->channel = $release->channel;
-                                $build->save();
-                            }
-                            break;
-                    }
-                }
-                if (!$release->save()){
-                    throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
-                }
-                $log = $this->getlogReleaseDetails($release);
-                $logger->appbuilderWarningLog($log);
-            }
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkReleaseStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            echo "Exception: " . $e->getMessage() . PHP_EOL;
-            $logException = $this->getlogReleaseDetails($release);
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
-
-    /**
-     * Manage the state of the releases and process the current state
-     * until the status is complete.
-     */
-    public function actionManageReleases()
-    {
-        $logger = new Appbuilder_logger("CronController");
-        $complete = Release::STATUS_COMPLETED;
-        foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
-            $build = $release->build;
-            $job = $build->job;
-            echo "cron/manage-releases: Job=$job->id, ". PHP_EOL;
-            $logReleaseDetails = $this->getlogReleaseDetails($release);
-            $logger->appbuilderWarningLog($logReleaseDetails);
-            switch ($release->status){
-                case Release::STATUS_INITIALIZED:
-                    $this->tryStartRelease($release);
-                    break;
-                case Release::STATUS_ACTIVE:
-                    $this->checkReleaseStatus($release);
-                    break;
-            }
-        }
-    }
-    function recurse_copy($src,$dst, $git) {
-        $dir = opendir($src);
-        if (!file_exists($dst)) {
-            echo "mkdir $dst ". PHP_EOL;
-            if (mkdir($dst, 0777, true)){
-                echo "failed to mkdir $dst ". PHP_EOL;
-            }
-        }
-        while(false !== ( $file = readdir($dir)) ) {
-            if (( $file != '.' ) && ( $file != '..' )) {
-                $srcFile = $src .DIRECTORY_SEPARATOR. $file;
-                $dstFile = $dst .DIRECTORY_SEPARATOR. $file;
-                if ( is_dir($srcFile) ) {
-                    recurse_copy($srcFile,$dstFile, $git);
-                }
-                else {
-                    copy($srcFile,$dstFile);
-                    $git->add($dstFile);
-                }
-            }
-        }
-        closedir($dir);
-    }
     /*===============================================  logging ============================================*/
-    /**
-     *
-     * get release details for logging.
-     * @param Release $release
-     * @return Array
-     */
-    public function getlogReleaseDetails($release)
-    {
-        $build = $release->build;
-        $job = $build->job;
-
-        $jobName = $build->job->name();
-        $log = [
-            'jobName' => $jobName,
-            'jobId' => $job->id
-        ];
-        $log['Release-id'] = $release->id;
-        $log['Release-Status'] = $release->status;
-        $log['Release-Build'] = $release->build_number;
-        $log['Release-Result'] = $release->result;
-
-        echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
-
-        return $log;
-    }
-
     /**
      * get Jenkins and S3 details
      * @param Build $build

@@ -17,7 +17,6 @@ class SyncScriptsAction
             $cronController, $viewPath, $git,
             $repoLocalPath, $scriptDir, $appBuilderGitSshUser)
     {
-        echo "performAction start vp:".$viewPath.PHP_EOL;
         $prefix = Utils::getPrefix();
 
         // When using Codecommit, the user portion in the url has to be changed
@@ -62,7 +61,6 @@ class SyncScriptsAction
         $commitString = $commitString . $changesString;
         echo $commitString;
         self::applyUpdates($git, $commitString, $prefix);
-        echo "performAction exit".PHP_EOL;
     }
     private static function recurse_copy($src,$dst, $git) {
         echo "recurse_copy src ".$src.PHP_EOL;
@@ -156,7 +154,6 @@ class SyncScriptsAction
             {
                 echo "[$prefix] Removing: $jobName" . PHP_EOL;
                 $git->rm($scriptFile);
-                echo "Removed";
                 $removed++;
                 $retString = $retString."remove: ".$jobName.PHP_EOL;
             }

@@ -1,0 +1,147 @@
+<?php
+namespace console\components;
+
+use common\models\Build;
+use common\models\Release;
+use common\components\Appbuilder_logger;
+use common\components\JenkinsUtils;
+
+use console\components\ActionCommon;
+
+use common\helpers\Utils;
+use yii\web\NotFoundHttpException;
+
+use JenkinsApi\Item\Build as JenkinsBuild;
+
+class ManageReleasesAction extends ActionCommon
+{
+    public static function performAction()
+    {
+        $logger = new Appbuilder_logger("CronController");
+        $complete = Release::STATUS_COMPLETED;
+        foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
+            $build = $release->build;
+            $job = $build->job;
+            echo "cron/manage-releases: Job=$job->id, ". PHP_EOL;
+            $logReleaseDetails = self::getlogReleaseDetails($release);
+            $logger->appbuilderWarningLog($logReleaseDetails);
+            switch ($release->status){
+                case Release::STATUS_INITIALIZED:
+                    self::tryStartRelease($release);
+                    break;
+                case Release::STATUS_ACTIVE:
+                    self::checkReleaseStatus($release);
+                    break;
+            }
+        }
+    }
+    /*===============================================  logging ============================================*/
+    /**
+     *
+     * get release details for logging.
+     * @param Release $release
+     * @return Array
+     */
+    public static function getlogReleaseDetails($release)
+    {
+        $build = $release->build;
+        $job = $build->job;
+
+        $jobName = $build->job->name();
+        $log = [
+            'jobName' => $jobName,
+            'jobId' => $job->id
+        ];
+        $log['Release-id'] = $release->id;
+        $log['Release-Status'] = $release->status;
+        $log['Release-Build'] = $release->build_number;
+        $log['Release-Result'] = $release->result;
+
+        echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
+
+        return $log;
+    }
+    /**
+     *
+     * @param Release $release
+     */
+    private static function tryStartRelease($release)
+    {
+        $logger = new Appbuilder_logger("CronController");
+        try {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
+
+            $jenkins = JenkinsUtils::getJenkins();
+            $jenkinsJob = $jenkins->getJob($release->jobName());
+            $parameters = array("CHANNEL" => $release->channel, "BUILD_NUMBER" => $release->build->build_number);
+
+            if ($jenkinsBuild = self::startBuildIfNotBuilding($jenkinsJob, $parameters)){
+                $release->build_number = $jenkinsBuild->getNumber();
+                echo "[$prefix] Started Build $release->build_number". PHP_EOL;
+                $release->status = Release::STATUS_ACTIVE;
+                $release->save();
+            }
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] tryStartRelease: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = self::getlogReleaseDetails($release);
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
+    }
+
+    /**
+     *
+     * @param Release $release
+     */
+    private static function checkReleaseStatus($release)
+    {
+        $logger = new Appbuilder_logger("CronController");
+        try {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
+
+            $jenkins = JenkinsUtils::getJenkins();
+            $jenkinsJob = $jenkins->getJob($release->jobName());
+            $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
+            if ($jenkinsBuild){
+                $release->result = $jenkinsBuild->getResult();
+                if (!$jenkinsBuild->isBuilding()){
+                    $release->status = Release::STATUS_COMPLETED;
+                    switch($release->result){
+                        case JenkinsBuild::FAILURE:
+                            $release->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $release->jobName(), $release->build_number);
+                            break;
+                        case JenkinsBuild::SUCCESS:
+                           if ($build = self::getBuild($release->build_id))
+                            {
+                                $build->channel = $release->channel;
+                                $build->save();
+                            }
+                            break;
+                    }
+                }
+                if (!$release->save()){
+                    throw new \Exception("Unable to update Build entry, model errors: ".print_r($release->getFirstErrors(),true), 1452611606);
+                }
+                $log = self::getlogReleaseDetails($release);
+                $logger->appbuilderWarningLog($log);
+            }
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] checkReleaseStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            echo "Exception: " . $e->getMessage() . PHP_EOL;
+            $logException = self::getlogReleaseDetails($release);
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
+    }
+    private static function getBuild($id)
+    {
+        $build = Build::findOne(['id' => $id]);
+        if (!$build){
+            echo "Build not found ". PHP_EOL;
+            throw new NotFoundHttpException();
+        }
+        return $build;
+    }
+}
