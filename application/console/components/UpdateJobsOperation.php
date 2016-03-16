@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components;
+namespace console\components;
 
-use common\components\OperationInterface;
+use console\components\OperationInterface;
 
 use common\components\JenkinsUtils;
 

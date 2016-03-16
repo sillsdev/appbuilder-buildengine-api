@@ -10,7 +10,8 @@ use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
-use common\components\MaxRetriesExceededException;
+
+use console\components\MaxRetriesExceededException;
 
 use yii\console\Controller;
 use common\helpers\Utils;

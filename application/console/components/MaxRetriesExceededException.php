@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components;
+namespace console\components;
 
 use yii\base\Exception;
 

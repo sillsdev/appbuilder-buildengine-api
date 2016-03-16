@@ -3,10 +3,10 @@
 namespace common\models;
 use common\models\EmailQueue;
 use common\components\EmailUtils;
-use common\components\CopyToS3Operation;
-use common\components\FindExpiredBuildsOperation;
-use common\components\UpdateJobsOperation;
-use common\components\MaxRetriesExceededException;
+use console\components\CopyToS3Operation;
+use console\components\FindExpiredBuildsOperation;
+use console\components\UpdateJobsOperation;
+use console\components\MaxRetriesExceededException;
 
 use common\helpers\Utils;
 use yii\helpers\ArrayHelper;

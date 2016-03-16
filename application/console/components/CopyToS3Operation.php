@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components;
+namespace console\components;
 
-use common\components\OperationInterface;
+use console\components\OperationInterface;
 use common\models\Build;
 use common\components\S3;
 use common\components\Appbuilder_logger;
