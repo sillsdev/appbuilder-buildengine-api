@@ -1,7 +1,6 @@
 <?php
 namespace console\controllers;
 
-use common\models\Job;
 use common\models\Build;
 use common\models\Release;
 use common\models\EmailQueue;
@@ -12,6 +11,7 @@ use common\components\EmailUtils;
 use common\components\JenkinsUtils;
 
 use console\components\MaxRetriesExceededException;
+use console\components\SyncScriptsAction;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -93,47 +93,6 @@ class CronController extends Controller
         return $git;
     }
 
-    /**
-     *
-     * @param string $subject
-     * @param string $patterns
-     * @return string
-     */
-    private function doReplacements($subject, $patterns)
-    {
-        foreach ($patterns as $pattern => $replacement )
-        {
-            $subject = preg_replace($pattern, $replacement, $subject);
-        }
-        return $subject;
-    }
-
-    /**
-     * Create a new Build.  If there is a Build in the initialized state,
-     * then it is OK to use that as the build.
-     * @param Job $job
-     * @throws ServerErrorHttpException
-     * @return Build
-     */
-    private function createBuild($job)
-    {
-        $build = $job->getLatestBuild();
-        if (!$build || $build->status != Build::STATUS_INITIALIZED){
-            $build = $job->createBuild();
-            if(!$build){
-                throw new ServerErrorHttpException("Failed to create build for job $job->id", 1443811601);
-            }
-        }
-        return $build;
-    }
-
-    private function updateJenkinsJobs()
-    {
-        echo "updateJenkinsJobs starting". PHP_EOL;
-        $task = OperationQueue::UPDATEJOBS;
-        OperationQueue::findOrCreate($task, null, null);
-    }
-
     public function actionGetRepo()
     {
         $this->getRepo();
@@ -143,85 +102,12 @@ class CronController extends Controller
      */
     public function actionSyncScripts()
     {
-        $prefix = Utils::getPrefix();
-
+        $viewPath = $this->getViewPath();
+        $git = $this->getRepo();
         $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
         $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
-        $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
-
-        // When using Codecommit, the user portion in the url has to be changed
-        // to the User associated with the AppBuilder SSH Key
         $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
-        $gitSubstPatterns = [ '/ssh:\/\/([0-9A-Za-z]*)@git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit",
-                              '/ssh:\/\/git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit" ];
-
-        $git = $this->getRepo();
-
-        $jobs = [];
-        // TODO: Apps should be pulled from a database?
-        $apps = ['scriptureappbuilder' => 1];
-        $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
-        $dataScriptDir = $this->getViewPath().DIRECTORY_SEPARATOR."scripts";
-        $utilitiesSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR."utilities";
-        $utilitiesDestDir = $localScriptDir . DIRECTORY_SEPARATOR . "utilities";
-        $this->recurse_copy($utilitiesSourceDir, $utilitiesDestDir, $git);
-        foreach (array_keys($apps) as $app) {
-            $appSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR.$app;
-            $appDestDir = $localScriptDir . DIRECTORY_SEPARATOR .$app;
-             $this->recurse_copy($appSourceDir, $appDestDir, $git);
-        }
-        foreach (Job::find()->each(50) as $job)
-        {
-            $publisherName = $job->publisher_id;
-            $buildJobName = $job->name();
-            $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
-
-            $script = $this->renderPartial("scripts/$job->app_id", [
-                'publisherName' => $publisherName,
-                'buildJobName' => $buildJobName,
-                'publishJobName' => Release::jobNameForBuild($buildJobName),
-                'gitUrl' => $gitUrl,
-                'artifactUrlBase' => $artifactUrlBase,
-            ]);
-
-            $file = $localScriptDir . DIRECTORY_SEPARATOR . $buildJobName . ".groovy";
-            $handle = fopen($file, "w");
-            fwrite($handle, $script);
-            fclose($handle);
-            if ($git->getStatus($file))
-            {
-                echo "[$prefix] Updated: $buildJobName" . PHP_EOL;
-                $git->add($file);
-                $this->createBuild($job);
-            }
-
-            $jobs[$buildJobName] = 1;
-        }
-
-        // Remove Scripts that are not in the database
-        $globFileName = "*_*.groovy";
-        foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)
-        {
-            $jobName = basename($scriptFile, ".groovy");
-            list($app_id, $request_id) = explode("_", $jobName);
-            if (!array_key_exists($app_id, $apps))
-            {
-                continue;
-            }
-            if (!array_key_exists($jobName, $jobs))
-            {
-                echo "[$prefix] Removing: $jobName" . PHP_EOL;
-                $git->rm($scriptFile);
-            }
-        }
-
-        if ($git->hasChanges())
-        {
-            echo "[$prefix] Changes detected...committing..." . PHP_EOL;
-            $git->commit('cron update scripts');
-            $git->push();
-            $this->updateJenkinsJobs();
-        }
+        SyncScriptsAction::performAction($this, $viewPath, $git, $repoLocalPath, $scriptDir, $appBuilderGitSshUser);
     }
 
     /**
