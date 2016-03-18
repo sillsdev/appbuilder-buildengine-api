@@ -10,7 +10,7 @@ https://docs.google.com/a/sil.org/document/d/1FtHLCEOvOuSnBC1ryeEUH3Vx2Y5XqF_Whp
 
 [Doorman](https://doorman.sil.org) is a web application developed by [GTIS](http://gtis.sil.org) that automates the
 workflow of approval and provisioning of services for SIL and affiliate organizations (requires Insite authentication).
-Examples of the services are: Smartsheet, Trello, HipChat, Jira, an CrashPlan.
+Examples of the services are: Smartsheet, Trello, HipChat, Jira, and CrashPlan.
 
 For the SIL App Publishing Service, Doorman will provide the following services:
 
