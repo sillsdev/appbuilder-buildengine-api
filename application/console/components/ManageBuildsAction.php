@@ -16,7 +16,7 @@ class ManageBuildsAction extends ActionCommon
 {
     public function performAction()
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("ManageBuildsAction");
         $complete = Build::STATUS_COMPLETED;
         foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
             $job = $build->job;
@@ -40,7 +40,7 @@ class ManageBuildsAction extends ActionCommon
      */
     private function tryStartBuild($job, $build)
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("ManageBuildsAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
@@ -68,7 +68,7 @@ class ManageBuildsAction extends ActionCommon
      * @param Build $build
      */
     private function checkBuildStatus($build){
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("ManageBuildsAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName(). PHP_EOL;
