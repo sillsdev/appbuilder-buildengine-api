@@ -26,85 +26,12 @@ use JenkinsApi\Item\Job as JenkinsJob;
 class CronController extends Controller
 {
     /**
-     *
-     * @return \GitWrapper\GitWorkingCopy
-     */
-    private function getRepo()
-    {
-        $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
-        $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
-        $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
-        $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
-
-        // Verify buildEngineRepoUrl is a SSH Url
-        if (is_null($repoUrl) || !preg_match('/^ssh:\/\//', $repoUrl)) {
-            throw new ServerErrorHttpException("BUILD_ENGINE_REPO_URL must be SSH Url: $repoUrl", 1456850613);
-        }
-
-        echo "1) RepoUrl: $repoUrl\n";
-
-        // If buildEngineRepoUrl is CodeCommit, insert the userId
-        if (preg_match('/^ssh:\/\/git-codecommit/', $repoUrl)) {
-            // If using CodeCommit, GitSshUser is required
-            $sshUser = \Yii::$app->params['buildEngineGitSshUser'];
-            if (is_null($sshUser)) {
-                throw new ServerErrorHttpException("BUILD_ENGINE_GIT_SSH_USER must be set if using codecommit: $repoUrl", 1456850614);
-            }
-            $repoUrl = "ssh://" . $sshUser . "@" . substr($repoUrl, 6);
-        }
-
-        echo "2) RepoUrl: $repoUrl\n";
-
-        require_once __DIR__ . '/../../vendor/autoload.php';
-        $wrapper = new GitWrapper();
-
-        $wrapper->setEnvVar('HOME', '/data');
-        $wrapper->setPrivateKey($privateKey);
-        $git = null;
-        if (!file_exists($repoLocalPath))
-        {
-            $git = $wrapper->clone($repoUrl, $repoLocalPath);
-            $git->config('push.default', 'simple');
-        } else {
-            $git = $wrapper->init($repoLocalPath);
-            $git->fetchAll();
-            try {
-                $git->reset("--hard", "origin/$repoBranch");
-            } catch (\Exception $e) {
-                echo "origin/$repoBranch doesn't exist yet. \n";
-            }
-        }
-        // Set afterwards in case the configuration changes after
-        // the repo has been cloned (i.e. services has been restarted
-        // with different configuration).
-        $userName = \Yii::$app->params['buildEngineGitUserName'];
-        $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
-
-        $git->config('user.name', $userName);
-        $git->config('user.email', $userEmail);
-
-        // Check to see if empty repo
-        try {
-            $git->checkout($repoBranch);
-
-        } catch (\Exception $e) {
-            echo "$repoBranch doesn't exist.  Trying to create it. \n";
-            $git->checkoutNewBranch($repoBranch);
-        }
-
-        return $git;
-    }
-    /**
      * Synchronize the Job configuration in database with groovy scripts.
      */
     public function actionSyncScripts()
     {
-        $viewPath = $this->getViewPath();
-        $git = $this->getRepo();
-        $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
-        $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
-        $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
-        SyncScriptsAction::performAction($this, $viewPath, $git, $repoLocalPath, $scriptDir, $appBuilderGitSshUser);
+        $syncScriptsAction = new SyncScriptsAction($this);
+        $syncScriptsAction->performAction();
     }
     /**
      * Manage the state of the builds and process the current state

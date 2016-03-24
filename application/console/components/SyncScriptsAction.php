@@ -1,6 +1,7 @@
 <?php
 namespace console\components;
 
+use GitWrapper\GitWrapper;
 
 use common\models\Job;
 use common\models\Build;
@@ -13,11 +14,29 @@ use yii\web\ServerErrorHttpException;
 
 class SyncScriptsAction
 {
-    public static function performAction(
-            $cronController, $viewPath, $git,
-            $repoLocalPath, $scriptDir, $appBuilderGitSshUser)
+    private $cronController;
+    private $git;
+    private $prefix;
+
+    public function __construct($cronController)
+    {
+        $this->cronController = $cronController;
+    }
+
+    public function __destruct()
+    {
+        $this->cronController = null;
+        $this->git = null;
+    }
+    public function performAction()
     {
         $prefix = Utils::getPrefix();
+
+        $this->git = $this->getRepo();
+        $viewPath = $this->cronController->getViewPath();
+        $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
+        $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
+        $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
 
         // When using Codecommit, the user portion in the url has to be changed
         // to the User associated with the AppBuilder SSH Key
@@ -35,15 +54,15 @@ class SyncScriptsAction
         $totalAdded = 0;
         $totalUpdated = 0;
         $totalRemoved = 0;
-        self::recurse_copy($utilitiesSourceDir, $utilitiesDestDir, $git);
+        $this->recurse_copy($utilitiesSourceDir, $utilitiesDestDir);
         foreach (array_keys($apps) as $app) {
             $appSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR.$app;
             $appDestDir = $localScriptDir . DIRECTORY_SEPARATOR .$app;
-            self::recurse_copy($appSourceDir, $appDestDir, $git);
+            $this->recurse_copy($appSourceDir, $appDestDir);
         }
         foreach (Job::find()->each(50) as $job)
         {
-            list($updatesString, $added, $updated) = self::createJobScripts($job, $jobs, $git, $gitSubstPatterns, $cronController, $localScriptDir, $prefix);
+            list($updatesString, $added, $updated) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir);
             $changesString = $changesString . $updatesString;
             $totalAdded = $totalAdded + $added;
             $totalUpdated = $totalUpdated + $updated;
@@ -53,16 +72,16 @@ class SyncScriptsAction
         $globFileName = "*_*.groovy";
         foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)
         {
-            list($removedString, $removed) = self::removeScriptIfNoJobRecord($scriptFile, $apps, $jobs, $git, $prefix);
+            list($removedString, $removed) = $this->removeScriptIfNoJobRecord($scriptFile, $apps, $jobs);
             $changesString = $changesString . $removedString;
             $totalRemoved = $totalRemoved + $removed;
         }
         $commitString = "cron add=" . $totalAdded . " update =" . $totalUpdated . " delete=" . $totalRemoved . PHP_EOL;
         $commitString = $commitString . $changesString;
         echo $commitString;
-        self::applyUpdates($git, $commitString, $prefix);
+        $this->applyUpdates($commitString);
     }
-    private static function recurse_copy($src,$dst, $git) {
+    private function recurse_copy($src,$dst) {
         echo "recurse_copy src ".$src.PHP_EOL;
         $dir = opendir($src);
         if (!file_exists($dst)) {
@@ -76,11 +95,11 @@ class SyncScriptsAction
                 $srcFile = $src .DIRECTORY_SEPARATOR. $file;
                 $dstFile = $dst .DIRECTORY_SEPARATOR. $file;
                 if ( is_dir($srcFile) ) {
-                    self::recurse_copy($srcFile,$dstFile, $git);
+                    $this->recurse_copy($srcFile,$dstFile);
                 }
                 else {
                     copy($srcFile,$dstFile);
-                    $git->add($dstFile);
+                    $this->git->add($dstFile);
                 }
             }
         }
@@ -92,7 +111,7 @@ class SyncScriptsAction
      * @param string $patterns
      * @return string
      */
-    private static function doReplacements($subject, $patterns)
+    private function doReplacements($subject, $patterns)
     {
         foreach ($patterns as $pattern => $replacement )
         {
@@ -101,14 +120,14 @@ class SyncScriptsAction
         return $subject;
     }
 
-    private static function applyUpdates($git, $commitString, $prefix)
+    private function applyUpdates($commitString)
     {
         echo "applyUpdates starting". PHP_EOL;
-        if ($git->hasChanges())
+        if ($this->git->hasChanges())
         {
-            echo "[$prefix] Changes detected...committing..." . PHP_EOL;
-            $git->commit($commitString);
-            $git->push();
+            echo "[$this->prefix] Changes detected...committing..." . PHP_EOL;
+            $this->git->commit($commitString);
+            $this->git->push();
             $task = OperationQueue::UPDATEJOBS;
             OperationQueue::findOrCreate($task, null, null);
         }
@@ -120,7 +139,7 @@ class SyncScriptsAction
      * @throws ServerErrorHttpException
      * @return Build
      */
-    private static function createBuild($job)
+    private function createBuild($job)
     {
         $build = $job->getLatestBuild();
         if (!$build || $build->status != Build::STATUS_INITIALIZED){
@@ -138,11 +157,9 @@ class SyncScriptsAction
      * @param String $scriptFile - Name of current scriptfile
      * @param Array $apps - List of supported apps
      * @param Array $jobs - All of the jobs in the database
-     * @param GitWrapper $git - The git repository
-     * @param String $prefix - Time stamp prefix for log messages
      * @return String, Int - String for cron commit and number of records removed
      */
-    private static function removeScriptIfNoJobRecord($scriptFile, $apps, $jobs, &$git, $prefix)
+    private function removeScriptIfNoJobRecord($scriptFile, $apps, $jobs)
     {
         $removed = 0;
         $retString = "";
@@ -152,15 +169,15 @@ class SyncScriptsAction
         {
             if (!array_key_exists($jobName, $jobs))
             {
-                echo "[$prefix] Removing: $jobName" . PHP_EOL;
-                $git->rm($scriptFile);
+                echo "[$this->prefix] Removing: $jobName" . PHP_EOL;
+                $this->git->rm($scriptFile);
                 $removed++;
                 $retString = $retString."remove: ".$jobName.PHP_EOL;
             }
         }
         return[$retString, $removed];
     }
-    private static function createJobScripts($job, &$jobs, &$git, $gitSubstPatterns, $cronController, $localScriptDir, $prefix)
+    private function createJobScripts($job, &$jobs, $gitSubstPatterns, $localScriptDir)
     {
         $added = 0;
         $updated = 0;
@@ -168,9 +185,9 @@ class SyncScriptsAction
         $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
         $publisherName = $job->publisher_id;
         $buildJobName = $job->name();
-        $gitUrl = self::doReplacements($job->git_url, $gitSubstPatterns);
+        $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
-        $script = $cronController->renderPartial("scripts/$job->app_id", [
+        $script = $this->cronController->renderPartial("scripts/$job->app_id", [
             'publisherName' => $publisherName,
             'buildJobName' => $buildJobName,
             'publishJobName' => Release::jobNameForBuild($buildJobName),
@@ -183,22 +200,91 @@ class SyncScriptsAction
         $handle = fopen($file, "w");
         fwrite($handle, $script);
         fclose($handle);
-        if ($git->getStatus($file))
+        if ($this->git->getStatus($file))
         {
             if ($file_exists) {
-                echo "[$prefix] Updated: $buildJobName" . PHP_EOL;
+                echo "[$this->prefix] Updated: $buildJobName" . PHP_EOL;
                 $retString = $retString."update: ".$buildJobName.PHP_EOL;
                 $updated++;
             } else {
-                echo "[$prefix] Added: $buildJobName" . PHP_EOL;
+                echo "[$this->prefix] Added: $buildJobName" . PHP_EOL;
                 $retString = $retString."update: ".$buildJobName.PHP_EOL;
                 $added++;
             }
-            $git->add($file);
-            self::createBuild($job);
+            $this->git->add($file);
+            $this->createBuild($job);
         }
 
         $jobs[$buildJobName] = 1;
         return [$retString, $added, $updated];
+    }
+    /**
+     *
+     * @return \GitWrapper\GitWorkingCopy
+     */
+    private function getRepo()
+    {
+        $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
+        $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
+        $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
+        $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
+
+        // Verify buildEngineRepoUrl is a SSH Url
+        if (is_null($repoUrl) || !preg_match('/^ssh:\/\//', $repoUrl)) {
+            throw new ServerErrorHttpException("BUILD_ENGINE_REPO_URL must be SSH Url: $repoUrl", 1456850613);
+        }
+
+        echo "1) RepoUrl: $repoUrl\n";
+
+        // If buildEngineRepoUrl is CodeCommit, insert the userId
+        if (preg_match('/^ssh:\/\/git-codecommit/', $repoUrl)) {
+            // If using CodeCommit, GitSshUser is required
+            $sshUser = \Yii::$app->params['buildEngineGitSshUser'];
+            if (is_null($sshUser)) {
+                throw new ServerErrorHttpException("BUILD_ENGINE_GIT_SSH_USER must be set if using codecommit: $repoUrl", 1456850614);
+            }
+            $repoUrl = "ssh://" . $sshUser . "@" . substr($repoUrl, 6);
+        }
+
+        echo "2) RepoUrl: $repoUrl\n";
+
+        require_once __DIR__ . '/../../vendor/autoload.php';
+        $wrapper = new GitWrapper();
+
+        $wrapper->setEnvVar('HOME', '/data');
+        $wrapper->setPrivateKey($privateKey);
+        $git = null;
+        if (!file_exists($repoLocalPath))
+        {
+            $git = $wrapper->clone($repoUrl, $repoLocalPath);
+            $git->config('push.default', 'simple');
+        } else {
+            $git = $wrapper->init($repoLocalPath);
+            $git->fetchAll();
+            try {
+                $git->reset("--hard", "origin/$repoBranch");
+            } catch (\Exception $e) {
+                echo "origin/$repoBranch doesn't exist yet. \n";
+            }
+        }
+        // Set afterwards in case the configuration changes after
+        // the repo has been cloned (i.e. services has been restarted
+        // with different configuration).
+        $userName = \Yii::$app->params['buildEngineGitUserName'];
+        $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
+
+        $git->config('user.name', $userName);
+        $git->config('user.email', $userEmail);
+
+        // Check to see if empty repo
+        try {
+            $git->checkout($repoBranch);
+
+        } catch (\Exception $e) {
+            echo "$repoBranch doesn't exist.  Trying to create it. \n";
+            $git->checkoutNewBranch($repoBranch);
+        }
+
+        return $git;
     }
 }
