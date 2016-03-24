@@ -10,10 +10,10 @@ rm -rf output/*
 { set +x; } 2>/dev/null
 PROJNAME=$(basename *.appDef .appDef)
 rename "s/$PROJNAME/build/" *
-/usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc +1
+/usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc $VERSION_CODE
 set -x
 echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
-echo $(grep "version code=" build.appDef|awk -F"\\"" '{print $2}') > output/version_code.txt
+echo $VERSION_CODE > output/version_code.txt
 rename "s/build/$PROJNAME/" build*
 if [ -d "metadata" ]; then
   tar -cvzf "output/metadata.tar.gz" "metadata"
@@ -48,6 +48,9 @@ git commit -m "Update Version Code"
                                         }
 				}
 			}
+                        parameters {
+                            stringParam('VERSION_CODE', '', '' )
+                        }
 
 			steps {
 				shell(buildJobScript)

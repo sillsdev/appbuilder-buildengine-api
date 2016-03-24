@@ -12,6 +12,7 @@ use common\helpers\Utils;
 use yii\web\NotFoundHttpException;
 
 use JenkinsApi\Item\Build as JenkinsBuild;
+use JenkinsApi\Item\Job as JenkinsJob;
 
 class ManageReleasesAction extends ActionCommon
 {

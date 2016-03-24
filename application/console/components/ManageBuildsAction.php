@@ -25,7 +25,7 @@ class ManageBuildsAction extends ActionCommon
             $logger->appbuilderWarningLog($logBuildDetails);
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
-                    self::tryStartBuild($build);
+                    self::tryStartBuild($job, $build);
                     break;
                 case Build::STATUS_ACTIVE:
                     self::checkBuildStatus($build);
@@ -38,7 +38,7 @@ class ManageBuildsAction extends ActionCommon
      * Try to start a build.  If it starts, then update the database.
      * @param Build $build
      */
-    private static function tryStartBuild($build)
+    private static function tryStartBuild($job, $build)
     {
         $logger = new Appbuilder_logger("CronController");
         try {
@@ -47,7 +47,9 @@ class ManageBuildsAction extends ActionCommon
 
             $jenkins = JenkinsUtils::getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
-            $jenkinsBuild = self::startBuildIfNotBuilding($jenkinsJob);
+            $versionCode = self::getNextVersionCode($job, $build);
+            $parameters = array("VERSION_CODE" => $versionCode);
+            $jenkinsBuild = self::startBuildIfNotBuilding($jenkinsJob, $parameters);
             if (!is_null($jenkinsBuild)){
                 $build->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $build->build_number". PHP_EOL;
@@ -109,5 +111,20 @@ class ManageBuildsAction extends ActionCommon
             $logException = JenkinsUtils::getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
         }
+    }
+
+    private static function getNextVersionCode($job, $build) {
+        $id = $job->id;
+        $retval = 0;
+        foreach (Build::find()->where([
+            'job_id' => $id,
+            'status' => Build::STATUS_COMPLETED,
+            'result' => "SUCCESS"])->each(50) as $build){
+                if (($build->version_code) && ($build->version_code > $retval)) {
+                    $retval = $build->version_code;
+                }
+        }
+        $retval = $retval + 1;
+        return $retval;
     }
 }
