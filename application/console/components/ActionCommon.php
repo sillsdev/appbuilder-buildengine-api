@@ -13,7 +13,7 @@ class ActionCommon
      * @param array $params
      * @return JenkinsBuild|null
      */
-    protected static function startBuildIfNotBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
+    protected function startBuildIfNotBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
     {
         // Note: JenkinsJob::isCurrentlyBuilding doesn't check for getLastBuild return null :-(
         $startTime = time();

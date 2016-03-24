@@ -39,7 +39,8 @@ class CronController extends Controller
      */
     public function actionManageBuilds()
     {
-        ManageBuildsAction::performAction();
+        $manageBuildsAction = new ManageBuildsAction();
+        $manageBuildsAction->performAction();
     }
 
     /**
@@ -48,7 +49,8 @@ class CronController extends Controller
      */
     public function actionManageReleases()
     {
-        ManageReleasesAction::performAction();
+        $manageReleasesAction = new ManageReleasesAction();
+        $manageReleasesAction->performAction();
     }
     /**
      * Send queued emails

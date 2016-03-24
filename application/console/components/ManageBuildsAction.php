@@ -14,7 +14,7 @@ use JenkinsApi\Item\Build as JenkinsBuild;
 
 class ManageBuildsAction extends ActionCommon
 {
-    public static function performAction()
+    public function performAction()
     {
         $logger = new Appbuilder_logger("CronController");
         $complete = Build::STATUS_COMPLETED;
@@ -25,10 +25,10 @@ class ManageBuildsAction extends ActionCommon
             $logger->appbuilderWarningLog($logBuildDetails);
             switch ($build->status){
                 case Build::STATUS_INITIALIZED:
-                    self::tryStartBuild($job, $build);
+                    $this->tryStartBuild($job, $build);
                     break;
                 case Build::STATUS_ACTIVE:
-                    self::checkBuildStatus($build);
+                    $this->checkBuildStatus($build);
                     break;
             }
         }        
@@ -38,7 +38,7 @@ class ManageBuildsAction extends ActionCommon
      * Try to start a build.  If it starts, then update the database.
      * @param Build $build
      */
-    private static function tryStartBuild($job, $build)
+    private function tryStartBuild($job, $build)
     {
         $logger = new Appbuilder_logger("CronController");
         try {
@@ -47,9 +47,9 @@ class ManageBuildsAction extends ActionCommon
 
             $jenkins = JenkinsUtils::getJenkins();
             $jenkinsJob = $jenkins->getJob($build->jobName());
-            $versionCode = self::getNextVersionCode($job, $build);
+            $versionCode = $this->getNextVersionCode($job, $build);
             $parameters = array("VERSION_CODE" => $versionCode);
-            $jenkinsBuild = self::startBuildIfNotBuilding($jenkinsJob, $parameters);
+            $jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
             if (!is_null($jenkinsBuild)){
                 $build->build_number = $jenkinsBuild->getNumber();
                 echo "[$prefix] Started Build $build->build_number". PHP_EOL;
@@ -67,7 +67,7 @@ class ManageBuildsAction extends ActionCommon
      *
      * @param Build $build
      */
-    private static function checkBuildStatus($build){
+    private function checkBuildStatus($build){
         $logger = new Appbuilder_logger("CronController");
         try {
             $prefix = Utils::getPrefix();
@@ -113,7 +113,7 @@ class ManageBuildsAction extends ActionCommon
         }
     }
 
-    private static function getNextVersionCode($job, $build) {
+    private function getNextVersionCode($job, $build) {
         $id = $job->id;
         $retval = 0;
         foreach (Build::find()->where([
