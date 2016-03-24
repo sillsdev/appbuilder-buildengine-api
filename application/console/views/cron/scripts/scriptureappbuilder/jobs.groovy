@@ -15,9 +15,11 @@ set -x
 echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
 echo $VERSION_CODE > output/version_code.txt
 rename "s/build/$PROJNAME/" build*
-if [ -d "metadata" ]; then
-  tar -cvzf "output/metadata.tar.gz" "metadata"
+PUBLISH_DIR=$(find "${PROJNAME}_data" -name publish -print)
+if [ -d "$PUBLISH_DIR" ]; then
+  (cd "$PUBLISH_DIR" && tar cf - .) | gzip > output/publish.tar.gz
 fi
+
 git add *.appDef
 git commit -m "Update Version Code"
 '''
@@ -74,14 +76,14 @@ git commit -m "Update Version Code"
 	}
 
     static publishJobScript = '''
-if [ ! -f "$WORKSPACE/metadata.tar.gz" ]; then
-  echo "Missing metadata.tar.gaz"
+if [ ! -f "$WORKSPACE/publish.tar.gz" ]; then
+  echo "Missing publish.tar.gaz"
   exit 1
 fi
-tar xvf "$WORKSPACE/metadata.tar.gz"
+tar xvf "$WORKSPACE/publish.tar.gz"
 
 set +x
-supply -k $PAK -i $PAI -b *.apk -p $(cat package_name.txt) --track $CHANNEL
+supply -k $PAK -i $PAI -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
 '''
     static void googleplayPublishJob(jobContext, gitUrl, publisherName, buildJobName) {
         jobContext.with {
