@@ -2,7 +2,6 @@
 namespace console\controllers;
 
 use common\models\Build;
-use common\models\Release;
 use common\models\EmailQueue;
 use common\models\OperationQueue;
 use common\components\S3;
@@ -10,18 +9,15 @@ use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
 
-use console\components\MaxRetriesExceededException;
 use console\components\SyncScriptsAction;
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
+use console\components\OperationsQueueAction;
 
 use yii\console\Controller;
 use common\helpers\Utils;
-use yii\web\ServerErrorHttpException;
 
-use GitWrapper\GitWrapper;
 use JenkinsApi\Item\Build as JenkinsBuild;
-use JenkinsApi\Item\Job as JenkinsJob;
 
 class CronController extends Controller
 {
@@ -102,73 +98,9 @@ class CronController extends Controller
      */
     public function actionOperationQueue($verbose=false)
     {
-        $logger = new Appbuilder_logger("CronController");
-
-        // Set the maximum number of entries that may be attempted in one run
-        $batchSize = 10;
-
-        // Capture start time for log
-        $starttimestamp = time();
-        $starttime = Utils::getDatetime();
-
-        // Initialize variables
-        $successfulJobs = 0;
-        $failedJobs = 0;
-        $iterationsRun = 0;
-        $maxRetriesExceeded = 0;
-
-        $queuedJobs = OperationQueue::find()->count();
-        // Do the work
-        for($i=0; $i<$queuedJobs; $i++){
-            $iterationsRun++;
-            try{
-                $results = OperationQueue::processNext(null);
-                if($results) {
-                    $successfulJobs++;
-                } else {
-                    break;
-                }
-            }
-            catch (MaxRetriesExceededException $e) {
-                // Don't count entries in the database that are now obsolete
-                // and are never deleted
-                echo "Caught max retry exception".PHP_EOL;
-                $maxRetriesExceeded++;
-            }
-
-            catch (\Exception $e) {
-                echo "Caught anothe exception".PHP_EOL;
-                echo $e->getMessage() .PHP_EOL;
-                $failedJobs++;
-             }
-            $attempts = $successfulJobs + $failedJobs;
-            if ($attempts >= $batchSize) {
-                break;
-            }
-        }
-
-        // Capture endtime for log
-        $endtimestamp = time();
-        $endtime = Utils::getDatetime();
-        $totaltime = $endtimestamp-$starttimestamp;
-
-        $logMsg  = 'cron/operation-queue - queued='.$queuedJobs.' successful='.$successfulJobs.' failed='.$failedJobs;
-        $logMsg .= ' retries exceeded='.$maxRetriesExceeded.' iterations='.$iterationsRun.' totaltime='.$totaltime;
-        $logArray = [$logMsg];
-        if($failedJobs > 0){
-            $logger->appbuilderErrorLog($logArray);
-        } else{
-            if($verbose && $verbose != 'false'){
-                $logger->appbuilderWarningLog($logArray);
-            } else {
-                $logger->appbuilderInfoLog($logArray);
-            }
-        }
-
-        echo PHP_EOL . $logMsg . PHP_EOL;
-
+        $operationsQueueAction = new OperationsQueueAction($verbose);
+        $operationsQueueAction->performAction();
     }
-
     /**
      * Test email action. Requires email adddress as parameter (Dev only)
      */
