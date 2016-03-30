@@ -62,10 +62,14 @@ class SyncScriptsAction
         }
         foreach (Job::find()->each(50) as $job)
         {
-            list($updatesString, $added, $updated) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir);
+            list($updatesString, $added, $updated) = $this->createBuildScript($job, $jobs, $gitSubstPatterns, $localScriptDir);
             $changesString = $changesString . $updatesString;
             $totalAdded = $totalAdded + $added;
             $totalUpdated = $totalUpdated + $updated;
+            list($updatesString2, $added2, $updated2) = $this->createPublishScript($job, $jobs, $gitSubstPatterns, $localScriptDir);
+            $changesString = $changesString . $updatesString2;
+            $totalAdded = $totalAdded + $added2;
+            $totalUpdated = $totalUpdated + $updated2;
         }
 
         // Remove Scripts that are not in the database
@@ -163,21 +167,39 @@ class SyncScriptsAction
     {
         $removed = 0;
         $retString = "";
-        $jobName = basename($scriptFile, ".groovy");
-        list($app_id, $request_id) = explode("_", $jobName);
+        $fileName = basename($scriptFile, ".groovy");
+        list($app_id, $request_id) = explode("_", $fileName);
+        $jobName = $app_id."_".$request_id;
         if (array_key_exists($app_id, $apps))
         {
             if (!array_key_exists($jobName, $jobs))
             {
-                echo "[$this->prefix] Removing: $jobName" . PHP_EOL;
+                echo "[$this->prefix] Removing: $fileName" . PHP_EOL;
                 $this->git->rm($scriptFile);
                 $removed++;
-                $retString = $retString."remove: ".$jobName.PHP_EOL;
+                $retString = $retString."remove: ".$fileName.PHP_EOL;
             }
         }
         return[$retString, $removed];
     }
-    private function createJobScripts($job, &$jobs, $gitSubstPatterns, $localScriptDir)
+    private function createBuildScript($job, &$jobs, $gitSubstPatterns, $localScriptDir)
+    {
+        list($updatesString, $added, $updated, $buildJobName) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir, "_build");
+        $changed = $added + $updated;
+        if ($changed > 0)
+        {
+            $this->createBuild($job);
+        }
+
+        $jobs[$buildJobName] = 1;
+        return [$updatesString, $added, $updated];
+    }
+    private function createPublishScript($job, &$jobs, $gitSubstPatterns, $localScriptDir)
+    {
+        list($updatesString, $added, $updated, $buildJobName) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir, "_publish");
+        return [$updatesString, $added, $updated];
+    }
+    private function createJobScripts($job, &$jobs, $gitSubstPatterns, $localScriptDir, $extension)
     {
         $added = 0;
         $updated = 0;
@@ -187,7 +209,7 @@ class SyncScriptsAction
         $buildJobName = $job->name();
         $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
-        $script = $this->cronController->renderPartial("scripts/$job->app_id", [
+        $script = $this->cronController->renderPartial("scripts/$job->app_id".$extension, [
             'publisherName' => $publisherName,
             'buildJobName' => $buildJobName,
             'publishJobName' => Release::jobNameForBuild($buildJobName),
@@ -195,7 +217,7 @@ class SyncScriptsAction
             'artifactUrlBase' => $artifactUrlBase,
         ]);
 
-        $file = $localScriptDir . DIRECTORY_SEPARATOR . $buildJobName . ".groovy";
+        $file = $localScriptDir . DIRECTORY_SEPARATOR . $buildJobName . $extension . ".groovy";
         $file_exists = file_exists($file);
         $handle = fopen($file, "w");
         fwrite($handle, $script);
@@ -203,20 +225,17 @@ class SyncScriptsAction
         if ($this->git->getStatus($file))
         {
             if ($file_exists) {
-                echo "[$this->prefix] Updated: $buildJobName" . PHP_EOL;
-                $retString = $retString."update: ".$buildJobName.PHP_EOL;
+                echo "[$this->prefix] Updated: $buildJobName" . $extension . PHP_EOL;
+                $retString = $retString."update: ".$buildJobName.$extension.PHP_EOL;
                 $updated++;
             } else {
-                echo "[$this->prefix] Added: $buildJobName" . PHP_EOL;
-                $retString = $retString."update: ".$buildJobName.PHP_EOL;
+                echo "[$this->prefix] Added: $buildJobName" .$extension . PHP_EOL;
+                $retString = $retString."update: ".$buildJobName.$extension.PHP_EOL;
                 $added++;
             }
             $this->git->add($file);
-            $this->createBuild($job);
         }
-
-        $jobs[$buildJobName] = 1;
-        return [$retString, $added, $updated];
+        return [$retString, $added, $updated, $buildJobName];
     }
     /**
      *

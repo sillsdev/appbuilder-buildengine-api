@@ -73,9 +73,13 @@ class ManageReleasesAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
 
-            $jenkins = JenkinsUtils::getJenkins();
+            $build = $release->build;
+            $artifactUrl = $build->artifact_url;
+            $path = substr($artifactUrl, 0, strrpos( $artifactUrl, '/'));
+
+            $jenkins = JenkinsUtils::getPublishJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
-            $parameters = array("CHANNEL" => $release->channel, "BUILD_NUMBER" => $release->build->build_number);
+            $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path);
 
             if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
                 $release->build_number = $jenkinsBuild->getNumber();
@@ -102,7 +106,7 @@ class ManageReleasesAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
 
-            $jenkins = JenkinsUtils::getJenkins();
+            $jenkins = JenkinsUtils::getPublishJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
             $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
             if ($jenkinsBuild){

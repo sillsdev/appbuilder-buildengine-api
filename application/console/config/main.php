@@ -9,6 +9,7 @@ $BUILD_ENGINE_REPO_LOCAL_PATH = getenv('BUILD_ENGINE_REPO_LOCAL_PATH') ?: "/tmp/
 $BUILD_ENGINE_REPO_SCRIPT_DIR = getenv('BUILD_ENGINE_REPO_SCRIPT_DIR') ?: "groovy";
 $BUILD_ENGINE_JENKINS_MASTER_URL = getenv('BUILD_ENGINE_JENKINS_MASTER_URL') ?: "unset";
 $BUILD_ENGINE_ARTIFACT_URL_BASE = getenv('BUILD_ENGINE_ARTIFACT_URL_BASE') ?: "unset";
+$PUBLISH_JENKINS_MASTER_URL = getenv('PUBLISH_JENKINS_MASTER_URL');
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
 
@@ -44,6 +45,7 @@ return [
         'buildEngineRepoScriptDir' => $BUILD_ENGINE_REPO_SCRIPT_DIR,
         'buildEngineJenkinsMasterUrl' => $BUILD_ENGINE_JENKINS_MASTER_URL,
         'buildEngineArtifactUrlBase' => $BUILD_ENGINE_ARTIFACT_URL_BASE,
+        'publishJenkinsMasterUrl' => $PUBLISH_JENKINS_MASTER_URL,
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
     ],
 ];

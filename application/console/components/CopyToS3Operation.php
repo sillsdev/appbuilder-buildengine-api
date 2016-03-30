@@ -67,7 +67,9 @@ class CopyToS3Operation implements OperationInterface
         $logger = new Appbuilder_logger("OperationQueue");
         $artifactUrl =  JenkinsUtils::getApkArtifactUrl($jenkinsBuild);
         $versionCodeArtifactUrl = JenkinsUtils::getVersionCodeArtifactUrl($jenkinsBuild);
-        list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl);
+        $packageNameUrl = JenkinsUtils::getPackageNameArtifactUrl($jenkinsBuild);
+        $metadataUrl = JenkinsUtils::getMetaDataArtifactUrl($jenkinsBuild);
+        list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl);
         $log = JenkinsUtils::getlogBuildDetails($build);
         $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
         $log['jenkins_ArtifactUrl'] = $artifactUrl;

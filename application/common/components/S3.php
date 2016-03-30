@@ -28,7 +28,7 @@ class S3 {
         return $client;
     }
 
-    public static function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl)
+    public static function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl)
     {
         $client = self::getS3Client();
         $apkS3Url = self::getS3Url($build, $artifactUrl);
@@ -58,6 +58,32 @@ class S3 {
             'ACL' => 'public-read'
         ]);
 
+        if (!is_null($packageNameUrl)) {
+            $packageNameS3Url = self::getS3Url($build, $packageNameUrl);
+            list ($packageNameS3bucket, $packageNameS3key) = self::getS3BucketKey($packageNameS3Url);
+
+            $packageName = file_get_contents($packageNameUrl);
+
+            $client->putObject([
+                'Bucket' => $packageNameS3bucket,
+                'Key' => $packageNameS3key,
+                'Body' => $packageName,
+                'ACL' => 'public-read'
+            ]);
+        }
+        if (!is_null($metadataUrl)) {
+            $metadataS3Url = self::getS3Url($build, $metadataUrl);
+            list ($metadataS3bucket, $metadataS3key) = self::getS3BucketKey($metadataS3Url);
+
+            $metadata = file_get_contents($metadataUrl);
+
+            $client->putObject([
+                'Bucket' => $metadataS3bucket,
+                'Key' => $metadataS3key,
+                'Body' => $metadata,
+                'ACL' => 'public-read'
+            ]);
+        }
         return [$apkPublicUrl, $versionCode];
     }
 

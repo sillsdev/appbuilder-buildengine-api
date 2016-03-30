@@ -70,6 +70,10 @@ class JobController extends ActiveController
         if (!$build){
             throw new NotFoundHttpException();
         }
+        $artifactUrl = $build->artifact_url;
+        if (is_null($artifactUrl) || ($artifactUrl=="")) {
+            throw new ServerErrorHttpException("Artifact URL empty for Job $id Build $build_id");
+        }
         $channel = \Yii::$app->request->getBodyParam('channel', null);
         $title = \Yii::$app->request->getBodyParam('title', null);
         $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);

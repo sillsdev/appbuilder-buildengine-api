@@ -18,6 +18,15 @@ class JenkinsUtils
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
     }
+    /**
+     *
+     * @return Jenkins for publish url
+     */
+    public static function getPublishJenkins(){
+        $jenkinsUrl = \Yii::$app->params['publishJenkinsMasterUrl'];
+        $jenkins = new Jenkins($jenkinsUrl);
+        return $jenkins;
+    }
      /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
@@ -36,6 +45,25 @@ class JenkinsUtils
      {
          return self::getArtifactUrl($jenkinsBuild, "/version_code.txt/");
      }
+     /**
+     * Extract the Artifact Url from the Jenkins Build information.
+     * @param JenkinsBuild $jenkinsBuild
+     * @return string
+     */
+     public static function getPackageNameArtifactUrl($jenkinsBuild)
+     {
+         return self::getArtifactUrl($jenkinsBuild, "/package_name.txt/");
+     }
+     /**
+     * Extract the Artifact Url from the Jenkins Build information.
+     * @param JenkinsBuild $jenkinsBuild
+     * @return string
+     */
+     public static function getMetaDataArtifactUrl($jenkinsBuild)
+     {
+         return self::getArtifactUrl($jenkinsBuild, "/publish.tar.gz/");
+     }
+
     /**
      * Get the artifact url base string from the configured parameters
      * @return string

@@ -76,10 +76,12 @@ git commit -m "Update Version Code"
 	}
 
     static publishJobScript = '''
-if [ ! -f "$WORKSPACE/publish.tar.gz" ]; then
-  echo "Missing publish.tar.gaz"
-  exit 1
-fi
+rm -rf *
+wget "$APK_URL"
+wget "$ARTIFACT_URL/package_name.txt"
+wget "$ARTIFACT_URL/publish.tar.gz"
+wget "$ARTIFACT_URL/version_code.txt"
+
 tar xvf "$WORKSPACE/publish.tar.gz"
 
 set +x
@@ -94,15 +96,10 @@ supply -k $PAK -i $PAI -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m p
             label('fastlane-supply')
             parameters {
                 choiceParam('CHANNEL', ['production', 'alpha', 'beta'])
+                stringParam('ARTIFACT_URL', '', '' )
+                stringParam('APK_URL', '', '' )
             }
             steps {
-                shell("rm -rf *")
-                copyArtifacts(buildJobName) {
-                    flatten()
-                    buildSelector {
-                        latestSuccessful(true)
-                    }
-                }
                 shell(publishJobScript)
             }
 

@@ -14,6 +14,3 @@ def artifactUrlBase = '<?= $artifactUrlBase ?>'
 job(buildJobName) {
     jobs.codecommitBuildJob(delegate, gitUrl, publisherName, artifactUrlBase)
 }
-job(publishJobName) {
-    jobs.googleplayPublishJob(delegate, gitUrl, publisherName, buildJobName)
-}
