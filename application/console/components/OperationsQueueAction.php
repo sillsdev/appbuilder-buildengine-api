@@ -45,7 +45,7 @@ class OperationsQueueAction {
                 break;
             }
         }
-        logResults($starttimestamp, $queuedJobs);
+        $this->logResults($starttimestamp, $queuedJobs);
     }
     private function processNextJob()
     {
