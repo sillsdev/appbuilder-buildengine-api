@@ -26,6 +26,7 @@ class DevelopmentAction {
     const GETCOMPLETED = 'GETCOMPLETED';
     const GETREMAINING = 'GETREMAINING';
     const GETBUILDS = 'GETBUILDS';
+    const UPDATEJOBS = 'UPDATEJOBS';
     
     private $actionType;
     private $sendToAddress;
@@ -59,6 +60,8 @@ class DevelopmentAction {
             case self::GETBUILDS:
                 $this->actionGetBuilds();
                 break;
+            case self::UPDATEJOBS:
+                $this->actionUpdateJobs();
         }  
     }
     /**
@@ -214,6 +217,10 @@ class DevelopmentAction {
         }
     }
 
+    private function actionUpdateJobs() {
+            $task = OperationQueue::UPDATEJOBS;
+            OperationQueue::findOrCreate($task, null, null);
+    }
     /*===============================================  logging ============================================*/
     /**
      * get Jenkins and S3 details

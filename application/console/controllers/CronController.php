@@ -152,4 +152,12 @@ class CronController extends Controller
         $developmentAction = new DevelopmentAction(DevelopmentAction::FORCEUPLOAD);
         $developmentAction->performAction();
     }
+    /**
+     * Force the wrapper seed jobs to execute (Dev only)
+     */
+    public function actionUpdateJobs()
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::UPDATEJOBS);
+        $developmentAction->performAction();
+    }
 }
