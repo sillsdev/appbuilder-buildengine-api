@@ -17,16 +17,6 @@ class Job extends JobBase implements Linkable
     public function __construct($config = array()) {
         parent::__construct($config);
 
-        $this->on(\yii\db\ActiveRecord::EVENT_AFTER_INSERT, [$this,'createInitialBuild']);
-    }
-
-    /**
-     * When a job is created, also create a build
-     * @param Event $event
-     */
-    public function createInitialBuild($event)
-    {
-        $this->createBuild();
     }
 
     public function scenarios()

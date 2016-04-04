@@ -86,10 +86,8 @@ class SyncScriptsAction
         $this->applyUpdates($commitString);
     }
     private function recurse_copy($src,$dst) {
-        echo "recurse_copy src ".$src.PHP_EOL;
         $dir = opendir($src);
         if (!file_exists($dst)) {
-            echo "mkdir $dst ". PHP_EOL;
             if (mkdir($dst, 0777, true)){
                 echo "failed to mkdir $dst ". PHP_EOL;
             }
@@ -126,7 +124,6 @@ class SyncScriptsAction
 
     private function applyUpdates($commitString)
     {
-        echo "applyUpdates starting". PHP_EOL;
         if ($this->git->hasChanges())
         {
             echo "[$this->prefix] Changes detected...committing..." . PHP_EOL;
@@ -185,11 +182,6 @@ class SyncScriptsAction
     private function createBuildScript($job, &$jobs, $gitSubstPatterns, $localScriptDir)
     {
         list($updatesString, $added, $updated, $buildJobName) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir, "_build");
-        $changed = $added + $updated;
-        if ($changed > 0)
-        {
-            $this->createBuild($job);
-        }
 
         $jobs[$buildJobName] = 1;
         return [$updatesString, $added, $updated];
