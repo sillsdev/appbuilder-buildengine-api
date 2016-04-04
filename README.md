@@ -221,29 +221,44 @@ The format of the URL should be ssh://git-commit.us-east-1.amazonaws.com/v1/repo
 
 #### Create S3 Folders ####
 BuildEngine and AppBuilder use [s3-expand](https://github.com/silinternational/s3-expand) to extract credentials needed to
-access resources.
+access resources. 
 
-* Create the following folders in [AWS S3](https://console.aws.amazon.com/s3/home)
+* Create the following folder in [AWS S3](https://console.aws.amazon.com/s3/home)
 ```
 sil-appbuilder-secrets/APP_ENV/buildengine_api/ssh
-sil-appbuilder-secrets/APP_ENV/jenkins/appbuilder_ssh
 ```
 * Save buildengine_api private and public key in S3
 ```
 sil-appbuilder-secrets/APP_ENV/buildengine_api/ssh/id_rsa
 sil-appbuilder-secrets/APP_ENV/buildengine_api/ssh/id_rsa.pub
 ```
+
+Jenkins is used to initiate jobs that can build the application and/or publish them to the Google Play Store.
+The system can be set up so that one instance of Jenkins performs both of these tasks or it can be configured to perform only one
+of the two functions, allowing another instance of Jenkins to perform the other.  For a typical development
+environment, the same Jenkins instance will be used for both, so both sets of keys described below should be
+included.
+
+If the credentials being saved here are to support a system that will build the application using AppBuilder:
+
+* Create the following folders in [AWS S3](https://console.aws.amazon.com/s3/home)
+```
+sil-appbuilder-secrets/APP_ENV/jenkins/build/appbuilder_ssh
+sil-appbuilder-secrets/APP_ENV/jenkins/build/google_play_store
+```
+ 
+
 * Save appbuilder private and public key in S3
 ```
-sil-appbuilder-secrets/APP_ENV/jenkins/appbuilder_ssh/id_rsa
-sil-appbuilder-secrets/APP_ENV/jenkins/appbuilder_ssh/id_rsa.pub
+sil-appbuilder-secrets/APP_ENV/jenkins/build/appbuilder_ssh/id_rsa
+sil-appbuilder-secrets/APP_ENV/jenkins/build/appbuilder_ssh/id_rsa.pub
 ```
 
 AppBuilder needs additional credentials for signing APK files.  These
 
-* Create the following folders in S3
+* Create the following folder in S3
 ```
-sil-appbuilder-secrets/APP_ENV/jenkins/google_play_store/wycliffeusa
+sil-appbuilder-secrets/APP_ENV/jenkins/build/google_play_store/wycliffeusa
 ```
 
 * Create a wycliffeusa.keystore (using Scripture App Builder from Tools->Create New KeyStore menu)
@@ -255,8 +270,18 @@ sil-appbuilder-secrets/APP_ENV/jenkins/google_play_store/wycliffeusa
     * ksp.txt - Key Store Password
     * ka.txt - Key Alias
     * kap.txt - Key Alias Password
-* Upload wycliffeusa.keystore, ksp.txt, ka.txt, and kap.txt to ```sil-appbuilder-secrets/APP_ENV/jenkins/google_play_store/wycliffeusa```
+* Upload wycliffeusa.keystore, ksp.txt, ka.txt, and kap.txt to ```sil-appbuilder-secrets/APP_ENV/jenkins/build/google_play_store/wycliffeusa
+```
 
+If the credentials being saved here are to support a system that will publish the application to Google Play Store:
+* Create the following folder in S3
+```
+sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
+```
+* Upload playstore_api_issuer.txt and playstore_api_key.p12 to ```sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
+```
+
+ 
 [Back](#markdown-header-development-setup-instructions)
 
 #### Give Permissions ####
@@ -422,7 +447,7 @@ In the directory where you cloned ```docker-appbuilder-jenkins```, do the follow
 * set ```BUILD_ENGINE_REPO_URL``` to the ssh url saved from creating the Build Engine repository.
 * set ```BUILD_ENGINE_REPO_BRANCH``` to master
 * set ```BUILD_ENGINE_GIT_SSH_USER``` to the value stored in ~/.ssh/buildengine_api/ssh_key_id.txt
-* set ```BUILD_EHGINE_JENKINS_MASTER_URL``` to the url of Jenkins.  This depends how you will deploy this app:
+* set ```BUILD_ENGINE_JENKINS_MASTER_URL``` to the url of Jenkins.  This depends how you will deploy this app:
     + If you will be using vagrant (Windows or Linux): ```http://192.168.70.241:8080```
     + If you will be using native docker (Linux): ```http://localhost:8080```
     + If you will be using docker-machine (Mac): run ```docker-engine ip default``` to determine IP, port 8080
@@ -442,6 +467,7 @@ In the directory where you cloned ```appbuilder-buildengine-api```, do the follo
 * set ```APPBUILDER_GIT_SSH_USER``` to the value stored in ~/.ssh/appbuilder/ssh_key_id.txt
 * set ```BUILD_ENGINE_REPO_URL``` to the ssh url saved from creating the Build Engine repository.
 * set ```BUILD_ENGINE_JENKINS_MASTER_URL``` to value used in ```docker-appbuilder-jenkins```
+* set ```PUBLISH_JENKINS_MASTER_URL``` to value used in ```docker-appbuilder-jenkins```
 * set ```API_ACCESS_TOKEN``` to some unique string to your environment.
     + This will be used during testing for HTTP Bearer Token Authentication.
     + See [RFC6750](https://tools.ietf.org/html/rfc6750) for more details.
