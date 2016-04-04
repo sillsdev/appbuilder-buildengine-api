@@ -270,16 +270,14 @@ sil-appbuilder-secrets/APP_ENV/jenkins/build/google_play_store/wycliffeusa
     * ksp.txt - Key Store Password
     * ka.txt - Key Alias
     * kap.txt - Key Alias Password
-* Upload wycliffeusa.keystore, ksp.txt, ka.txt, and kap.txt to ```sil-appbuilder-secrets/APP_ENV/jenkins/build/google_play_store/wycliffeusa
-```
+* Upload wycliffeusa.keystore, ksp.txt, ka.txt, and kap.txt to ```sil-appbuilder-secrets/APP_ENV/jenkins/build/google_play_store/wycliffeusa```
 
 If the credentials being saved here are to support a system that will publish the application to Google Play Store:
 * Create the following folder in S3
 ```
 sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
 ```
-* Upload playstore_api_issuer.txt and playstore_api_key.p12 to ```sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
-```
+* Upload playstore_api_issuer.txt and playstore_api_key.p12 to ```sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa```
 
  
 [Back](#markdown-header-development-setup-instructions)
