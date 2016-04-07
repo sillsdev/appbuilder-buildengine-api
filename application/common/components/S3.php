@@ -34,6 +34,7 @@ class S3 {
         $apkS3Url = self::getS3Url($build, $artifactUrl);
         list ($apkS3bucket, $apkS3key) = self::getS3BucketKey($apkS3Url);
         echo "..copy:" .PHP_EOL .".... $artifactUrl" .PHP_EOL .".... $apkS3bucket $apkS3Url" .PHP_EOL;
+        echo "... Key: $apkS3key ".PHP_EOL;
 
         $apk = file_get_contents($artifactUrl);
 
@@ -114,6 +115,57 @@ class S3 {
         }
 
         throw new ServerErrorHttpException("Failed to match $s3Url", 1444051300);
+    }
+    /**
+     * Removes any S3 job folder that doesn't have a corresponding
+     * record in the db
+     *
+     * @param type $jobNames - Array of all of the job names
+     */
+    public static function removeS3FoldersWithoutJobRecord($jobNames)
+    {
+        // Strip s3:// off of the url base to get the bucket
+        $urlBase = \Yii::$app->params['buildEngineArtifactUrlBase'];
+        $startPos = strpos($urlBase, '//') + 2;
+        $bucket = substr($urlBase, $startPos, strlen($urlBase) - $startPos);
+
+        // Create a list of all of the files in S3 in this bucket.
+        $prefix = \Yii::$app->params['appEnv']."/jobs/";
+        $s3 = self::getS3Client();
+        $s3FolderArray = self::getS3JobArray($bucket, $prefix);
+        // Now check and see if a record exists in the job table for
+        // those S3 folders and delete the S3 folder if not
+        foreach ($s3FolderArray as $key => $value) {
+            if (!array_key_exists($key, $jobNames))
+            {
+                $folderKey = $prefix.$key."/";
+                echo ("Deleting S3 bucket: $bucket key: $folderKey").PHP_EOL;
+                $s3->deleteMatchingObjects($bucket, $folderKey);
+            }
+        }
+    }
+
+    private static function getS3JobArray($bucket, $prefix)
+    {
+        $s3 = self::getS3Client();
+        $prefixLength = strlen($prefix);
+        $results = $s3->getPaginator('ListObjects', [
+            'Bucket' => $bucket,
+            'Prefix' => $prefix
+        ]);
+        // Create an array of just the jobs associated with those files
+        $s3FolderArray = array();
+        foreach ($results as $result) {
+            foreach ($result['Contents'] as $object) {
+                $key = $object['Key'];
+                $build = substr($key, $prefixLength, strpos($key, '/', $prefixLength) - $prefixLength);
+                if (!array_key_exists($build, $s3FolderArray))
+                {
+                    $s3FolderArray[$build] = 1;
+                }
+            }
+        }
+        return $s3FolderArray;
     }
     /**
      * Remove the artifacts for this build saved in S3

@@ -3,6 +3,7 @@
 namespace console\components;
 
 use console\components\OperationInterface;
+use common\models\Job;
 use common\models\Build;
 use common\components\S3;
 use common\components\Appbuilder_logger;
@@ -41,7 +42,12 @@ class CopyToS3Operation implements OperationInterface
                     }
                 }    
             }
-        }        
+        }
+
+        // Clean up S3 files
+        $jobNames = Job::getJobNames();
+        S3::removeS3FoldersWithoutJobRecord($jobNames);
+
     }
     public function getMaximumRetries()
     {

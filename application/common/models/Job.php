@@ -133,4 +133,17 @@ class Job extends JobBase implements Linkable
     {
         return self::findOne(['id' => $id]);
     }
+
+    public static function getJobNames()
+    {
+        $jobs = [];
+        foreach (Job::find()->each(50) as $job)
+        {
+            $jobApp = $job->app_id;
+            $request = $job->request_id;
+            $jobName = $jobApp."_".$request;
+            $jobs[$jobName] = 1;
+        }
+        return $jobs;
+    }
 }
