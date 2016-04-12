@@ -116,7 +116,7 @@ class DevelopmentAction {
      */
     private function actionForceUploadBuilds()
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("DevelopmentAction");
         foreach (Build::find()->each(50) as $build){
             if ($build->status == Build::STATUS_COMPLETED
                 && $build->result == JenkinsBuild::SUCCESS)
@@ -139,7 +139,7 @@ class DevelopmentAction {
      */
     private function actionGetBuildsCompleted()
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("DevelopmentAction");
         foreach (Build::find()->where([
             'status' => Build::STATUS_COMPLETED,
             'result' => JenkinsBuild::SUCCESS])->each(50) as $build){
@@ -165,7 +165,7 @@ class DevelopmentAction {
      */
     private function actionGetBuildsRemaining()
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("DevelopmentAction");
         $prefix = Utils::getPrefix();
         echo "[$prefix] Remaining Builds...". PHP_EOL;
         $complete = Build::STATUS_COMPLETED;
@@ -194,7 +194,7 @@ class DevelopmentAction {
      */
     private function actionGetBuilds()
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("DevelopmentAction");
         $prefix = Utils::getPrefix();
         echo "[$prefix] All Builds...". PHP_EOL;
         foreach (Build::find()->each(50) as $build){

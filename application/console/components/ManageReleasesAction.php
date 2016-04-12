@@ -18,7 +18,7 @@ class ManageReleasesAction extends ActionCommon
 {
     public function performAction()
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("ManageReleasesAction");
         $complete = Release::STATUS_COMPLETED;
         foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
             $build = $release->build;
@@ -68,7 +68,7 @@ class ManageReleasesAction extends ActionCommon
      */
     private function tryStartRelease($release)
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("ManageReleasesAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
@@ -101,7 +101,7 @@ class ManageReleasesAction extends ActionCommon
      */
     private function checkReleaseStatus($release)
     {
-        $logger = new Appbuilder_logger("CronController");
+        $logger = new Appbuilder_logger("ManageReleasesAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;

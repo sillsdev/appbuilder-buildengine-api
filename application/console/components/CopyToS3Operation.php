@@ -70,7 +70,7 @@ class CopyToS3Operation implements OperationInterface
      */
     private function saveBuild($build, $jenkinsBuild)
     {
-        $logger = new Appbuilder_logger("OperationQueue");
+        $logger = new Appbuilder_logger("CopyToS3Operation");
         $artifactUrl =  JenkinsUtils::getApkArtifactUrl($jenkinsBuild);
         $versionCodeArtifactUrl = JenkinsUtils::getVersionCodeArtifactUrl($jenkinsBuild);
         $packageNameUrl = JenkinsUtils::getPackageNameArtifactUrl($jenkinsBuild);
