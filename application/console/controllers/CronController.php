@@ -13,6 +13,7 @@ use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
 use console\components\OperationsQueueAction;
 use console\components\DevelopmentAction;
+use console\components\S3MaintenanceAction;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -89,6 +90,14 @@ class CronController extends Controller
 
     }
 
+    /**
+     * Delete orphaned files on S3
+     */
+    public function actionS3Maintenance()
+    {
+        $s3MaintenanceAction = new S3MaintenanceAction();
+        $s3MaintenanceAction->performAction();
+    }
     /**
      * Process operation_queue
      * This function will iterate up to the configured limit and for each iteration

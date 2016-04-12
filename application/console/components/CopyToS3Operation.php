@@ -43,11 +43,6 @@ class CopyToS3Operation implements OperationInterface
                 }    
             }
         }
-
-        // Clean up S3 files
-        $jobNames = Job::getJobNames();
-        S3::removeS3FoldersWithoutJobRecord($jobNames);
-
     }
     public function getMaximumRetries()
     {

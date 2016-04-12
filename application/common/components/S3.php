@@ -124,6 +124,7 @@ class S3 {
      */
     public static function removeS3FoldersWithoutJobRecord($jobNames)
     {
+        $logInfo = ["Checking for S3 files to delete"];
         // Strip s3:// off of the url base to get the bucket
         $urlBase = \Yii::$app->params['buildEngineArtifactUrlBase'];
         $startPos = strpos($urlBase, '//') + 2;
@@ -141,8 +142,11 @@ class S3 {
                 $folderKey = $prefix.$key."/";
                 echo ("Deleting S3 bucket: $bucket key: $folderKey").PHP_EOL;
                 $s3->deleteMatchingObjects($bucket, $folderKey);
+                $logString = "Deleted S3 bucket: $bucket key: $folderKey".PHP_EOL;
+                $logInfo[] = $logString;
             }
         }
+        return $logInfo;
     }
 
     private static function getS3JobArray($bucket, $prefix)
