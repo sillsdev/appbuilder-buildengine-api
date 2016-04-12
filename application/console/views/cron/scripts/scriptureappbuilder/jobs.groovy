@@ -65,6 +65,9 @@ git commit -m "Update Version Code"
                                     pushOnlyIfSuccess(true)
                                     forcePush(false)
                                     branch('origin', 'master')
+                                    tag('origin', '$BUILD_TAG-$GIT_COMMIT') {
+                                        create(true)
+                                    }
                                 }
 			}
 
