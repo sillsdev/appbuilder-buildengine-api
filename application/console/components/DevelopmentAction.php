@@ -3,6 +3,7 @@ namespace console\components;
 
 use common\models\Build;
 use common\models\EmailQueue;
+use common\models\Job;
 use common\models\OperationQueue;
 use common\components\S3;
 use common\components\Appbuilder_logger;
@@ -27,9 +28,11 @@ class DevelopmentAction {
     const GETREMAINING = 'GETREMAINING';
     const GETBUILDS = 'GETBUILDS';
     const UPDATEJOBS = 'UPDATEJOBS';
+    const DELETEJOB = 'DELETEJOB';
     
     private $actionType;
     private $sendToAddress;
+    private $jobIdToDelete;
     
     public function __construct()
     {
@@ -37,6 +40,9 @@ class DevelopmentAction {
         $this->actionType = $argv[0];
         if ($this->actionType == self::TESTEMAIL) {
             $this->sendToAddress = $argv[1];
+        }
+        if ($this->actionType == self::DELETEJOB) {
+            $this->jobIdToDelete = $argv[1];
         }
     }
     
@@ -62,6 +68,10 @@ class DevelopmentAction {
                 break;
             case self::UPDATEJOBS:
                 $this->actionUpdateJobs();
+                break;
+            case self::DELETEJOB:
+                $this->actionDeleteJob();
+                break;
         }  
     }
     /**
@@ -220,6 +230,17 @@ class DevelopmentAction {
     private function actionUpdateJobs() {
             $task = OperationQueue::UPDATEJOBS;
             OperationQueue::findOrCreate($task, null, null);
+    }
+    private function actionDeleteJob() {
+        echo "Deleting job $this->jobIdToDelete".PHP_EOL;
+        $job = Job::findById($this->jobIdToDelete);
+        if (is_null($job)) {
+            echo "Job $this->jobIdToDelete not found".PHP_EOL;
+        } else if ($job->delete()) {
+            echo "Successfully deleted record".PHP_EOL;
+        } else {
+            echo "Failed to delete record".PHP_EOL;
+        }
     }
     /*===============================================  logging ============================================*/
     /**

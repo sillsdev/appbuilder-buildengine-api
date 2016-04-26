@@ -169,4 +169,12 @@ class CronController extends Controller
         $developmentAction = new DevelopmentAction(DevelopmentAction::UPDATEJOBS);
         $developmentAction->performAction();
     }
+    /**
+     * Delete job.  Job ID required as parameter
+     */
+    public function actionDeleteJob($jobIdToDelete)
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::DELETEJOB, $jobIdToDelete);
+        $developmentAction->performAction();
+    }
 }
