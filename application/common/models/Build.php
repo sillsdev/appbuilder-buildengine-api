@@ -204,10 +204,22 @@ class Build extends BuildBase implements Linkable
      * @param type $job_id
      * @return type array of Build
      */
-    public static function findAllByJobId($job_id)
+    public static function findAllActiveByJobId($job_id)
     {
        $builds = Build::find()->where('job_id = :job_id and status != :status',
                ['job_id'=>$job_id, 'status'=>Build::STATUS_EXPIRED])->all();
+       return $builds;
+    }
+    /**
+     * Returns array of all builds associated with the specified job
+     *
+     * @param type $job_id
+     * @return type array of Build
+     */
+    public static function findAllByJobId($job_id)
+    {
+       $builds = Build::find()->where('job_id = :job_id',
+               ['job_id'=>$job_id])->all();
        return $builds;
     }
 
@@ -218,5 +230,18 @@ class Build extends BuildBase implements Linkable
     {
         $this->artifact_url = null;
         $this->save();
+    }
+    /**
+     * Check for dependent builds and delete them prior to deleting
+     * record
+     */
+    public function beforeDelete() {
+        foreach (Release::findAllByBuildId($this->id) as $release)
+        {
+            if (!$release->delete()){
+                return false;
+            }
+        }
+        return parent::beforeDelete();
     }
 }

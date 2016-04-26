@@ -146,4 +146,18 @@ class Job extends JobBase implements Linkable
         }
         return $jobs;
     }
+
+    /**
+     * Check for dependent builds and delete them prior to deleting
+     * record
+     */
+    public function beforeDelete() {
+        foreach (Build::findAllByJobId($this->id) as $build)
+        {
+            if (!$build->delete()){
+                return false;
+            }
+        }
+        return parent::beforeDelete();
+    }
 }

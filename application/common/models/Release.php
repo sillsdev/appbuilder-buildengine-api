@@ -154,4 +154,16 @@ class Release extends ReleaseBase implements Linkable
     {
         return Release::jobNameForBuild($this->build->jobName());
     }
+    /**
+     * Returns array of all  associated with the specified job
+     *
+     * @param type $build_id
+     * @return type array of Release
+     */
+    public static function findAllByBuildId($build_id)
+    {
+       $releases = Release::find()->where('build_id = :build_id',
+               ['build_id'=>$build_id])->all();
+       return $releases;
+    }
 }

@@ -18,6 +18,7 @@ $ADMIN_EMAIL = getenv('ADMIN_EMAIL') ?: 'nobody@nowhere.com';
 $APP_ENV = getenv('APP_ENV') ?: "not set";
 
 return [
+    'id' => 'app-frontend',
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
     'components' => [
         'cache' => [

@@ -4,6 +4,7 @@ namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
+use common\models\EmailQueue;
 
 /**
  * ContactForm is the model behind the contact form.
@@ -27,7 +28,7 @@ class ContactForm extends Model
             // email has to be a valid email address
             ['email', 'email'],
             // verifyCode needs to be entered correctly
-            ['verifyCode', 'captcha'],
+            // ['verifyCode', 'captcha'],
         ];
     }
 
@@ -49,11 +50,12 @@ class ContactForm extends Model
      */
     public function sendEmail($email)
     {
+        $emailBody = "Administration Web Site Contact request from $this->name at $this->email".PHP_EOL.PHP_EOL.$this->body;
         return Yii::$app->mailer->compose()
             ->setTo($email)
             ->setFrom([$this->email => $this->name])
             ->setSubject($this->subject)
-            ->setTextBody($this->body)
+            ->setTextBody($emailBody)
             ->send();
     }
 }
