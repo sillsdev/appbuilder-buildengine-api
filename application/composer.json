@@ -9,10 +9,10 @@
         "cpliakas/git-wrapper": "*",
         "chbiel/jenkins-php-api": "*",
         "aws/aws-sdk-php": "^3.4",
-        "silinternational/yii2-jsonsyslog": "*",
-		"fillup/phpmyadmin-minimal": "dev-master"
+        "silinternational/yii2-jsonsyslog": "*"
     },
     "require-dev": {
+        "fillup/phpmyadmin-minimal": "dev-master",
         "yiisoft/yii2-codeception": "*",
         "yiisoft/yii2-debug": "*",
         "yiisoft/yii2-faker": "*",
