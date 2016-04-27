@@ -5,15 +5,15 @@ $this->title = 'SIL App Builder Administration';
 <div class="site-index">
 
     <div class="jumbotron">
-        <h1>App Builder Adminstration</h1>
-
+        <h1>App Publishing Service</h1>
+        <h1>Administration</h1>
     </div>
 
     <div class="body-content">
 
         <div class="row">
-            <div class="col-lg-4">
-                <h2>Job Administration</h2>
+            <div class="col-lg-3">
+                <h2>Job</h2>
 
                 <p>View, edit or remove entries from the job table.  Each entry in the table corresponds to
                     a application build and an application publish job in Jenkins instances attached to this database. 
@@ -23,8 +23,8 @@ $this->title = 'SIL App Builder Administration';
 
                 <p><a class="btn btn-default" href="/job-admin">Job Administration &raquo;</a></p>
             </div>
-            <div class="col-lg-4">
-                <h2>Build Administration</h2>
+            <div class="col-lg-3">
+                <h2>Build</h2>
 
                 <p>View, edit or remove entries from the build table.  Each entry in this table corresponds to a build
                     of the application job in Jenkins instances attached to this database.  Deleting the build also
@@ -32,16 +32,16 @@ $this->title = 'SIL App Builder Administration';
 
                 <p><a class="btn btn-default" href="/build-admin">Build Administration &raquo;</a></p>
             </div>
-            <div class="col-lg-4">
-                <h2>Release Administration</h2>
+            <div class="col-lg-3">
+                <h2>Release</h2>
 
                 <p>View, edit or remove entries from the release table.  Entries in this table relates to attempts to
                     publish builds to the Google Play Store and corresponds to a build of the Jenkins publish job.</p>
 
                 <p><a class="btn btn-default" href="/release-admin">Release Administration &raquo;</a></p>
             </div>
-            <div class="col-lg-4">
-                <h2>Operation Queue Administration</h2>
+            <div class="col-lg-3">
+                <h2>Operation Queue</h2>
 
                 <p>View, edit or remove entries from the operation queue table.  Entries in this table relate to internal operations
                     that are either queued to be performed, waiting to be retried, or have failed the maximum number of times and 

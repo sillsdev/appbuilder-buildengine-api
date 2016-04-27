@@ -2,7 +2,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-$this->title = 'App Builder';
+$this->title = 'App Publishing Service';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="site-about">
@@ -19,6 +19,8 @@ $this->params['breadcrumbs'][] = $this->title;
 <p>Chris Hubbard&nbsp;(<a href="http://sil.org">SIL International</a>) :&nbsp;Dev Lead, Programming
 </p>
 <p>David Moore&nbsp;(<a href="http://sil.org">SIL International</a>) :&nbsp;Programming
+</p>
+<p>Rick MacLean&nbsp;(<a href="http://sil.org">SIL International</a>) :&nbsp;Dev Ops
 </p>
 <!--
     <code><?= __FILE__ ?></code>
