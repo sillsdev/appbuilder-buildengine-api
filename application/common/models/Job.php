@@ -121,7 +121,25 @@ class Job extends JobBase implements Linkable
      */
     public function name()
     {
-        return $this->app_id."_".$this->request_id;
+        $client = $this->getClient();
+        if ($client) {
+            return $this->app_id."_".$client->prefix."_".$this->request_id;
+        } else {
+            return $this->app_id."_".$this->request_id;
+        }
+    }
+
+    /**
+     * Returns array of all jobs associated with the specified client
+     *
+     * @param integer $client_id
+     * @return array array of Build
+     */
+    public static function findAllByClientId($client_id)
+    {
+        $jobs = Job::find()->where('client_id = :client_id',
+            ['client_id'=>$client_id])->all();
+        return $jobs;
     }
     /**
      * Return the nae of the job to use with Jenkins when publishing
@@ -135,7 +153,7 @@ class Job extends JobBase implements Linkable
     /**
      * Convenience method to find the job by Id
      * @param integer $id
-     * @return type Job
+     * @return Job Job
      */
     public static function findById($id)
     {
