@@ -27,7 +27,24 @@ class S3 {
         $client->registerStreamWrapper();
         return $client;
     }
+    public static function saveErrorToS3($jenkins, $jobName, $buildNumber)
+    {
+        $client = self::getS3Client();
+        $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $jobName, $buildNumber);
+        $s3Url = self::getS3UrlByNameNumber($jobName, $buildNumber, $errorUrl);
+        list ($s3bucket, $s3key) = self::getS3BucketKey($s3Url);
+        $consoleOutput = file_get_contents($errorUrl);
 
+        $client->putObject([
+            'Bucket' => $s3bucket,
+            'Key' => $s3key,
+            'Body' => $consoleOutput,
+            'ACL' => 'public-read'
+        ]);
+
+        $publicUrl = $client->getObjectUrl($s3bucket, $s3key);
+        return $publicUrl;
+    }
     public static function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl)
     {
         $client = self::getS3Client();
@@ -97,9 +114,12 @@ class S3 {
     public static function getS3Url($build, $artifactUrl)
     {
         $job = $build->job;
-        return JenkinsUtils::getArtifactUrlBase()."/jobs/".$job->name()."/".$build->build_number."/".basename($artifactUrl);
+        return self::getS3UrlByNameNumber($job->name(), $build->build_number, $artifactUrl);
     }
 
+    private static function getS3UrlByNameNumber($name, $number, $artifactUrl) {
+        return JenkinsUtils::getArtifactUrlBase()."/jobs/".$name."/".$number."/".basename($artifactUrl);
+    }
     /**
      * Get the S3 Bucket and Key to use to archive a build
      * @param string s3Url

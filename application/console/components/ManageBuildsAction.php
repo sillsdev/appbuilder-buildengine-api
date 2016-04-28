@@ -84,7 +84,9 @@ class ManageBuildsAction extends ActionCommon
                         $build->status = Build::STATUS_COMPLETED;
                         switch($build->result){
                             case JenkinsBuild::FAILURE:
-                                $build->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $build->jobName(), $build->build_number);
+                                $task = OperationQueue::SAVEERRORTOS3;
+                                $build_id = $build->id;
+                                OperationQueue::findOrCreate($task, $build_id, "build");
                                 break;
                             case JenkinsBuild::SUCCESS:
                                 $task = OperationQueue::SAVETOS3;

@@ -199,12 +199,13 @@ class SyncScriptsAction
         $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
         $publisherName = $job->publisher_id;
         $buildJobName = $job->name();
+        $publishJobName = $job->nameForPublish();
         $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
         $script = $this->cronController->renderPartial("scripts/$job->app_id".$extension, [
             'publisherName' => $publisherName,
             'buildJobName' => $buildJobName,
-            'publishJobName' => Release::jobNameForBuild($buildJobName),
+            'publishJobName' => $publishJobName,
             'gitUrl' => $gitUrl,
             'artifactUrlBase' => $artifactUrlBase,
         ]);

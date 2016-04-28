@@ -3,6 +3,7 @@ namespace console\components;
 
 use common\models\Build;
 use common\models\Release;
+use common\models\OperationQueue;
 use common\components\Appbuilder_logger;
 use common\components\JenkinsUtils;
 
@@ -115,10 +116,12 @@ class ManageReleasesAction extends ActionCommon
                     $release->status = Release::STATUS_COMPLETED;
                     switch($release->result){
                         case JenkinsBuild::FAILURE:
-                            $release->error = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $release->jobName(), $release->build_number);
+                            $task = OperationQueue::SAVEERRORTOS3;
+                            $release_id = $release->id;
+                            OperationQueue::findOrCreate($task, $release_id, "release");
                             break;
                         case JenkinsBuild::SUCCESS:
-                           if ($build = $this->getBuild($release->build_id))
+                            if ($build = $this->getBuild($release->build_id))
                             {
                                 $build->channel = $release->channel;
                                 $build->save();

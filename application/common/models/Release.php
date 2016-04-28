@@ -145,14 +145,9 @@ class Release extends ReleaseBase implements Linkable
         return false;
     }
 
-    public static function jobNameForBuild($buildJobName)
-    {
-        return "publish_".$buildJobName;
-    }
-
     public function jobName()
     {
-        return Release::jobNameForBuild($this->build->jobName());
+        return $this->build->job->nameForPublish();
     }
     /**
      * Returns array of all  associated with the specified job

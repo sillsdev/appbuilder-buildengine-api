@@ -4,6 +4,7 @@ namespace common\models;
 use common\models\EmailQueue;
 use common\components\EmailUtils;
 use console\components\CopyToS3Operation;
+use console\components\CopyErrorToS3Operation;
 use console\components\FindExpiredBuildsOperation;
 use console\components\UpdateJobsOperation;
 use console\components\MaxRetriesExceededException;
@@ -20,6 +21,7 @@ class OperationQueue extends OperationQueueBase
     const UPDATEJOBS = 'UPDATEJOBS';
     const SAVETOS3 = 'SAVETOS3';
     const FINDEXPIREDBUILDS = 'FINDEXPIREDBUILDS';
+    const SAVEERRORTOS3 = "SAVEERRORTOS3";
 
     public function rules()
     {
@@ -67,7 +69,7 @@ class OperationQueue extends OperationQueueBase
 
         return $job;
     }
-    public static function createOperationObject($operation, $id) {
+    public static function createOperationObject($operation, $id, $operation_parms) {
         $operationObject = null;
         switch($operation){
             case OperationQueue::UPDATEJOBS:
@@ -79,6 +81,8 @@ class OperationQueue extends OperationQueueBase
             case OperationQueue::FINDEXPIREDBUILDS:
                 $operationObject = new FindExpiredBuildsOperation($id);
                 break;
+            case OperationQueue::SAVEERRORTOS3:
+                $operationObject = new CopyErrorToS3Operation($id, $operation_parms);
         }
         return $operationObject;
     }
@@ -110,7 +114,7 @@ class OperationQueue extends OperationQueueBase
             return false;
         }
         $object_id = $job->operation_object_id;
-        $operationObject = self::createOperationObject($job->operation,$object_id);
+        $operationObject = self::createOperationObject($job->operation,$object_id, $job->operation_parms);
         $maxDelay = $operationObject->getMaximumDelay();
         $maxAttempts = $operationObject->getMaximumRetries();
         $alertAfterAttemptCount = $operationObject->getAlertAfterAttemptCount();

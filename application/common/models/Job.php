@@ -123,6 +123,14 @@ class Job extends JobBase implements Linkable
     {
         return $this->app_id."_".$this->request_id;
     }
+    /**
+     * Return the nae of the job to use with Jenkins when publishing
+     * @return String
+     */
+    public function nameForPublish()
+    {
+        return "publish_".$this->name();
+    }
 
     /**
      * Convenience method to find the job by Id
@@ -133,16 +141,19 @@ class Job extends JobBase implements Linkable
     {
         return self::findOne(['id' => $id]);
     }
-
+    /**
+     * Create an entry containing the name of all Jenkins
+     * build and publish jobs that are valid based on the
+     * current database contents
+     * @return array of Strings
+     */
     public static function getJobNames()
     {
         $jobs = [];
         foreach (Job::find()->each(50) as $job)
         {
-            $jobApp = $job->app_id;
-            $request = $job->request_id;
-            $jobName = $jobApp."_".$request;
-            $jobs[$jobName] = 1;
+            $jobs[$job->name()] = 1;
+            $jobs[$job->nameForPublish()] = 1;
         }
         return $jobs;
     }

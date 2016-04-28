@@ -67,7 +67,7 @@ class OperationsQueueAction {
         }
 
         catch (\Exception $e) {
-            echo "Caught anothe exception".PHP_EOL;
+            echo "Caught another exception".PHP_EOL;
             echo $e->getMessage() .PHP_EOL;
             $this->failedJobs++;
          }
