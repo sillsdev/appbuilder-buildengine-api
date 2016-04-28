@@ -17,6 +17,10 @@ class User extends Component implements IdentityInterface
         if($token == $validToken){
             return new User();
         }
+        $client = Client::findByAccessToken($token);
+        if ($client) {
+            return new User($client['prefix']);
+        }
 
         return null;
     }

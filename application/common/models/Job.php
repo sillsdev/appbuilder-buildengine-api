@@ -121,13 +121,31 @@ class Job extends JobBase implements Linkable
      */
     public function name()
     {
-        return $this->app_id."_".$this->request_id;
+        $client = $this->getClient();
+        if ($client) {
+            return $this->app_id."_".$client->prefix."_".$this->request_id;
+        } else {
+            return $this->app_id."_".$this->request_id;
+        }
+    }
+
+    /**
+     * Returns array of all jobs associated with the specified client
+     *
+     * @param integer $client_id
+     * @return array array of Build
+     */
+    public static function findAllByClientId($client_id)
+    {
+        $jobs = Job::find()->where('client_id = :client_id',
+            ['client_id'=>$client_id])->all();
+        return $jobs;
     }
 
     /**
      * Convenience method to find the job by Id
      * @param integer $id
-     * @return type Job
+     * @return Job Job
      */
     public static function findById($id)
     {
@@ -139,10 +157,7 @@ class Job extends JobBase implements Linkable
         $jobs = [];
         foreach (Job::find()->each(50) as $job)
         {
-            $jobApp = $job->app_id;
-            $request = $job->request_id;
-            $jobName = $jobApp."_".$request;
-            $jobs[$jobName] = 1;
+            $jobs[$job->name()] = 1;
         }
         return $jobs;
     }
