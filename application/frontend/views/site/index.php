@@ -23,7 +23,7 @@ $this->title = 'SIL App Builder Administration';
 
                 <p><a class="btn btn-default" href="/job-admin">Job Administration &raquo;</a></p>
             </div>
-            <div class="col-lg-3">
+            <div class="col-lg-2">
                 <h2>Build</h2>
 
                 <p>View, edit or remove entries from the build table.  Each entry in this table corresponds to a build
@@ -32,13 +32,22 @@ $this->title = 'SIL App Builder Administration';
 
                 <p><a class="btn btn-default" href="/build-admin">Build Administration &raquo;</a></p>
             </div>
-            <div class="col-lg-3">
+            <div class="col-lg-2">
                 <h2>Release</h2>
 
                 <p>View, edit or remove entries from the release table.  Entries in this table relates to attempts to
                     publish builds to the Google Play Store and corresponds to a build of the Jenkins publish job.</p>
 
                 <p><a class="btn btn-default" href="/release-admin">Release Administration &raquo;</a></p>
+            </div>
+            <div class="col-lg-2">
+                <h2>Client</h2>
+
+                <p>View edit or remove entries from the client table.  Used if multiple Doorman sites are sending requests to 
+                    the build engine.  Access tokens, which are used for the Authentication: Bearer fields of requests are entered
+                    along with a prefix that is used in naming jobs associated with this client.
+
+                <p><a class="btn btn-default" href="/client-admin">Client Administration &raquo;</a></p>
             </div>
             <div class="col-lg-3">
                 <h2>Operation Queue</h2>
