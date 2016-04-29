@@ -26,22 +26,40 @@ class JobController extends ActiveController
     public $modelClass = 'common\models\Job';
 
     public function actionIndexBuilds($id) {
-       $builds = Build::findAllActiveByJobId($id);
-       if (!$builds){
-           throw new NotFoundHttpException();
-       }
-       return $builds;
+        $this->validateJob($id);
+        $builds = Build::findAllActiveByJobId($id);
+        if (!$builds){
+            throw new NotFoundHttpException();
+        }
+        return $builds;
     }
 
+    public function actionIndexJobs() {
+        $clientId = Job::getCurrentClientId();
+        $jobs = Job::findAllByClientId($clientId);
+        if (!$jobs) {
+            throw new NotFoundHttpException();
+        }
+        return $jobs;
+    }
+    public function actionViewJob($id) {
+        $job = Job::findByIdFiltered($id);
+        if (!$job) {
+            throw new NotFoundHttpException("Job $id not found");
+        }
+        return $job;
+    }
     public function actionViewBuild($id, $build_id) {
-       $build = Build::findOneById($id, $build_id);
-       if (!$build){
-           throw new NotFoundHttpException();
-       }
-       return $build;
+        $this->validateJob($id);
+        $build = Build::findOneById($id, $build_id);
+        if (!$build){
+            throw new NotFoundHttpException("Job $id Build $build_id not found");
+        }
+        return $build;
     }
 
     public function actionViewBuildError($id, $build_id) {
+        $this->validateJob($id);
         $build = Build::findOneById($id, $build_id);
         if ($build && filter_var($build->error, FILTER_VALIDATE_URL)) {
             $contents = file_get_contents($build->error);
@@ -53,7 +71,7 @@ class JobController extends ActiveController
     }
 
     public function actionNewBuild($id) {
-       $job = Job::findById($id);
+       $job = Job::findByIdFiltered($id);
        if (!$job){
            throw new NotFoundHttpException("Job $id not found", 1443810472);
        }
@@ -66,9 +84,10 @@ class JobController extends ActiveController
     }
 
     public function actionPublishBuild($id, $build_id) {
+        $this->validateJob($id);
         $build = Build::findOneById($id, $build_id);
         if (!$build){
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException("Job $id Build $build_id not found");
         }
         $artifactUrl = $build->artifact_url;
         if (is_null($artifactUrl) || ($artifactUrl=="")) {
@@ -89,11 +108,13 @@ class JobController extends ActiveController
     }
 
     public function actionViewRelease($id, $build_id, $release_id) {
+        $this->validateJob($id);
         $release = $this->lookupRelease($id, $build_id, $release_id);
         return $release;
     }
 
     public function actionViewReleaseError($id, $build_id, $release_id) {
+        $this->validateJob($id);
         $release = $this->lookupRelease($id, $build_id, $release_id);
         if ($release && filter_var($release->error, FILTER_VALIDATE_URL)) {
             $contents = file_get_contents($release->error);
@@ -176,5 +197,11 @@ class JobController extends ActiveController
                 }
         }
         return $retval;
+    }
+    private function validateJob($id)
+    {
+       if (!$this->actionViewJob($id)) {
+           throw new NotFoundHttpException("Job $id not found");
+       }
     }
 }

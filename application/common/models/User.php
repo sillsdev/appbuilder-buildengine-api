@@ -6,6 +6,7 @@ use yii\web\IdentityInterface;
 
 class User extends Component implements IdentityInterface
 {
+    var $client_id = null;
     public static function findIdentity($id)
     {
         return null;
@@ -19,7 +20,9 @@ class User extends Component implements IdentityInterface
         }
         $client = Client::findByAccessToken($token);
         if ($client) {
-            return new User($client['prefix']);
+            $configs=[];
+            $configs["client_id"] = $client['id'];
+            return new User($configs);
         }
 
         return null;
@@ -38,5 +41,10 @@ class User extends Component implements IdentityInterface
     public function validateAuthKey($authKey)
     {
         return false;
+    }
+
+    public function getClientId()
+    {
+        return $this->client_id;
     }
 }

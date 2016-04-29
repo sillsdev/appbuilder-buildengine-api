@@ -16,7 +16,6 @@ class Job extends JobBase implements Linkable
 {
     public function __construct($config = array()) {
         parent::__construct($config);
-
     }
 
     public function scenarios()
@@ -59,6 +58,11 @@ class Job extends JobBase implements Linkable
                 'git_url', 'url',
                     'pattern' => '/^ssh:\/\/(\w+@)?git-codecommit\./',
                 'message' => \Yii::t('app', 'Git SSH Url is required.')
+            ],
+            [
+                ['client_id'],'default', 'value' => function() {
+                    return self::getCurrentClientId();
+                },
             ],
         ]);
     }
@@ -122,7 +126,7 @@ class Job extends JobBase implements Linkable
     public function name()
     {
         $client = $this->getClient();
-        if ($client) {
+        if (!is_null($client)) {
             return $this->app_id."_".$client->prefix."_".$this->request_id;
         } else {
             return $this->app_id."_".$this->request_id;
@@ -137,9 +141,23 @@ class Job extends JobBase implements Linkable
      */
     public static function findAllByClientId($client_id)
     {
-        $jobs = Job::find()->where('client_id = :client_id',
-            ['client_id'=>$client_id])->all();
-        return $jobs;
+        if ($client_id) {
+            $jobs = Job::find()->where('client_id = :client_id',
+                ['client_id'=>$client_id])->all();
+            return $jobs;
+        } else {
+            /* No way I could find to find records where the 
+             * field is equal to null.  Always returned nothing
+             */
+            $jobs = [];
+            foreach (Job::find()->each(50) as $job)
+            {
+                if ($job->client_id == null) {
+                    $jobs[] = $job;
+                }
+            }
+            return $jobs;
+        }
     }
     /**
      * Return the nae of the job to use with Jenkins when publishing
@@ -158,6 +176,16 @@ class Job extends JobBase implements Linkable
     public static function findById($id)
     {
         return self::findOne(['id' => $id]);
+    }
+    public static function findByIdFiltered($id)
+    {
+        $job = self::findById($id);
+        if (!is_null($job)){
+            if ($job->client_id != self::getCurrentClientId()) {
+                $job = null;
+            }
+        }
+        return $job;
     }
     /**
      * Create an entry containing the name of all Jenkins
@@ -188,5 +216,13 @@ class Job extends JobBase implements Linkable
             }
         }
         return parent::beforeDelete();
+    }
+    public static function getCurrentClientId() {
+        $cid = "";
+        $user = Utils::getCurrentUser();
+        if (!is_null($user)) {
+            $cid = $user->getClientId();
+        }
+        return $cid;
     }
 }

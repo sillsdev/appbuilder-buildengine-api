@@ -49,14 +49,14 @@ class JobBase extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'request_id' => 'Request ID',
-            'git_url' => 'Git Url',
-            'app_id' => 'App ID',
-            'publisher_id' => 'Publisher ID',
-            'created' => 'Created',
-            'updated' => 'Updated',
-            'client_id' => 'Client ID',
+            'id' => Yii::t('app', 'ID'),
+            'request_id' => Yii::t('app', 'Request ID'),
+            'git_url' => Yii::t('app', 'Git Url'),
+            'app_id' => Yii::t('app', 'App ID'),
+            'publisher_id' => Yii::t('app', 'Publisher ID'),
+            'created' => Yii::t('app', 'Created'),
+            'updated' => Yii::t('app', 'Updated'),
+            'client_id' => Yii::t('app', 'Client ID'),
         ];
     }
 
@@ -73,6 +73,9 @@ class JobBase extends \yii\db\ActiveRecord
      */
     public function getClient()
     {
-        return $this->hasOne(Client::className(), ['id' => 'client_id']);
+        if (is_null($this->client_id)) {
+            return null;
+        }
+        return Client::findOne(['id' => $this->client_id]);
     }
 }

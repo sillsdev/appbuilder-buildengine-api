@@ -165,8 +165,11 @@ class SyncScriptsAction
         $removed = 0;
         $retString = "";
         $fileName = basename($scriptFile, ".groovy");
-        list($app_id, $request_id) = explode("_", $fileName);
-        $jobName = $app_id."_".$request_id;
+        list($app_id, $second, $third ) = explode("_", $fileName);
+        $jobName = $app_id."_".$second;;
+        if (!(($third == "build") || ($third == "publish"))) {
+            $jobName = $app_id."_".$second."_".$third;
+        }
         if (array_key_exists($app_id, $apps))
         {
             if (!array_key_exists($jobName, $jobs))
