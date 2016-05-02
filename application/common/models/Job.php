@@ -125,7 +125,7 @@ class Job extends JobBase implements Linkable
      */
     public function name()
     {
-        $client = $this->getClient();
+        $client = $this->getLinkedClient();
         if (!is_null($client)) {
             return $this->app_id."_".$client->prefix."_".$this->request_id;
         } else {
@@ -225,4 +225,11 @@ class Job extends JobBase implements Linkable
         }
         return $cid;
     }
+    public function getLinkedClient()
+     {
+        if (is_null($this->client_id)) {
+            return null;
+        }
+        return Client::findOne(['id' => $this->client_id]);
+     }
 }

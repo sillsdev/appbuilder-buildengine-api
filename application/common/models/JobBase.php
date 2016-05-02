@@ -73,9 +73,6 @@ class JobBase extends \yii\db\ActiveRecord
      */
     public function getClient()
     {
-        if (is_null($this->client_id)) {
-            return null;
-        }
-        return Client::findOne(['id' => $this->client_id]);
+        return $this->hasOne(Client::className(), ['id' => 'client_id']);
     }
 }
