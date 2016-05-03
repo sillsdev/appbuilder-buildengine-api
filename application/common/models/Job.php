@@ -169,6 +169,15 @@ class Job extends JobBase implements Linkable
     }
 
     /**
+     * Return the nae of the job to use with Jenkins when publishing
+     * @return String
+     */
+    public function nameForBuild()
+    {
+        return "build_".$this->name();
+    }
+
+    /**
      * Convenience method to find the job by Id
      * @param integer $id
      * @return Job Job
@@ -198,7 +207,7 @@ class Job extends JobBase implements Linkable
         $jobs = [];
         foreach (Job::find()->each(50) as $job)
         {
-            $jobs[$job->name()] = 1;
+            $jobs[$job->nameForBuild()] = 1;
             $jobs[$job->nameForPublish()] = 1;
         }
         return $jobs;

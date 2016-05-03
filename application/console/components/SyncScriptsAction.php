@@ -30,7 +30,7 @@ class SyncScriptsAction
     }
     public function performAction()
     {
-        $prefix = Utils::getPrefix();
+        $this->prefix = Utils::getPrefix();
 
         $this->git = $this->getRepo();
         $viewPath = $this->cronController->getViewPath();
@@ -62,21 +62,23 @@ class SyncScriptsAction
         }
         foreach (Job::find()->each(50) as $job)
         {
-            list($updatesString, $added, $updated) = $this->createBuildScript($job, $jobs, $gitSubstPatterns, $localScriptDir);
+            list($updatesString, $added, $updated) = $this->createBuildScript($job, $gitSubstPatterns, $localScriptDir);
             $changesString = $changesString . $updatesString;
             $totalAdded = $totalAdded + $added;
             $totalUpdated = $totalUpdated + $updated;
-            list($updatesString2, $added2, $updated2) = $this->createPublishScript($job, $jobs, $gitSubstPatterns, $localScriptDir);
+            list($updatesString2, $added2, $updated2) = $this->createPublishScript($job, $gitSubstPatterns, $localScriptDir);
             $changesString = $changesString . $updatesString2;
             $totalAdded = $totalAdded + $added2;
             $totalUpdated = $totalUpdated + $updated2;
+
+            $jobs[$job->name()] = 1;
         }
 
         // Remove Scripts that are not in the database
         $globFileName = "*_*.groovy";
         foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)
         {
-            list($removedString, $removed) = $this->removeScriptIfNoJobRecord($scriptFile, $apps, $jobs);
+            list($removedString, $removed) = $this->removeScriptIfNoJobRecord($scriptFile, $jobs);
             $changesString = $changesString . $removedString;
             $totalRemoved = $totalRemoved + $removed;
         }
@@ -156,56 +158,55 @@ class SyncScriptsAction
      * from the job table in the database.
      * 
      * @param String $scriptFile - Name of current scriptfile
-     * @param Array $apps - List of supported apps
      * @param Array $jobs - All of the jobs in the database
      * @return String, Int - String for cron commit and number of records removed
      */
-    private function removeScriptIfNoJobRecord($scriptFile, $apps, $jobs)
+    private function removeScriptIfNoJobRecord($scriptFile, $jobs)
     {
         $removed = 0;
         $retString = "";
         $fileName = basename($scriptFile, ".groovy");
-        list($app_id, $second, $third ) = explode("_", $fileName);
-        $jobName = $app_id."_".$second;;
-        if (!(($third == "build") || ($third == "publish"))) {
-            $jobName = $app_id."_".$second."_".$third;
-        }
-        if (array_key_exists($app_id, $apps))
+
+        list($type, $jobName) = explode("_", $fileName, 2);
+        if (!array_key_exists($jobName, $jobs))
         {
-            if (!array_key_exists($jobName, $jobs))
-            {
-                echo "[$this->prefix] Removing: $fileName" . PHP_EOL;
-                $this->git->rm($scriptFile);
-                $removed++;
-                $retString = $retString."remove: ".$fileName.PHP_EOL;
-            }
+            echo "[$this->prefix] Removing: $fileName" . PHP_EOL;
+            $this->git->rm($scriptFile);
+            $removed++;
+            $retString = $retString."remove: ".$fileName.PHP_EOL;
         }
+
         return[$retString, $removed];
     }
-    private function createBuildScript($job, &$jobs, $gitSubstPatterns, $localScriptDir)
+    private function createBuildScript($job, $gitSubstPatterns, $localScriptDir)
     {
-        list($updatesString, $added, $updated, $buildJobName) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir, "_build");
+        return $this->createJobScripts($job, $gitSubstPatterns, $localScriptDir, "build");
+    }
+    private function createPublishScript($job, $gitSubstPatterns, $localScriptDir)
+    {
+        return $this->createJobScripts($job, $gitSubstPatterns, $localScriptDir, "publish");
+    }
 
-        $jobs[$buildJobName] = 1;
-        return [$updatesString, $added, $updated];
-    }
-    private function createPublishScript($job, &$jobs, $gitSubstPatterns, $localScriptDir)
-    {
-        list($updatesString, $added, $updated, $buildJobName) = $this->createJobScripts($job, $jobs, $gitSubstPatterns, $localScriptDir, "_publish");
-        return [$updatesString, $added, $updated];
-    }
-    private function createJobScripts($job, &$jobs, $gitSubstPatterns, $localScriptDir, $extension)
+    /**
+     * @param Job $job
+     * @param String $gitSubstPatterns
+     * @param String $localScriptDir
+     * @param String $type
+     * @return array
+     */
+    private function createJobScripts($job, $gitSubstPatterns, $localScriptDir, $type)
     {
         $added = 0;
         $updated = 0;
         $retString = "";
         $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
         $publisherName = $job->publisher_id;
-        $buildJobName = $job->name();
+        $jobName = $job->name();
+        $buildJobName = $job->nameForBuild();
         $publishJobName = $job->nameForPublish();
         $gitUrl = $this->doReplacements($job->git_url, $gitSubstPatterns);
 
-        $script = $this->cronController->renderPartial("scripts/$job->app_id".$extension, [
+        $script = $this->cronController->renderPartial("scripts/$job->app_id"."_".$type, [
             'publisherName' => $publisherName,
             'buildJobName' => $buildJobName,
             'publishJobName' => $publishJobName,
@@ -213,25 +214,26 @@ class SyncScriptsAction
             'artifactUrlBase' => $artifactUrlBase,
         ]);
 
-        $file = $localScriptDir . DIRECTORY_SEPARATOR . $buildJobName . $extension . ".groovy";
-        $file_exists = file_exists($file);
-        $handle = fopen($file, "w");
+        $fileName = $type . "_" . $jobName . ".groovy";
+        $filePath = $localScriptDir . DIRECTORY_SEPARATOR . $fileName;
+        $fileExists = file_exists($filePath);
+        $handle = fopen($filePath, "w");
         fwrite($handle, $script);
         fclose($handle);
-        if ($this->git->getStatus($file))
+        if ($this->git->getStatus($filePath))
         {
-            if ($file_exists) {
-                echo "[$this->prefix] Updated: $buildJobName" . $extension . PHP_EOL;
-                $retString = $retString."update: ".$buildJobName.$extension.PHP_EOL;
+            if ($fileExists) {
+                echo "[$this->prefix] Updated:" . $fileName . PHP_EOL;
+                $retString = $retString."update: ".$fileName . PHP_EOL;
                 $updated++;
             } else {
-                echo "[$this->prefix] Added: $buildJobName" .$extension . PHP_EOL;
-                $retString = $retString."update: ".$buildJobName.$extension.PHP_EOL;
+                echo "[$this->prefix] Added: " . $fileName . PHP_EOL;
+                $retString = $retString."update: ".$fileName . PHP_EOL;
                 $added++;
             }
-            $this->git->add($file);
+            $this->git->add($filePath);
         }
-        return [$retString, $added, $updated, $buildJobName];
+        return [$retString, $added, $updated];
     }
     /**
      *
@@ -249,8 +251,6 @@ class SyncScriptsAction
             throw new ServerErrorHttpException("BUILD_ENGINE_REPO_URL must be SSH Url: $repoUrl", 1456850613);
         }
 
-        echo "1) RepoUrl: $repoUrl\n";
-
         // If buildEngineRepoUrl is CodeCommit, insert the userId
         if (preg_match('/^ssh:\/\/git-codecommit/', $repoUrl)) {
             // If using CodeCommit, GitSshUser is required
@@ -260,8 +260,6 @@ class SyncScriptsAction
             }
             $repoUrl = "ssh://" . $sshUser . "@" . substr($repoUrl, 6);
         }
-
-        echo "2) RepoUrl: $repoUrl\n";
 
         require_once __DIR__ . '/../../vendor/autoload.php';
         $wrapper = new GitWrapper();
