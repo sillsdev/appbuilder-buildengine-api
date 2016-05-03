@@ -33,6 +33,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'git_url:url',
             'app_id',
             'publisher_id',
+            'client_id',
             'created',
             'updated',
         ],
