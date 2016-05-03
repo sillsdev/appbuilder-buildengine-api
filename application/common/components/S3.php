@@ -114,7 +114,7 @@ class S3 {
     public static function getS3Url($build, $artifactUrl)
     {
         $job = $build->job;
-        return self::getS3UrlByNameNumber($job->name(), $build->build_number, $artifactUrl);
+        return self::getS3UrlByNameNumber($job->nameForBuild(), $build->build_number, $artifactUrl);
     }
 
     private static function getS3UrlByNameNumber($name, $number, $artifactUrl) {

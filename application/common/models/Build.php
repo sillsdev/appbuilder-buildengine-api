@@ -166,7 +166,7 @@ class Build extends BuildBase implements Linkable
 
     public function jobName()
     {
-        return $this->job->name();
+        return $this->job->nameForBuild();
     }
     /**
      * Returns the build specified by $build_id.  The inclusion of the $job_id

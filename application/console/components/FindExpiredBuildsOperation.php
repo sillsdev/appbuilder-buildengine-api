@@ -27,7 +27,7 @@ class FindExpiredBuildsOperation implements OperationInterface
         $job = Job::findOne(['id' => $this->job_id]);
         if (!is_null($job)){
            $jenkins = JenkinsUtils::getJenkins();
-            $jenkinsJob = $jenkins->getJob($job->name());
+            $jenkinsJob = $jenkins->getJob($job->nameForBuild());
             $builds = $jenkinsJob->getBuilds();
             foreach (Build::find()->where([
                 'job_id' => $this->job_id])->each(50) as $build){

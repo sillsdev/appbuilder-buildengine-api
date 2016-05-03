@@ -33,7 +33,7 @@ class CopyToS3Operation implements OperationInterface
             $job = $build->job;
             if ($job){
                 $jenkins = JenkinsUtils::getJenkins();
-                $jenkinsJob = $jenkins->getJob($job->name());
+                $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
                     list($build->artifact_url, $build->version_code) = $this->saveBuild($build, $jenkinsBuild);

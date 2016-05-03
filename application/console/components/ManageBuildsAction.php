@@ -76,7 +76,7 @@ class ManageBuildsAction extends ActionCommon
             $job = $build->job;
             if ($job){
                 $jenkins = JenkinsUtils::getJenkins();
-                $jenkinsJob = $jenkins->getJob($job->name());
+                $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
                     $build->result = $jenkinsBuild->getResult();
