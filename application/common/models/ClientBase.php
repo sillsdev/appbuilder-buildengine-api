@@ -12,6 +12,8 @@ use Yii;
  * @property string $prefix
  * @property string $created
  * @property string $updated
+ *
+ * @property Job[] $jobs
  */
 class ClientBase extends \yii\db\ActiveRecord
 {
@@ -42,11 +44,19 @@ class ClientBase extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'access_token' => 'Access Token',
-            'prefix' => 'Prefix',
-            'created' => 'Created',
-            'updated' => 'Updated',
+            'id' => Yii::t('app', 'ID'),
+            'access_token' => Yii::t('app', 'Access Token'),
+            'prefix' => Yii::t('app', 'Prefix'),
+            'created' => Yii::t('app', 'Created'),
+            'updated' => Yii::t('app', 'Updated'),
         ];
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getJobs()
+    {
+        return $this->hasMany(Job::className(), ['client_id' => 'id']);
     }
 }
