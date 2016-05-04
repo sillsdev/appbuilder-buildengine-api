@@ -58,18 +58,6 @@ class JobController extends ActiveController
         return $build;
     }
 
-    public function actionViewBuildError($id, $build_id) {
-        $this->validateJob($id);
-        $build = Build::findOneById($id, $build_id);
-        if ($build && filter_var($build->error, FILTER_VALIDATE_URL)) {
-            $contents = file_get_contents($build->error);
-            \Yii::$app->response->format = Response::FORMAT_RAW;
-            \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
-            return $contents;
-        }
-        throw new NotFoundHttpException();
-    }
-
     public function actionNewBuild($id) {
        $job = Job::findByIdFiltered($id);
        if (!$job){
@@ -111,19 +99,6 @@ class JobController extends ActiveController
         $this->validateJob($id);
         $release = $this->lookupRelease($id, $build_id, $release_id);
         return $release;
-    }
-
-    public function actionViewReleaseError($id, $build_id, $release_id) {
-        $this->validateJob($id);
-        $release = $this->lookupRelease($id, $build_id, $release_id);
-        if ($release && filter_var($release->error, FILTER_VALIDATE_URL)) {
-            $contents = file_get_contents($release->error);
-            \Yii::$app->response->format = Response::FORMAT_RAW;
-            \Yii::$app->response->setDownloadHeaders(null, "text/plain", true, strlen($contents));
-            return $contents;
-        }
-
-        throw new NotFoundHttpException();
     }
 
     public function behaviors()
