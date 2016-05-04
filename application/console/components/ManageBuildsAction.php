@@ -84,6 +84,7 @@ class ManageBuildsAction extends ActionCommon
                         $build->status = Build::STATUS_COMPLETED;
                         switch($build->result){
                             case JenkinsBuild::FAILURE:
+                            case JenkinsBuild::ABORTED:
                                 $task = OperationQueue::SAVEERRORTOS3;
                                 $build_id = $build->id;
                                 OperationQueue::findOrCreate($task, $build_id, "build");
