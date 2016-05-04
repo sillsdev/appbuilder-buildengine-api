@@ -23,7 +23,13 @@ $this->params['breadcrumbs'][] = $this->title;
             ['class' => 'yii\grid\SerialColumn'],
 
             'id',
-            'build_id',
+            [
+                'attribute' => 'build_id',
+                'format' => 'html',
+                'value' => function($data) {
+                    return Html::a("$data->build_id", ['build-admin/view', 'id' => $data->build_id]);
+                },
+            ],
             'status',
             'created',
             'updated',

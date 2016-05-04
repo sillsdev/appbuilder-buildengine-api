@@ -29,7 +29,11 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'attributes' => [
             'id',
-            'build_id',
+            [
+                'attribute'=>'build_id',
+                'format'=>"html",
+                'value' => Html::a($model->build_id, ['build-admin/view', 'id' => $model->build_id]),
+            ],
             'status',
             'created',
             'updated',

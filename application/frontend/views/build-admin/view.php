@@ -25,11 +25,16 @@ $this->params['breadcrumbs'][] = $this->title;
         ]) ?>
     </p>
 
-    <?= DetailView::widget([
+    <?=
+        DetailView::widget([
         'model' => $model,
         'attributes' => [
             'id',
-            'job_id',
+            [
+                'attribute'=>'job_id',
+                'format'=>"html",
+                'value' => Html::a($model->job_id, ['job-admin/view', 'id' => $model->job_id]),
+            ],
             'status',
             'build_number',
             'result',

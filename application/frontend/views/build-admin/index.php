@@ -23,7 +23,13 @@ $this->params['breadcrumbs'][] = $this->title;
             ['class' => 'yii\grid\SerialColumn'],
 
             'id',
-            'job_id',
+           [
+                'attribute' => 'job_id',
+                'format' => 'html',
+                'value' => function($data) {
+                    return Html::a("$data->job_id", ['job-admin/view', 'id' => $data->job_id]);
+                },
+            ],
             'status',
             'build_number',
             'result',
