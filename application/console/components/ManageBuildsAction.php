@@ -46,21 +46,35 @@ class ManageBuildsAction extends ActionCommon
             echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
 
             $jenkins = JenkinsUtils::getJenkins();
-            $jenkinsJob = $jenkins->getJob($build->jobName());
-            $versionCode = $this->getNextVersionCode($job, $build);
-            $parameters = array("VERSION_CODE" => $versionCode);
-            $jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
-            if (!is_null($jenkinsBuild)){
-                $build->build_number = $jenkinsBuild->getNumber();
-                echo "[$prefix] Started Build $build->build_number". PHP_EOL;
-                $build->status = Build::STATUS_ACTIVE;
-                $build->save();
+            $jenkinsJob = $this->getJenkinsJob($jenkins, $build);
+            if (!is_null($jenkinsJob)) {
+                $versionCode = $this->getNextVersionCode($job, $build);
+                $parameters = array("VERSION_CODE" => $versionCode);
+                $jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
+                if (!is_null($jenkinsBuild)){
+                    $build->build_number = $jenkinsBuild->getNumber();
+                    echo "[$prefix] Started Build $build->build_number". PHP_EOL;
+                    $build->status = Build::STATUS_ACTIVE;
+                    $build->save();
+                }
             }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = JenkinsUtils::getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
+        }
+    }
+    private function getJenkinsJob($jenkins, $build) {
+        try {
+            $jenkinsJob = $jenkins->getJob($build->jobName());
+            return $jenkinsJob;
+        } catch (\Exception $e) {
+            // If Jenkins is up and you can't get the job, then resync the scripts
+            echo "Job not found, trigger wrapper seed job".PHP_EOL;
+            $task = OperationQueue::UPDATEJOBS;
+            OperationQueue::findOrCreate($task, null, null);
+            return null;
         }
     }
     /**

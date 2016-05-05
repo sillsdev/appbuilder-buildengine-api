@@ -79,20 +79,34 @@ class ManageReleasesAction extends ActionCommon
             $path = substr($artifactUrl, 0, strrpos( $artifactUrl, '/'));
 
             $jenkins = JenkinsUtils::getPublishJenkins();
-            $jenkinsJob = $jenkins->getJob($release->jobName());
-            $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path);
+            $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
+            if (!is_null($jenkinsJob)) {
+                $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path);
 
-            if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
-                $release->build_number = $jenkinsBuild->getNumber();
-                echo "[$prefix] Started Build $release->build_number". PHP_EOL;
-                $release->status = Release::STATUS_ACTIVE;
-                $release->save();
+                if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
+                    $release->build_number = $jenkinsBuild->getNumber();
+                    echo "[$prefix] Started Build $release->build_number". PHP_EOL;
+                    $release->status = Release::STATUS_ACTIVE;
+                    $release->save();
+                }
             }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartRelease: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
+        }
+    }
+    private function getJenkinsJob($jenkins, $release) {
+        try {
+            $jenkinsJob = $jenkins->getJob($release->jobName());
+            return $jenkinsJob;
+        } catch (\Exception $e) {
+            // If Jenkins is up and you can't get the job, then resync the scripts
+            echo "Job not found, trigger wrapper seed job".PHP_EOL;
+            $task = OperationQueue::UPDATEJOBS;
+            OperationQueue::findOrCreate($task, null, null);
+            return null;
         }
     }
 
