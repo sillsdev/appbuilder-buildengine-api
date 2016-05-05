@@ -130,6 +130,7 @@ class ManageReleasesAction extends ActionCommon
                     $release->status = Release::STATUS_COMPLETED;
                     switch($release->result){
                         case JenkinsBuild::FAILURE:
+                        case JenkinsBuild::ABORTED:
                             $task = OperationQueue::SAVEERRORTOS3;
                             $release_id = $release->id;
                             OperationQueue::findOrCreate($task, $release_id, "release");
