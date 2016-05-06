@@ -8,7 +8,7 @@ db:
 
 web:
     build:
-        image: docker.sil.org/appbuilder-buildengine-api
+        image: silintl/appbuilder-buildengine-api
         dockerfile_path: Dockerfile
     links:
         - db
@@ -19,6 +19,6 @@ web:
         MYSQL_PASSWORD: appbuilder
     working_dir: /data
 
-ecsdeploy:
-    image: silintl/ecs-deploy:latest
-    encrypted_env_file: aws.env.encrypted
+#ecsdeploy:
+#    image: silintl/ecs-deploy:latest
+#    encrypted_env_file: aws.env.encrypted
