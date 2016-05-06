@@ -9,6 +9,15 @@ else
     rsyslogd
 fi
 
+# fix folder permissions
+chown -R www-data:www-data \
+  /data/console/runtime/ \
+  /data/frontend/assets/ \
+  /data/frontend/runtime/ \
+  /data/frontend/web/assets/
+
+
+
 # Run database migrations
 /data/yii migrate --interactive=0
 /data/yii migrate --interactive=0 --migrationPath=console/migrations-local
