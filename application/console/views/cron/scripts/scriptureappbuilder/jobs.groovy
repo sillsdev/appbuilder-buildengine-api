@@ -88,7 +88,7 @@ wget "$ARTIFACT_URL/version_code.txt"
 tar xvf "$WORKSPACE/publish.tar.gz"
 
 set +x
-supply -k $PAK -i $PAI -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
+supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
 '''
     static void googleplayPublishJob(jobContext, gitUrl, publisherName, buildJobName) {
         jobContext.with {
