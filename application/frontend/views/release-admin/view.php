@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'created',
             'updated',
             'result',
-            'error',
+            'error:url',
             'channel',
             'title',
             'defaultLanguage',

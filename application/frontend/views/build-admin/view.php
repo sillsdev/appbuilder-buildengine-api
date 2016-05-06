@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'status',
             'build_number',
             'result',
-            'error',
+            'error:url',
             'artifact_url:url',
             'created',
             'updated',
