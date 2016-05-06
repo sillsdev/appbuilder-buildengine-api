@@ -11,6 +11,7 @@ fi
 
 # fix folder permissions
 chown -R www-data:www-data \
+  /data/vendor/ \
   /data/console/runtime/ \
   /data/frontend/assets/ \
   /data/frontend/runtime/ \
