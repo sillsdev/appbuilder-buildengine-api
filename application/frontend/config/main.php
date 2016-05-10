@@ -45,11 +45,14 @@ return [
                     'extraPatterns' => [
                         'GET' => 'index-jobs',
                         'GET <id>' => 'view-job',
+                        'DELETE <id>' => 'delete-job',
                         'GET <id>/build' => 'index-builds',
                         'GET <id>/build/<build_id:\d+>' => 'view-build',
+                        'DELETE <id>/build/<build_id:\d+>' => 'delete-build',
                         'PUT <id>/build/<build_id:\d+>' => 'publish-build',
                         'POST <id>/build' => 'new-build',
                         'GET <id>/build/<build_id:\d+>/release/<release_id:\d+>' => 'view-release',
+                        'DELETE <id>/build/<build_id:\d+>/release/<release_id:\d+>' => 'delete-release',
                     ]
                 ],
             ]

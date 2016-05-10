@@ -49,6 +49,13 @@ class JobController extends ActiveController
         }
         return $job;
     }
+    public function actionDeleteJob($id) {
+        $job = Job::findByIdFiltered($id);
+        if (!$job) {
+            throw new NotFoundHttpException("Job $id not found");
+        }
+        $job->delete();
+    }
     public function actionViewBuild($id, $build_id) {
         $this->validateJob($id);
         $build = Build::findOneById($id, $build_id);
@@ -70,7 +77,14 @@ class JobController extends ActiveController
 
        return $build;
     }
-
+    public function actionDeleteBuild($id, $build_id) {
+        $this->validateJob($id);
+        $build = Build::findOneById($id, $build_id);
+        if (!$build){
+            throw new NotFoundHttpException("Job $id Build $build_id not found");
+        }
+        $build->delete();
+    }
     public function actionPublishBuild($id, $build_id) {
         $this->validateJob($id);
         $build = Build::findOneById($id, $build_id);
@@ -99,6 +113,12 @@ class JobController extends ActiveController
         $this->validateJob($id);
         $release = $this->lookupRelease($id, $build_id, $release_id);
         return $release;
+    }
+
+    public function actionDeleteRelease($id, $build_id, $release_id) {
+        $this->validateJob($id);
+        $release = $this->lookupRelease($id, $build_id, $release_id);
+        $release->delete();
     }
 
     public function behaviors()
