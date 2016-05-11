@@ -48,6 +48,9 @@ git commit -m "Update Version Code"
                                                 email('appbuilder_buildagent@sil.org')
                                             }
                                         }
+                                        extensions {
+                                            cleanBeforeCheckout()
+                                        }
 				}
 			}
                         parameters {
