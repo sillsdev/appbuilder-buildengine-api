@@ -6,7 +6,6 @@ import scriptureappbuilder.google;
 class jobs {
 	static gitBranch = '*/master'
 	static buildJobScript = '''
-rm -rf output/*
 { set +x; } 2>/dev/null
 PROJNAME=$(basename *.appDef .appDef)
 rename "s/$PROJNAME/build/" *
@@ -19,9 +18,6 @@ PUBLISH_DIR=$(find "${PROJNAME}_data" -name publish -print)
 if [ -d "$PUBLISH_DIR" ]; then
   (cd "$PUBLISH_DIR" && tar cf - .) | gzip > output/publish.tar.gz
 fi
-
-git add *.appDef
-git commit -m "Update Version Code"
 '''
 	static artifactFiles = 'output/*'
 
