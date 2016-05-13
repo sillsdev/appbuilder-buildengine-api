@@ -34,6 +34,9 @@ class Client extends ClientBase
                 return true;
             },
             ],
+            [
+                ['prefix'], 'match', 'pattern'=>'/^([a-zA-Z0-9])+$/',
+            ],
         ]);
     }
 
