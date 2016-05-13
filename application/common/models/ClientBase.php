@@ -35,7 +35,7 @@ class ClientBase extends \yii\db\ActiveRecord
             [['created', 'updated'], 'safe'],
             [['access_token'], 'string', 'max' => 255],
             [['prefix'], 'string', 'max' => 4],
-            [['prefix'], 'match', 'pattern'=>'/^([a-z0-9])+$/']
+            [['prefix'], 'match', 'pattern'=>'/^([a-zA-Z0-9])+$/']
         ];
     }
 
