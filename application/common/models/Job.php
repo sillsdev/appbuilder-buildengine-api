@@ -127,9 +127,9 @@ class Job extends JobBase implements Linkable
     {
         $client = $this->getLinkedClient();
         if (!is_null($client)) {
-            return $this->app_id."_".$client->prefix."_".$this->request_id;
+            return $this->app_id."_".$client->prefix."_".$this->id;
         } else {
-            return $this->app_id."_".$this->request_id;
+            return $this->app_id."_".$this->id;
         }
     }
 
