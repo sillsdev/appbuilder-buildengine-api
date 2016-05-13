@@ -1,11 +1,10 @@
 package scriptureappbuilder;
-import utilities.common;
 import scriptureappbuilder.keystore;
 import scriptureappbuilder.google;
 
 class jobs {
-	static gitBranch = '*/master'
-	static buildJobScript = '''
+    static gitBranch = '*/master'
+    static buildJobScript = '''
 { set +x; } 2>/dev/null
 PROJNAME=$(basename *.appDef .appDef)
 rename "s/$PROJNAME/build/" *
@@ -19,63 +18,72 @@ if [ -d "$PUBLISH_DIR" ]; then
   (cd "$PUBLISH_DIR" && tar cf - .) | gzip > output/publish.tar.gz
 fi
 '''
-	static artifactFiles = 'output/*'
+    static artifactFiles = 'output/*'
 
-	static void codecommitBuildJob(jobContext, gitUrl, publisherName, artifactUrlBase) {
-		jobContext.with {
-			description "Create App for ${gitUrl}"
+    static void codecommitBuildJob(jobContext, gitUrl, publisherName, artifactUrlBase) {
+        jobContext.with {
+            description "Create App for ${gitUrl}"
 
-			configure common.XvfbBuildWrapper()
-			configure keystore."${publisherName}_credentialsBindingWrapper"()
+            wrappers {
+                xvfb('default') {
+                    screen('1024x768x24')
+                }
+            }
 
-			label('android-sdk && app-builders')
+            properties {
+                zenTimestamp('yyyy_MM_dd_HH_mm_Z')
+            }
 
-			scm {
-				git {
-					remote {
-						url(gitUrl)
-						credentials('appbuilder-buildagent')
-					}
-					branch(gitBranch)
-                                        localBranch("master")
-                                        configure { node ->
-                                            node / 'extensions' / 'hudson.plugins.git.extensions.impl.UserIdentity' << {
-                                                delegate.name('AppBuilder_BuildAgent')
-                                                email('appbuilder_buildagent@sil.org')
-                                            }
-                                        }
-                                        extensions {
-                                            cleanBeforeCheckout()
-                                        }
-				}
-			}
-                        parameters {
-                            stringParam('VERSION_CODE', '', '' )
+            configure keystore."${publisherName}_credentialsBindingWrapper"()
+
+            label('android-sdk && app-builders')
+
+            scm {
+                git {
+                    remote {
+                        url(gitUrl)
+                        credentials('appbuilder-buildagent')
+                    }
+                    branch(gitBranch)
+                        configure { node ->
+                        node / 'extensions' / 'hudson.plugins.git.extensions.impl.UserIdentity' << {
+                            delegate.name('AppBuilder_BuildAgent')
+                            email('appbuilder_buildagent@sil.org')
                         }
+                    }
+                    extensions {
+                        cleanBeforeCheckout()
+                    }
+                }
+            }
 
-			steps {
-				shell(buildJobScript)
-			}
+            parameters {
+                stringParam('VERSION_CODE', '', '' )
+            }
 
-			publishers {
-				archiveArtifacts(artifactFiles)
-                                git {
-                                    pushMerge(true)
-                                    pushOnlyIfSuccess(true)
-                                    forcePush(false)
-                                    branch('origin', 'master')
-                                    tag('origin', '$BUILD_TAG-$GIT_COMMIT') {
-                                        create(true)
-                                    }
-                                }
-			}
+            steps {
+                shell(buildJobScript)
+            }
 
-			logRotator {
-				numToKeep(5)
-				artifactNumToKeep(2)
-			}
-		}
-	}
+            publishers {
+                archiveArtifacts(artifactFiles)
+                    git {
+                        pushMerge(true)
+                        pushOnlyIfSuccess(true)
+                        forcePush(false)
+                        branch('origin', 'master')
+                        tag('origin', '$BUILD_TAG-$VERSION_CODE-$BUILD_TIMESTAMP') {
+                            create(true)
+                        }
+                    }
+            }
+
+            logRotator {
+                numToKeep(5)
+                artifactNumToKeep(2)
+            }
+        }
+    }
 
     static publishJobScript = '''
 rm -rf *
@@ -93,7 +101,7 @@ supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-list
         jobContext.with {
             description "Publish App for ${gitUrl}"
 
-			configure google."${publisherName}_credentialsBindingWrapper"()
+            configure google."${publisherName}_credentialsBindingWrapper"()
 
             label('fastlane-supply')
             parameters {
@@ -105,9 +113,9 @@ supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-list
                 shell(publishJobScript)
             }
 
-			logRotator {
-				numToKeep(5)
-			}
+            logRotator {
+                numToKeep(5)
+            }
         }
     }
 }
