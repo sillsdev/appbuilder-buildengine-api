@@ -241,4 +241,9 @@ class Job extends JobBase implements Linkable
         }
         return Client::findOne(['id' => $this->client_id]);
      }
+     public static function recordCount() {
+         $jobs = Job::find()->all();
+         $count = count($jobs);
+         return $count;
+     }
 }

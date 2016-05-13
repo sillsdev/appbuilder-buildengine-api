@@ -85,7 +85,7 @@ class ManageReleasesAction extends ActionCommon
 
                 if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
                     $release->build_number = $jenkinsBuild->getNumber();
-                    echo "[$prefix] Started Build $release->build_number". PHP_EOL;
+                    echo "[$prefix] Started Build $release->build_number Channel: $release->channel APK: $artifactUrl Artifact: $path". PHP_EOL;
                     $release->status = Release::STATUS_ACTIVE;
                     $release->save();
                 }

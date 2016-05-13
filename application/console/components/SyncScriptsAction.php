@@ -131,8 +131,11 @@ class SyncScriptsAction
             echo "[$this->prefix] Changes detected...committing..." . PHP_EOL;
             $this->git->commit($commitString);
             $this->git->push();
-            $task = OperationQueue::UPDATEJOBS;
-            OperationQueue::findOrCreate($task, null, null);
+            $count = Job::recordCount();
+            if ($count > 0) {
+                $task = OperationQueue::UPDATEJOBS;
+                OperationQueue::findOrCreate($task, null, null);
+            }
         }
     }
     /**
