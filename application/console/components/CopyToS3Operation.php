@@ -37,6 +37,7 @@ class CopyToS3Operation implements OperationInterface
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
                     list($build->artifact_url, $build->version_code) = $this->saveBuild($build, $jenkinsBuild);
+                    $build->status = Build::STATUS_COMPLETED;
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
                     }

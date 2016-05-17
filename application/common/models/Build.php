@@ -18,6 +18,7 @@ class Build extends BuildBase implements Linkable
     const STATUS_INITIALIZED = 'initialized';
     const STATUS_ACTIVE = 'active';
     const STATUS_EXPIRED = 'expired';
+    const STATUS_POSTPROCESSING = 'postprocessing';
     const STATUS_COMPLETED = 'completed';
 
     const CHANNEL_UNPUBLISHED = 'unpublished';
@@ -37,9 +38,13 @@ class Build extends BuildBase implements Linkable
         self::STATUS_ACTIVE => [
             self::STATUS_COMPLETED,
             self::STATUS_EXPIRED,
+            self::STATUS_POSTPROCESSING,
         ],
         self::STATUS_EXPIRED => [
             self::STATUS_ACTIVE,
+        ],
+        self::STATUS_POSTPROCESSING=> [
+            self::STATUS_COMPLETED
         ],
     ];
 
@@ -77,6 +82,7 @@ class Build extends BuildBase implements Linkable
                     self::STATUS_COMPLETED,
                     self::STATUS_EXPIRED,
                     self::STATUS_INITIALIZED,
+                    self::STATUS_POSTPROCESSING,
                 ],
             ],
             [

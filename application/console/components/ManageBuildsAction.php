@@ -104,6 +104,7 @@ class ManageBuildsAction extends ActionCommon
                                 OperationQueue::findOrCreate($task, $build_id, "build");
                                 break;
                             case JenkinsBuild::SUCCESS:
+                                $build->status = Build::STATUS_POSTPROCESSING;
                                 $task = OperationQueue::SAVETOS3;
                                 $build_id = $build->id;
                                 OperationQueue::findOrCreate($task, $build_id, null);
