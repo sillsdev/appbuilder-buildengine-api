@@ -45,7 +45,7 @@ class S3 {
         $publicUrl = $client->getObjectUrl($s3bucket, $s3key);
         return $publicUrl;
     }
-    public static function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl)
+    public static function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $extraUrls)
     {
         $client = self::getS3Client();
         $apkS3Url = self::getS3Url($build, $artifactUrl);
@@ -76,33 +76,26 @@ class S3 {
             'ACL' => 'public-read'
         ]);
 
-        if (!is_null($packageNameUrl)) {
-            $packageNameS3Url = self::getS3Url($build, $packageNameUrl);
-            list ($packageNameS3bucket, $packageNameS3key) = self::getS3BucketKey($packageNameS3Url);
+        foreach ($extraUrls as $url) {
+            if (!is_null($url)) {
+                $s3url =  self::getS3Url($build, $url);
+                list ($fileS3Bucket, $fileS3Key) =  self::getS3BucketKey($s3url);
 
-            $packageName = file_get_contents($packageNameUrl);
+                echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL .".... $fileS3Bucket $s3url" .PHP_EOL;
+                echo "... Key: $fileS3Key ".PHP_EOL;
 
-            $client->putObject([
-                'Bucket' => $packageNameS3bucket,
-                'Key' => $packageNameS3key,
-                'Body' => $packageName,
-                'ACL' => 'public-read'
-            ]);
+                $file = file_get_contents($url);
+
+                $client->putObject([
+                    'Bucket' => $fileS3Bucket,
+                    'Key' => $fileS3Key,
+                    'Body' => $file,
+                    'ACL' => 'public-read'
+                ]);
+            }
         }
-        if (!is_null($metadataUrl)) {
-            $metadataS3Url = self::getS3Url($build, $metadataUrl);
-            list ($metadataS3bucket, $metadataS3key) = self::getS3BucketKey($metadataS3Url);
 
-            $metadata = file_get_contents($metadataUrl);
-
-            $client->putObject([
-                'Bucket' => $metadataS3bucket,
-                'Key' => $metadataS3key,
-                'Body' => $metadata,
-                'ACL' => 'public-read'
-            ]);
-        }
-        return [$apkPublicUrl, $versionCode];
+         return [$apkPublicUrl, $versionCode];
     }
 
     /**
