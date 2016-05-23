@@ -17,6 +17,7 @@ class ActionCommon
     {
         // Note: JenkinsJob::isCurrentlyBuilding doesn't check for getLastBuild return null :-(
         $startTime = time();
+        $build = null;
         if (!$job->getLastBuild())
         {
             echo "...not built at all, so launch a build". PHP_EOL;
@@ -29,29 +30,30 @@ class ActionCommon
                 $job->refresh();
                 $lastBuild = $job->getLastBuild();
             }
+            $build = $lastBuild;
         }
         else if (!$job->isCurrentlyBuilding())
         {
             echo "...not building, so launch a build". PHP_EOL;
 
-            $lastNumber = $job->getLastBuild()->getNumber();
+            $lastBuild = $job->getLastBuild();
+            $lastNumber = $lastBuild->getNumber();
 
             $job->launch($params);
 
+            $lastBuild = $job->getLastBuild();
             while ((time() < $startTime + $timeoutSeconds)
-                && ($job->getLastBuild()->getNumber() == $lastNumber))
+                && ($lastBuild->getNumber() == $lastNumber))
             {
                 sleep($checkIntervalSeconds);
                 $job->refresh();
+                $lastBuild = $job->getLastBuild();
+            }
+            if ($lastBuild->getNumber() != $lastNumber)
+            {
+                $build = $lastBuild;
             }
         }
-        else
-        {
-            // Currently building so wait for next cycle
-            return null;
-        }
-
-        $build = $job->getLastBuild();
         if (is_null($build))
         {
             echo '...There was no lastbuild for this job so $build is null {$job->getLastBuild()} '.  PHP_EOL;
