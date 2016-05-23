@@ -3,10 +3,12 @@ namespace console\controllers;
 
 use common\models\Build;
 use common\models\EmailQueue;
+use common\models\Job;
 use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
+use common\components\FileUtils;
 
 use console\components\SyncScriptsAction;
 use console\components\ManageBuildsAction;
@@ -20,6 +22,13 @@ use common\helpers\Utils;
 
 class CronController extends Controller
 {
+    public function __construct($id, $module, $config = [])
+    {
+        \Yii::$container->set('fileUtils', 'common\components\FileUtils');
+        \Yii::$container->set('jenkinsUtils', 'common\components\JenkinsUtils');
+        parent::__construct($id, $module, $config);
+    }
+
     /**
      * Synchronize the Job configuration in database with groovy scripts.
      */
@@ -79,7 +88,8 @@ class CronController extends Controller
             'status' => Build::STATUS_EXPIRED])->each(50) as $build){
             if ($build->artifact_url != null) {
                 echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
-                S3::removeS3Artifacts($build);
+                $s3 = new S3();
+                $s3->removeS3Artifacts($build);
                 $build->clearArtifactUrl();
                 $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Remove expired S3 Artifacts for an expired build.';
@@ -176,5 +186,10 @@ class CronController extends Controller
     {
         $developmentAction = new DevelopmentAction(DevelopmentAction::DELETEJOB, $jobIdToDelete);
         $developmentAction->performAction();
+    }
+    public function actionCheckCount()
+    {
+        $count = Job::recordCount();
+        echo "Count:[$count]".PHP_EOL;
     }
 }

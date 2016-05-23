@@ -48,4 +48,12 @@ return [
         'publishJenkinsMasterUrl' => $PUBLISH_JENKINS_MASTER_URL,
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
     ],
+    'controllerMap' => [
+        'fixture' => [
+            'class' => 'yii\faker\FixtureController',
+            'fixtureDataPath' => '@tests/codeception/common/fixtures/data',
+            'templatePath' => '@tests/codeception/common/templates/fixtures',
+            'namespace' => 'tests\codeception\common\fixtures',
+        ],
+    ],
 ];

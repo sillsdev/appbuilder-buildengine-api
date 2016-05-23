@@ -4,7 +4,6 @@ namespace common\components;
 
 use common\models\Build;
 use common\components\JenkinsUtils;
-
 use yii\web\ServerErrorHttpException;
 
 /*
@@ -14,11 +13,22 @@ use yii\web\ServerErrorHttpException;
  */
 
 class S3 {
+    private $s3Client;
+    private $fileUtil;
+    public function __construct($client = null) {
+        $this->s3Client = $client;
+        if ($this->s3Client == null)
+        {
+            $this->s3Client = self::getS3Client();
+        }
+        $this->fileUtil = \Yii::$container->get('fileUtils');
+    }
+
     /**
      * Configure and get the S3 Client
      * @return \Aws\S3\S3Client
      */
-    private static function getS3Client()
+    public static function getS3Client()
     {
         $client = new \Aws\S3\S3Client([
             'region' => 'us-west-2',
@@ -27,49 +37,48 @@ class S3 {
         $client->registerStreamWrapper();
         return $client;
     }
-    public static function saveErrorToS3($jenkins, $jobName, $buildNumber)
+    public function saveErrorToS3($jobName, $buildNumber, $jenkins)
     {
-        $client = self::getS3Client();
         $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $jobName, $buildNumber);
         $s3Url = self::getS3UrlByNameNumber($jobName, $buildNumber, $errorUrl);
         list ($s3bucket, $s3key) = self::getS3BucketKey($s3Url);
-        $consoleOutput = file_get_contents($errorUrl);
+        $consoleOutput = $this->fileUtil->file_get_contents($errorUrl);
 
-        $client->putObject([
+        $this->s3Client->putObject([
             'Bucket' => $s3bucket,
             'Key' => $s3key,
             'Body' => $consoleOutput,
             'ACL' => 'public-read'
         ]);
 
-        $publicUrl = $client->getObjectUrl($s3bucket, $s3key);
+        $publicUrl = $this->s3Client->getObjectUrl($s3bucket, $s3key);
         return $publicUrl;
     }
-    public static function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl)
+    public function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl)
     {
-        $client = self::getS3Client();
+        echo "version URL: $versionCodeArtifactUrl".PHP_EOL. "package URL $packageNameUrl".PHP_EOL."Meta URL $metadataUrl".PHP_EOL;
         $apkS3Url = self::getS3Url($build, $artifactUrl);
         list ($apkS3bucket, $apkS3key) = self::getS3BucketKey($apkS3Url);
         echo "..copy:" .PHP_EOL .".... $artifactUrl" .PHP_EOL .".... $apkS3bucket $apkS3Url" .PHP_EOL;
         echo "... Key: $apkS3key ".PHP_EOL;
 
-        $apk = file_get_contents($artifactUrl);
+        $apk = $this->fileUtil->file_get_contents($artifactUrl);
 
-        $client->putObject([
+        $this->s3Client->putObject([
             'Bucket' => $apkS3bucket,
             'Key' => $apkS3key,
             'Body' => $apk,
             'ACL' => 'public-read'
         ]);
 
-        $apkPublicUrl = $client->getObjectUrl($apkS3bucket, $apkS3key);
+        $apkPublicUrl = $this->s3Client->getObjectUrl($apkS3bucket, $apkS3key);
 
         $versionS3Url = self::getS3Url($build, $versionCodeArtifactUrl);
         list ($versionCodeS3bucket, $versionCodeS3key) = self::getS3BucketKey($versionS3Url);
 
-        $versionCode = file_get_contents($versionCodeArtifactUrl);
+        $versionCode = $this->fileUtil->file_get_contents($versionCodeArtifactUrl);
 
-        $client->putObject([
+        $this->s3Client->putObject([
             'Bucket' => $versionCodeS3bucket,
             'Key' => $versionCodeS3key,
             'Body' => $versionCode,
@@ -80,9 +89,8 @@ class S3 {
             $packageNameS3Url = self::getS3Url($build, $packageNameUrl);
             list ($packageNameS3bucket, $packageNameS3key) = self::getS3BucketKey($packageNameS3Url);
 
-            $packageName = file_get_contents($packageNameUrl);
-
-            $client->putObject([
+            $packageName = $this->fileUtil->file_get_contents($packageNameUrl);
+            $this->s3Client->putObject([
                 'Bucket' => $packageNameS3bucket,
                 'Key' => $packageNameS3key,
                 'Body' => $packageName,
@@ -93,9 +101,8 @@ class S3 {
             $metadataS3Url = self::getS3Url($build, $metadataUrl);
             list ($metadataS3bucket, $metadataS3key) = self::getS3BucketKey($metadataS3Url);
 
-            $metadata = file_get_contents($metadataUrl);
-
-            $client->putObject([
+            $metadata = $this->fileUtil->file_get_contents($metadataUrl);
+            $this->s3Client->putObject([
                 'Bucket' => $metadataS3bucket,
                 'Key' => $metadataS3key,
                 'Body' => $metadata,
@@ -142,7 +149,7 @@ class S3 {
      *
      * @param type $jobNames - Array of all of the job names
      */
-    public static function removeS3FoldersWithoutJobRecord($jobNames)
+    public function removeS3FoldersWithoutJobRecord($jobNames)
     {
         $logInfo = ["Checking for S3 files to delete"];
         // Strip s3:// off of the url base to get the bucket
@@ -152,7 +159,6 @@ class S3 {
 
         // Create a list of all of the files in S3 in this bucket.
         $prefix = \Yii::$app->params['appEnv']."/jobs/";
-        $s3 = self::getS3Client();
         $s3FolderArray = self::getS3JobArray($bucket, $prefix);
         // Now check and see if a record exists in the job table for
         // those S3 folders and delete the S3 folder if not
@@ -161,7 +167,7 @@ class S3 {
             {
                 $folderKey = $prefix.$key."/";
                 echo ("Deleting S3 bucket: $bucket key: $folderKey").PHP_EOL;
-                $s3->deleteMatchingObjects($bucket, $folderKey);
+                $this->s3Client->deleteMatchingObjects($bucket, $folderKey);
                 $logString = "Deleted S3 bucket: $bucket key: $folderKey".PHP_EOL;
                 $logInfo[] = $logString;
             }
@@ -169,11 +175,10 @@ class S3 {
         return $logInfo;
     }
 
-    private static function getS3JobArray($bucket, $prefix)
+    private function getS3JobArray($bucket, $prefix)
     {
-        $s3 = self::getS3Client();
         $prefixLength = strlen($prefix);
-        $results = $s3->getPaginator('ListObjects', [
+        $results = $this->s3Client->getPaginator('ListObjects', [
             'Bucket' => $bucket,
             'Prefix' => $prefix
         ]);
@@ -196,14 +201,13 @@ class S3 {
      *
      * @param Build $build
      */
-    public static function removeS3Artifacts($build) {
+    public function removeS3Artifacts($build) {
         $parts = parse_url($build->artifact_url);
         $apkpath = $parts['path'];
         $path = substr($apkpath, 0, strrpos( $apkpath, '/') + 1);
         $bucket = substr($path,1, strpos( $path, '/', 1) - 1);
         $key = substr($path, strpos($path, '/', 1) + 1);
-        $s3 = self::getS3Client();
-        $s3->deleteMatchingObjects($bucket, $key);
+        $this->s3Client->deleteMatchingObjects($bucket, $key);
         echo "Deleted S3 bucket $bucket key $key " . PHP_EOL;
     }
 }

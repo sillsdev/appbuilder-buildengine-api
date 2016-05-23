@@ -19,10 +19,12 @@ class CopyToS3Operation implements OperationInterface
     private $maxRetries = 50;
     private $maxDelay = 30;
     private $alertAfter = 5;
+    private $jenkinsUtils;
     
     public function __construct($id)
     {
         $this->build_id = $id;
+        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
     public function performOperation()
     {
@@ -32,7 +34,7 @@ class CopyToS3Operation implements OperationInterface
         if ($build) {
             $job = $build->job;
             if ($job){
-                $jenkins = JenkinsUtils::getJenkins();
+                $jenkins = $jenkinsUtils->getJenkins();
                 $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
@@ -67,11 +69,12 @@ class CopyToS3Operation implements OperationInterface
     private function saveBuild($build, $jenkinsBuild)
     {
         $logger = new Appbuilder_logger("CopyToS3Operation");
-        $artifactUrl =  JenkinsUtils::getApkArtifactUrl($jenkinsBuild);
-        $versionCodeArtifactUrl = JenkinsUtils::getVersionCodeArtifactUrl($jenkinsBuild);
-        $packageNameUrl = JenkinsUtils::getPackageNameArtifactUrl($jenkinsBuild);
+        $artifactUrl =  $jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
+        $versionCodeArtifactUrl = $jenkinsUtils->getVersionCodeArtifactUrl($jenkinsBuild);
+        $packageNameUrl = $jenkinsUtils->getPackageNameArtifactUrl($jenkinsBuild);
         $metadataUrl = JenkinsUtils::getMetaDataArtifactUrl($jenkinsBuild);
-        list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl);
+        $s3 = new S3();
+        list($apkPublicUrl, $versionCode) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $packageNameUrl, $metadataUrl);
         $log = JenkinsUtils::getlogBuildDetails($build);
         $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
         $log['jenkins_ArtifactUrl'] = $artifactUrl;

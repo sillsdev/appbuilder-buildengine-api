@@ -13,19 +13,19 @@ class UpdateJobsOperation implements OperationInterface
     private $maxRetries = 50;
     private $maxDelay = 30;
     private $alertAfter = 5;
-    
 
     public function performOperation()
     {
         $prefix = Utils::getPrefix();
-        $buildJenkins = JenkinsUtils::getJenkins();
+        $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+        $buildJenkins = $jenkinsUtils->getJenkins();
         if ($buildJenkins){
             echo "[$prefix] UpdateJobsOperation: Telling Jenkins to regenerate Build Jobs" . PHP_EOL;
             $buildJenkins->getJob("Build-Wrapper-Seed")->launch();
         } else {
             throw new \Exception("Unable to update the jenkins build job list.  Jenkins unavailable",1457101819);
         }
-        $publishJenkins = JenkinsUtils::getPublishJenkins();
+        $publishJenkins = $jenkinsUtils->getPublishJenkins();
         if ($publishJenkins){
             echo "[$prefix] UpdateJobsOperation: Telling Jenkins to regenerate Publish Jobs" . PHP_EOL;
             $publishJenkins->getJob("Publish-Wrapper-Seed")->launch();

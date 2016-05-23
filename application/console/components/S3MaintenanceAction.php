@@ -13,7 +13,8 @@ class S3MaintenanceAction
         $logger = new Appbuilder_logger("S3MaintenanceAction");
         // Clean up S3 files
         $jobNames = Job::getJobNames();
-        $logStringArray = S3::removeS3FoldersWithoutJobRecord($jobNames);
+        $s3 = new S3();
+        $logStringArray = $s3->removeS3FoldersWithoutJobRecord($jobNames);
         $logger->appbuilderWarningLog($logStringArray);
 
     }

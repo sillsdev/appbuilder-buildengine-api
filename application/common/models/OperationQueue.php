@@ -89,8 +89,6 @@ class OperationQueue extends OperationQueueBase
     /**
      * Find the next job in queue and process it if not over max attempts
      * @param string|null $currentTime The datetime after which to try jobs
-     * @param int $maxAttempts
-     * @param int $alertAfterAttemptCount
      * @return bool|null
      * @throws \Exception
      */

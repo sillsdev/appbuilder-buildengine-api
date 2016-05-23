@@ -14,6 +14,11 @@ use JenkinsApi\Item\Build as JenkinsBuild;
 
 class ManageBuildsAction extends ActionCommon
 {
+    private $jenkinsUtils;
+    public function __construct()
+    {
+        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+    }
     public function performAction()
     {
         $logger = new Appbuilder_logger("ManageBuildsAction");
@@ -45,7 +50,7 @@ class ManageBuildsAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
 
-            $jenkins = JenkinsUtils::getJenkins();
+            $jenkins = $this->jenkinsUtils->getJenkins();
             $jenkinsJob = $this->getJenkinsJob($jenkins, $build);
             if (!is_null($jenkinsJob)) {
                 $versionCode = $this->getNextVersionCode($job, $build);
@@ -89,7 +94,7 @@ class ManageBuildsAction extends ActionCommon
 
             $job = $build->job;
             if ($job){
-                $jenkins = JenkinsUtils::getJenkins();
+                $jenkins = $this->jenkinsUtils->getJenkins();
                 $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){

@@ -26,3 +26,6 @@ phpunit.phar
 
 # ssh keys for git
 .ssh/
+
+tests/_output/*
+tests/_output/*

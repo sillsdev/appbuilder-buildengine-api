@@ -13,7 +13,7 @@ class JenkinsUtils
      *
      * @return Jenkins
      */
-    public static function getJenkins(){
+    public function getJenkins(){
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
@@ -22,7 +22,7 @@ class JenkinsUtils
      *
      * @return Jenkins for publish url
      */
-    public static function getPublishJenkins(){
+    public function getPublishJenkins(){
         $jenkinsUrl = \Yii::$app->params['publishJenkinsMasterUrl'];
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
@@ -32,27 +32,27 @@ class JenkinsUtils
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-    public static function getApkArtifactUrl($jenkinsBuild)
+    public function getApkArtifactUrl($jenkinsBuild)
     {
-       return self::getArtifactUrl($jenkinsBuild, "/\.apk$/");
+       return $this->getArtifactUrl($jenkinsBuild, "/\.apk$/");
     }
     /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-     public static function getVersionCodeArtifactUrl($jenkinsBuild)
+     public function getVersionCodeArtifactUrl($jenkinsBuild)
      {
-         return self::getArtifactUrl($jenkinsBuild, "/version_code.txt/");
+         return $this->getArtifactUrl($jenkinsBuild, "/version_code.txt/");
      }
      /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-     public static function getPackageNameArtifactUrl($jenkinsBuild)
+     public function getPackageNameArtifactUrl($jenkinsBuild)
      {
-         return self::getArtifactUrl($jenkinsBuild, "/package_name.txt/");
+         return $this->getArtifactUrl($jenkinsBuild, "/package_name.txt/");
      }
      /**
      * Extract the Artifact Url from the Jenkins Build information.
@@ -77,7 +77,7 @@ class JenkinsUtils
      * @param string $artifactPattern
      * @return string
      */
-    private static function getArtifactUrl($jenkinsBuild, $artifactPattern)
+    private function getArtifactUrl($jenkinsBuild, $artifactPattern)
     {
         $artifacts = $jenkinsBuild->get("artifacts");
         if (!$artifacts) { return null; }

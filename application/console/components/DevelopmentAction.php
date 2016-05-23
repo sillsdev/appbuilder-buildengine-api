@@ -33,6 +33,7 @@ class DevelopmentAction {
     private $actionType;
     private $sendToAddress;
     private $jobIdToDelete;
+    private $jenkinsUtils;
     
     public function __construct()
     {
@@ -44,6 +45,7 @@ class DevelopmentAction {
         if ($this->actionType == self::DELETEJOB) {
             $this->jobIdToDelete = $argv[1];
         }
+        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
     
     public function performAction() {
@@ -109,7 +111,7 @@ class DevelopmentAction {
         $sshUser = \Yii::$app->params['buildEngineGitSshUser'] ?: "";
 
         $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
-        $jenkins = JenkinsUtils::getJenkins();
+        $jenkins = $this->jenkinsUtils->getJenkins();
         $jenkinsBaseUrl = $jenkins->getBaseUrl();
 
         $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
@@ -257,11 +259,11 @@ class DevelopmentAction {
         ];
         $log['request_id'] = $build->job->request_id;
 
-        $jenkins = JenkinsUtils::getJenkins();
+        $jenkins = $this->jenkinsUtils->getJenkins();
         $jenkinsJob = $jenkins->getJob($build->job->name());
         $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
         $buildResult = $jenkinsBuild->getResult();
-        $buildArtifact = JenkinsUtils::getApkArtifactUrl($jenkinsBuild);
+        $buildArtifact = $this->jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
         $s3Url = S3::getS3Url($build, $buildArtifact);
 
         $log['jenkins_buildResult'] = $buildResult;

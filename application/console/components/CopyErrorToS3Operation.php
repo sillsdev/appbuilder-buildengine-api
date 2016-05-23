@@ -29,20 +29,22 @@ class CopyErrorToS3Operation implements OperationInterface
     {
         $prefix = Utils::getPrefix();
         echo "[$prefix] CopyErrorToS3Operation ID: " .$this->id . PHP_EOL;
+        $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
         if ($this->parms == "release") {
             $release = Release::findOne(['id' => $this->id]);
             if ($release) {
-                $jenkins = JenkinsUtils::getPublishJenkins();
-                $s3ErrorUrl = S3::saveErrorToS3($jenkins, $release->jobName(), $release->build_number);
+                $jenkins = $jenkinsUtils->getPublishJenkins();
+                $s3 = new S3();
+                $s3ErrorUrl = $s3->saveErrorToS3($release->jobName(), $release->build_number, $jenkins);
                 $release->error = $s3ErrorUrl;
                 $release->save();
             }
         } else {
             $build = Build::findOneByBuildId($this->id);
             if ($build) {
-                $jenkins = JenkinsUtils::getJenkins();
-                $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $build->jobName(), $build->build_number);
-                $s3ErrorUrl = S3::saveErrorToS3($jenkins, $build->jobName(), $build->build_number);
+                $jenkins = $jenkinsUtils->getJenkins();
+                $s3 = new S3();
+                $s3ErrorUrl = $s3->saveErrorToS3($build->jobName(), $build->build_number, $jenkins);
                 $build->error = $s3ErrorUrl;
                 $build->save();
             }

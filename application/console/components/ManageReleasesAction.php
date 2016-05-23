@@ -17,6 +17,11 @@ use JenkinsApi\Item\Job as JenkinsJob;
 
 class ManageReleasesAction extends ActionCommon
 {
+    private $jenkinsUtils;
+    public function __construct()
+    {
+        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+    }
     public function performAction()
     {
         $logger = new Appbuilder_logger("ManageReleasesAction");
@@ -78,7 +83,7 @@ class ManageReleasesAction extends ActionCommon
             $artifactUrl = $build->artifact_url;
             $path = substr($artifactUrl, 0, strrpos( $artifactUrl, '/'));
 
-            $jenkins = JenkinsUtils::getPublishJenkins();
+            $jenkins = $this->jenkinsUtils->getPublishJenkins();
             $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
             if (!is_null($jenkinsJob)) {
                 $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path);
@@ -121,7 +126,7 @@ class ManageReleasesAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
 
-            $jenkins = JenkinsUtils::getPublishJenkins();
+            $jenkins = $this->jenkinsUtils->getPublishJenkins();
             $jenkinsJob = $jenkins->getJob($release->jobName());
             $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
             if ($jenkinsBuild){
