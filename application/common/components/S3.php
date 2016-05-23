@@ -56,7 +56,6 @@ class S3 {
     }
     public function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $extraUrls)
     {
-        echo "version URL: $versionCodeArtifactUrl".PHP_EOL. "package URL $packageNameUrl".PHP_EOL."Meta URL $metadataUrl".PHP_EOL;
         $apkS3Url = self::getS3Url($build, $artifactUrl);
         list ($apkS3bucket, $apkS3key) = self::getS3BucketKey($apkS3Url);
         echo "..copy:" .PHP_EOL .".... $artifactUrl" .PHP_EOL .".... $apkS3bucket $apkS3Url" .PHP_EOL;
@@ -93,9 +92,9 @@ class S3 {
                 echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL .".... $fileS3Bucket $s3url" .PHP_EOL;
                 echo "... Key: $fileS3Key ".PHP_EOL;
 
-                $file = file_get_contents($url);
+                $file = $this->fileUtil->file_get_contents($url);
 
-                $client->putObject([
+                $this->s3Client->putObject([
                     'Bucket' => $fileS3Bucket,
                     'Key' => $fileS3Key,
                     'Body' => $file,

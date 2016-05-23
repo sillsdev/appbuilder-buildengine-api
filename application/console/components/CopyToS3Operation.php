@@ -34,7 +34,7 @@ class CopyToS3Operation implements OperationInterface
         if ($build) {
             $job = $build->job;
             if ($job){
-                $jenkins = $jenkinsUtils->getJenkins();
+                $jenkins = $this->jenkinsUtils->getJenkins();
                 $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
@@ -69,12 +69,12 @@ class CopyToS3Operation implements OperationInterface
     private function saveBuild($build, $jenkinsBuild)
     {
         $logger = new Appbuilder_logger("CopyToS3Operation");
-        $artifactUrl =  $jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
-        $versionCodeArtifactUrl = $jenkinsUtils->getVersionCodeArtifactUrl($jenkinsBuild);
-        $packageNameUrl = $jenkinsUtils->getPackageNameArtifactUrl($jenkinsBuild);
+        $artifactUrl =  $this->jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
+        $versionCodeArtifactUrl = $this->jenkinsUtils->getVersionCodeArtifactUrl($jenkinsBuild);
+        $packageNameUrl = $this->jenkinsUtils->getPackageNameArtifactUrl($jenkinsBuild);
         $metadataUrl = JenkinsUtils::getMetaDataArtifactUrl($jenkinsBuild);
         $s3 = new S3();
-        $aboutUrl = JenkinsUtils::getAboutArtifactUrl($jenkinsBuild);
+        $aboutUrl = $this->jenkinsUtils->getAboutArtifactUrl($jenkinsBuild);
         list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
         $log = JenkinsUtils::getlogBuildDetails($build);
         $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';

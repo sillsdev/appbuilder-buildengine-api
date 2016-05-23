@@ -68,9 +68,9 @@ class JenkinsUtils
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-    public static function getAboutArtifactUrl($jenkinsBuild)
+    public function getAboutArtifactUrl($jenkinsBuild)
     {
-        return self::getArtifactUrl($jenkinsBuild, "/about.txt/");
+        return $this->getArtifactUrl($jenkinsBuild, "/about.txt/");
     }
     /**
      * Get the artifact url base string from the configured parameters

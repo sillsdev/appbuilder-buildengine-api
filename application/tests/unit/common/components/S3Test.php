@@ -66,7 +66,7 @@ class S3Test extends DbTestCase
         $versionCodeUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/version_code.txt";
         $packageNameUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/package_name.txt";
         $metadataUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/publish.tar.gz";
-        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, $packageNameUrl, $metadataUrl);
+        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl));
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Test-1.0.apk";
         $this->assertEquals($expected, $apkPublicUrl, " *** Public URL doesn't match");
         $this->assertEquals(4, count($client->puts), " *** Wrong number of puts to S3");
@@ -88,7 +88,7 @@ class S3Test extends DbTestCase
         $versionCodeUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/version_code.txt";
         $packageNameUrl = null;
         $metadataUrl = null;
-        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, $packageNameUrl, $metadataUrl);
+        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl));
         $this->assertEquals(2, count($client->puts), " *** Wrong number of puts to S3");
     }
     public function testRemoveS3Artifacts()
