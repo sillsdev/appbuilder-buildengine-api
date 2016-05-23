@@ -12,6 +12,9 @@ rename "s/$PROJNAME/build/" *
 set -x
 echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
 echo $VERSION_CODE > output/version_code.txt
+if [ -f "build_data/about/about.txt" ]; then
+  cp build_data/about/about.txt output/
+fi
 rename "s/build/$PROJNAME/" build*
 PUBLISH_DIR=$(find "${PROJNAME}_data" -name publish -print)
 if [ -d "$PUBLISH_DIR" ]; then

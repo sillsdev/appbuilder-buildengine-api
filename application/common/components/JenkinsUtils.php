@@ -63,7 +63,15 @@ class JenkinsUtils
      {
          return self::getArtifactUrl($jenkinsBuild, "/publish.tar.gz/");
      }
-
+    /**
+     * Extract the Artifact Url from the Jenkins Build information.
+     * @param JenkinsBuild $jenkinsBuild
+     * @return string
+     */
+    public static function getAboutArtifactUrl($jenkinsBuild)
+    {
+        return self::getArtifactUrl($jenkinsBuild, "/about.txt/");
+    }
     /**
      * Get the artifact url base string from the configured parameters
      * @return string
