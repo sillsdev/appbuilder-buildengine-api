@@ -59,9 +59,9 @@ class JenkinsUtils
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-     public static function getMetaDataArtifactUrl($jenkinsBuild)
+     public function getMetaDataArtifactUrl($jenkinsBuild)
      {
-         return self::getArtifactUrl($jenkinsBuild, "/publish.tar.gz/");
+         return $this->getArtifactUrl($jenkinsBuild, "/publish.tar.gz/");
      }
     /**
      * Extract the Artifact Url from the Jenkins Build information.

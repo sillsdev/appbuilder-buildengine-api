@@ -72,10 +72,10 @@ class CopyToS3Operation implements OperationInterface
         $artifactUrl =  $this->jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
         $versionCodeArtifactUrl = $this->jenkinsUtils->getVersionCodeArtifactUrl($jenkinsBuild);
         $packageNameUrl = $this->jenkinsUtils->getPackageNameArtifactUrl($jenkinsBuild);
-        $metadataUrl = JenkinsUtils::getMetaDataArtifactUrl($jenkinsBuild);
+        $metadataUrl = $this->jenkinsUtils->getMetaDataArtifactUrl($jenkinsBuild);
         $s3 = new S3();
         $aboutUrl = $this->jenkinsUtils->getAboutArtifactUrl($jenkinsBuild);
-        list($apkPublicUrl, $versionCode) = S3::saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
+        list($apkPublicUrl, $versionCode) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
         $log = JenkinsUtils::getlogBuildDetails($build);
         $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
         $log['jenkins_ArtifactUrl'] = $artifactUrl;
@@ -83,7 +83,6 @@ class CopyToS3Operation implements OperationInterface
         $log['version'] = $versionCode;
         $logger->appbuilderWarningLog($log);
         echo "returning: $apkPublicUrl version: $versionCode". PHP_EOL;
-
         return [$apkPublicUrl, $versionCode];
     }
 }
