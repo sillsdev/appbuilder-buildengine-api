@@ -38,31 +38,32 @@ class S3Test extends UnitTestBase
     {
 //        ParamFixture::setParams();
         $this->setContainerObjects();
-        $client = new MockS3Client();
         $jenkins = new MockJenkins();
-        $s3 = new S3($client);
+        $s3 = new S3();
+        $client = $s3->s3Client;
         $publicUrl = $s3->saveErrorToS3("build_scriptureappbuilder_3", "1", $jenkins);
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_3/1/consoleText";
         $this->assertEquals($expected, $publicUrl, " *** Mismatching sent emails");
         $this->assertEquals(1, count($client->puts), " *** Wrong number of puts to S3");
-        $expected = "Contents of http://127.0.0.1/S3/job/build_scriptureappbuilder_3/1/consoleText";
+        $expected = "Contents of http://127.0.0.1/job/build_scriptureappbuilder_3/1/consoleText";
         $put = $client->puts[0];
         $this->assertEquals($expected, $put['Body'], " *** Wrong content");
     }
     public function testSaveBuild()
     {
         $this->setContainerObjects();
-        $client = new MockS3Client();
-        $s3 = new S3($client);
+        $s3 = new S3();
+        $client = $s3->s3Client;
         $build = Build::findOne(['id' => 11]);
         $artifactUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/Test-1.0.apk";
         $versionCodeUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/version_code.txt";
         $packageNameUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/package_name.txt";
         $metadataUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/publish.tar.gz";
-        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl));
+        $aboutUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/about.txt";
+        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Test-1.0.apk";
         $this->assertEquals($expected, $apkPublicUrl, " *** Public URL doesn't match");
-        $this->assertEquals(4, count($client->puts), " *** Wrong number of puts to S3");
+        $this->assertEquals(5, count($client->puts), " *** Wrong number of puts to S3");
         $artifactPut = $client->puts[0];
         $expected = "sil-appbuilder-artifacts";
         $this->assertEquals($expected, $artifactPut['Bucket'], " *** Bad bucket data");
@@ -74,21 +75,22 @@ class S3Test extends UnitTestBase
     public function testSaveBuildNoPackageOrMetadata()
     {
         $this->setContainerObjects();
-        $client = new MockS3Client();
-        $s3 = new S3($client);
+        $s3 = new S3();
+        $client = $s3->s3Client;
         $build = Build::findOne(['id' => 11]);
         $artifactUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/Test-1.0.apk";
         $versionCodeUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/version_code.txt";
         $packageNameUrl = null;
         $metadataUrl = null;
-        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl));
-        $this->assertEquals(2, count($client->puts), " *** Wrong number of puts to S3");
+        $aboutUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/about.txt";
+        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
+        $this->assertEquals(3, count($client->puts), " *** Wrong number of puts to S3");
     }
     public function testRemoveS3Artifacts()
     {
         $this->setContainerObjects();
-        $client = new MockS3Client();
-        $s3 = new S3($client);
+        $s3 = new S3();
+        $client = $s3->s3Client;
         $build = Build::findOne(['id' => 12]);
         $s3->removeS3Artifacts($build);
         $expected = "sil-appbuilder-artifacts";
@@ -101,9 +103,9 @@ class S3Test extends UnitTestBase
     public function testRemoveS3FoldersWithoutJobRecord()
     {
         $this->setContainerObjects();
-        $client = new MockS3Client();
         $jobNames = Job::getJobNames();
-        $s3 = new S3($client);
+        $s3 = new S3();
+        $client = $s3->s3Client;
         $loginfo = $s3->removeS3FoldersWithoutJobRecord($jobNames);
         $this->assertEquals(2, count($client->deletes), " *** Wrong number of deletes to S3");
         $delete = $client->deletes[0];

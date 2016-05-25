@@ -8,7 +8,7 @@ class MockJenkins
 {
     public function getBaseUrl()
     {
-        return("http://127.0.0.1/S3/");
+        return("http://127.0.0.1/");
     }
     public function getJob($jobName)
     {

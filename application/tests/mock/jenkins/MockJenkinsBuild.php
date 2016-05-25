@@ -6,17 +6,17 @@ use JenkinsApi\Item\Build as JenkinsBuild;
 
 class MockJenkinsBuild
 {
-    public $jenkins;
+    public $jenkinsJob;
     public $buildNumer;
     public $isBuilding;
-    public function __construct($jenkins, $buildNumber, $isBuilding) {
-        $this->jenkins = $jenkins;
+    public function __construct($jenkinsJob, $buildNumber, $isBuilding) {
+        $this->jenkinsJob = $jenkinsJob;
         $this->buildNumber = $buildNumber;
         $this->isBuilding = $isBuilding;
     }
     public function getJenkins()
     {
-        return $jenkins;
+        return $this->jenkinsJob->getJenkins();
     }
     public function getNumber()
     {

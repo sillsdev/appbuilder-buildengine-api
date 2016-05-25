@@ -13,12 +13,14 @@ use yii\web\ServerErrorHttpException;
  */
 
 class S3 {
-    private $s3Client;
+    public $s3Client;
     private $fileUtil;
-    public function __construct($client = null) {
-        $this->s3Client = $client;
-        if ($this->s3Client == null)
-        {
+    public function __construct() {
+        try {
+            // Injected if Unit Test
+            $this->s3Client = \Yii::$container->get('s3Client'); 
+        } catch (\Exception $e) {
+            // Get real S3 client
             $this->s3Client = self::getS3Client();
         }
         $this->fileUtil = \Yii::$container->get('fileUtils');

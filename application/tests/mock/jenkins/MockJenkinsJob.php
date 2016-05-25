@@ -16,12 +16,12 @@ class MockJenkinsJob
     public $jobName;
     public function __construct($jenkins, $currentlyBuilding, $changeBuildsCount, $initialBuildNumber, $jobName) {
         $this->jenkins = $jenkins;
-        $this->$jobName = $jobName;
+        $this->jobName = $jobName;
         $this->changeBuildsCount = $changeBuildsCount;
         $this->currentlyBuilding = $currentlyBuilding;
         $this->currentBuildNumber = $initialBuildNumber; 
         if ($initialBuildNumber > 0) {
-            $this->lastBuild = new MockJenkinsBuild($this->getJenkins(), $initialBuildNumber, $currentlyBuilding);
+            $this->lastBuild = new MockJenkinsBuild($this, $initialBuildNumber, $currentlyBuilding);
         }
     }
     public function getJenkins()
@@ -37,7 +37,7 @@ class MockJenkinsJob
         } else {
             $this->buildCheckCount = 0;
             $this->currentBuildNumber = $this->currentBuildNumber + 1;
-            $this->lastBuild = new MockJenkinsBuild($this->getJenkins(), $this->currentBuildNumber, true);
+            $this->lastBuild = new MockJenkinsBuild($this, $this->currentBuildNumber, true);
         }
         
         return $this->lastBuild;
@@ -56,7 +56,7 @@ class MockJenkinsJob
     }
     public function getBuild($buildNumber)
     {
-        return new MockJenkinsBuild($this->getJenkins(), $buildNumber, $this->currentlyBuilding);
+        return new MockJenkinsBuild($this, $buildNumber, $this->currentlyBuilding);
     }
 }
 
