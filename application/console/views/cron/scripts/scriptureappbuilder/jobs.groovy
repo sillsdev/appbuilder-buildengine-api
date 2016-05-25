@@ -31,6 +31,12 @@ fi
                 xvfb('default') {
                     screen('1024x768x24')
                 }
+
+                timeout {
+                    noActivity(180)
+                    failBuild()
+                    writeDescription('Build failed due to timeout: {0} seconds')
+                }
             }
 
             properties {
