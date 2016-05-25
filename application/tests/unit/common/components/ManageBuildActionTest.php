@@ -1,30 +1,23 @@
 <?php
 namespace tests\unit\common\components;
-use common\components\S3;
-
-use \yii\codeception\DbTestCase;
 
 use tests\mock\jenkins\MockJenkins;
 use tests\mock\jenkins\MockJenkinsJob;
-use tests\mock\jenkins\MockJenkinsUtils;
-
-use common\models\Job;
 use common\models\Build;
 use common\models\OperationQueue;
 
 use console\components\ManageBuildsAction;
 
+use tests\unit\UnitTestBase;
 use tests\unit\fixtures\common\models\JobFixture;
 use tests\unit\fixtures\common\models\BuildFixture;
 use tests\unit\fixtures\common\models\OperationQueueFixture;
 
-class ManageBuildActionTest extends DbTestCase
+class ManageBuildActionTest extends UnitTestBase
 {
     /**
      * @var \UnitTester
      */
-    protected $tester;
-    public $appConfig = '@tests/codeception/config/config.php';
 
     protected function _before()
     {
@@ -108,24 +101,15 @@ class ManageBuildActionTest extends DbTestCase
         $this->assertEquals(1, $queuedSaveRecords, " *** SAVETOS3 Count should be 1 ");
         $queuedFindExpiredRecords = OperationQueue::find()->where(['operation' => OperationQueue::FINDEXPIREDBUILDS])->count();
         $this->assertEquals(3, $queuedFindExpiredRecords, " *** FINDEXPIREDBUILDS Count should be 3 ");
-    }    /**
-     * getPrivateMethod
-     *
-     * @author	Joe Sexton <joe@webtipblog.com>
-     * @param 	string $className
-     * @param 	string $methodName
-     * @return	ReflectionMethod
-     */
-    public function getPrivateMethod( $className, $methodName ) {
-            $reflector = new \ReflectionClass( $className );
-            $method = $reflector->getMethod( $methodName );
-            $method->setAccessible( true );
-
-            return $method;
     }
-    private function setContainerObjects() {
-        \Yii::$container->set('fileUtils', 'tests\mock\common\components\MockFileUtils');
-        \Yii::$container->set('jenkinsUtils', 'tests\mock\common\components\MockJenkinsUtils');
+    public function testNextVersion()
+    {
+        $this->setContainerObjects();
+        $buildsAction = new ManageBuildsAction();
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'getNextVersionCode');
+        $build = Build::findOne(['id' => 13]);
+        $job = $build->job;
+        $versionCode = $method->invokeArgs($buildsAction, array( $job, $build));
+        $this->assertEquals(3, $versionCode, " *** version code should max for completed job +1"); 
     }
-
 }

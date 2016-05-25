@@ -2,29 +2,22 @@
 namespace tests\unit\common\components;
 use common\components\S3;
 
-use \yii\codeception\DbTestCase;
+use tests\unit\UnitTestBase;
 
 use tests\mock\jenkins\MockJenkins;
 use tests\mock\s3client\MockS3Client;
-use tests\mock\common\components\MockFileUtils;
-use tests\unit\fixtures\ParamFixture;
 
 use common\models\Job;
 use common\models\Build;
 
 use tests\unit\fixtures\common\models\JobFixture;
 use tests\unit\fixtures\common\models\BuildFixture;
-use common\components\FileUtilsInterface;
-use yii\di\Container;
 
-class S3Test extends DbTestCase
+class S3Test extends UnitTestBase
 {
     /**
      * @var \UnitTester
      */
-    protected $tester;
-    public $appConfig = '@tests/codeception/config/config.php';
-
     protected function _before()
     {
     }
@@ -144,8 +137,5 @@ class S3Test extends DbTestCase
             }
         }
 */
-    }
-    private function setContainerObjects() {
-        \Yii::$container->set('fileUtils', 'tests\mock\common\components\MockFileUtils');
     }
 }

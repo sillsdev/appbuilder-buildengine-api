@@ -3,17 +3,15 @@
 namespace tests\unit\common\components;
 
 use tests\mock\mailer\MockMailer;
-use \yii\codeception\DbTestCase;
+use tests\unit\UnitTestBase;
 
 use common\components\EmailUtils;
 use common\models\EmailQueue;
 
 use tests\unit\fixtures\common\models\EmailQueueFixture;
 
-class EmailUtilsTest extends DbTestCase
+class EmailUtilsTest extends UnitTestBase
 {
-    public $appConfig = '@tests/codeception/config/config.php';
-
     public $mailFolder;
 
     private $startConfig;
