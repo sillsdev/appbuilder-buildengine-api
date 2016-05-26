@@ -1,5 +1,5 @@
 <?php
-namespace tests\unit\common\components;
+namespace tests\unit\console\components;
 
 use tests\mock\jenkins\MockJenkins;
 use tests\mock\jenkins\MockJenkinsJob;
@@ -34,6 +34,9 @@ class ManageBuildActionTest extends UnitTestBase
             'operation' => OperationQueueFixture::className(),
         ];
     }
+    /**
+     * The start building tests test the method in ActionCommon
+     */
     public function testStartBuildIsBuilding()
     {
         $this->setContainerObjects();
@@ -89,10 +92,13 @@ class ManageBuildActionTest extends UnitTestBase
         $this->assertEquals(Build::STATUS_ACTIVE, $build->status, " *** Status should be active");
         $build = Build::findOne(['id' => 14]);
         $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be postprocessing after successful completion");
+        $this->assertEquals("SUCCESS", $build->result, " *** Result should be Success after good successful completion");
         $build = Build::findOne(['id' => 15]);
         $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after failure");
+        $this->assertEquals("FAILURE", $build->result, " *** Result should be Failure after failed build");
         $build = Build::findOne(['id' => 16]);
         $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after abort");
+        $this->assertEquals("ABORTED", $build->result, " *** Result should be aborted after an aborted build");
         $queuedRecords = OperationQueue::find()->count();
         $this->assertEquals(6, $queuedRecords, " *** Queued record count should be ");
         $queuedErrorRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVEERRORTOS3])->count();

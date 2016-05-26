@@ -43,7 +43,6 @@ class EmailUtilsTest extends UnitTestBase
     }
     public function testSendEmailQueue_OK()
     {
-//        ParamFixture::setParams();
         $mailer = new MockMailer();
         $initialEmailQueueCount = EmailQueue::find()->count();
         // use real mailer

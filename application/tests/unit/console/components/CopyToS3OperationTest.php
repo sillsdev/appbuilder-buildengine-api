@@ -1,5 +1,5 @@
 <?php
-namespace tests\unit\common\components;
+namespace tests\unit\console\components;
 use console\components\CopyToS3Operation;
 use tests\unit\UnitTestBase;
 
@@ -32,14 +32,7 @@ class CopyToS3OperationTest extends UnitTestBase
             'build' => BuildFixture::className(),
         ];
     }
-    /**
-     * This method is only here because if I don't put it in, the first test
-     * fails because the params isn't loaded.  Don't know why, but this fixed it
-     */
-    public function testDummy()
-    {
-        $this->assertEquals(1,1);
-    }
+
     public function testPerformAction()
     {
         $this->setContainerObjects();
