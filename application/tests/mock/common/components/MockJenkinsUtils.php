@@ -7,10 +7,21 @@ use tests\mock\jenkins\MockJenkins;
 
 class MockJenkinsUtils
 {
+    private static $returnJenkins = true;
+    public static function setReturnJenkins($value)
+    {
+        self::$returnJenkins = $value;
+    }
     public function getJenkins()
     {
-        $jenkins = new MockJenkins();
-        return $jenkins;
+        if (self::$returnJenkins)
+        {
+            $jenkins = new MockJenkins();
+            return $jenkins;
+        } else {
+            self::$returnJenkins = true;
+            return null;
+        }
     }
     public function getPublishJenkins()
     {

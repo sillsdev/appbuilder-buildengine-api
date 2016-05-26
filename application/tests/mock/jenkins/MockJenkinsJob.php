@@ -14,6 +14,7 @@ class MockJenkinsJob
     public $countLastBuildsCalled = 0;
     public $refreshCount = 0;
     public $jobName;
+    public static $launchedJobs = [];
     public function __construct($jenkins, $currentlyBuilding, $changeBuildsCount, $initialBuildNumber, $jobName) {
         $this->jenkins = $jenkins;
         $this->jobName = $jobName;
@@ -42,9 +43,9 @@ class MockJenkinsJob
         
         return $this->lastBuild;
     }
-    public function launch($params)
+    public function launch($params = null)
     {
-        
+        self::$launchedJobs[] = $this->jobName;
     }
     public function refresh()
     {
@@ -57,6 +58,21 @@ class MockJenkinsJob
     public function getBuild($buildNumber)
     {
         return new MockJenkinsBuild($this, $buildNumber, $this->currentlyBuilding);
+    }
+    public function getBuilds()
+    {
+        // This is for the test for expirted builds
+        $build1 = new MockJenkinsBuild($this, 21, false);
+        $build2 = new MockJenkinsBuild($this, 22, false);
+        return [$build1, $build2];
+    }
+    public static function resetLaunchedJobs()
+    {
+        self::$launchedJobs = [];
+    }
+    public static function getLaunchedJobs()
+    {
+        return(self::$launchedJobs);
     }
 }
 
