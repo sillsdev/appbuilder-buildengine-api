@@ -125,7 +125,23 @@ class Build extends BuildBase implements Linkable
             'status',
             'result',
             'error',
-            'artifact_url',
+            'artifact_url' => function() {
+                list ($apk) = preg_split("/,/", $this->artifact_url);
+                return $apk;
+            },
+            'artifacts' => function() {
+                $dirname = dirname($this->artifact_url);
+                $basename = basename($this->artifact_url);
+                $files = preg_split("/,/", $basename);
+                $apk = array_shift($files);
+                $artifacts = array("apk" => $dirname . "/" . $apk);
+                foreach ($files  as $file) {
+                    $info = pathinfo($file);
+                    $key = strstr($file, ".", true);
+                    $artifacts[$key] = $dirname . "/" . $file;
+                }
+                return $artifacts;
+            },
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },

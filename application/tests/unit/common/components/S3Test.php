@@ -60,9 +60,9 @@ class S3Test extends UnitTestBase
         $packageNameUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/package_name.txt";
         $metadataUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/publish.tar.gz";
         $aboutUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/about.txt";
-        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
-        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Test-1.0.apk";
-        $this->assertEquals($expected, $apkPublicUrl, " *** Public URL doesn't match");
+        list($baseUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1";
+        $this->assertEquals($expected, $baseUrl, " *** Public URL doesn't match");
         $this->assertEquals(5, count($client->puts), " *** Wrong number of puts to S3");
         $artifactPut = $client->puts[0];
         $expected = "sil-appbuilder-artifacts";

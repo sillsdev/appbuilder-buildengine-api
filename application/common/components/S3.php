@@ -56,8 +56,21 @@ class S3 {
         $publicUrl = $this->s3Client->getObjectUrl($s3bucket, $s3key);
         return $publicUrl;
     }
+
+    /**
+     * Save Build Artifacts to S3.
+     * Return information about Saved Artifacts:
+     * * (BaseUrl, VersionCode, Array(Filenames))
+     * @param Build $build
+     * @param String $artifactUrl
+     * @param String $versionCodeArtifactUrl
+     * @param Array $extraUrls
+     * @return array
+     * @throws ServerErrorHttpException
+     */
     public function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $extraUrls)
     {
+        $files = array();
         $apkS3Url = self::getS3Url($build, $artifactUrl);
         list ($apkS3bucket, $apkS3key) = self::getS3BucketKey($apkS3Url);
         echo "..copy:" .PHP_EOL .".... $artifactUrl" .PHP_EOL .".... $apkS3bucket $apkS3Url" .PHP_EOL;
@@ -73,6 +86,8 @@ class S3 {
         ]);
 
         $apkPublicUrl = $this->s3Client->getObjectUrl($apkS3bucket, $apkS3key);
+        $baseUrl = dirname($apkPublicUrl);
+        array_push($files, basename($artifactUrl));
 
         $versionS3Url = self::getS3Url($build, $versionCodeArtifactUrl);
         list ($versionCodeS3bucket, $versionCodeS3key) = self::getS3BucketKey($versionS3Url);
@@ -85,6 +100,7 @@ class S3 {
             'Body' => $versionCode,
             'ACL' => 'public-read'
         ]);
+        array_push($files, basename($versionCodeArtifactUrl));
 
         foreach ($extraUrls as $url) {
             if (!is_null($url)) {
@@ -102,10 +118,11 @@ class S3 {
                     'Body' => $file,
                     'ACL' => 'public-read'
                 ]);
+                array_push($files, basename($url));
             }
         }
 
-         return [$apkPublicUrl, $versionCode];
+         return [$baseUrl, $versionCode, $files];
     }
 
     /**
@@ -120,9 +137,24 @@ class S3 {
         return self::getS3UrlByNameNumber($job->nameForBuild(), $build->build_number, $artifactUrl);
     }
 
-    private static function getS3UrlByNameNumber($name, $number, $artifactUrl) {
-        return JenkinsUtils::getArtifactUrlBase()."/jobs/".$name."/".$number."/".basename($artifactUrl);
+    /**
+     * Get the S3 Url to use to archive a build
+     * @param Build $build
+     * @return string S3Url
+     */
+    public static function getS3UrlBase($build) {
+        $job = $build->job;
+        return self::getS3UrlBaseByNameNumber($job->nameForBuild(), $build->build_number);
     }
+
+    private static function getS3UrlBaseByNameNumber($name, $number) {
+        return JenkinsUtils::getArtifactUrlBase()."/jobs/".$name."/".$number."/";
+    }
+
+    private static function getS3UrlByNameNumber($name, $number, $artifactUrl) {
+        return self::getS3UrlBaseByNameNumber($name, $number).basename($artifactUrl);
+    }
+
     /**
      * Get the S3 Bucket and Key to use to archive a build
      * @param string s3Url
