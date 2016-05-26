@@ -81,5 +81,18 @@ return [
         'channel' => 'unpublished',
         'version_code' => 5,
     ],
+    'build7' => [
+        'id' => 17,
+        'job_id' => 22,
+        'status' => 'completed',
+        'build_number' => 1,
+        'result' => 'FAILURE',
+        'error' => NULL,
+        'artifact_url' => NULL,
+        'created' => Utils::getDatetime(),
+        'updated' => Utils::getDatetime(),
+        'channel' => 'unpublished',
+        'version_code' => 1,
+    ],
 ];
 
