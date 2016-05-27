@@ -231,7 +231,7 @@ class SyncScriptsAction
                 $updated++;
             } else {
                 echo "[$this->prefix] Added: " . $fileName . PHP_EOL;
-                $retString = $retString."update: ".$fileName . PHP_EOL;
+                $retString = $retString."add: ".$fileName . PHP_EOL;
                 $added++;
             }
             $this->git->add($filePath);
