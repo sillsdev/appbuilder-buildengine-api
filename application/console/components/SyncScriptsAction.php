@@ -5,7 +5,6 @@ use GitWrapper\GitWrapper;
 
 use common\models\Job;
 use common\models\Build;
-use common\models\Release;
 use common\models\OperationQueue;
 use common\components\JenkinsUtils;
 
@@ -17,10 +16,12 @@ class SyncScriptsAction
     private $cronController;
     private $git;
     private $prefix;
+    private $fileUtil;
 
     public function __construct($cronController)
     {
         $this->cronController = $cronController;
+        $this->fileUtil = \Yii::$container->get('fileUtils');
     }
 
     public function __destruct()
@@ -84,17 +85,17 @@ class SyncScriptsAction
         }
         $commitString = "cron add=" . $totalAdded . " update =" . $totalUpdated . " delete=" . $totalRemoved . PHP_EOL;
         $commitString = $commitString . $changesString;
-        echo $commitString;
+        echo "[$this->prefix] $commitString";
         $this->applyUpdates($commitString);
     }
     private function recurse_copy($src,$dst) {
-        $dir = opendir($src);
-        if (!file_exists($dst)) {
-            if (mkdir($dst, 0777, true)){
+        $dir = $this->fileUtil->opendir($src);
+        if (!$this->fileUtil->file_exists($dst)) {
+            if ($this->fileUtil->mkdir($dst, 0777, true)){
                 echo "failed to mkdir $dst ". PHP_EOL;
             }
         }
-        while(false !== ( $file = readdir($dir)) ) {
+        while(false !== ( $file = $this->fileUtil->readdir($dir)) ) {
             if (( $file != '.' ) && ( $file != '..' )) {
                 $srcFile = $src .DIRECTORY_SEPARATOR. $file;
                 $dstFile = $dst .DIRECTORY_SEPARATOR. $file;
@@ -102,12 +103,12 @@ class SyncScriptsAction
                     $this->recurse_copy($srcFile,$dstFile);
                 }
                 else {
-                    copy($srcFile,$dstFile);
+                    $this->fileUtil->copy($srcFile,$dstFile);
                     $this->git->add($dstFile);
                 }
             }
         }
-        closedir($dir);
+        $this->fileUtil->closedir($dir);
     }
      /**
      *
@@ -219,10 +220,10 @@ class SyncScriptsAction
 
         $fileName = $type . "_" . $jobName . ".groovy";
         $filePath = $localScriptDir . DIRECTORY_SEPARATOR . $fileName;
-        $fileExists = file_exists($filePath);
-        $handle = fopen($filePath, "w");
-        fwrite($handle, $script);
-        fclose($handle);
+        $fileExists = $this->fileUtil->file_exists($filePath);
+        $handle = $this->fileUtil->fopen($filePath, "w");
+        $this->fileUtil->fwrite($handle, $script);
+        $this->fileUtil->fclose($handle);
         if ($this->git->getStatus($filePath))
         {
             if ($fileExists) {
@@ -265,12 +266,12 @@ class SyncScriptsAction
         }
 
         require_once __DIR__ . '/../../vendor/autoload.php';
-        $wrapper = new GitWrapper();
+        $wrapper = \Yii::$container->get('gitWrapper');
 
         $wrapper->setEnvVar('HOME', '/data');
         $wrapper->setPrivateKey($privateKey);
         $git = null;
-        if (!file_exists($repoLocalPath))
+        if (!$this->fileUtil->file_exists($repoLocalPath))
         {
             $git = $wrapper->clone($repoUrl, $repoLocalPath);
             $git->config('push.default', 'simple');

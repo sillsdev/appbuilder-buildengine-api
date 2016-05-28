@@ -19,6 +19,7 @@ use console\components\S3MaintenanceAction;
 
 use yii\console\Controller;
 use common\helpers\Utils;
+use GitWrapper\GitWrapper;
 
 class CronController extends Controller
 {
@@ -26,6 +27,7 @@ class CronController extends Controller
     {
         \Yii::$container->set('fileUtils', 'common\components\FileUtils');
         \Yii::$container->set('jenkinsUtils', 'common\components\JenkinsUtils');
+        \Yii::$container->set('gitWrapper', 'GitWrapper\GitWrapper');
         parent::__construct($id, $module, $config);
     }
 

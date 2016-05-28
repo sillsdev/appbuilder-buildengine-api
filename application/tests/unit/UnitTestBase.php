@@ -25,6 +25,7 @@ class UnitTestBase extends DbTestCase
         \Yii::$container->set('fileUtils', 'tests\mock\common\components\MockFileUtils');
         \Yii::$container->set('jenkinsUtils', 'tests\mock\common\components\MockJenkinsUtils');
         \Yii::$container->set('s3Client', '\tests\mock\s3client\MockS3Client');
+        \Yii::$container->set('gitWrapper', '\tests\mock\gitWrapper\MockGitWrapper');
     }
 }
 
