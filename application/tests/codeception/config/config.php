@@ -2,17 +2,17 @@
 /**
  * Application configuration shared by all applications and test types
  */
-$BUILD_ENGINE_GIT_USER_NAME = getenv('BUILD_ENGINE_GIT_USER_NAME') ?: 'SIL AppBuilder Build Agent';
-$BUILD_ENGINE_GIT_USER_EMAIL = getenv('BUILD_ENGINE_GIT_USER_EMAIL') ?: 'appbuilder_buildagent@sil.org';
-$BUILD_ENGINE_GIT_SSH_USER = getenv('BUILD_ENGINE_GIT_SSH_USER');
-$BUILD_ENGINE_REPO_URL = getenv('BUILD_ENGINE_REPO_URL');
-$BUILD_ENGINE_REPO_PRIVATE_KEY = getenv('BUILD_ENGINE_REPO_PRIVATE_KEY') ?: "/root/.ssh/id_rsa";
-$BUILD_ENGINE_REPO_BRANCH = getenv('BUILD_ENGINE_REPO_BRANCH') ?: "master";
-$BUILD_ENGINE_REPO_LOCAL_PATH = getenv('BUILD_ENGINE_REPO_LOCAL_PATH') ?: "/tmp/appbuilder/appbuilder-ci-scripts";
-$BUILD_ENGINE_REPO_SCRIPT_DIR = getenv('BUILD_ENGINE_REPO_SCRIPT_DIR') ?: "groovy";
-$BUILD_ENGINE_JENKINS_MASTER_URL = getenv('BUILD_ENGINE_JENKINS_MASTER_URL') ?: "http://192.168.70.241:8080";
+$BUILD_ENGINE_GIT_USER_NAME = 'SIL AppBuilder Build Agent';
+$BUILD_ENGINE_GIT_USER_EMAIL = 'appbuilder_buildagent@sil.org';
+$BUILD_ENGINE_GIT_SSH_USER = 'APKAJNELREDI767PX3QQ';
+$BUILD_ENGINE_REPO_URL = 'ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/ci-scripts-development-dmoore-windows10';
+$BUILD_ENGINE_REPO_PRIVATE_KEY = "/root/.ssh/id_rsa";
+$BUILD_ENGINE_REPO_BRANCH =  "master";
+$BUILD_ENGINE_REPO_LOCAL_PATH = "/tmp/appbuilder/appbuilder-ci-scripts";
+$BUILD_ENGINE_REPO_SCRIPT_DIR =  "groovy";
+$BUILD_ENGINE_JENKINS_MASTER_URL =  "http://192.168.70.241:8080";
 $BUILD_ENGINE_ARTIFACT_URL_BASE = "s3://sil-appbuilder-artifacts";
-$PUBLISH_JENKINS_MASTER_URL = getenv('PUBLISH_JENKINS_MASTER_URL');
+$PUBLISH_JENKINS_MASTER_URL = "http://192.168.70.242:8080";
 $MYSQL_HOST = getenv('MYSQL_HOST') ?: 'localhost';
 $MYSQL_DATABASE = getenv('MYSQL_DATABASE') ?: 'example';
 $MYSQL_USER = getenv('MYSQL_USER') ?: 'example';
@@ -21,7 +21,7 @@ $TEST_MYSQL_HOST = getenv('TEST_MYSQL_HOST') ?: 'localhost';
 $TEST_MYSQL_DATABASE = getenv('TEST_MYSQL_DATABASE') ?: 'example';
 $TEST_MYSQL_USER = getenv('TEST_MYSQL_USER') ?: 'example';
 $TEST_MYSQL_PASSWORD = getenv('TEST_MYSQL_PASSWORD') ?: 'example';
-$ADMIN_EMAIL = getenv('ADMIN_EMAIL') ?: 'nobody@nowhere.com';
+$ADMIN_EMAIL = 'nobody@nowhere.com';
 $APP_ENV = "testing";
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
