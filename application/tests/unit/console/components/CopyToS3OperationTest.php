@@ -3,10 +3,6 @@ namespace tests\unit\console\components;
 use console\components\CopyToS3Operation;
 use tests\unit\UnitTestBase;
 
-use tests\mock\jenkins\MockJenkins;
-use tests\mock\s3client\MockS3Client;
-
-use common\models\Job;
 use common\models\Build;
 
 use tests\unit\fixtures\common\models\JobFixture;
