@@ -1,7 +1,7 @@
 <?php
 namespace tests\mock\gitWrapper;
 
-use tests\mock\GitWrapper\MockGitWorkingCopy;
+use tests\mock\gitWrapper\MockGitWorkingCopy;
 
 use Codeception\Util\Debug;
 
@@ -70,7 +70,9 @@ class MockGitWrapper
         $output->writeln('cloneRepository');
         self::$url = $url;
         self::$path = $path;
+        $output->writeln('Before git working copy');
         self::$workingCopy = new MockGitWorkingCopy($this, $path);
+        $output->writeln('After working copy');
         return self::$workingCopy;
     }
     public function init($path)
