@@ -2,7 +2,7 @@
   service: web
   command: /data/run-tests.sh
 
-- name: push_develop
+- name: push_master
   service: web
   type: push
   image_name: silintl/appbuilder-buildengine-api
