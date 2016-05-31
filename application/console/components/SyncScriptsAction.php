@@ -273,15 +273,20 @@ class SyncScriptsAction
         require_once __DIR__ . '/../../vendor/autoload.php';
         $output->writeln("Past require");
         $wrapper = \Yii::$container->get('gitWrapper');
+        $output->writeln("Got wrapper");
 
         $wrapper->setEnvVar('HOME', '/data');
         $wrapper->setPrivateKey($privateKey);
         $git = null;
+        $output->writeln("Before if");
         if (!$this->fileUtil->file_exists($repoLocalPath))
         {
+        $output->writeln("Begin if");
             $git = $wrapper->clone($repoUrl, $repoLocalPath);
             $git->config('push.default', 'simple');
         } else {
+                    $output->writeln("Begin else");
+
             $git = $wrapper->init($repoLocalPath);
             $git->fetchAll();
             try {
