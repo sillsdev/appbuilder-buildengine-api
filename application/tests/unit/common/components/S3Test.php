@@ -102,6 +102,9 @@ class S3Test extends UnitTestBase
     }
     public function testRemoveS3FoldersWithoutJobRecord()
     {
+        $output = new \Codeception\Lib\Console\Output([]);
+        $output->writeln('');
+        $output->writeln("Starting Test");
         $this->setContainerObjects();
         $jobNames = Job::getJobNames();
         $s3 = new S3();
@@ -126,17 +129,6 @@ class S3Test extends UnitTestBase
         $output->writeln('');
         $output->writeln("Starting Test");
 
-        $bucket = "bucket";
-        $prefix = "prefix";
-        $results = $client->getPaginator('ListObjects', [
-            'Bucket' => $bucket,
-            'Prefix' => $prefix
-        ]);
-        foreach ($results as $result) {
-            foreach ($result['Contents'] as $object) {
-                $key = $object['Key'];
-                $output->writeln("Key: $key");
-            }
         }
 */
     }
