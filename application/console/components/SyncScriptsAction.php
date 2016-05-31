@@ -245,19 +245,15 @@ class SyncScriptsAction
      */
     private function getRepo()
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln("Entered method");
         $privateKey = \Yii::$app->params['buildEngineRepoPrivateKey'];
         $repoUrl = \Yii::$app->params['buildEngineRepoUrl'];
         $repoBranch = \Yii::$app->params['buildEngineRepoBranch'];
         $repoLocalPath =\Yii::$app->params['buildEngineRepoLocalPath'];
-        $output->writeln("Got parms");
 
         // Verify buildEngineRepoUrl is a SSH Url
         if (is_null($repoUrl) || !preg_match('/^ssh:\/\//', $repoUrl)) {
             throw new ServerErrorHttpException("BUILD_ENGINE_REPO_URL must be SSH Url: $repoUrl", 1456850613);
         }
-        $output->writeln("Past first");
 
         // If buildEngineRepoUrl is CodeCommit, insert the userId
         if (preg_match('/^ssh:\/\/git-codecommit/', $repoUrl)) {
@@ -268,27 +264,18 @@ class SyncScriptsAction
             }
             $repoUrl = "ssh://" . $sshUser . "@" . substr($repoUrl, 6);
         }
-        $output->writeln("Past 2nd");
 
         require_once __DIR__ . '/../../vendor/autoload.php';
-        $output->writeln("Past require");
         $wrapper = \Yii::$container->get('gitWrapper');
-        $output->writeln("Got wrapper");
 
         $wrapper->setEnvVar('HOME', '/data');
         $wrapper->setPrivateKey($privateKey);
         $git = null;
-        $output->writeln("Before if");
         if (!$this->fileUtil->file_exists($repoLocalPath))
         {
-        $output->writeln("Begin if");
             $git = $wrapper->clone($repoUrl, $repoLocalPath);
-        $output->writeln("past clone");
             $git->config('push.default', 'simple');
-        $output->writeln("past config");
         } else {
-                    $output->writeln("Begin else");
-
             $git = $wrapper->init($repoLocalPath);
             $git->fetchAll();
             try {
@@ -297,7 +284,6 @@ class SyncScriptsAction
                 echo "origin/$repoBranch doesn't exist yet. \n";
             }
         }
-        $output->writeln("Past clone/init");
         // Set afterwards in case the configuration changes after
         // the repo has been cloned (i.e. services has been restarted
         // with different configuration).
