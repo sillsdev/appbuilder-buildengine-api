@@ -27,9 +27,6 @@ class SyncScriptsActionTest extends UnitTestBase
     }
     public function fixtures()
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('');
-        $output->writeln("Fixtures");
         return [
             'job' => JobFixture::className(),
             'build' => BuildFixture::className(),
@@ -37,26 +34,17 @@ class SyncScriptsActionTest extends UnitTestBase
     }
     public function testGetRepoClone()
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('');
-        $output->writeln("Starting Test");
         $this->setContainerObjects();
         MockGitWrapper::resetTest();
         $cronController = new MockCronController();
-        $output->writeln("Mock created");
         $syncScriptsAction = new SyncScriptsAction($cronController);
-        $output->writeln("Action created");
         MockFileUtils::setFileExistsVar(false);
         $method = $this->getPrivateMethod('console\components\SyncScriptsAction', 'getRepo');
-        $output->writeln("Ready to run method");
         $repoWorkingCopy = $method->invokeArgs($syncScriptsAction, array( ));
-        $output->writeln("ran method");
         $expectedUrl = "ssh://APKAJNELREDI767PX3QQ@git-codecommit.us-east-1.amazonaws.com/v1/repos/ci-scripts-development-dmoore-windows10";
         $this->assertEquals($expectedUrl, MockGitWrapper::getTestUrl(), " *** Wrong URL");
-        $output->writeln("First Assert");
         $expectedPath = "/tmp/appbuilder/appbuilder-ci-scripts";
         $this->assertEquals($expectedPath, MockGitWrapper::getTestPath(), " *** Wrong Path");
-        $output->writeln("second Assert");
         $expectedKey = "/root/.ssh/id_rsa";
         $this->assertEquals($expectedKey, MockGitWrapper::getTestPrivateKey(), " *** Wrong private key");
         $expectedUserName = "SIL AppBuilder Build Agent";

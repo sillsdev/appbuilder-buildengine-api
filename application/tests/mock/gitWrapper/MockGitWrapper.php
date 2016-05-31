@@ -40,8 +40,6 @@ class MockGitWrapper
     }
     public function setPrivateKey($privateKey, $port = 22, $wrapper = null)
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('setPrivateKey');
         self::$privateKey = $privateKey;
         return;
     }
@@ -54,8 +52,6 @@ class MockGitWrapper
      */
     public function __call($method, $args)
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('Call override');
         if ('clone' == $method) {
             return call_user_func_array(array($this, 'cloneRepository'), $args);
         } else {
@@ -66,13 +62,9 @@ class MockGitWrapper
     }
     public function cloneRepository($url, $path)
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('cloneRepository');
         self::$url = $url;
         self::$path = $path;
-        $output->writeln('Before git working copy');
         self::$workingCopy = new MockGitWorkingCopy($this, $path);
-        $output->writeln('After working copy');
         return self::$workingCopy;
     }
     public function init($path)

@@ -24,8 +24,6 @@ class MockGitWorkingCopy
     public $lastResetBranch;
     public function __construct($gitWrapper, $directory)
     {
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('Constructor');
         $this->gitWrapper = $gitWrapper;
         $this->directory = $directory;
     }
