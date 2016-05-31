@@ -283,7 +283,9 @@ class SyncScriptsAction
         {
         $output->writeln("Begin if");
             $git = $wrapper->clone($repoUrl, $repoLocalPath);
+        $output->writeln("past clone");
             $git->config('push.default', 'simple');
+        $output->writeln("past config");
         } else {
                     $output->writeln("Begin else");
 
