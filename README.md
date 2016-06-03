@@ -1,7 +1,7 @@
 # appbuilder-buildengine-api #
 This is the Web Service interface for the SIL App Publishing Service. BuildEngine creates entries in a database
 and transforms the data into Jenkins Job DSL configuration shared in a git Repository shared with
-the Jenkins build infrastructure (see [docker-appbuilder-jenkins](https://bitbucket.org/silintl/docker-appbuilder-jenkins)).
+the Jenkins build infrastructure (see [docker-appbuilder-jenkins](https://github.com/sillsdev/docker-appbuilder-jenkins)).
 
 ## API Specs ##
 https://docs.google.com/a/sil.org/document/d/1FtHLCEOvOuSnBC1ryeEUH3Vx2Y5XqF_WhpkPpjWteqs/edit?usp=sharing
@@ -114,30 +114,30 @@ be limited to alphanumeric characters, '.', '_', and '-' (CodeCommit limit).
 * [Deploy containers](#deploy-containers) for BuildEngine
 
 #### Clone Source Repositories ####
-You will need to authenticate to BitBucket to be able to clone the repositories. You can either use username/password with the HTTPS urls:
+You will need to authenticate to GitHub to be able to clone the repositories. You can either use username/password with the HTTPS urls:
 
 ```bash
-git clone https://bitbucket.org/silintl/appbuilder-buildengine-api
-git clone https://bitbucket.org/silintl/docker-appbuilder-jenkins
+git clone https://github.com/sillsdev/appbuilder-buildengine-api
+git clone https://github.com/sillsdev/docker-appbuilder-jenkins
 ```
 
-Or you can create an SSH Key, store the private and public key in ~/.ssh, and associate the public key with your BitBucket account.
+Or you can create an SSH Key, store the private and public key in ~/.ssh, and associate the public key with your GitHub account.
 
 ```bash
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
-# login to https://bitbucket.org/account/user/USERNAME/ssh-keys/ and "Add Key" using ~/.ssh/id_rsa.pub
-git clone git@bitbucket.org:silintl/appbuilder-buildengine-api
-git clone git@bitbucket.org:silintl/docker-appbuilder-jenkins
+# login to https://github.com/settings/keys/ and "New SSH Key" using ~/.ssh/id_rsa.pub
+git clone git@github.com:sillsdev/appbuilder-buildengine-api
+git clone git@github.com:sillsdev/docker-appbuilder-jenkins
 ```
 
-If you want to create a separate SSH Key just for BitBucket, you can create the SSH Key in a subdirectory of ~/.ssh and then add an entry to
+If you want to create a separate SSH Key just for GitHub, you can create the SSH Key in a subdirectory of ~/.ssh and then add an entry to
 ~/.ssh/config (which normally doesn't exist--create an empty file) to specify the location of the key.
 
 ```
-Host bitbucket.org
-	IdentityFile ~/.ssh/bitbucket/id_rsa
+Host github.com
+	IdentityFile ~/.ssh/github/id_rsa
 ```
 
 [Back](#markdown-header-development-setup-instructions)
@@ -591,6 +591,6 @@ Content-Type: application/json
 
 [^1]: We use for the Git Repository since AWS only charges for $1/month/active-user.  For many projects, the user
 requesting the project will be active for a short period of time and then not modify the project repository for a long time.
-It would be possible to use another Git service (like [BitBucket](https://bitbucket.org)) to host the project repository, but will require to make a
+It would be possible to use another Git service (like [GitHub](https://github.com)) to host the project repository, but will require to make a
 code change in application/common/model/Job.php to allow other repository urls).
 
