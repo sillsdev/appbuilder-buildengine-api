@@ -126,21 +126,13 @@ class Build extends BuildBase implements Linkable
             'result',
             'error',
             'artifact_url' => function() {
-                list ($apk) = preg_split("/,/", $this->artifact_url);
-                return $apk;
+                return $this->apk();
             },
             'artifacts' => function() {
-                $dirname = dirname($this->artifact_url);
-                $basename = basename($this->artifact_url);
-                $files = preg_split("/,/", $basename);
-                $apk = array_shift($files);
-                $artifacts = array("apk" => $dirname . "/" . $apk);
-                foreach ($files  as $file) {
-                    $info = pathinfo($file);
-                    $key = strstr($file, ".", true);
-                    $artifacts[$key] = $dirname . "/" . $file;
-                }
-                return $artifacts;
+                return [
+                    "apk" => $this->apk(),
+                    "about" => $this->about(),
+                    "play-listing" => $this->playListing() ];
             },
             'created' => function(){
                 return Utils::getIso8601($this->created);
@@ -256,5 +248,77 @@ class Build extends BuildBase implements Linkable
             }
         }
         return parent::beforeDelete();
+    }
+
+    public function artifactType($key) {
+        $type = "unknown";
+        if (preg_match("/\.apk$/", $key)) {
+            $type = "apk";
+        } else if (preg_match("/version_code\.txt$/", $key)) {
+            $type = "version_code";
+        } else if (preg_match("/about\.txt$/", $key)) {
+            $type = "about";
+        } else if (preg_match("/play-listing\/index\.html$/", $key)) {
+            $type = "play-listing";
+        }
+
+        return $type;
+    }
+
+    public function appendArtifact($url, $basename) {
+        if (is_null($this->artifact_url) || strlen($this->artifact_url) == 0) {
+            echo "appendArtifact: setting url: $url" . PHP_EOL;
+            $this->artifact_url = dirname($url) . "|" . $basename;
+         } else {
+            echo "appendArtifact: adding basename: $basename" . PHP_EOL;
+            $this->artifact_url = $this->artifact_url . "," . $basename;
+        }
+    }
+
+    public function handleArtifact($url, $s3FileKey, $contents) {
+        $type = $this->artifactType($s3FileKey);
+        $basename = basename($url);
+        switch ($type) {
+            case "apk":
+                break;
+
+            case "version":
+                $this->version_code = $contents;
+                break;
+
+            case "about":
+                break;
+
+            case "play-listing":
+                $basename = "play-listing/index.html";
+                break;
+
+            default:
+                return;
+        }
+        $this->appendArtifact($url, $basename);
+    }
+
+    private function getArtifact($pattern) {
+        if (!is_null($this->artifact_url) && strlen($this->artifact_url)) {
+            list($baseUrl, $filelist) = explode("|", $this->artifact_url);
+            $files = explode(",", $filelist);
+            foreach ($files as $file) {
+                if (preg_match($pattern, $file)) {
+                    return $baseUrl . "/" . $file;
+                }
+            }
+        }
+        return null;
+    }
+
+    public function apk() {
+        return $this->getArtifact("/\.apk$/");
+    }
+    public function about() {
+        return $this->getArtifact("/about\.txt$/");
+    }
+    public function playListing() {
+        return $this->getArtifact("/play-listing\/index\.html$/");
     }
 }

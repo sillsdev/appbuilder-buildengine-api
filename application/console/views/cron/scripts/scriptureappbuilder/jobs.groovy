@@ -15,16 +15,16 @@ echo $VERSION_CODE > output/version_code.txt
 if [ -f "build_data/about/about.txt" ]; then
   cp build_data/about/about.txt output/
 fi
-rename "s/build/$PROJNAME/" build*
-PUBLISH_DIR=$(find "${PROJNAME}_data" -name publish -print)
+PUBLISH_DIR="build_data/publish/play-listing"
 if [ -d "$PUBLISH_DIR" ]; then
-  (cd "$PUBLISH_DIR" && tar cf - .) | gzip > output/publish.tar.gz
+  cp -r "$PUBLISH_DIR" output
 fi
+rename "s/build/$PROJNAME/" build*
 
 # Work-around for https://issues.jenkins-ci.org/browse/JENKINS-35102
 killall Xvfb
 '''
-    static artifactFiles = 'output/*'
+    static artifactFiles = 'output/**'
 
     static void codecommitBuildJob(jobContext, gitUrl, publisherName, artifactUrlBase) {
         jobContext.with {

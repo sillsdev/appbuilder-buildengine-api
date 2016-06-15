@@ -57,55 +57,28 @@ class S3 {
         return $publicUrl;
     }
 
-    /**
-     * Save Build Artifacts to S3.
-     * Return information about Saved Artifacts:
-     * * (BaseUrl, VersionCode, Array(Filenames))
+    /***
      * @param Build $build
-     * @param String $artifactUrl
-     * @param String $versionCodeArtifactUrl
-     * @param Array $extraUrls
-     * @return array
+     * @param array $artifactUrls
      * @throws ServerErrorHttpException
      */
-    public function saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, $extraUrls)
-    {
-        $files = array();
-        $apkS3Url = self::getS3Url($build, $artifactUrl);
-        list ($apkS3bucket, $apkS3key) = self::getS3BucketKey($apkS3Url);
-        echo "..copy:" .PHP_EOL .".... $artifactUrl" .PHP_EOL .".... $apkS3bucket $apkS3Url" .PHP_EOL;
-        echo "... Key: $apkS3key ".PHP_EOL;
+    public function saveBuildToS3($build, $artifactUrls) {
+        $hasPlayListing = false;
+        $playListingBucket = null;
+        $playListingIndex = null;
 
-        $apk = $this->fileUtil->file_get_contents($artifactUrl);
-
-        $this->s3Client->putObject([
-            'Bucket' => $apkS3bucket,
-            'Key' => $apkS3key,
-            'Body' => $apk,
-            'ACL' => 'public-read'
-        ]);
-
-        $apkPublicUrl = $this->s3Client->getObjectUrl($apkS3bucket, $apkS3key);
-        $baseUrl = dirname($apkPublicUrl);
-        array_push($files, basename($artifactUrl));
-
-        $versionS3Url = self::getS3Url($build, $versionCodeArtifactUrl);
-        list ($versionCodeS3bucket, $versionCodeS3key) = self::getS3BucketKey($versionS3Url);
-
-        $versionCode = $this->fileUtil->file_get_contents($versionCodeArtifactUrl);
-
-        $this->s3Client->putObject([
-            'Bucket' => $versionCodeS3bucket,
-            'Key' => $versionCodeS3key,
-            'Body' => $versionCode,
-            'ACL' => 'public-read'
-        ]);
-        array_push($files, basename($versionCodeArtifactUrl));
-
-        foreach ($extraUrls as $url) {
+        foreach ($artifactUrls as $url) {
             if (!is_null($url)) {
                 $s3url =  self::getS3Url($build, $url);
                 list ($fileS3Bucket, $fileS3Key) =  self::getS3BucketKey($s3url);
+                if (preg_match("/play-listing/", $fileS3Key)) {
+                    $pieces = explode("/play-listing/", $fileS3Key);
+                    if (!$hasPlayListing) {
+                        $hasPlayListing = true;
+                        $playListingBucket = $fileS3Bucket;
+                        $playListingIndex = $pieces[0] . "/play-listing/index.html";
+                    }
+                }
 
                 echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL .".... $fileS3Bucket $s3url" .PHP_EOL;
                 echo "... Key: $fileS3Key ".PHP_EOL;
@@ -118,11 +91,25 @@ class S3 {
                     'Body' => $file,
                     'ACL' => 'public-read'
                 ]);
-                array_push($files, basename($url));
+
+                $publicUrl = $this->s3Client->getObjectUrl($fileS3Bucket, $fileS3Key);
+                $build->handleArtifact($publicUrl,  $fileS3Key, $file);
             }
         }
 
-         return [$baseUrl, $versionCode, $files];
+        if ($hasPlayListing) {
+            $s3url = self::getS3UrlBase($build) . "/play-listing/index.html";
+            $file = \Yii::getAlias("@common") . "/preview/playlisting/index.html";
+            $this->s3Client->putObject([
+                'Bucket' => $playListingBucket,
+                'Key' => $playListingIndex,
+                'SourceFile' => $file,
+                'ACL' => 'public-read'
+            ]);
+
+            $publicUrl = $this->s3Client->getObjectUrl($playListingBucket, $playListingIndex);
+            $build->handleArtifact($publicUrl,  $playListingIndex, $file);
+        }
     }
 
     /**
@@ -152,7 +139,12 @@ class S3 {
     }
 
     private static function getS3UrlByNameNumber($name, $number, $artifactUrl) {
-        return self::getS3UrlBaseByNameNumber($name, $number).basename($artifactUrl);
+        return self::getS3UrlBaseByNameNumber($name, $number) . self::getArtifactOutputFile($artifactUrl);
+    }
+
+    public static function getArtifactOutputFile($artifactUrl) {
+        $parts = explode("artifact/output/", $artifactUrl);
+        return $parts[1];
     }
 
     /**

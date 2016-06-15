@@ -129,4 +129,20 @@ class S3Test extends UnitTestBase
         }
 */
     }
+
+    public function testGetArtifactOutputFile()
+    {
+        $urls = [
+            "http://localhost:8080/job/testJb4/1/artifact/output/about.txt" => "about.txt",
+            "http://localhost:8080/job/testJb4/1/artifact/output/play-listing/en-us/title.txt" => "play-listing/en-us/title.txt",
+        ];
+        foreach ($urls as $url => $expect) {
+            $result = S3::getArtifactOutputFile($url);
+            $this->assertEquals($expect, $result, "*** Wrong output file");
+
+        }
+    }
+    public function testGetS3Url()
+    {
+    }
 }

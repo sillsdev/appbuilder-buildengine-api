@@ -39,7 +39,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'build_number',
             'result',
             'error:url',
-            'artifact_url:url',
+            [
+                'attribute' => 'artifacts',
+                'format'=>'html',
+                'value'=> Html::a("apk", $model->apk()) . ", " . Html::a("about", $model->about()) . ", " . Html::a("play-listing", $model->playListing()),
+            ],
             'created',
             'updated',
             'channel',

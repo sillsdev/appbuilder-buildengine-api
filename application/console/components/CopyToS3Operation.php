@@ -38,7 +38,7 @@ class CopyToS3Operation implements OperationInterface
                 $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
                 if ($jenkinsBuild){
-                    list($build->artifact_url, $build->version_code) = $this->saveBuild($build, $jenkinsBuild);
+                    $this->saveBuild($build, $jenkinsBuild);
                     $build->status = Build::STATUS_COMPLETED;
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
@@ -66,27 +66,23 @@ class CopyToS3Operation implements OperationInterface
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-    private function saveBuild($build, $jenkinsBuild)
-    {
-        $logger = new Appbuilder_logger("CopyToS3Operation");
-        $artifactUrl =  $this->jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
-        $versionCodeArtifactUrl = $this->jenkinsUtils->getVersionCodeArtifactUrl($jenkinsBuild);
-        $packageNameUrl = $this->jenkinsUtils->getPackageNameArtifactUrl($jenkinsBuild);
-        $metadataUrl = $this->jenkinsUtils->getMetaDataArtifactUrl($jenkinsBuild);
+    private function saveBuild($build, $jenkinsBuild) {
+        # Get list of artifacts from Jenkins build
+        list($artifactUrls, $artifactRelativePaths) = $this->jenkinsUtils->getArtifactUrls($jenkinsBuild);
+
+        # Save to S3
         $s3 = new S3();
-        $aboutUrl = $this->jenkinsUtils->getAboutArtifactUrl($jenkinsBuild);
-        list($baseUrl, $versionCode, $files) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeArtifactUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
-        var_dump($baseUrl);
-        $fileList = implode(',', $files);
+        $s3->saveBuildToS3($build, $artifactUrls, $artifactRelativePaths);
+
+        # Log
+        $logger = new Appbuilder_logger("CopyToS3Operation");
         $log = JenkinsUtils::getlogBuildDetails($build);
-        $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
-        $log['jenkins_ArtifactUrl'] = $artifactUrl;
-        $log['baseUrl'] = $baseUrl;
-        $log['files'] = $fileList;
-        $log['version'] = $versionCode;
+
+//        $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
+//        $log['jenkins_ArtifactUrl'] = $artifactUrl;
+//        $log['baseUrl'] = $baseUrl;
+//        $log['files'] = $fileList;
+//        $log['version'] = $versionCode;
         $logger->appbuilderWarningLog($log);
-        $artifacts = $baseUrl . "/" . $fileList;
-        echo "returning: $artifacts version: $versionCode". PHP_EOL;
-        return [$artifacts, $versionCode];
     }
 }

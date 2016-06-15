@@ -27,6 +27,29 @@ class JenkinsUtils
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
     }
+
+    public function getArtifactUrls($jenkinsBuild) {
+
+        $jenkinsArtifacts = $jenkinsBuild->get("artifacts");
+        if (!$jenkinsArtifacts) { return null; }
+        $artifactUrls = array();
+        $artifactRelativePaths = array();
+        foreach ($jenkinsArtifacts as $testArtifact) {
+            $relativePath = explode("output/", $testArtifact->relativePath)[1];
+            array_push($artifactRelativePaths, $relativePath);
+            $artifactUrl = $this->getArtifactUrlFromRelativePath($jenkinsBuild, $testArtifact->relativePath);
+            array_push($artifactUrls, $artifactUrl);
+        }
+        return array($artifactUrls, $artifactRelativePaths);
+    }
+
+    public function getArtifactUrlFromRelativePath($jenkinsBuild, $relativePath) {
+        $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
+        $buildUrl = $jenkinsBuild->getBuildUrl();
+        $pieces = explode("job", $buildUrl);
+        return $baseUrl."job".$pieces[1]."artifact/".$relativePath;
+
+    }
      /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
