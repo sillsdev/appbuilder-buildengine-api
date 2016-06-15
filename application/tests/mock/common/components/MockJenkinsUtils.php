@@ -3,9 +3,10 @@
 namespace tests\mock\common\components;
 
 use Codeception\Util\Debug;
+use common\components\JenkinsUtils;
 use tests\mock\jenkins\MockJenkins;
 
-class MockJenkinsUtils
+class MockJenkinsUtils extends JenkinsUtils
 {
     private static $returnJenkins = true;
     public static function setReturnJenkins($value)

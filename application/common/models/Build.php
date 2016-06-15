@@ -282,7 +282,7 @@ class Build extends BuildBase implements Linkable
             case "apk":
                 break;
 
-            case "version":
+            case "version_code":
                 $this->version_code = $contents;
                 break;
 

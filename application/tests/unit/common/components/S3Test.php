@@ -1,10 +1,13 @@
 <?php
 namespace tests\unit\common\components;
 use common\components\S3;
+use common\components\JenkinsUtils;
 
 use tests\unit\UnitTestBase;
 
 use tests\mock\jenkins\MockJenkins;
+use tests\mock\jenkins\MockJenkinsJob;
+use tests\mock\jenkins\MockJenkinsBuild;
 use tests\mock\s3client\MockS3Client;
 
 use common\models\Job;
@@ -55,36 +58,28 @@ class S3Test extends UnitTestBase
         $s3 = new S3();
         $client = $s3->s3Client;
         $build = Build::findOne(['id' => 11]);
-        $artifactUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/Test-1.0.apk";
-        $versionCodeUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/version_code.txt";
-        $packageNameUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/package_name.txt";
-        $metadataUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/publish.tar.gz";
-        $aboutUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/about.txt";
-        list($baseUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
-        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1";
-        $this->assertEquals($expected, $baseUrl, " *** Public URL doesn't match");
-        $this->assertEquals(5, count($client->puts), " *** Wrong number of puts to S3");
+        $jenkins = new MockJenkins();
+        $jenkinsJob = new MockJenkinsJob($jenkins, false, 4, 0, "testJob4");
+        $jenkinsBuild = new MockJenkinsBuild($jenkinsJob, 1, false);
+        $jenkinsUtils = new JenkinsUtils();
+        list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
+        $s3->saveBuildToS3($build, $artifactUrls, $artifactRelativePaths);
+        $this->assertEquals(14, count($client->puts), " *** Wrong number of puts to S3");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Kuna_Gospels-1.0.apk";
+        $this->assertEquals($expected, $build->apk(), " *** Public URL for APK doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/about.txt";
+        $this->assertEquals($expected, $build->about(), " *** Public URL for About doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/play-listing/index.html";
+        $this->assertEquals($expected, $build->playListing(), " *** Public URL for Play Listing doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1|about.txt,Kuna_Gospels-1.0.apk,version_code.txt,play-listing/index.html";
+        $this->assertEquals($expected, $build->artifact_url, " *** Artifact URL doesn't match");
         $artifactPut = $client->puts[0];
         $expected = "sil-appbuilder-artifacts";
         $this->assertEquals($expected, $artifactPut['Bucket'], " *** Bad bucket data");
-        $expected = "testing/jobs/build_scriptureappbuilder_22/1/Test-1.0.apk";
+        $expected = "testing/jobs/build_scriptureappbuilder_22/1/about.txt";
         $this->assertEquals($expected, $artifactPut['Key'], " *** Bad Key data");
-        $expected = "Contents of http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/Test-1.0.apk";
+        $expected = "Contents of http://127.0.0.1/job/testJob4/1/artifact/output/about.txt";
         $this->assertEquals($expected, $artifactPut['Body'], " *** Wrong content");
-    }
-    public function testSaveBuildNoPackageOrMetadata()
-    {
-        $this->setContainerObjects();
-        $s3 = new S3();
-        $client = $s3->s3Client;
-        $build = Build::findOne(['id' => 11]);
-        $artifactUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/Test-1.0.apk";
-        $versionCodeUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/version_code.txt";
-        $packageNameUrl = null;
-        $metadataUrl = null;
-        $aboutUrl = "http://127.0.0.1:8080/job/build_scriptureappbuilder_22/11/artifact/output/about.txt";
-        list($apkPublicUrl, $versionCodeReturned) = $s3->saveBuildToS3($build, $artifactUrl, $versionCodeUrl, array($packageNameUrl, $metadataUrl, $aboutUrl));
-        $this->assertEquals(3, count($client->puts), " *** Wrong number of puts to S3");
     }
     public function testRemoveS3Artifacts()
     {

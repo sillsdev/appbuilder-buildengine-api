@@ -42,7 +42,7 @@ class S3 {
     public function saveErrorToS3($jobName, $buildNumber, $jenkins)
     {
         $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $jobName, $buildNumber);
-        $s3Url = self::getS3UrlByNameNumber($jobName, $buildNumber, $errorUrl);
+        $s3Url = self::getS3UrlBaseByNameNumber($jobName, $buildNumber).basename($errorUrl);
         list ($s3bucket, $s3key) = self::getS3BucketKey($s3Url);
         $consoleOutput = $this->fileUtil->file_get_contents($errorUrl);
 

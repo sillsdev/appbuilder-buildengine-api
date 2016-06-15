@@ -37,7 +37,7 @@ class CopyToS3OperationTest extends UnitTestBase
         $copyOperation->performOperation();
         $build = Build::findOne(['id' => 11]);
         $this->assertEquals(42, $build->version_code, " *** Version code should be set to 42");
-        $expectedUrl = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/TestPublishing-1.0.apk,version_code.txt,package_name.txt,publish.tar.gz,about.txt";
+        $expectedUrl = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1|about.txt,Kuna_Gospels-1.0.apk,version_code.txt,play-listing/index.html";
         $this->assertEquals($expectedUrl, $build->artifact_url, " *** Incorrect Artifact Url");
     }
 }
