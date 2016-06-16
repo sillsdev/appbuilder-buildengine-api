@@ -84,11 +84,15 @@ class CopyToS3Operation implements OperationInterface
             // serialization from an array to a hash where the indexes were the old
             // positions in the array.
             $playRelativePaths = array();
+            $publishIndex = "<html><body><ul>" . PHP_EOL;
             foreach ($artifactRelativePaths as $path) {
                 if (0 === strpos($path, "play-listing/")) {
+                    $publishIndex .= "<li><a href=\"$path\">$path</a></p></li>" . PHP_EOL;
                     array_push($playRelativePaths, substr($path, strlen("play-listing/")));
                 }
             }
+            $publishIndex .= "</ul></body></html>" . PHP_EOL;
+            $extraContent["play-listing.html"] = $publishIndex;
             $manifest = [ "files" => $playRelativePaths ];
             if (!empty($defaultLanguage)) {
                 $manifest["default-language"] = $defaultLanguage;
