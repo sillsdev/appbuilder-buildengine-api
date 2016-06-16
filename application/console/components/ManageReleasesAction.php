@@ -80,8 +80,8 @@ class ManageReleasesAction extends ActionCommon
             echo "[$prefix] tryStartRelease: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
 
             $build = $release->build;
-            $artifactUrl = $build->artifact_url;
-            $path = substr($artifactUrl, 0, strrpos( $artifactUrl, '/'));
+            $artifactUrl = $build->apk();
+            $path = $build->artifact_url_base;
 
             $jenkins = $this->jenkinsUtils->getPublishJenkins();
             $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
