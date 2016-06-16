@@ -145,10 +145,11 @@ class JenkinsUtils
         $log['buildStatus'] = $build->status;
         $log['buildNumber'] = $build->build_number;
         $log['buildResult'] = $build->result;
-        $log['buildArtifactUrl'] = $build->artifact_url;
+        $log['buildArtifactUrlBase'] = $build->artifact_url_base;
+        $log['buildArtifactFiles'] = $build->artifact_files;
 
         echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
-                    . "Result=$build->result, ArtifactUrl=$build->artifact_url". PHP_EOL;
+                    . "Result=$build->result, ArtifactUrlBase=$build->artifact_url_base, ArtifactFiles=$build->artifact_files". PHP_EOL;
         return $log;
     }
 

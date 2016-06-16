@@ -22,7 +22,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'error')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'artifact_url')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'artifact_url_base')->textInput(['maxlength' => true]) ?>
+
+    <?= $form->field($model, 'artifact_files')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'created')->textInput() ?>
 

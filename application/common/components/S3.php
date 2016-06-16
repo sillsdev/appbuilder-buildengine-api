@@ -60,25 +60,19 @@ class S3 {
     /***
      * @param Build $build
      * @param array $artifactUrls
+     * @param Array $extraContent
      * @throws ServerErrorHttpException
      */
-    public function saveBuildToS3($build, $artifactUrls) {
-        $hasPlayListing = false;
-        $playListingBucket = null;
-        $playListingIndex = null;
+    public function saveBuildToS3($build, $artifactUrls, $extraContent) {
+        $s3baseUrl = self::getS3UrlBase($build);
+        list ($baseS3Bucket, $baseS3Key) =  self::getS3BucketKey($s3baseUrl);
+        $publicBaseUrl = $this->s3Client->getObjectUrl($baseS3Bucket, $baseS3Key);
+        $build->beginArtifacts($publicBaseUrl);
 
         foreach ($artifactUrls as $url) {
             if (!is_null($url)) {
                 $s3url =  self::getS3Url($build, $url);
                 list ($fileS3Bucket, $fileS3Key) =  self::getS3BucketKey($s3url);
-                if (preg_match("/play-listing/", $fileS3Key)) {
-                    $pieces = explode("/play-listing/", $fileS3Key);
-                    if (!$hasPlayListing) {
-                        $hasPlayListing = true;
-                        $playListingBucket = $fileS3Bucket;
-                        $playListingIndex = $pieces[0] . "/play-listing/index.html";
-                    }
-                }
 
                 echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL .".... $fileS3Bucket $s3url" .PHP_EOL;
                 echo "... Key: $fileS3Key ".PHP_EOL;
@@ -92,23 +86,23 @@ class S3 {
                     'ACL' => 'public-read'
                 ]);
 
-                $publicUrl = $this->s3Client->getObjectUrl($fileS3Bucket, $fileS3Key);
-                $build->handleArtifact($publicUrl,  $fileS3Key, $file);
+                $build->handleArtifact($fileS3Key, $file);
             }
         }
 
-        if ($hasPlayListing) {
-            $s3url = self::getS3UrlBase($build) . "/play-listing/index.html";
-            $file = \Yii::getAlias("@common") . "/preview/playlisting/index.html";
-            $this->s3Client->putObject([
-                'Bucket' => $playListingBucket,
-                'Key' => $playListingIndex,
-                'SourceFile' => $file,
-                'ACL' => 'public-read'
-            ]);
+        if (!empty($extraContent)) {
+            foreach ($extraContent as $filename => $content) {
+                $s3url = self::getS3UrlBase($build) . $filename;
+                list ($fileS3Bucket, $fileS3Key) = self::getS3BucketKey($s3url);
+                $this->s3Client->putObject([
+                    'Bucket' => $fileS3Bucket,
+                    'Key' => $fileS3Key,
+                    'Body' => $content,
+                    'ACL' => 'public-read'
+                ]);
 
-            $publicUrl = $this->s3Client->getObjectUrl($playListingBucket, $playListingIndex);
-            $build->handleArtifact($publicUrl,  $playListingIndex, $file);
+                $build->handleArtifact($fileS3Key, $content);
+            }
         }
     }
 
@@ -222,9 +216,8 @@ class S3 {
      * @param Build $build
      */
     public function removeS3Artifacts($build) {
-        $parts = parse_url($build->artifact_url);
-        $apkpath = $parts['path'];
-        $path = substr($apkpath, 0, strrpos( $apkpath, '/') + 1);
+        $parts = parse_url($build->artifact_url_base);
+        $path = $parts['path'];
         $bucket = substr($path,1, strpos( $path, '/', 1) - 1);
         $key = substr($path, strpos($path, '/', 1) + 1);
         $this->s3Client->deleteMatchingObjects($bucket, $key);

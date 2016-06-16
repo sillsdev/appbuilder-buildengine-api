@@ -74,12 +74,12 @@
         <title>Play Store Overview</title>
 
         <script type="text/javascript">
-            var defaultName;
+            var languages = {};
 
-            //read and replace title, full description, what's new, and icon field with the selected language
-            function readContent(folderName) {
+            //read and replace title, full description, and what's new with the selected language
+            function readContent(language) {
                 var titleFile = new XMLHttpRequest();
-                var titlePath = "./" + folderName + "/title.txt";
+                var titlePath = languages[language]["title"];
                 titleFile.open("GET", titlePath, true);
                 titleFile.onreadystatechange = function () {
                     if(titleFile.readyState === 4) {
@@ -87,15 +87,13 @@
                             var titleText = titleFile.responseText;
                             var titleElement = document.getElementById('titleField');
                             titleElement.innerHTML = titleText;
-                        } else {
-                            console.log(titleFile);
                         }
                     }
                 }
                 titleFile.send();
 
                 var fullFile = new XMLHttpRequest();
-                var fullPath = "./" + folderName + "/full_description.txt";
+                var fullPath = languages[language]["full-description"];
                 fullFile.open("GET", fullPath, true);
                 fullFile.onreadystatechange = function () {
                     if(fullFile.readyState === 4) {
@@ -110,7 +108,7 @@
                 fullFile.send();
 
                 var newFile = new XMLHttpRequest();
-                var newPath = "./" + folderName + "/whats_new.txt";
+                var newPath = languages[language]["whats-new"];
                 newFile.open("GET", newPath, true);
                 newFile.onreadystatechange = function () {
                     if(newFile.readyState === 4) {
@@ -123,59 +121,23 @@
                     }
                 }
                 newFile.send();
-
-                var iconFile = new XMLHttpRequest();
-                var iconPath = "./" + folderName + "/images/icon.png";
-                iconFile.open("GET", iconPath, true);
-                iconFile.onreadystatechange = function () {
-                    if(iconFile.readyState === 4) {
-                        if(iconFile.status === 200 || iconFile.status == 0) {
-                            var iconElement = document.getElementById("icon");
-                            iconElement.src = iconPath;
-                        } else if(iconFile.status === 403) {
-                            var iconElement = document.getElementById("icon");
-                            iconElement.src = "./" + defaultName + "/images/icon.png";
-                        }
-                    }
-                }
-                iconFile.send()
             }
 
             //read and insert images to the correspond element
-			function readImg(folderName) {
-				var totalFile = new XMLHttpRequest();
-                var totalPath = "./" + folderName + "/images/phoneScreenshots/count.txt";
-                totalFile.open("GET", totalPath, false);
-                var total = 0;
+			function readImg(language) {
+                var defaultLanguage = languages["default"];
 
-                totalFile.onreadystatechange = function () {
-                    if (totalFile.readyState === 4) {
-                        if (totalFile.status === 200 || totalFile.status == 0) {
-                            total = parseInt(totalFile.responseText);
-                        }
-                    }
-                }
-                totalFile.send()
-
-                //total is the total amout of screenshot
-                //if no image for the current language, use images from the default language => we make the assumption that default language contains image files
-                if (total == 0) {
-                    totalFile.open("GET", "./" + defaultName + "/images/phoneScreenshots/count.txt", false);
-                    totalFile.onreadystatechange = function () {
-                        if (totalFile.readyState === 4) {
-                            if (totalFile.status === 200 || totalFile.status == 0) {
-                                total = parseInt(totalFile.responseText);
-                            }
-                        }
-                    }
-                    totalFile.send()
-                    var imgPath = "./" + defaultName + "/images/phoneScreenshots/screen-";
+                var iconElement = document.getElementById("icon");
+                if (languages[language]["icon"] == undefined) {
+                    iconElement.src = languages[defaultLanguage]["icon"];
                 } else {
-                    var imgPath = "./" + folderName + "/images/phoneScreenshots/screen-";
+                    iconElement.src = languages[language]["icon"];
                 }
 
-                //the current screenshot
-                var count = 0;
+                //if no image for the current language, use images from the default language => we make the assumption that default language contains image files
+                if (languages[language]["phone"] == undefined) {
+                    language = defaultLanguage;
+                }
                 //clear the old existing content in the elements
                 var ol = document.getElementsByClassName("carousel-indicators")[0];
                 while (ol.lastChild) {
@@ -187,13 +149,13 @@
                 }
 
                 //insert new content in the elements
-                while (count != total) {
-                    var aPath = imgPath + count.toString() + ".png";
+                for (i=0;i<languages[language]["phone"].length;i++) {
+                    var aPath = languages[language]["phone"][i];
                     //insert code that used for image slider
                     var liElement = document.createElement("li");
                     liElement.setAttribute("data-target", "#myCarousel");
-                    liElement.setAttribute("data-slide-to", count.toString());
-                    if (count == 0) {
+                    liElement.setAttribute("data-slide-to", i.toString());
+                    if (i == 0) {
                         liElement.setAttribute("class", "active");
                     }
                     ol.appendChild(liElement);
@@ -203,7 +165,7 @@
                     imgElement.height = "480";
                     imgElement.width = "270";
                     var divElement = document.createElement("div");
-                    if (count == 0) {
+                    if (i == 0) {
                         divElement.setAttribute("class", "item active");
                     } else {
                         divElement.setAttribute("class", "item");
@@ -211,54 +173,110 @@
                     divElement.appendChild(imgElement);
                     div.appendChild(divElement);
                     //replace the first three image for the initial image display => we make the assumption that we have at least 3 image for screenshot
-                    if (count <= 2) {
-                        var theId = "display" + count.toString();
+                    if (i <= 2) {
+                        var theId = "display" + i.toString();
                         var displayElement = document.getElementById(theId);
                         displayElement.src = aPath;
                     }
-                    //go to the next image
-                    count += 1;
                 }
 
             }
 
-            //load all available language and insert them in a dropdown menu
-            function readLanguage() {
-                var lanFile = new XMLHttpRequest();
-                lanFile.open("GET","./name.txt",false);
-                lanFile.onreadystatechange = function () {
-                    if (lanFile.readyState === 4) {
-                        if (lanFile.status === 200 || lanFile.status == 0) {
-                            var selectElement = document.getElementById("language");
-                            var a = lanFile.responseText.split("\n");
-                            for (i=0;i<a.length;i++) {
-                                var optElement = document.createElement("option");
-                                optElement.setAttribute("value",a[i]);
-                                optElement.innerHTML = a[i];
-                                selectElement.appendChild(optElement);
-                                //store the default as a globle variable used for default image path
-                                if(a[i].includes("default")) {
-                                    defaultName = a[i];
-                                    optElement.setAttribute("selected", "selected");
+//            request manifest from the server. then parses and stores data into js object called languages
+//            data structure:
+//            {default: "languageA",
+//            languageA: {title: path
+//                        full-description: path
+//                        short-description: path
+//                        whats-new: path
+//                        icon: path
+//                        feature: path
+//                        phone: [path, path, path]
+//                        (tablet etc. this is not implemented yet)
+//                        },
+//            languageB: {}
+//            }
+//            pros:
+//              1. file name for screen shot is not required. as long as they are in the screen shot directory
+//            limitations:
+//              1. icon has to contain the key word "icon"
+//              2. feature graphic has to contain the key word "feature"
+            function readJson() {
+                var jsonFile = new XMLHttpRequest();
+                jsonFile.open("GET","./manifest.json",false);
+                jsonFile.onreadystatechange = function () {
+                    if (jsonFile.readyState === 4) {
+                        if (jsonFile.status === 200) {
+                            var response = JSON.parse(jsonFile.response);
+                            var files = response["files"];
+                            languages["default"] = response["default-language"];
+                            for (i=0;i<files.length;i++) {
+                                var aFile = files[i].split('/');
+                                if (!Object.keys(languages).includes(aFile[0])) {
+                                    languages[aFile[0]] = {};
+                                }
+                                switch (aFile.length) {
+                                    case 2:
+                                        if (files[i].includes("title")) {
+                                            languages[aFile[0]]["title"] = files[i]
+                                        } else if (files[i].includes("full")) {
+                                            languages[aFile[0]]["full-description"] = files[i]
+                                        } else if (files[i].includes("short")) {
+                                            languages[aFile[0]]["short-description"] = files[i]
+                                        } else if (files[i].includes("new")) {
+                                            languages[aFile[0]]["whats-new"] = files[i]
+                                        }
+                                        break;
+                                    case 3:
+                                        if (files[i].includes("icon")) {
+                                            languages[aFile[0]]["icon"] = files[i];
+                                        } else if (files[i].includes("feature")) {
+                                            languages[aFile[0]]["feature"] = files[i];
+                                        }
+                                        break;
+                                    case 4:
+                                        if (aFile[2].includes("phone")) {
+                                            if (!Object.keys(languages[aFile[0]]).includes("phone")) {
+                                                languages[aFile[0]]["phone"] = [];
+                                            }
+                                            languages[aFile[0]]["phone"].push(files[i]);
+                                            languages[aFile[0]]["phone"].sort();
+                                        } else {
+                                            alert("no implementation has been made");
+                                        }
                                 }
                             }
                         }
                     }
                 }
-                lanFile.send();
+                jsonFile.send();
             }
 
-            //reload the page with content from the selected language
-            //defaultTF varifies whether to load image from the default language
-            //display the initial displayer
-            //hide the slider
-            function reloadAll(folderName,defaultTF) {
+//          add all available languages to the dropdown menu
+            function loadLanguageSelection() {
+                var selectElement = document.getElementById("language");
+                var lans = Object.keys(languages);
+                for (i=0;i<lans.length;i++) {
+                    if (lans[i] != "default") {
+                        var optElement = document.createElement("option");
+                        optElement.setAttribute("value", lans[i]);
+                        optElement.innerHTML = lans[i];
+                        selectElement.appendChild(optElement);
+                    }
+                }
+            }
+
+//            reload the page with content from the selected language
+//            defaultTF varifies whether to load image from the default language
+//            display the initial displayer
+//            hide the slider
+            function reloadAll(language,defaultTF) {
                 if (defaultTF == false) {
-                    readImg(folderName);
-                    readContent(folderName);
+                    readImg(language);
+                    readContent(language);
                 } else {
-                    readImg(defaultName);
-                    readContent(defaultName);
+                    readImg(languages["default"]);
+                    readContent(languages["default"]);
                 }
                 document.getElementById("slider").style = "display: none;";
                 document.getElementById("display").style = "";
@@ -282,11 +300,12 @@
         </script>
     </head>
 
-    <body onload="readLanguage();reloadAll('default',true)">
+    <body onload="readJson();loadLanguageSelection();reloadAll('default',true)">
         <div class="row" align="center">
             <select id="language" onchange="reloadAll(this.value,false)">
             </select>
         </div>
+
         <div class="row"><br></div>
         <div class="container">
             <div class="row">
@@ -351,9 +370,5 @@
                 <p id="whatIsNew">what's new <br>(select a language from top of the page)</p>
             </div>
         </div>
-
     </body>
-
-
-
 </html>

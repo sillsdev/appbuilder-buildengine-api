@@ -63,16 +63,21 @@ class S3Test extends UnitTestBase
         $jenkinsBuild = new MockJenkinsBuild($jenkinsJob, 1, false);
         $jenkinsUtils = new JenkinsUtils();
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
-        $s3->saveBuildToS3($build, $artifactUrls, $artifactRelativePaths);
-        $this->assertEquals(14, count($client->puts), " *** Wrong number of puts to S3");
+        $extraContent = [ "play-listing/index.html"  => "<html></html>", "play-listing/manifest.json" => "{}" ];
+        $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
+        $this->assertEquals(15, count($client->puts), " *** Wrong number of puts to S3");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Kuna_Gospels-1.0.apk";
         $this->assertEquals($expected, $build->apk(), " *** Public URL for APK doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/about.txt";
         $this->assertEquals($expected, $build->about(), " *** Public URL for About doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/play-listing/index.html";
         $this->assertEquals($expected, $build->playListing(), " *** Public URL for Play Listing doesn't match");
-        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1|about.txt,Kuna_Gospels-1.0.apk,version_code.txt,play-listing/index.html";
-        $this->assertEquals($expected, $build->artifact_url, " *** Artifact URL doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/";
+        $this->assertEquals($expected, $build->artifact_url_base, " *** Artifact URL Base doesn't match");
+        $expected = "about.txt,Kuna_Gospels-1.0.apk,version_code.txt,play-listing/index.html";
+        $this->assertEquals($expected, $build->artifact_files, "*** Artifact files doesn't match");
+        codecept_debug("artifact_url_base=" . $build->artifact_url_base);
+        codecept_debug("artiface_files=" . $build->artifact_files);
         $artifactPut = $client->puts[0];
         $expected = "sil-appbuilder-artifacts";
         $this->assertEquals($expected, $artifactPut['Bucket'], " *** Bad bucket data");
@@ -121,6 +126,10 @@ class S3Test extends UnitTestBase
         $output->writeln('');
         $output->writeln("Starting Test");
 
+        or
+
+        codecept_debug("Starting Test");
+        and run with "docker-compose run --rm codecept --debug run unit"
         }
 */
     }
