@@ -100,17 +100,17 @@ Whenever you use see APP_ENV in the directions, please substitute with your chos
 be limited to alphanumeric characters, '.', '_', and '-' (CodeCommit limit).
 
 * On Windows, you will need to install [Git for Windows](https://git-scm.com/download/win) and execute commands from a Git Bash shell.
-* [Clone Source Repositories](#markdown-header-clone-source-repositories) for  ```appbuilder-buildengine-api``` and ```docker-appbuilder-jenkins```
-* [Create BuildEngine SSH Key](#markdown-header-create-buildengine-ssh-key) to be used to authenticate git access to jenkins config data
-* [Associate BuildEngine SSH Key](#markdown-header-associate-buildengine-ssh-key) to a user in IAM
-* [Create AppBuilder SSH Key](#markdown-header-create-appbuilder-ssh-key) to be used to authenticate git access to projects
-* [Associate AppBuilder SSH Key](#markdown-header-associate-buildengine-ssh-key) to a user in IAM
-* [Create BuildEngine CodeCommit Repository](#markdown-header-create-buildengine-codecommit-repository)
-* [Create S3 Folders](#markdown-header-create-s3-folders) to store credentials
-* [Give permissions to IAM user for CodeCommit and S3 Access](#markdown-header-give-permissions)
-* [AppBuilder Configuration](#markdown-header-appbuilder-configuration)
+* [Clone Source Repositories](#clone-source-repositories) for  ```appbuilder-buildengine-api``` and ```docker-appbuilder-jenkins```
+* [Create BuildEngine SSH Key](#create-buildengine-ssh-key) to be used to authenticate git access to jenkins config data
+* [Associate BuildEngine SSH Key](#associate-buildengine-ssh-key) to a user in IAM
+* [Create AppBuilder SSH Key](#create-appbuilder-ssh-key) to be used to authenticate git access to projects
+* [Associate AppBuilder SSH Key](#associate-buildengine-ssh-key) to a user in IAM
+* [Create BuildEngine CodeCommit Repository](#create-buildengine-codecommit-repository)
+* [Create S3 Folders](#create-s3-folders) to store credentials
+* [Give permissions to IAM user for CodeCommit and S3 Access](#give-permissions)
+* [AppBuilder Configuration](#appbuilder-configuration)
 * [Deploy containers](#deploy-containers) for AppBuilder
-* [Build Engine Configuration](#markdown-header-build-engine-configuration)
+* [Build Engine Configuration](#build-engine-configuration)
 * [Deploy containers](#deploy-containers) for BuildEngine
 
 #### Clone Source Repositories ####
@@ -140,7 +140,7 @@ Host github.com
 	IdentityFile ~/.ssh/github/id_rsa
 ```
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Create BuildEngine SSH Key ####
 BuildEngine uses git to synchronize the git Repository with ssh keys for authentication.
@@ -156,7 +156,7 @@ openssl rsa -in ~/.ssh/buildengine_api/id_rsa -pubout > ~/.ssh/buildengine_api/i
 
 This will also save the public key to ~/.ssh/buildengine_api/id_rsa.pub
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Associate BuildEngine SSH Key ###
 BuildEngine uses SSH authentication to access the Git repository which store Jenkins job configuration.
@@ -171,7 +171,7 @@ You need to associate the SSH Public Key with a user in IAM.
 6. Click on the "Upload SSH public Key" button
 7. You should see a new entry under "SSH keys for AWS CodeCommit". Save the value of "SSH Key ID" for the new uploaded key to ~/.ssh/buildengine_api/ssh_key_id.txt
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Create AppBuilder SSH Key ####
 BuildEngine uses git to synchronize the git Repository with ssh keys for authentication.
@@ -187,7 +187,7 @@ openssl rsa -in ~/.ssh/appbuilder/id_rsa -pubout > ~/.ssh/appbuilder/id_rsa_pub.
 
 This will also save the public key to ~/.ssh/appbuilder/id_rsa.pub
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Associate AppBuilder SSH Key ###
 AppBuilder uses SSH authentication to access the CodeCommit Repo for projects.  You need to associate the SSH Public Key
@@ -202,7 +202,7 @@ with a user in IAM.
 6. Click on the "Upload SSH public Key" button
 7. You should see a new entry under "SSH keys for AWS CodeCommit". Save the value of "SSH Key ID" for the new uploaded key to ~/.ssh/appbuilder/ssh_key_id.txt
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Create BuildEngine CodeCommit Repository ####
 We use a Git repository to store Jenkins Job DSL configuration.  BuildEngine takes information from the Database and generates
@@ -217,7 +217,7 @@ To use a CodeCommit Repository for BuildEngine:
 
 The format of the URL should be ssh://git-commit.us-east-1.amazonaws.com/v1/repos/REPO where REPO is the repository name you entered.
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Create S3 Folders ####
 BuildEngine and AppBuilder use [s3-expand](https://github.com/silinternational/s3-expand) to extract credentials needed to
@@ -280,7 +280,7 @@ sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
 * Upload playstore_api_issuer.txt and playstore_api_key.p12 to ```sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa```
 
  
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Give Permissions ####
 There are 3 different users involved in accessing S3 resources
@@ -435,7 +435,7 @@ Attach the following policies to the "App Builder" user:
 * s3-appbuilder-artifacts-APP_ENV
 * codecommit-projects-APP_ENV
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Jenkins Configuration ####
 In the directory where you cloned ```docker-appbuilder-jenkins```, do the following:
@@ -453,7 +453,7 @@ In the directory where you cloned ```docker-appbuilder-jenkins```, do the follow
 
 in ```docker-appbuilder-jenkins``` will match ```APPBUILDER_JENKINS_URL``` in ```appbuilder-buildengine-api```
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 #### Build Engine Configuration ####
 In the directory where you cloned ```appbuilder-buildengine-api```, do the following:
@@ -470,7 +470,7 @@ In the directory where you cloned ```appbuilder-buildengine-api```, do the follo
     + This will be used during testing for HTTP Bearer Token Authentication.
     + See [RFC6750](https://tools.ietf.org/html/rfc6750) for more details.
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 ### Deploy Containers ###
 
@@ -509,15 +509,15 @@ docker-compose up -d
 docker-machine ip default # to know what the IP Address to use for docker host
 ```
 
-[Back](#markdown-header-development-setup-instructions)
+[Back](#development-setup-instructions)
 
 # Testing API #
 Doorman interacts with BuildEngine using a RESTful Web Interface.  This can be simlated with a Google Chrome Extension called Advanded REST Client.
 
 * Install [Advanced REST Client](https://chrome.google.com/webstore/detail/advanced-rest-client/hgmloofddffdnphfgcellkdfbfbjeloo?utm_source=chrome-app-launcher-info-dialog) to test Web Service
-* [Give User Write Permissions to CodeCommit](#markdown-header-give-user-write-permissions-to-codecommit)
-* [Create AppBuilder CodeCommit Repository](#markdown-header-create-appbuilder-codecommit-repository)
-* [Commit Project](#markdown-header-commit-project) to AppBuilder CodeCommit repository
+* [Give User Write Permissions to CodeCommit](#give-user-write-permissions-to-codecommit)
+* [Create AppBuilder CodeCommit Repository](#create-appbuilder-codecommit-repository)
+* [Commit Project](#commit-project) to AppBuilder CodeCommit repository
 * [Add Job to BuildEngine]
 TODO:
 * Get job
@@ -558,7 +558,7 @@ automates the creation of the repository and setting the security.  We need to s
     + git add .
     + git commit -m "Initial Revision"
     + git remote add origin URL
-        * URL is the "Clone URL" from [Create AppBuilder CodeCommit Repository](#markdown-header-create-appbuilder-codecommit-repository)
+        * URL is the "Clone URL" from [Create AppBuilder CodeCommit Repository](#create-appbuilder-codecommit-repository)
     + git push origin master
 
 #### Add Job to BuildEngine ####
