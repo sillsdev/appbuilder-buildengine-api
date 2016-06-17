@@ -108,7 +108,7 @@ be limited to alphanumeric characters, '.', '_', and '-' (CodeCommit limit).
 * [Create BuildEngine CodeCommit Repository](#create-buildengine-codecommit-repository)
 * [Create S3 Folders](#create-s3-folders) to store credentials
 * [Give permissions to IAM user for CodeCommit and S3 Access](#give-permissions)
-* [AppBuilder Configuration](#appbuilder-configuration)
+* [Jenkins Configuration](#jenkins-configuration)
 * [Deploy containers](#deploy-containers) for AppBuilder
 * [Build Engine Configuration](#build-engine-configuration)
 * [Deploy containers](#deploy-containers) for BuildEngine
