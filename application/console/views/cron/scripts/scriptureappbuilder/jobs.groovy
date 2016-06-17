@@ -100,12 +100,13 @@ killall Xvfb
 
     static publishJobScript = '''
 rm -rf *
+wget -r -i "${ARTIFACT_URL}play-listing.html"
+PLAY_LISTING_DIR=$(find -name play-listing -print)
+cd $PLAY_LISTING_DIR
+cd ..
 wget "$APK_URL"
-wget "$ARTIFACT_URL/package_name.txt"
-wget "$ARTIFACT_URL/publish.tar.gz"
-wget "$ARTIFACT_URL/version_code.txt"
-
-tar xvf "$WORKSPACE/publish.tar.gz"
+wget "${ARTIFACT_URL}package_name.txt"
+wget "${ARTIFACT_URL}version_code.txt"
 
 set +x
 supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
@@ -121,6 +122,7 @@ supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-list
                 choiceParam('CHANNEL', ['production', 'alpha', 'beta'])
                 stringParam('ARTIFACT_URL', '', '' )
                 stringParam('APK_URL', '', '' )
+                stringParam('PUBLIC_URL', '', '')
             }
             steps {
                 shell(publishJobScript)

@@ -83,7 +83,8 @@ class S3 {
                     'Bucket' => $fileS3Bucket,
                     'Key' => $fileS3Key,
                     'Body' => $file,
-                    'ACL' => 'public-read'
+                    'ACL' => 'public-read',
+                    'ContentType' => $this->getFileType($url)
                 ]);
 
                 $build->handleArtifact($fileS3Key, $file);
@@ -98,12 +99,34 @@ class S3 {
                     'Bucket' => $fileS3Bucket,
                     'Key' => $fileS3Key,
                     'Body' => $content,
-                    'ACL' => 'public-read'
+                    'ACL' => 'public-read',
+                    'ContentType' => $this->getFileType($filename)
                 ]);
-
                 $build->handleArtifact($fileS3Key, $content);
             }
         }
+    }
+    private function getFileType($fileName) {
+        $info = pathinfo($fileName);
+        switch ($info['extension']) {
+            case "html":
+                $contentType = "text/html";
+                break;
+            case "png":
+                $contentType = "image/png";
+                 break;
+            case "jpg":
+            case "jpeg":
+               $contentType = "image/jpeg";
+                break;
+            case "txt":
+                $contentType = "text/plain";
+                break;
+            default:
+                $contentType = "application/octet-stream";
+                break;
+        }
+        return $contentType;
     }
 
     /**
@@ -168,6 +191,7 @@ class S3 {
         $logInfo = ["Checking for S3 files to delete"];
         // Strip s3:// off of the url base to get the bucket
         $urlBase = \Yii::$app->params['buildEngineArtifactUrlBase'];
+        echo "URLBase $urlBase".PHP_EOL;
         $startPos = strpos($urlBase, '//') + 2;
         $bucket = substr($urlBase, $startPos, strlen($urlBase) - $startPos);
 
@@ -191,6 +215,7 @@ class S3 {
 
     private function getS3JobArray($bucket, $prefix)
     {
+        echo "Bucket: $bucket Prefix: $prefix".PHP_EOL;
         $prefixLength = strlen($prefix);
         $results = $this->s3Client->getPaginator('ListObjects', [
             'Bucket' => $bucket,

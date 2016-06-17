@@ -5,12 +5,18 @@ use Codeception\Util\Debug;
 
 class MockS3Client
 {
-    public $puts = [];
-    public $deletes = [];
-    public $deletedBucket;
-    public $deletedKey;
+    public static $puts = [];
+    public static $deletes = [];
+    public static $deletedBucket;
+    public static $deletedKey;
     public function putObject($parms) {
-        $this->puts[] = $parms;
+        self::$puts[] = $parms;
+    }
+    public static function clearGlobals() {
+        self::$puts = [];
+        self::$deletes = [];
+        self::$deletedBucket = null;
+        self::$deletedKey = null;
     }
     public function getObjectUrl($s3bucket, $s3key)
     {
@@ -22,7 +28,7 @@ class MockS3Client
     {
         $delete['bucket'] = $s3bucket;
         $delete['key'] = $s3key;
-        $this->deletes[] = $delete;
+        self::$deletes[] = $delete;
     }
     public function getPaginator($command, $parms)
     {
