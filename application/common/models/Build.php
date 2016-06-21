@@ -26,6 +26,12 @@ class Build extends BuildBase implements Linkable
     const CHANNEL_BETA = 'beta';
     const CHANNEL_PRODUCTION = 'production';
 
+    const ARTIFACT_UNKNOWN = "unknown";
+    const ARTIFACT_APK = "apk";
+    const ARTIFACT_VERSION_CODE = "version_code";
+    const ARTIFACT_ABOUT = "about";
+    const ARTIFACT_PLAY_LISTING = "play-listing";
+
         /**
      * Array of valid status transitions. The key is the starting
      * status and the values are valid options to be changed to.
@@ -93,7 +99,7 @@ class Build extends BuildBase implements Linkable
                 'message' => \Yii::t('app', 'Invalid Job ID'),
             ],
             [
-                'artifact_url', 'url', 
+                'artifact_url_base', 'url',
                 'pattern' => '/^https:\/\/s3-/',
                 'message' => \Yii::t('app', 'Artifact Url must be an https S3 Url.')
             ],            
@@ -126,21 +132,13 @@ class Build extends BuildBase implements Linkable
             'result',
             'error',
             'artifact_url' => function() {
-                list ($apk) = preg_split("/,/", $this->artifact_url);
-                return $apk;
+                return $this->apk();
             },
             'artifacts' => function() {
-                $dirname = dirname($this->artifact_url);
-                $basename = basename($this->artifact_url);
-                $files = preg_split("/,/", $basename);
-                $apk = array_shift($files);
-                $artifacts = array("apk" => $dirname . "/" . $apk);
-                foreach ($files  as $file) {
-                    $info = pathinfo($file);
-                    $key = strstr($file, ".", true);
-                    $artifacts[$key] = $dirname . "/" . $file;
-                }
-                return $artifacts;
+                return [
+                    self::ARTIFACT_APK => $this->apk(),
+                    self::ARTIFACT_ABOUT => $this->about(),
+                    self::ARTIFACT_PLAY_LISTING => $this->playListing() ];
             },
             'created' => function(){
                 return Utils::getIso8601($this->created);
@@ -237,11 +235,12 @@ class Build extends BuildBase implements Linkable
     }
 
     /**
-     * Clears the artifact url for a build
+     * Clears the artifacts for a build
      */
-    public function clearArtifactUrl()
+    public function clearArtifacts()
     {
-        $this->artifact_url = null;
+        $this->artifact_url_base = null;
+        $this->artifact_files = null;
         $this->save();
     }
     /**
@@ -256,5 +255,77 @@ class Build extends BuildBase implements Linkable
             }
         }
         return parent::beforeDelete();
+    }
+
+    public function artifactType($key) {
+        $type = "unknown";
+        $path_parts = pathinfo($key);
+        $file = $path_parts['basename'];
+        if ($path_parts['extension'] === "apk") {
+            $type = self::ARTIFACT_APK;
+        } else if ($file === "version_code.txt") {
+            $type = self::ARTIFACT_VERSION_CODE;
+        } else if ($file === "about.txt") {
+            $type = self::ARTIFACT_ABOUT;
+        } else if (preg_match("/play-listing\/index\.html$/", $key)) {
+            $type = self::ARTIFACT_PLAY_LISTING;
+            $file = "play-listing/index.html";
+        }
+
+        return array($type, $file);
+    }
+
+    private function appendArtifact($file) {
+        if (empty($this->artifact_files)) {
+            $this->artifact_files = $file;
+        } else {
+            $this->artifact_files .= "," . $file;
+        }
+    }
+
+    public function beginArtifacts($baseUrl) {
+        $this->artifact_url_base = $baseUrl;
+        $this->artifact_files = null;
+    }
+
+    public function handleArtifact($fileKey, $contents) {
+        list($type, $file) = $this->artifactType($fileKey);
+        switch ($type) {
+            case self::ARTIFACT_VERSION_CODE:
+                $this->version_code = $contents;
+                break;
+
+            case self::ARTIFACT_ABOUT:
+            case self::ARTIFACT_APK:
+            case self::ARTIFACT_PLAY_LISTING:
+                break;
+
+            default:
+                // Don't include in files
+                return;
+        }
+        $this->appendArtifact($file);
+    }
+
+    private function getArtifactUrl($pattern) {
+        if (!empty($this->artifact_files)) {
+            $files = explode(",", $this->artifact_files);
+            foreach ($files as $file) {
+                if (preg_match($pattern, $file)) {
+                    return $this->artifact_url_base . $file;
+                }
+            }
+        }
+        return null;
+    }
+
+    public function apk() {
+        return $this->getArtifactUrl("/\.apk$/");
+    }
+    public function about() {
+        return $this->getArtifactUrl("/about\.txt$/");
+    }
+    public function playListing() {
+        return $this->getArtifactUrl("/play-listing\/index\.html$/");
     }
 }

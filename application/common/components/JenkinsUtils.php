@@ -27,6 +27,29 @@ class JenkinsUtils
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
     }
+
+    public function getArtifactUrls($jenkinsBuild) {
+
+        $jenkinsArtifacts = $jenkinsBuild->get("artifacts");
+        if (!$jenkinsArtifacts) { return null; }
+        $artifactUrls = array();
+        $artifactRelativePaths = array();
+        foreach ($jenkinsArtifacts as $testArtifact) {
+            $relativePath = explode("output/", $testArtifact->relativePath)[1];
+            array_push($artifactRelativePaths, $relativePath);
+            $artifactUrl = $this->getArtifactUrlFromRelativePath($jenkinsBuild, $testArtifact->relativePath);
+            array_push($artifactUrls, $artifactUrl);
+        }
+        return array($artifactUrls, $artifactRelativePaths);
+    }
+
+    public function getArtifactUrlFromRelativePath($jenkinsBuild, $relativePath) {
+        $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
+        $buildUrl = $jenkinsBuild->getBuildUrl();
+        $pieces = explode("job", $buildUrl);
+        return $baseUrl."job".$pieces[1]."artifact/".$relativePath;
+
+    }
      /**
      * Extract the Artifact Url from the Jenkins Build information.
      * @param JenkinsBuild $jenkinsBuild
@@ -122,10 +145,11 @@ class JenkinsUtils
         $log['buildStatus'] = $build->status;
         $log['buildNumber'] = $build->build_number;
         $log['buildResult'] = $build->result;
-        $log['buildArtifactUrl'] = $build->artifact_url;
+        $log['buildArtifactUrlBase'] = $build->artifact_url_base;
+        $log['buildArtifactFiles'] = $build->artifact_files;
 
         echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_number, "
-                    . "Result=$build->result, ArtifactUrl=$build->artifact_url". PHP_EOL;
+                    . "Result=$build->result, ArtifactUrlBase=$build->artifact_url_base, ArtifactFiles=$build->artifact_files". PHP_EOL;
         return $log;
     }
 

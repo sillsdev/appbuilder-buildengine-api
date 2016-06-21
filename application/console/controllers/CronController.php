@@ -88,7 +88,7 @@ class CronController extends Controller
         echo "[$prefix] actionRemoveExpiredBuilds: Started". PHP_EOL;
         foreach (Build::find()->where([
             'status' => Build::STATUS_EXPIRED])->each(50) as $build){
-            if ($build->artifact_url != null) {
+            if ($build->apk() != null) {
                 echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
                 $s3 = new S3();
                 $s3->removeS3Artifacts($build);

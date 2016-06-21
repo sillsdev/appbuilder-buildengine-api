@@ -3,9 +3,10 @@
 namespace tests\mock\common\components;
 
 use Codeception\Util\Debug;
+use common\components\JenkinsUtils;
 use tests\mock\jenkins\MockJenkins;
 
-class MockJenkinsUtils
+class MockJenkinsUtils extends JenkinsUtils
 {
     private static $returnJenkins = true;
     public static function setReturnJenkins($value)
@@ -35,6 +36,21 @@ class MockJenkinsUtils
         $buildNumber = $jenkinsBuild->getNumber();
         $artifactUrl = $baseUrl."job/".$jobName."/".$buildNumber."/artifact/output/".$artifactName;
         return $artifactUrl;    
+    }
+
+    public function getArtifactUrls($jenkinsBuild) {
+
+        $jenkinsArtifacts = $jenkinsBuild->get("artifacts");
+        if (!$jenkinsArtifacts) { return null; }
+        $artifactUrls = array();
+        $artifactRelativePaths = array();
+        foreach ($jenkinsArtifacts as $testArtifact) {
+            $relativePath = explode("output/", $testArtifact->relativePath)[1];
+            array_push($artifactRelativePaths, $relativePath);
+            $artifactUrl = $this->getArtifactUrlFromRelativePath($jenkinsBuild, $testArtifact->relativePath);
+            array_push($artifactUrls, $artifactUrl);
+        }
+        return array($artifactUrls, $artifactRelativePaths);
     }
 
     public function getApkArtifactUrl($jenkinsBuild)

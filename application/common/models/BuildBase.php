@@ -13,11 +13,12 @@ use Yii;
  * @property integer $build_number
  * @property string $result
  * @property string $error
- * @property string $artifact_url
  * @property string $created
  * @property string $updated
  * @property string $channel
  * @property integer $version_code
+ * @property string $artifact_url_base
+ * @property string $artifact_files
  *
  * @property Job $job
  * @property Release[] $releases
@@ -41,8 +42,8 @@ class BuildBase extends \yii\db\ActiveRecord
             [['job_id'], 'required'],
             [['job_id', 'build_number', 'version_code'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel'], 'string', 'max' => 255],
-            [['error', 'artifact_url'], 'string', 'max' => 2083]
+            [['status', 'result', 'channel', 'artifact_files'], 'string', 'max' => 255],
+            [['error', 'artifact_url_base'], 'string', 'max' => 2083]
         ];
     }
 
@@ -58,11 +59,12 @@ class BuildBase extends \yii\db\ActiveRecord
             'build_number' => Yii::t('app', 'Build Number'),
             'result' => Yii::t('app', 'Result'),
             'error' => Yii::t('app', 'Error'),
-            'artifact_url' => Yii::t('app', 'Artifact Url'),
             'created' => Yii::t('app', 'Created'),
             'updated' => Yii::t('app', 'Updated'),
             'channel' => Yii::t('app', 'Channel'),
             'version_code' => Yii::t('app', 'Version Code'),
+            'artifact_url_base' => Yii::t('app', 'Artifact Url Base'),
+            'artifact_files' => Yii::t('app', 'Artifact Files'),
         ];
     }
 

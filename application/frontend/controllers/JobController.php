@@ -91,7 +91,7 @@ class JobController extends ActiveController
         if (!$build){
             throw new NotFoundHttpException("Job $id Build $build_id not found");
         }
-        $artifactUrl = $build->artifact_url;
+        $artifactUrl = $build->apk();
         if (is_null($artifactUrl) || ($artifactUrl=="")) {
             throw new ServerErrorHttpException("Artifact URL empty for Job $id Build $build_id");
         }

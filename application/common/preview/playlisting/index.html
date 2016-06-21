@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <style>
+            body {
+                background-color: lightgrey;
+                font-family: 'Roboto',UILanguageFont,Arial,sans-serif;
+            }
+
+            .container {
+                border-radius: 5px;
+                background-color: white;
+                width: 750px;
+            }
+
+            #icon {
+                height: 180px;
+                width: 180px;
+                margin-top: 15px;
+            }
+
+            #buttons > .btn-default {
+                color:#4cae4c;
+                margin-right: 15px;
+                border-style:hidden
+            }
+            #buttons > .btn-success {
+                margin-right: 15px;
+            }
+
+            #imageHolder {
+                height: 300px;
+                margin: 40px;
+                margin-bottom: 0px;
+            }
+            #imageHolder > img {
+                height: 300px;
+                width: 180px;
+                margin: auto;
+            }
+
+            #slider {
+                display: none;
+            }
+            #slider > .row {
+                margin: 40px;
+                margin-bottom: 0px;
+            }
+            #slider > .row > button {
+                border-style: hidden;
+                background-color: lightgray;
+                float: right;
+            }
+
+            #myCarousel {
+                height: 480px;
+                margin:40px;
+                margin-top: 0px;
+            }
+            .carousel-inner > div > img {
+                height: 480px;
+                width: 270px;
+                margin: auto;
+            }
+
+            #descriptionDiv, #whatIsNewDiv {
+                margin: 40px;
+            }
+        </style>
+        <title>Play Store Overview</title>
+
+        <script type="text/javascript">
+            var languages = {};
+
+            //read and replace title, full description, and what's new with the selected language
+            function readContent(language) {
+                var titleFile = new XMLHttpRequest();
+                var titlePath = languages[language]["title"];
+                titleFile.open("GET", titlePath, true);
+                titleFile.onreadystatechange = function () {
+                    if(titleFile.readyState === 4) {
+                        if(titleFile.status === 200 || titleFile.status == 0) {
+                            var titleText = titleFile.responseText;
+                            var titleElement = document.getElementById('titleField');
+                            titleElement.innerHTML = titleText;
+                        }
+                    }
+                }
+                titleFile.send();
+
+                var fullFile = new XMLHttpRequest();
+                var fullPath = languages[language]["full-description"];
+                fullFile.open("GET", fullPath, true);
+                fullFile.onreadystatechange = function () {
+                    if(fullFile.readyState === 4) {
+                        if(fullFile.status === 200 || fullFile.status == 0) {
+                            var fullText = fullFile.responseText;
+                            fullText = fullText.replace(/\n/g,"<br>")
+                            var fullElement = document.getElementById('fullDescription');
+                            fullElement.innerHTML = fullText;
+                        }
+                    }
+                }
+                fullFile.send();
+
+                var newFile = new XMLHttpRequest();
+                var newPath = languages[language]["whats-new"];
+                newFile.open("GET", newPath, true);
+                newFile.onreadystatechange = function () {
+                    if(newFile.readyState === 4) {
+                        if(newFile.status === 200 || newFile.status == 0) {
+                            var newText = "<h4 style='border-top:solid'><br><strong>What's New</strong></h4> " + newFile.responseText;
+                            newText = newText.replace(/\n/g,"<br>");
+                            var newElement = document.getElementById('whatIsNew');
+                            newElement.innerHTML = newText;
+                        }
+                    }
+                }
+                newFile.send();
+            }
+
+            //read and insert images to the correspond element
+			function readImg(language) {
+                var defaultLanguage = languages["default"];
+
+                var iconElement = document.getElementById("icon");
+                if (languages[language]["icon"] == undefined) {
+                    iconElement.src = languages[defaultLanguage]["icon"];
+                } else {
+                    iconElement.src = languages[language]["icon"];
+                }
+
+                //if no image for the current language, use images from the default language => we make the assumption that default language contains image files
+                if (languages[language]["phone"] == undefined) {
+                    language = defaultLanguage;
+                }
+                //clear the old existing content in the elements
+                var ol = document.getElementsByClassName("carousel-indicators")[0];
+                while (ol.lastChild) {
+                    ol.removeChild(ol.lastChild);
+                }
+                var div = document.getElementsByClassName("carousel-inner")[0];
+                while (div.lastChild) {
+                    div.removeChild(div.lastChild);
+                }
+
+                //insert new content in the elements
+                for (i=0;i<languages[language]["phone"].length;i++) {
+                    var aPath = languages[language]["phone"][i];
+                    //insert code that used for image slider
+                    var liElement = document.createElement("li");
+                    liElement.setAttribute("data-target", "#myCarousel");
+                    liElement.setAttribute("data-slide-to", i.toString());
+                    if (i == 0) {
+                        liElement.setAttribute("class", "active");
+                    }
+                    ol.appendChild(liElement);
+                    //insert actual image for the slider
+                    var imgElement = document.createElement("img");
+                    imgElement.setAttribute("src", aPath);
+                    imgElement.height = "480";
+                    imgElement.width = "270";
+                    var divElement = document.createElement("div");
+                    if (i == 0) {
+                        divElement.setAttribute("class", "item active");
+                    } else {
+                        divElement.setAttribute("class", "item");
+                    }
+                    divElement.appendChild(imgElement);
+                    div.appendChild(divElement);
+                    //replace the first three image for the initial image display => we make the assumption that we have at least 3 image for screenshot
+                    if (i <= 2) {
+                        var theId = "display" + i.toString();
+                        var displayElement = document.getElementById(theId);
+                        displayElement.src = aPath;
+                    }
+                }
+
+            }
+
+//            request manifest from the server. then parses and stores data into js object called languages
+//            data structure:
+//            {default: "languageA",
+//            languageA: {title: path
+//                        full-description: path
+//                        short-description: path
+//                        whats-new: path
+//                        icon: path
+//                        feature: path
+//                        phone: [path, path, path]
+//                        (tablet etc. this is not implemented yet)
+//                        },
+//            languageB: {}
+//            }
+//            pros:
+//              1. file name for screen shot is not required. as long as they are in the screen shot directory
+//            limitations:
+//              1. icon has to contain the key word "icon"
+//              2. feature graphic has to contain the key word "feature"
+            function readJson() {
+                var jsonFile = new XMLHttpRequest();
+                jsonFile.open("GET","./manifest.json",false);
+                jsonFile.onreadystatechange = function () {
+                    if (jsonFile.readyState === 4) {
+                        if (jsonFile.status === 200) {
+                            var response = JSON.parse(jsonFile.response);
+                            var files = response["files"];
+                            languages["default"] = response["default-language"];
+                            for (i=0;i<files.length;i++) {
+                                var aFile = files[i].split('/');
+                                if (!Object.keys(languages).includes(aFile[0])) {
+                                    languages[aFile[0]] = {};
+                                }
+                                switch (aFile.length) {
+                                    case 2:
+                                        if (files[i].includes("title")) {
+                                            languages[aFile[0]]["title"] = files[i]
+                                        } else if (files[i].includes("full")) {
+                                            languages[aFile[0]]["full-description"] = files[i]
+                                        } else if (files[i].includes("short")) {
+                                            languages[aFile[0]]["short-description"] = files[i]
+                                        } else if (files[i].includes("new")) {
+                                            languages[aFile[0]]["whats-new"] = files[i]
+                                        }
+                                        break;
+                                    case 3:
+                                        if (files[i].includes("icon")) {
+                                            languages[aFile[0]]["icon"] = files[i];
+                                        } else if (files[i].includes("feature")) {
+                                            languages[aFile[0]]["feature"] = files[i];
+                                        }
+                                        break;
+                                    case 4:
+                                        if (aFile[2].includes("phone")) {
+                                            if (!Object.keys(languages[aFile[0]]).includes("phone")) {
+                                                languages[aFile[0]]["phone"] = [];
+                                            }
+                                            languages[aFile[0]]["phone"].push(files[i]);
+                                            languages[aFile[0]]["phone"].sort();
+                                        } else {
+                                            alert("no implementation has been made");
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+                jsonFile.send();
+            }
+
+//          add all available languages to the dropdown menu
+            function loadLanguageSelection() {
+                var selectElement = document.getElementById("language");
+                var lans = Object.keys(languages);
+                for (i=0;i<lans.length;i++) {
+                    if (lans[i] != "default") {
+                        var optElement = document.createElement("option");
+                        optElement.setAttribute("value", lans[i]);
+                        optElement.innerHTML = lans[i];
+                        selectElement.appendChild(optElement);
+                    }
+                }
+            }
+
+//            reload the page with content from the selected language
+//            defaultTF varifies whether to load image from the default language
+//            display the initial displayer
+//            hide the slider
+            function reloadAll(language,defaultTF) {
+                if (defaultTF == false) {
+                    readImg(language);
+                    readContent(language);
+                } else {
+                    readImg(languages["default"]);
+                    readContent(languages["default"]);
+                }
+                document.getElementById("slider").style = "display: none;";
+                document.getElementById("display").style = "";
+            }
+
+            //display the slider with the selected image to start with
+            //hide the initial display
+            function showSlider(id) {
+                document.getElementsByClassName("item active")[0].className = "item";
+                document.getElementsByClassName("item")[parseInt(id.charAt(7))].className = "item active";
+                document.getElementById("slider").style = "display: inline;";
+                document.getElementById("display").style = "display: none;";
+            }
+
+            //hide the slider
+            //display the initial displayer
+            function hideSlider() {
+                document.getElementById("slider").style = "display: none;";
+                document.getElementById("display").style = "display: inline;";
+            }
+        </script>
+    </head>
+
+    <body onload="readJson();loadLanguageSelection();reloadAll('default',true)">
+        <div class="row" align="center">
+            <select id="language" onchange="reloadAll(this.value,false)">
+            </select>
+        </div>
+
+        <div class="row"><br></div>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-4 col-md-4">
+                    <img id="icon" src="https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/images/icon-not-available.png">
+                </div>
+                <div class="col-xs-8 col-md-8">
+                    <div class="row">
+                        <h1 id="titleField">App Name</h1>
+                        <br>
+                        <br>
+                        <br>
+                    </div>
+                    <div class="row" id="buttons" align="right">
+                        <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-bookmark"></span> Add to Wishlist</button>
+                        <button type="button" class="btn btn-success">INSTALL</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" id="display">
+                <div id="imageHolder">
+                    <button onclick="showSlider('display0')"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>
+                    <img id="display0" src="https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/images/screen-not-available.png" onclick="showSlider(this.id)">
+                    <img id="display1" src="https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/images/screen-not-available.png" onclick="showSlider(this.id)">
+                    <img id="display2" src="https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/images/screen-not-available.png" onclick="showSlider(this.id)">
+                    <button onclick="showSlider('display0')"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>
+                </div>
+            </div>
+            <div id="slider" class="row">
+                <div class="row">
+                    <button onclick="hideSlider()"><span class="glyphicon glyphicon-resize-small" aria-hidden="true" style="font-size: 2em;"></span></button>
+                </div>
+                <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                    <!-- Indicators -->
+                    <ol class="carousel-indicators">
+                        <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+                    </ol>
+                    <!-- Wrapper for slides -->
+                    <div class="carousel-inner" role="listbox">
+                        <div class="item active">
+                            <img src="https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/images/screen-not-available.png">
+                        </div>
+                    </div>
+                    <!-- Left and right controls -->
+                    <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+                        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+                        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="row" id="descriptionDiv">
+                <p id="fullDescription">some description <br>(select a language from top of the page)</p>
+            </div>
+
+            <div class="row" id="whatIsNewDiv">
+                <p id="whatIsNew">what's new <br>(select a language from top of the page)</p>
+            </div>
+        </div>
+    </body>
+</html>
