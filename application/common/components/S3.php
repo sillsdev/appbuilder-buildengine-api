@@ -50,7 +50,8 @@ class S3 {
             'Bucket' => $s3bucket,
             'Key' => $s3key,
             'Body' => $consoleOutput,
-            'ACL' => 'public-read'
+            'ACL' => 'public-read',
+            'ContentType' => "text/plain"
         ]);
 
         $publicUrl = $this->s3Client->getObjectUrl($s3bucket, $s3key);
