@@ -131,9 +131,6 @@ class Build extends BuildBase implements Linkable
             'status',
             'result',
             'error',
-            'artifact_url' => function() {
-                return $this->apk();
-            },
             'artifacts' => function() {
                 return [
                     self::ARTIFACT_APK => $this->apk(),
