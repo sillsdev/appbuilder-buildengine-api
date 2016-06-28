@@ -18,7 +18,3 @@ web:
         MYSQL_USER: appbuilder
         MYSQL_PASSWORD: appbuilder
     working_dir: /data
-
-#ecsdeploy:
-#    image: silintl/ecs-deploy:latest
-#    encrypted_env_file: aws.env.encrypted

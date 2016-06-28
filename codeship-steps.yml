@@ -2,16 +2,20 @@
   service: web
   command: /data/run-tests.sh
 
-- name: push_master
+- name: push_develop
   service: web
   type: push
   image_name: silintl/appbuilder-buildengine-api
-  image_tag: latest
-  tag: master
+  image_tag: staging
+  tag: develop
   registry: https://index.docker.io/v1/
   encrypted_dockercfg_path: dockercfg.encrypted
 
-#- name: deploy_staging
-#  service: ecsdeploy
-#  tag: master
-#  command: "-c default -n appbuilder-buildengine-api -i docker.sil.org/appbuilder-buildengine-api:latest -t 360"
+- name: push_production
+  service: web
+  type: push
+  image_name: silintl/appbuilder-buildengine-api
+  image_tag: production
+  tag: master
+  registry: https://index.docker.io/v1/
+  encrypted_dockercfg_path: dockercfg.encrypted
