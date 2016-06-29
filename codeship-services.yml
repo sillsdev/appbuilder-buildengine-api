@@ -8,7 +8,7 @@ db:
 
 web:
     build:
-        image: silintl/appbuilder-buildengine-api
+        image: sillsdev/appbuilder-buildengine-api
         dockerfile_path: Dockerfile
     links:
         - db
