@@ -40,9 +40,13 @@ class Utils
      */
     public static function getCurrentUser()
     {
-        if(\Yii::$app->user && !\Yii::$app->user->isGuest){
-            return \Yii::$app->user->identity;
+        try {
+            if(\Yii::$app->user && !\Yii::$app->user->isGuest){
+                return \Yii::$app->user->identity;
+            }
+        } catch (\Exception $e) {
         }
+
         return null;
     }
     public static function getPrefix()

@@ -7,6 +7,7 @@ use common\models\Build;
 use common\models\OperationQueue;
 
 use console\components\ManageBuildsAction;
+use console\components\SetInitialVersionCodeAction;
 
 use tests\unit\UnitTestBase;
 use tests\unit\fixtures\common\models\JobFixture;
@@ -117,5 +118,19 @@ class ManageBuildActionTest extends UnitTestBase
         $job = $build->job;
         $versionCode = $method->invokeArgs($buildsAction, array( $job, $build));
         $this->assertEquals(3, $versionCode, " *** version code should max for completed job +1"); 
+    }
+    public function testNextVersionWithSet()
+    {
+        $this->setContainerObjects();
+        $job_id = "22";
+        $initialVC = "10";
+        $action = new SetInitialVersionCodeAction($job_id, $initialVC);
+        $action->performAction();
+        $buildsAction = new ManageBuildsAction();
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'getNextVersionCode');
+        $build = Build::findOne(['id' => 13]);
+        $job = $build->job;
+        $versionCode = $method->invokeArgs($buildsAction, array( $job, $build));
+        $this->assertEquals(11, $versionCode, " *** version code should be initial version code +1");
     }
 }

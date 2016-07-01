@@ -15,6 +15,7 @@ use Yii;
  * @property string $created
  * @property string $updated
  * @property integer $client_id
+ * @property integer $initial_version_code
  *
  * @property Build[] $builds
  * @property Client $client
@@ -37,7 +38,7 @@ class JobBase extends \yii\db\ActiveRecord
         return [
             [['request_id', 'git_url', 'app_id', 'publisher_id'], 'required'],
             [['created', 'updated'], 'safe'],
-            [['client_id'], 'integer'],
+            [['client_id', 'initial_version_code'], 'integer'],
             [['request_id', 'app_id', 'publisher_id'], 'string', 'max' => 255],
             [['git_url'], 'string', 'max' => 2083],
             [['client_id'], 'exist', 'skipOnError' => true, 'targetClass' => Client::className(), 'targetAttribute' => ['client_id' => 'id']],
@@ -58,6 +59,7 @@ class JobBase extends \yii\db\ActiveRecord
             'created' => Yii::t('app', 'Created'),
             'updated' => Yii::t('app', 'Updated'),
             'client_id' => Yii::t('app', 'Client ID'),
+            'initial_version_code' => Yii::t('app', 'Initial Version Code'),
         ];
     }
 

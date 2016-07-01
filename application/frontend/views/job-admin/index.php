@@ -27,13 +27,14 @@ $this->params['breadcrumbs'][] = $this->title;
             'git_url:url',
             'app_id',
             'publisher_id',
-           [
+            [
                 'attribute' => 'client_id',
                 'format' => 'html',
                 'value' => function($data) {
                     return $data->client_id ? Html::a($data->client_id, ['client-admin/view', 'id' => $data->client_id]) : "<span class='not-set'>(not set)</span>";
                 },
             ],
+            'initial_version_code',
             // 'created',
             // 'updated',
 

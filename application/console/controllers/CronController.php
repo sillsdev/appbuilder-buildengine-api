@@ -16,6 +16,7 @@ use console\components\ManageReleasesAction;
 use console\components\OperationsQueueAction;
 use console\components\DevelopmentAction;
 use console\components\S3MaintenanceAction;
+use console\components\SetInitialVersionCodeAction;
 
 use yii\console\Controller;
 use common\helpers\Utils;
@@ -187,6 +188,15 @@ class CronController extends Controller
     public function actionDeleteJob($jobIdToDelete)
     {
         $developmentAction = new DevelopmentAction(DevelopmentAction::DELETEJOB, $jobIdToDelete);
+        $developmentAction->performAction();
+    }
+    /**
+     * Set initial version code. Job ID and the initial version code required as parameters
+     * Example: ./yii cron/set-initial-version-code 1, 33
+     */
+    public function actionSetInitialVersionCode($jobId, $initialVersionCode)
+    {
+        $developmentAction = new SetInitialVersionCodeAction($jobId, $initialVersionCode);
         $developmentAction->performAction();
     }
     public function actionCheckCount()
