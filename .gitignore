@@ -9,3 +9,6 @@ aws.env
 # IDE project files
 .idea/
 nbproject/
+
+#yii runtime stuff
+application/runtime/
