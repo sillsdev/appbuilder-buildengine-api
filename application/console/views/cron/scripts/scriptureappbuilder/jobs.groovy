@@ -7,7 +7,8 @@ class jobs {
     static buildJobScript = '''
 { set +x; } 2>/dev/null
 PROJNAME=$(basename *.appDef .appDef)
-rename "s/$PROJNAME/build/" *
+mv "${PROJNAME}.appDef" build.appDef
+mv "${PROJNAME}_data" build_data
 /usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc $VERSION_CODE
 set -x
 echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
@@ -19,7 +20,8 @@ PUBLISH_DIR="build_data/publish/play-listing"
 if [ -d "$PUBLISH_DIR" ]; then
   cp -r "$PUBLISH_DIR" output
 fi
-rename "s/build/$PROJNAME/" build*
+mv build_data "${PROJNAME}_data"
+mv build.appDef "${PROJNAME}.appDef"
 
 # Work-around for https://issues.jenkins-ci.org/browse/JENKINS-35102
 killall Xvfb
