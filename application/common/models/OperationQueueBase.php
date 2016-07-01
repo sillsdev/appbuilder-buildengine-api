@@ -39,7 +39,7 @@ class OperationQueueBase extends \yii\db\ActiveRecord
             [['operation_object_id', 'attempt_count'], 'integer'],
             [['last_attempt', 'try_after', 'start_time', 'created', 'updated'], 'safe'],
             [['operation'], 'string', 'max' => 255],
-            [['operation_parms', 'last_error'], 'string', 'max' => 2048]
+            [['operation_parms', 'last_error'], 'string', 'max' => 2048],
         ];
     }
 

@@ -42,7 +42,8 @@ class ReleaseBase extends \yii\db\ActiveRecord
             [['created', 'updated'], 'safe'],
             [['status', 'result', 'channel', 'defaultLanguage'], 'string', 'max' => 255],
             [['error'], 'string', 'max' => 2083],
-            [['title'], 'string', 'max' => 30]
+            [['title'], 'string', 'max' => 30],
+            [['build_id'], 'exist', 'skipOnError' => true, 'targetClass' => Build::className(), 'targetAttribute' => ['build_id' => 'id']],
         ];
     }
 

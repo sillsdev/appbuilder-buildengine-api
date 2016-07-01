@@ -43,7 +43,8 @@ class BuildBase extends \yii\db\ActiveRecord
             [['job_id', 'build_number', 'version_code'], 'integer'],
             [['created', 'updated'], 'safe'],
             [['status', 'result', 'channel', 'artifact_files'], 'string', 'max' => 255],
-            [['error', 'artifact_url_base'], 'string', 'max' => 2083]
+            [['error', 'artifact_url_base'], 'string', 'max' => 2083],
+            [['job_id'], 'exist', 'skipOnError' => true, 'targetClass' => Job::className(), 'targetAttribute' => ['job_id' => 'id']],
         ];
     }
 

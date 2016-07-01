@@ -39,7 +39,7 @@ class EmailQueueBase extends \yii\db\ActiveRecord
             [['text_body', 'html_body'], 'string'],
             [['attempts_count'], 'integer'],
             [['last_attempt', 'created'], 'safe'],
-            [['to', 'cc', 'bcc', 'subject', 'error'], 'string', 'max' => 255]
+            [['to', 'cc', 'bcc', 'subject', 'error'], 'string', 'max' => 255],
         ];
     }
 

@@ -39,7 +39,8 @@ class JobBase extends \yii\db\ActiveRecord
             [['created', 'updated'], 'safe'],
             [['client_id'], 'integer'],
             [['request_id', 'app_id', 'publisher_id'], 'string', 'max' => 255],
-            [['git_url'], 'string', 'max' => 2083]
+            [['git_url'], 'string', 'max' => 2083],
+            [['client_id'], 'exist', 'skipOnError' => true, 'targetClass' => Client::className(), 'targetAttribute' => ['client_id' => 'id']],
         ];
     }
 
