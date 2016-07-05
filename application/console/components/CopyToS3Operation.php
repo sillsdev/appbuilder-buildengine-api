@@ -20,11 +20,13 @@ class CopyToS3Operation implements OperationInterface
     private $maxDelay = 30;
     private $alertAfter = 5;
     private $jenkinsUtils;
+    private $fileUtil;
     
     public function __construct($id)
     {
         $this->build_id = $id;
         $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+        $this->fileUtil = \Yii::$container->get('fileUtils');
     }
     public function performOperation()
     {
@@ -60,25 +62,21 @@ class CopyToS3Operation implements OperationInterface
         return $this->alertAfter;
     }
 
-    private function getExtraContent($artifactRelativePaths) {
+    private function getExtraContent($artifactRelativePaths, $defaultLanguage) {
         $hasPlayListing = false;
-        $defaultLanguage = null;
         $extraContent = array();
 
         foreach ($artifactRelativePaths as $path) {
             if (preg_match("/play-listing/", $path)) {
                 $hasPlayListing = true;
-                // For now, the first language that has an icon will be the default-language
-                if (preg_match("/play-listing\/([^\/]*)\/images\/icon.png$/", $path, $matches)) {
-                    $defaultLanguage = $matches[1];
-                }
+                break;
             }
         }
 
         if ($hasPlayListing) {
             $file = \Yii::getAlias("@common") . "/preview/playlisting/index.html";
 
-            $extraContent["play-listing/index.html"] = file_get_contents($file);
+            $extraContent["play-listing/index.html"] = $this->fileUtil->file_get_contents($file);
 
             // Note: I tried using array_map/array_filter, but it changed the json
             // serialization from an array to a hash where the indexes were the old
@@ -86,7 +84,7 @@ class CopyToS3Operation implements OperationInterface
             $playRelativePaths = array();
             $publishIndex = "<html><body><ul>" . PHP_EOL;
             foreach ($artifactRelativePaths as $path) {
-                if (0 === strpos($path, "play-listing/")) {
+                if ((0 === strpos($path, "play-listing/")) && (strpos($path, 'default-language.txt') == false)) {
                     $publishIndex .= "<li><a href=\"$path\">$path</a></p></li>" . PHP_EOL;
                     array_push($playRelativePaths, substr($path, strlen("play-listing/")));
                 }
@@ -103,6 +101,17 @@ class CopyToS3Operation implements OperationInterface
         return $extraContent;
     }
 
+    private function getDefaultPath($artifactUrls) {
+        $defaultLanguage = null;
+        foreach ($artifactUrls as $key => $path) {
+            if (strpos($path, "default-language.txt") !== false) {
+                $defaultLanguage = $this->fileUtil->file_get_contents($path);
+                unset ($artifactUrls[$key]);
+                break;
+            }
+        }
+        return array($defaultLanguage, $artifactUrls);
+    }
     /**
      * Save the build to S3.
      * @param Build $build
@@ -112,8 +121,8 @@ class CopyToS3Operation implements OperationInterface
     private function saveBuild($build, $jenkinsBuild) {
         # Get list of artifacts from Jenkins build
         list($artifactUrls, $artifactRelativePaths) = $this->jenkinsUtils->getArtifactUrls($jenkinsBuild);
-
-        $extraContent = $this->getExtraContent($artifactRelativePaths);
+        list($defaultLanguage, $artifactUrls) = $this->getDefaultPath($artifactUrls);
+        $extraContent = $this->getExtraContent($artifactRelativePaths, $defaultLanguage);
 
         # Save to S3
         $s3 = new S3();
