@@ -268,37 +268,8 @@
                 document.getElementById("jssor_1").innerHTML = content;
             }
 
-//            function loadslider() {
-//                var content = "<div data-u='slides' style='cursor: default; position: relative; top: 0px; left: 0px; width: 809px; height: 150px; overflow: hidden;'>";
-//                var defaultLanguage = languages["default"];
-//                var currentLanguage = document.getElementById("language").value;
-//                if (languages[currentLanguage]["phone"] == undefined) {
-//                    currentLanguage = defaultLanguage;
-//                }
-//                for (i=0;i<languages[currentLanguage]["phone"].length;i++) {
-//                    var aPath = languages[currentLanguage]["phone"][i];
-//                    content = content +
-//                            "<div style='display: none;'>"+
-//                                "<img data-u='image' src='" + aPath + "' />"+
-//                            "</div>";
-//                }
-//                content = content + "</div>";
-//
-//                document.getElementById("jssor_1").innerHTML = content;
-////                "<div data-u='slides' style='cursor: default; position: relative; top: 0px; left: 0px; width: 809px; height: 150px; overflow: hidden;'>" +
-////                "<div style='display: none;'>"+
-////                "<img data-u='image' src='es-419/images/phoneScreenshots/screen-0.png' />"+
-////                "</div>"+
-////                "<div style='display: none;'>"+
-////                "<img data-u='image' src='es-419/images/phoneScreenshots/screen-0.png' />"+
-////                "</div>"+
-////                "</div>";
-//
-//                jssor_1_slider_init();
-//            }
-
 //            request manifest from the server. then parses and stores data into js object called languages
-//            data structure:
+//            the data structure:
 //            {default: "languageA",
 //            languageA: {title: path
 //                        full-description: path
@@ -378,12 +349,17 @@
             function loadLanguageSelection() {
                 var selectElement = document.getElementById("language");
                 var lans = Object.keys(languages);
+				console.log(lans);
                 for (i=0;i<lans.length;i++) {
-                    if (lans[i] != "default") {
-                        var optElement = document.createElement("option");
-                        optElement.setAttribute("value", lans[i]);
-                        optElement.innerHTML = lans[i];
-                        selectElement.appendChild(optElement);
+					if (lans[i] != "default") {
+						var optElement = document.createElement("option");
+						optElement.setAttribute("value", lans[i]);
+						optElement.innerHTML = lans[i];
+						if (lans[i] == languages["default"]) {
+							optElement.setAttribute("selected", true);
+							var df = document.getElementById("dfLangText").innerHTML = lans[i];
+						}
+						selectElement.appendChild(optElement);
                     }
                 }
             }
@@ -454,6 +430,7 @@
                 <option value="browser">browser</option>
                 <option value="store">play store</option>
             </select>
+			<p><b>Default Language: <span id="dfLangText"></span></b></p>
         </div>
 
         <div class="row"><br></div>
