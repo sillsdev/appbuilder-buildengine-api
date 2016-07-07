@@ -11,7 +11,7 @@ mv "${PROJNAME}.appDef" build.appDef
 mv "${PROJNAME}_data" build_data
 APPDEF_VERSION=$(grep "version code=" build.appDef|awk -F"\\"" '{print $2}')
 if [ "$APPDEF_VERSION" -gt "$VERSION_CODE" ]; then
-    VERSION_CODE=$APPDEF_VERSION
+    VERSION_CODE=$((APPDEF_VERSION+1))
 fi
 /usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc $VERSION_CODE
 set -x
