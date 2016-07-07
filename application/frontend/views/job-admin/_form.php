@@ -22,7 +22,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'client_id')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'initial_version_code')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'existing_version_code')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'created')->textInput() ?>
 

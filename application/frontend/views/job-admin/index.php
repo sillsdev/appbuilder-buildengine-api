@@ -34,7 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     return $data->client_id ? Html::a($data->client_id, ['client-admin/view', 'id' => $data->client_id]) : "<span class='not-set'>(not set)</span>";
                 },
             ],
-            'initial_version_code',
+            'existing_version_code',
             // 'created',
             // 'updated',
 

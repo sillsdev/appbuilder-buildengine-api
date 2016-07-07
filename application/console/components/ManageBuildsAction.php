@@ -138,7 +138,7 @@ class ManageBuildsAction extends ActionCommon
 
     private function getNextVersionCode($job, $build) {
         $id = $job->id;
-        $retval = $job->initial_version_code;
+        $retval = $job->existing_version_code;
         foreach (Build::find()->where([
             'job_id' => $id,
             'status' => Build::STATUS_COMPLETED,
