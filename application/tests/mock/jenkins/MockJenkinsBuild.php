@@ -49,6 +49,7 @@ class MockJenkinsBuild
 {"displayPath":"about.txt","fileName":"about.txt","relativePath":"output/about.txt"},
 {"displayPath":"Kuna_Gospels-1.0.apk","fileName":"Kuna_Gospels-1.0.apk","relativePath":"output/Kuna_Gospels-1.0.apk"},
 {"displayPath":"package_name.txt","fileName":"package_name.txt","relativePath":"output/package_name.txt"},
+{"displayPath":"default-language.txt","fileName":"package_name.txt","relativePath":"output/play-listing/default-language.txt"},
 {"displayPath":"full_description.txt","fileName":"full_description.txt","relativePath":"output/play-listing/es-419/full_description.txt"},
 {"displayPath":"featureGraphic.png","fileName":"featureGraphic.png","relativePath":"output/play-listing/es-419/images/featureGraphic.png"},
 {"displayPath":"icon.png","fileName":"icon.png","relativePath":"output/play-listing/es-419/images/icon.png"},

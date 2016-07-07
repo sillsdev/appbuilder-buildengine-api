@@ -69,7 +69,11 @@ class CopyToS3Operation implements OperationInterface
         foreach ($artifactRelativePaths as $path) {
             if (preg_match("/play-listing/", $path)) {
                 $hasPlayListing = true;
-                break;
+                // If default-language.txt file was not found, use entry with icon
+                if (empty($defaultLanguage) && preg_match("/play-listing\/([^\/]*)\/images\/icon.png$/", $path, $matches)) {
+                    $defaultLanguage = $matches[1];
+                    break;
+                }
             }
         }
 

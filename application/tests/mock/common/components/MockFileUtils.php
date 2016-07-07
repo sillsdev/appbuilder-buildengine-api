@@ -23,6 +23,10 @@ class MockFileUtils
         {
             $retString = "42";
         }
+        if (strpos($url, 'default-language') !== false)
+        {
+            $retString = "es-419";
+        }
         return $retString;
     }
     public function copy($file, $to_file)

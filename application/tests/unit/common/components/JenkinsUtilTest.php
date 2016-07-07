@@ -36,8 +36,9 @@ class JenkinsUtilsTest extends UnitTestBase
 
         $jenkinsUtil = new JenkinsUtils();
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtil->getArtifactUrls($jenkinsBuild);
-        $this->assertEquals(13, count($artifactUrls), "*** Wrong number of artifacts");
+        $this->assertEquals(14, count($artifactUrls), "*** Wrong number of artifacts");
         $files = array ("about.txt", "Kuna_Gospels-1.0.apk", "package_name.txt",
+            "play-listing/default-language.txt",
             "play-listing/es-419/full_description.txt",
             "play-listing/es-419/images/featureGraphic.png",
             "play-listing/es-419/images/icon.png",

@@ -65,7 +65,7 @@ class S3Test extends UnitTestBase
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
         $extraContent = [ "play-listing/index.html"  => "<html></html>", "play-listing/manifest.json" => "{}" ];
         $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
-        $this->assertEquals(15, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
+        $this->assertEquals(16, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Kuna_Gospels-1.0.apk";
         $this->assertEquals($expected, $build->apk(), " *** Public URL for APK doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/about.txt";

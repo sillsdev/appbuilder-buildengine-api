@@ -8,6 +8,10 @@ use common\models\Build;
 use tests\unit\fixtures\common\models\JobFixture;
 use tests\unit\fixtures\common\models\BuildFixture;
 use tests\mock\s3client\MockS3Client;
+use tests\mock\common\components\MockJenkinsUtils;
+use tests\mock\jenkins\MockJenkins;
+use tests\mock\jenkins\MockJenkinsJob;
+use tests\mock\jenkins\MockJenkinsBuild;
 
 class CopyToS3OperationTest extends UnitTestBase
 {
@@ -50,5 +54,63 @@ class CopyToS3OperationTest extends UnitTestBase
         $expected = "text/html";
         $this->assertEquals($expected, $testParms['ContentType'], " *** Wrong Mime Type");
     }
+    public function testGetDefaultPath()
+    {
+        $this->setContainerObjects();
+        $buildNumber = 11;
+        $jenkinsUtils = new MockJenkinsUtils();
+        $jenkins = new MockJenkins();
+        $jenkinsJob = new MockJenkinsJob($jenkins, false, 4, 0, "testJob4");
+        $jenkinsBuild = new MockJenkinsBuild($jenkinsJob, 1, false);
+        list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
+        $copyOperation = new CopyToS3Operation($buildNumber);
+        $method = $this->getPrivateMethod('console\components\CopyToS3Operation', 'getDefaultPath');
+        list($defaultLanguage, $newArtifactUrls) = $method->invokeArgs($copyOperation, array($artifactUrls));
+        $this->assertEquals("es-419", $defaultLanguage, " *** Wrong default language");
+        $foundDefault = false;
+        foreach ($newArtifactUrls as $key => $path) {
+            if (strpos($path, "default-language.txt") !== false) {
+                $foundDefault = true;
+                break;
+            }
+        }
+        $this->assertEquals(false, $foundDefault, " *** defaultLanguage.txt not removed from array");
+    }
+    public function testGetExtraContent()
+    {
+        $this->setContainerObjects();
+        $buildNumber = 11;
+        $jenkinsUtils = new MockJenkinsUtils();
+        $jenkins = new MockJenkins();
+        $jenkinsJob = new MockJenkinsJob($jenkins, false, 4, 0, "testJob4");
+        $jenkinsBuild = new MockJenkinsBuild($jenkinsJob, 1, false);
+        list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
+        $copyOperation = new CopyToS3Operation($buildNumber);
+        $method = $this->getPrivateMethod('console\components\CopyToS3Operation', 'getExtraContent');
+        $defaultLanguage = "engl";
+        $extraContent = $method->invokeArgs($copyOperation, array($artifactRelativePaths, $defaultLanguage ));
+        $manifest = $extraContent["play-listing/manifest.json"];
+        $expectedString = '"default-language":"engl"';
+        $foundDefaultString = strpos($manifest, $expectedString);
+        $this->assertEquals(true, $foundDefaultString, " *** Didn't find default language string");
+     }
+    public function testGetExtraContentWithNull()
+    {
+        $this->setContainerObjects();
+        $buildNumber = 11;
+        $jenkinsUtils = new MockJenkinsUtils();
+        $jenkins = new MockJenkins();
+        $jenkinsJob = new MockJenkinsJob($jenkins, false, 4, 0, "testJob4");
+        $jenkinsBuild = new MockJenkinsBuild($jenkinsJob, 1, false);
+        list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
+        $copyOperation = new CopyToS3Operation($buildNumber);
+        $method = $this->getPrivateMethod('console\components\CopyToS3Operation', 'getExtraContent');
+        $defaultLanguage = null;
+        $extraContent = $method->invokeArgs($copyOperation, array($artifactRelativePaths, $defaultLanguage ));
+        $manifest = $extraContent["play-listing/manifest.json"];
+        $expectedString = '"default-language":"es-419"';
+        $foundDefaultString = strpos($manifest, $expectedString);
+        $this->assertEquals(true, $foundDefaultString, " *** Didn't find default language string");
+     }
 }
 
