@@ -24,10 +24,18 @@ class MockJenkinsUtils extends JenkinsUtils
             return null;
         }
     }
+    public function getJenkinsBaseUrl()
+    {
+        return "http://192.168.70.241:8080";
+    }
     public function getPublishJenkins()
     {
         $jenkins = new MockJenkins();
         return $jenkins;
+    }
+    public function getPublishJenkinsBaseUrl()
+    {
+        return "http://192.168.70.242:8080";
     }
     private function getArtifactUrl($jenkinsBuild, $artifactName)
     {

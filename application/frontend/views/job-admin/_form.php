@@ -24,6 +24,10 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'existing_version_code')->textInput(['maxlength' => true]) ?>
 
+    <?= $form->field($model, 'jenkins_build_url')->textInput(['maxlength' => true]) ?>
+
+    <?= $form->field($model, 'jenkins_publish_url')->textInput(['maxlength' => true]) ?>
+
     <?= $form->field($model, 'created')->textInput() ?>
 
     <?= $form->field($model, 'updated')->textInput() ?>

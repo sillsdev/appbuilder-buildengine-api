@@ -14,20 +14,25 @@ class JenkinsUtils
      * @return Jenkins
      */
     public function getJenkins(){
-        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
+        $jenkinsUrl = $this->getJenkinsBaseUrl();
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
+    }
+    public function getJenkinsBaseUrl(){
+        return \Yii::$app->params['buildEngineJenkinsMasterUrl'];
     }
     /**
      *
      * @return Jenkins for publish url
      */
     public function getPublishJenkins(){
-        $jenkinsUrl = \Yii::$app->params['publishJenkinsMasterUrl'];
+        $jenkinsUrl = $this->getPublishJenkinsBaseUrl();
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
     }
-
+    public function getPublishJenkinsBaseUrl() {
+        return \Yii::$app->params['publishJenkinsMasterUrl'];
+    }
     public function getArtifactUrls($jenkinsBuild) {
 
         $jenkinsArtifacts = $jenkinsBuild->get("artifacts");

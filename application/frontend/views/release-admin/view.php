@@ -42,7 +42,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'channel',
             'title',
             'defaultLanguage',
-            'build_number',
+            [
+                'attribute'=>'build_number',
+                'format'=>"html",
+                'value' => $model->jenkinsUrl() ? Html::a($model->build_number, $model->jenkinsUrl()) : "<span>" . $model->build_number . "</span>",
+            ],
         ],
     ]) ?>
 

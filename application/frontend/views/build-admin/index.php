@@ -31,7 +31,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             'status',
-            'build_number',
+            [
+                'attribute'=>'build_number',
+                'format'=>"html",
+                'value' => function($data) {
+                    return $data->jenkinsUrl() ? Html::a($data->build_number, $data->jenkinsUrl()) : "<span>" . $data->build_number . "</span>";
+                }
+            ],
             'result',
             // 'error',
             // 'created',

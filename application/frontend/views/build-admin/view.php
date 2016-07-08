@@ -36,7 +36,11 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => Html::a($model->job_id, ['job-admin/view', 'id' => $model->job_id]),
             ],
             'status',
-            'build_number',
+            [
+                'attribute'=>'build_number',
+                'format'=>"html",
+                'value' => $model->jenkinsUrl() ? Html::a($model->build_number, $model->jenkinsUrl()) : "<span>" . $model->build_number . "</span>",
+            ],
             'result',
             'error:url',
             [

@@ -16,6 +16,8 @@ use Yii;
  * @property string $updated
  * @property integer $client_id
  * @property integer $existing_version_code
+ * @property string $jenkins_build_url
+ * @property string $jenkins_publish_url
  *
  * @property Build[] $builds
  * @property Client $client
@@ -41,6 +43,7 @@ class JobBase extends \yii\db\ActiveRecord
             [['client_id', 'existing_version_code'], 'integer'],
             [['request_id', 'app_id', 'publisher_id'], 'string', 'max' => 255],
             [['git_url'], 'string', 'max' => 2083],
+            [['jenkins_build_url', 'jenkins_publish_url'], 'string', 'max' => 1024],
             [['client_id'], 'exist', 'skipOnError' => true, 'targetClass' => Client::className(), 'targetAttribute' => ['client_id' => 'id']],
         ];
     }
@@ -60,6 +63,8 @@ class JobBase extends \yii\db\ActiveRecord
             'updated' => Yii::t('app', 'Updated'),
             'client_id' => Yii::t('app', 'Client ID'),
             'existing_version_code' => Yii::t('app', 'Existing Version Code'),
+            'jenkins_build_url' => Yii::t('app', 'Jenkins Build Url'),
+            'jenkins_publish_url' => Yii::t('app', 'Jenkins Publish Url'),
         ];
     }
 

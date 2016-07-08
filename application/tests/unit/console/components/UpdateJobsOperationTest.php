@@ -8,6 +8,7 @@ use tests\mock\common\components\MockJenkinsUtils;
 use tests\unit\fixtures\common\models\JobFixture;
 use tests\unit\fixtures\common\models\BuildFixture;
 use tests\unit\fixtures\common\models\ReleaseFixture;
+use common\models\Job;
 
 class UpdateJobsOperationTest extends UnitTestBase
 {
@@ -49,6 +50,19 @@ class UpdateJobsOperationTest extends UnitTestBase
         $updateJobsOperation = new UpdateJobsOperation();
         $updateJobsOperation->performOperation();
         $this->setExpectedException('\Exception');
+    }
+    public function testSetJobUrls()
+    {
+        $this->setContainerObjects();
+        $jenkinsUtils = new MockJenkinsUtils();
+        $copyOperation = new UpdateJobsOperation();
+        $method = $this->getPrivateMethod('console\components\UpdateJobsOperation', 'setJobUrls');
+        $method->invokeArgs($copyOperation, array($jenkinsUtils));
+        $job = Job::findOne(['id' => 22]);
+        $expectedBuildUrl = "http://192.168.70.241:8080/job/build_scriptureappbuilder_22/";
+        $this->assertEquals($expectedBuildUrl, $job->jenkins_build_url, " *** Jenkins build url incorrect");
+        $expectedPublishUrl = "http://192.168.70.242:8080/job/publish_scriptureappbuilder_22/";
+        $this->assertEquals($expectedPublishUrl, $job->jenkins_publish_url, " *** Jenkins publish url incorrect");
     }
 }
 

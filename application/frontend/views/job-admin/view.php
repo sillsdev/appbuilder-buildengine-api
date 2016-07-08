@@ -39,6 +39,16 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => $model->client_id ? Html::a($model->client_id, ['client-admin/view', 'id' => $model->client_id]) : "<span class='not-set'>(not set)</span>",
             ],
             'existing_version_code',
+            [
+                'attribute'=>'jenkins_build_url',
+                'format'=>"html",
+                'value' => $model->jenkins_build_url ? Html::a($model->jenkins_build_url, $model->jenkins_build_url) : "<span class='not-set'>(not set)</span>",
+            ],
+            [
+                'attribute'=>'jenkins_publish_url',
+                'format'=>"html",
+                'value' => $model->jenkins_publish_url ? Html::a($model->jenkins_publish_url, $model->jenkins_publish_url) : "<span class='not-set'>(not set)</span>",
+            ],
             'created',
             'updated',
         ],

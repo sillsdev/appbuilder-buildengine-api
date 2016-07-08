@@ -1,7 +1,7 @@
 <?php
 
 namespace console\components;
-
+use common\models\Job;
 use console\components\OperationInterface;
 
 use common\components\JenkinsUtils;
@@ -18,6 +18,7 @@ class UpdateJobsOperation implements OperationInterface
     {
         $prefix = Utils::getPrefix();
         $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+        $this->setJobUrls($jenkinsUtils);
         $buildJenkins = $jenkinsUtils->getJenkins();
         if ($buildJenkins){
             echo "[$prefix] UpdateJobsOperation: Telling Jenkins to regenerate Build Jobs" . PHP_EOL;
@@ -32,7 +33,16 @@ class UpdateJobsOperation implements OperationInterface
         } else {
             throw new \Exception("Unable to update the jenkins publish job list.  Jenkins unavailable",1457101819);
         }
-    } 
+    }
+    private function setJobUrls($jenkinsUtils)
+    {
+        foreach (Job::find()->each(50) as $job)
+        {
+            $job->jenkins_build_url = $jenkinsUtils->getJenkinsBaseUrl() . "/job/" . $job->nameForBuild() . "/";
+            $job->jenkins_publish_url = $jenkinsUtils->getPublishJenkinsBaseUrl() . "/job/" . $job->nameForPublish() . "/";
+            $job->save();
+        }
+    }
     public function getMaximumRetries()
     {
         return $this->maxRetries;
