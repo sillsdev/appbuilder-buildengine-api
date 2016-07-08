@@ -31,7 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             'status',
-            'status',
+            'result',
             [
                 'attribute'=>'build_number',
                 'format'=>"html",
