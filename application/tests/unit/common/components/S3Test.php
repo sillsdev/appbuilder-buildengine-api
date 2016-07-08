@@ -74,7 +74,7 @@ class S3Test extends UnitTestBase
         $this->assertEquals($expected, $build->playListing(), " *** Public URL for Play Listing doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/";
         $this->assertEquals($expected, $build->artifact_url_base, " *** Artifact URL Base doesn't match");
-        $expected = "about.txt,Kuna_Gospels-1.0.apk,version_code.txt,play-listing/index.html";
+        $expected = "about.txt,Kuna_Gospels-1.0.apk,package_name.txt,version_code.txt,play-listing/index.html";
         $this->assertEquals($expected, $build->artifact_files, "*** Artifact files doesn't match");
         codecept_debug("artifact_url_base=" . $build->artifact_url_base);
         codecept_debug("artiface_files=" . $build->artifact_files);

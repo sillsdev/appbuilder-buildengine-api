@@ -31,6 +31,7 @@ class Build extends BuildBase implements Linkable
     const ARTIFACT_VERSION_CODE = "version_code";
     const ARTIFACT_ABOUT = "about";
     const ARTIFACT_PLAY_LISTING = "play-listing";
+    const ARTIFACT_PACKAGE_NAME = "package_name";
 
         /**
      * Array of valid status transitions. The key is the starting
@@ -135,7 +136,9 @@ class Build extends BuildBase implements Linkable
                 return [
                     self::ARTIFACT_APK => $this->apk(),
                     self::ARTIFACT_ABOUT => $this->about(),
-                    self::ARTIFACT_PLAY_LISTING => $this->playListing() ];
+                    self::ARTIFACT_PLAY_LISTING => $this->playListing(),
+                    self::ARTIFACT_VERSION_CODE => $this->versionCode(),
+                    self::ARTIFACT_PACKAGE_NAME => $this->packageName() ];
             },
             'created' => function(){
                 return Utils::getIso8601($this->created);
@@ -274,6 +277,8 @@ class Build extends BuildBase implements Linkable
             $type = self::ARTIFACT_APK;
         } else if ($file === "version_code.txt") {
             $type = self::ARTIFACT_VERSION_CODE;
+        } else if ($file === "package_name.txt") {
+            $type = self::ARTIFACT_PACKAGE_NAME;
         } else if ($file === "about.txt") {
             $type = self::ARTIFACT_ABOUT;
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
@@ -307,6 +312,7 @@ class Build extends BuildBase implements Linkable
             case self::ARTIFACT_ABOUT:
             case self::ARTIFACT_APK:
             case self::ARTIFACT_PLAY_LISTING:
+            case self::ARTIFACT_PACKAGE_NAME:
                 break;
 
             default:
@@ -336,5 +342,11 @@ class Build extends BuildBase implements Linkable
     }
     public function playListing() {
         return $this->getArtifactUrl("/play-listing\/index\.html$/");
+    }
+    public function versionCode() {
+        return $this->getArtifactUrl("/version_code\.txt$/");
+    }
+    public function packageName() {
+        return $this->getArtifactUrl("/package_name\.txt$/");
     }
 }
