@@ -48,8 +48,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     return $data->jenkinsUrl() ? Html::a($data->build_number, $data->jenkinsUrl()) : "<span>" . $data->build_number . "</span>";
                 }
             ],
-            'created',
-            'updated',
+            // 'created',
+            // 'updated',
             // 'result',
             // 'error',
             // 'channel',
