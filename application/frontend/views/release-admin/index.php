@@ -24,6 +24,15 @@ $this->params['breadcrumbs'][] = $this->title;
 
             'id',
             [
+                'label' => 'Job ID',
+                'attribute' => 'job_id',
+                'format' => 'html',
+                'value' => function($data) {
+                    $jobId = $data->jobId();
+                    return Html::a("$jobId", ['job-admin/view', 'id' => $jobId]);
+                },
+            ],
+            [
                 'attribute' => 'build_id',
                 'format' => 'html',
                 'value' => function($data) {

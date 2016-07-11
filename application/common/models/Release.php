@@ -140,6 +140,10 @@ class Release extends ReleaseBase implements Linkable
     {
         return $this->build->job->nameForPublish();
     }
+    public function jobId()
+    {
+        return $this->build->job_id;
+    }
     public function jenkinsUrl()
     {
         if ($this->status == Release::STATUS_EXPIRED) {
