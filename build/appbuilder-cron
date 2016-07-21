@@ -5,5 +5,5 @@
 * * * * * root /data/yii cron/send-emails  2>&1 >> /var/log/sendemails.log
 * * * * * root /data/yii cron/operation-queue  2>&1 >> /var/log/operationqueue.log
 30 0 * * * root /data/yii cron/remove-expired-builds  2>&1 >> /var/log/expiredbuilds.log
-40 0 * * * root /data/yii cron/s3-maintenance 2>$1 >> /var/log/s3maintenance.log
+40 0 * * * root /data/yii cron/s3-maintenance 2>&1 >> /var/log/s3maintenance.log
 
