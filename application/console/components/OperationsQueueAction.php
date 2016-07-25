@@ -63,12 +63,24 @@ class OperationsQueueAction {
             // Don't count entries in the database that are now obsolete
             // and are never deleted
             echo "Caught max retry exception".PHP_EOL;
+            $logger = new Appbuilder_logger("OperationsQueueAction");
+            $logException = [
+            'problem' => 'Maximum retries exceeded',
+                ];
+            $logger->appbuilderExceptionLog($logException, $e);
             $this->maxRetriesExceeded++;
         }
 
         catch (\Exception $e) {
             echo "Caught another exception".PHP_EOL;
             echo $e->getMessage() .PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
+            $logger = new Appbuilder_logger("OperationsQueueAction");
+            $logException = [
+            'problem' => 'Caught another exception',
+                ];
+            $logger->appbuilderExceptionLog($logException, $e);
             $this->failedJobs++;
          }
          return $retVal;

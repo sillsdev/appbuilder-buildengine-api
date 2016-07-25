@@ -81,9 +81,9 @@ class EmailUtils
             $logContents = [
                 'to' => $to,
                 'error_code' => $e->getCode(),
-                'error_message' => $e->getMessage()
+                'error_message' => $e->getMessage(),
             ];
-            $logger->appbuilderErrorLog($logContents);
+            $logger->appbuilderExceptionLog($logContents, $e);
 
             $errorMsg =  'Error code: ' . $e->getCode() . '. ' . $e->getMessage();
             return [false, $errorMsg];

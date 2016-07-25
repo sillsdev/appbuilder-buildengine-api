@@ -159,6 +159,8 @@ class ManageReleasesAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] checkReleaseStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             echo "Exception: " . $e->getMessage() . PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
         }
