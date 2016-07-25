@@ -2,6 +2,7 @@
 namespace tests\mock\jenkins;
 
 use Codeception\Util\Debug;
+use yii\web\NotFoundHttpException;
 
 class MockJenkinsJob
 {
@@ -57,6 +58,9 @@ class MockJenkinsJob
     }
     public function getBuild($buildNumber)
     {
+        if ($buildNumber == 99) {
+            throw new NotFoundHttpException();
+        }
         return new MockJenkinsBuild($this, $buildNumber, $this->currentlyBuilding);
     }
     public function getBuilds()

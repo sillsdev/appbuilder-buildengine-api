@@ -100,6 +100,9 @@ class ManageBuildActionTest extends UnitTestBase
         $build = Build::findOne(['id' => 16]);
         $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after abort");
         $this->assertEquals("ABORTED", $build->result, " *** Result should be aborted after an aborted build");
+        $build = Build::findOne(['id' => 21]);
+        $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after failure");
+        $this->assertEquals("FAILURE", $build->result, " *** Result should be Failure after failed build");
         $queuedRecords = OperationQueue::find()->count();
         $this->assertEquals(6, $queuedRecords, " *** Queued record count should be ");
         $queuedErrorRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVEERRORTOS3])->count();

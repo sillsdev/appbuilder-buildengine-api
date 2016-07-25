@@ -61,6 +61,9 @@ class ManageReleasesActionTest extends UnitTestBase
         $queuedErrorRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVEERRORTOS3])->count();
         $this->assertEquals(2, $queuedErrorRecords, " *** SAVEERRORTOS3 Count should be 2 ");
         $queuedSaveRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVETOS3])->count();
+        $release = Release::findOne(['id' => 15]);
+        $this->assertEquals(Build::STATUS_COMPLETED, $release->status, " *** Status should be completed after failure");
+        $this->assertEquals("FAILURE", $release->result, " *** result should be failure after a failed build");
 
     }
 }

@@ -57,7 +57,7 @@ return [
     ],
     'release5' => [
         'id' => 14,
-        'build_id' => 12,
+        'build_id' => 17,
         'status' => 'active',
         'result' => NULL,
         'error' => NULL,
@@ -68,4 +68,16 @@ return [
         'defaultLanguage' => NULL,
         'build_number' => 4,
     ],    
-];
+    'release6' => [
+        'id' => 15,
+        'build_id' => 17,
+        'status' => 'active',
+        'result' => NULL,
+        'error' => NULL,
+        'created' => Utils::getDatetime(),
+        'updated' => Utils::getDatetime(),
+        'channel' => 'alpha',
+        'title' => NULL,
+        'defaultLanguage' => NULL,
+        'build_number' => 99,
+    ],    ];

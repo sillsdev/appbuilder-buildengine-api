@@ -132,7 +132,8 @@ class ManageBuildsAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] checkBuildStatus: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = JenkinsUtils::getlogBuildDetails($build);
-            $logger->appbuilderExceptionLog($logException, $e);
+            $logger->appbuilderErrorLog($logException);
+            $this->failBuild($build);
         }
     }
 
@@ -149,5 +150,21 @@ class ManageBuildsAction extends ActionCommon
         }
         $retval = $retval + 1;
         return $retval;
+    }
+    private function failBuild($build) {
+        $logger = new Appbuilder_logger("ManageBuildsAction");
+        try {
+            $build->result = JenkinsBuild::FAILURE;
+            $build->status = Build::STATUS_COMPLETED;
+            $build->save();
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] failBuild Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            echo "Exception: " . $e->getMessage() . PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
+            $logException = $this->getlogBuildDetails($build);
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
     }
 }

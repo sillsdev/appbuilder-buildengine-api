@@ -163,6 +163,7 @@ class ManageReleasesAction extends ActionCommon
             echo $e->getLine() . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
+            $this->failRelease($release);
         }
     }
     private function getBuild($id)
@@ -173,5 +174,21 @@ class ManageReleasesAction extends ActionCommon
             throw new NotFoundHttpException();
         }
         return $build;
+    }
+    private function failRelease($release) {
+        try {
+            $release->result = JenkinsBuild::FAILURE;
+            $release->status = Release::STATUS_COMPLETED;
+            $release->save();
+        } catch (\Exception $e) {
+        $logger = new Appbuilder_logger("ManageReleasesAction");
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] failRelease Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            echo "Exception: " . $e->getMessage() . PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
+            $logException = $this->getlogReleaseDetails($release);
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
     }
 }
