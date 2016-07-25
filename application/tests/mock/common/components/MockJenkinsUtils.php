@@ -52,11 +52,15 @@ class MockJenkinsUtils extends JenkinsUtils
         if (!$jenkinsArtifacts) { return null; }
         $artifactUrls = array();
         $artifactRelativePaths = array();
-        foreach ($jenkinsArtifacts as $testArtifact) {
-            $relativePath = explode("output/", $testArtifact->relativePath)[1];
-            array_push($artifactRelativePaths, $relativePath);
-            $artifactUrl = $this->getArtifactUrlFromRelativePath($jenkinsBuild, $testArtifact->relativePath);
-            array_push($artifactUrls, $artifactUrl);
+        if ($jenkinsBuild->getNumber() == 22) {
+            return null;
+        } else {
+            foreach ($jenkinsArtifacts as $testArtifact) {
+                $relativePath = explode("output/", $testArtifact->relativePath)[1];
+                array_push($artifactRelativePaths, $relativePath);
+                $artifactUrl = $this->getArtifactUrlFromRelativePath($jenkinsBuild, $testArtifact->relativePath);
+                array_push($artifactUrls, $artifactUrl);
+            }
         }
         return array($artifactUrls, $artifactRelativePaths);
     }

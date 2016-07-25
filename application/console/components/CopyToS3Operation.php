@@ -123,24 +123,26 @@ class CopyToS3Operation implements OperationInterface
      * @return string
      */
     private function saveBuild($build, $jenkinsBuild) {
+        $logger = new Appbuilder_logger("CopyToS3Operation");
         # Get list of artifacts from Jenkins build
         list($artifactUrls, $artifactRelativePaths) = $this->jenkinsUtils->getArtifactUrls($jenkinsBuild);
-        list($defaultLanguage, $artifactUrls) = $this->getDefaultPath($artifactUrls);
-        $extraContent = $this->getExtraContent($artifactRelativePaths, $defaultLanguage);
+        if (!$artifactUrls) {
+            $log = JenkinsUtils::getlogBuildDetails($build);
+            $log['errorMessage'] = 'No artifacts to save';
+            $logger->appbuilderErrorLog($log);
+            echo "ERROR: No artifacts to save";
+       } else {
+            list($defaultLanguage, $artifactUrls) = $this->getDefaultPath($artifactUrls);
+            $extraContent = $this->getExtraContent($artifactRelativePaths, $defaultLanguage);
 
-        # Save to S3
-        $s3 = new S3();
-        $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
+            # Save to S3
+            $s3 = new S3();
+            $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
 
-        # Log
-        $logger = new Appbuilder_logger("CopyToS3Operation");
-        $log = JenkinsUtils::getlogBuildDetails($build);
+            # Log
+            $log = JenkinsUtils::getlogBuildDetails($build);
 
-//        $log['NOTE:']='save the build to S3 and return $apkPublicUrl and $versionCode';
-//        $log['jenkins_ArtifactUrl'] = $artifactUrl;
-//        $log['baseUrl'] = $baseUrl;
-//        $log['files'] = $fileList;
-//        $log['version'] = $versionCode;
-        $logger->appbuilderWarningLog($log);
+            $logger->appbuilderWarningLog($log);
+       }
     }
 }

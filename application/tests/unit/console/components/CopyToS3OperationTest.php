@@ -54,6 +54,19 @@ class CopyToS3OperationTest extends UnitTestBase
         $expected = "text/html";
         $this->assertEquals($expected, $testParms['ContentType'], " *** Wrong Mime Type");
     }
+    public function testPerformActionNoArtifacts()
+    {
+        $this->setContainerObjects();
+        $buildNumber = 20;
+        MockS3Client::clearGlobals();
+        $copyOperation = new CopyToS3Operation($buildNumber);
+        $copyOperation->performOperation();
+        $build = Build::findOne(['id' => 20]);
+        $this->assertEquals(4, $build->version_code, " *** Version code should not be changed");
+        $this->assertEquals(NULL, $build->artifact_url_base, " *** Incorrect Artifact Url Base");
+        $this->assertEquals(NULL, $build->artifact_files, " *** Incorrect Artifact Files");
+        $this->assertEquals(0, count(MockS3Client::$puts), " *** Wrong number of files");
+    }
     public function testGetDefaultPath()
     {
         $this->setContainerObjects();
