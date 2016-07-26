@@ -160,7 +160,8 @@ class SyncScriptsActionTest extends UnitTestBase
         MockGitWrapper::resetTest();
         $cronController = new MockCronController();
         $syncScriptsAction = new SyncScriptsAction($cronController);
-        $syncScriptsAction->performAction();
+        $method = $this->getPrivateMethod('console\components\SyncScriptsAction', 'getRepo');
+        $method->invokeArgs($syncScriptsAction, array());
     }
     public function testExceptionIfNoSSHUser()
     {
@@ -170,7 +171,8 @@ class SyncScriptsActionTest extends UnitTestBase
         MockGitWrapper::resetTest();
         $cronController = new MockCronController();
         $syncScriptsAction = new SyncScriptsAction($cronController);
-        $syncScriptsAction->performAction();
+        $method = $this->getPrivateMethod('console\components\SyncScriptsAction', 'getRepo');
+        $method->invokeArgs($syncScriptsAction, array());
     }
    public function testPerformActionForSyncScripts()
     {

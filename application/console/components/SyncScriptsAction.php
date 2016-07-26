@@ -7,11 +7,13 @@ use common\models\Job;
 use common\models\Build;
 use common\models\OperationQueue;
 use common\components\JenkinsUtils;
+use console\components\ActionCommon;
+use common\components\Appbuilder_logger;
 
 use common\helpers\Utils;
 use yii\web\ServerErrorHttpException;
 
-class SyncScriptsAction
+class SyncScriptsAction  extends ActionCommon
 {
     private $cronController;
     private $git;
@@ -32,61 +34,84 @@ class SyncScriptsAction
     public function performAction()
     {
         $this->prefix = Utils::getPrefix();
+        $tokenSemaphore = sem_get(14);
+        $tokenValue = shm_attach(15, 100);
 
-        $this->git = $this->getRepo();
-        $viewPath = $this->cronController->getViewPath();
-        $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
-        $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
-        $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
-
-        // When using Codecommit, the user portion in the url has to be changed
-        // to the User associated with the AppBuilder SSH Key
-        $gitSubstPatterns = [ '/ssh:\/\/([0-9A-Za-z]*)@git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit",
-                              '/ssh:\/\/git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit" ];
-
-        $jobs = [];
-        // TODO: Apps should be pulled from a database?
-        $apps = ['scriptureappbuilder' => 1];
-        $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
-        $dataScriptDir = $viewPath.DIRECTORY_SEPARATOR."scripts";
-        $utilitiesSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR."utilities";
-        $utilitiesDestDir = $localScriptDir . DIRECTORY_SEPARATOR . "utilities";
-        $changesString = "";
-        $totalAdded = 0;
-        $totalUpdated = 0;
-        $totalRemoved = 0;
-        $this->recurse_copy($utilitiesSourceDir, $utilitiesDestDir);
-        foreach (array_keys($apps) as $app) {
-            $appSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR.$app;
-            $appDestDir = $localScriptDir . DIRECTORY_SEPARATOR .$app;
-            $this->recurse_copy($appSourceDir, $appDestDir);
+        if (!$this->try_lock($tokenSemaphore, $tokenValue)){
+            echo "[$this->prefix] SyncScriptsAction: Semaphore Blocked" . PHP_EOL;
+            return;
         }
-        foreach (Job::find()->each(50) as $job)
-        {
-            list($updatesString, $added, $updated) = $this->createBuildScript($job, $gitSubstPatterns, $localScriptDir);
-            $changesString = $changesString . $updatesString;
-            $totalAdded = $totalAdded + $added;
-            $totalUpdated = $totalUpdated + $updated;
-            list($updatesString2, $added2, $updated2) = $this->createPublishScript($job, $gitSubstPatterns, $localScriptDir);
-            $changesString = $changesString . $updatesString2;
-            $totalAdded = $totalAdded + $added2;
-            $totalUpdated = $totalUpdated + $updated2;
+        try {
+            $this->git = $this->getRepo();
+            $viewPath = $this->cronController->getViewPath();
+            $repoLocalPath = \Yii::$app->params['buildEngineRepoLocalPath'];
+            $scriptDir = \Yii::$app->params['buildEngineRepoScriptDir'];
+            $appBuilderGitSshUser = \Yii::$app->params['appBuilderGitSshUser'];
 
-            $jobs[$job->name()] = 1;
-        }
+            // When using Codecommit, the user portion in the url has to be changed
+            // to the User associated with the AppBuilder SSH Key
+            $gitSubstPatterns = [ '/ssh:\/\/([0-9A-Za-z]*)@git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit",
+                                  '/ssh:\/\/git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit" ];
 
-        // Remove Scripts that are not in the database
-        $globFileName = "*_*.groovy";
-        foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)
-        {
-            list($removedString, $removed) = $this->removeScriptIfNoJobRecord($scriptFile, $jobs);
-            $changesString = $changesString . $removedString;
-            $totalRemoved = $totalRemoved + $removed;
+            $jobs = [];
+            // TODO: Apps should be pulled from a database?
+            $apps = ['scriptureappbuilder' => 1];
+            $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
+            $dataScriptDir = $viewPath.DIRECTORY_SEPARATOR."scripts";
+            $utilitiesSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR."utilities";
+            $utilitiesDestDir = $localScriptDir . DIRECTORY_SEPARATOR . "utilities";
+            $changesString = "";
+            $totalAdded = 0;
+            $totalUpdated = 0;
+            $totalRemoved = 0;
+            $this->recurse_copy($utilitiesSourceDir, $utilitiesDestDir);
+            foreach (array_keys($apps) as $app) {
+                $appSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR.$app;
+                $appDestDir = $localScriptDir . DIRECTORY_SEPARATOR .$app;
+                $this->recurse_copy($appSourceDir, $appDestDir);
+            }
+            foreach (Job::find()->each(50) as $job)
+            {
+                list($updatesString, $added, $updated) = $this->createBuildScript($job, $gitSubstPatterns, $localScriptDir);
+                $changesString = $changesString . $updatesString;
+                $totalAdded = $totalAdded + $added;
+                $totalUpdated = $totalUpdated + $updated;
+                list($updatesString2, $added2, $updated2) = $this->createPublishScript($job, $gitSubstPatterns, $localScriptDir);
+                $changesString = $changesString . $updatesString2;
+                $totalAdded = $totalAdded + $added2;
+                $totalUpdated = $totalUpdated + $updated2;
+
+                $jobs[$job->name()] = 1;
+            }
+
+            // Remove Scripts that are not in the database
+            $globFileName = "*_*.groovy";
+            foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)
+            {
+                list($removedString, $removed) = $this->removeScriptIfNoJobRecord($scriptFile, $jobs);
+                $changesString = $changesString . $removedString;
+                $totalRemoved = $totalRemoved + $removed;
+            }
+            $commitString = "cron add=" . $totalAdded . " update =" . $totalUpdated . " delete=" . $totalRemoved . PHP_EOL;
+            $commitString = $commitString . $changesString;
+            echo "[$this->prefix] $commitString";
+            $this->applyUpdates($commitString);
         }
-        $commitString = "cron add=" . $totalAdded . " update =" . $totalUpdated . " delete=" . $totalRemoved . PHP_EOL;
-        $commitString = $commitString . $changesString;
-        echo "[$this->prefix] $commitString";
-        $this->applyUpdates($commitString);
+        catch (\Exception $e) {
+            echo "Caught exception".PHP_EOL;
+            echo $e->getMessage() .PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
+            $logger = new Appbuilder_logger("SyncScriptsAction");
+            $logException = [
+            'problem' => 'Caught exception',
+                ];
+            $logger->appbuilderExceptionLog($logException, $e);
+         }
+         finally {
+            $this->release($tokenSemaphore, $tokenValue);
+         }
+
     }
     private function recurse_copy($src,$dst) {
         $dir = $this->fileUtil->opendir($src);

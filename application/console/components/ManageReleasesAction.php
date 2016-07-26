@@ -24,22 +24,46 @@ class ManageReleasesAction extends ActionCommon
     }
     public function performAction()
     {
-        $logger = new Appbuilder_logger("ManageReleasesAction");
-        $complete = Release::STATUS_COMPLETED;
-        foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
-            $build = $release->build;
-            $job = $build->job;
-            echo "cron/manage-releases: Job=$job->id, ". PHP_EOL;
-            $logReleaseDetails = $this->getlogReleaseDetails($release);
-            $logger->appbuilderWarningLog($logReleaseDetails);
-            switch ($release->status){
-                case Release::STATUS_INITIALIZED:
-                    $this->tryStartRelease($release);
-                    break;
-                case Release::STATUS_ACTIVE:
-                    $this->checkReleaseStatus($release);
-                    break;
+        $tokenSemaphore = sem_get(8);
+        $tokenValue = shm_attach(9, 100);
+
+        if (!$this->try_lock($tokenSemaphore, $tokenValue)){
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] ManageReleasesAction: Semaphore Blocked" . PHP_EOL;
+            return;
+        }
+        try {
+            $logger = new Appbuilder_logger("ManageReleasesAction");
+            $complete = Release::STATUS_COMPLETED;
+            foreach (Release::find()->where("status!='$complete'")->each(50) as $release){
+                $build = $release->build;
+                $job = $build->job;
+                echo "cron/manage-releases: Job=$job->id, ". PHP_EOL;
+                $logReleaseDetails = $this->getlogReleaseDetails($release);
+                $logger->appbuilderWarningLog($logReleaseDetails);
+                switch ($release->status){
+                    case Release::STATUS_INITIALIZED:
+                        $this->tryStartRelease($release);
+                        break;
+                    case Release::STATUS_ACTIVE:
+                        $this->checkReleaseStatus($release);
+                        break;
+                }
             }
+        }
+        catch (\Exception $e) {
+            echo "Caught exception".PHP_EOL;
+            echo $e->getMessage() .PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
+            $logger = new Appbuilder_logger("ManageBuildsAction");
+            $logException = [
+            'problem' => 'Caught exception',
+                ];
+            $logger->appbuilderExceptionLog($logException, $e);
+         }
+        finally {
+            $this->release($tokenSemaphore, $tokenValue);
         }
     }
     /*===============================================  logging ============================================*/
