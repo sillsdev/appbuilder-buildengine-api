@@ -141,9 +141,9 @@ class ManageBuildsAction extends ActionCommon
                                 OperationQueue::findOrCreate($task, $build_id, null);
                                 break;
                         }
-                        $task = OperationQueue::FINDEXPIREDBUILDS;
-                        $job_id = $job->id;
-                        OperationQueue::findOrCreate($task, $job_id, null);
+//                        $task = OperationQueue::FINDEXPIREDBUILDS;
+//                        $job_id = $job->id;
+//                        OperationQueue::findOrCreate($task, $job_id, null);
                     }
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);

@@ -104,13 +104,13 @@ class ManageBuildActionTest extends UnitTestBase
         $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after failure");
         $this->assertEquals("FAILURE", $build->result, " *** Result should be Failure after failed build");
         $queuedRecords = OperationQueue::find()->count();
-        $this->assertEquals(6, $queuedRecords, " *** Queued record count should be ");
+        $this->assertEquals(3, $queuedRecords, " *** Queued record count should be ");
         $queuedErrorRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVEERRORTOS3])->count();
         $this->assertEquals(2, $queuedErrorRecords, " *** SAVEERRORTOS3 Count should be 2 ");
         $queuedSaveRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVETOS3])->count();
         $this->assertEquals(1, $queuedSaveRecords, " *** SAVETOS3 Count should be 1 ");
-        $queuedFindExpiredRecords = OperationQueue::find()->where(['operation' => OperationQueue::FINDEXPIREDBUILDS])->count();
-        $this->assertEquals(3, $queuedFindExpiredRecords, " *** FINDEXPIREDBUILDS Count should be 3 ");
+//        $queuedFindExpiredRecords = OperationQueue::find()->where(['operation' => OperationQueue::FINDEXPIREDBUILDS])->count();
+//        $this->assertEquals(3, $queuedFindExpiredRecords, " *** FINDEXPIREDBUILDS Count should be 3 ");
     }
     public function testNextVersion()
     {
