@@ -54,6 +54,22 @@ composer:
         - data
     working_dir: /data
     command: composer install --prefer-dist
+cli:
+    image: silintl/php-cli:latest
+    container_name: cli
+    volumes_from:
+        - data
+    volumes:
+        - /tmp:/composer
+    links:
+        - db
+        - testDb
+    working_dir: /data
+    user: "${DOCKER_UIDGID}"
+    env_file:
+        - ./common.env
+        - ./local.env
+    command: ["true"]
 yiimigrate:
     image: silintl/php-cli:latest
     container_name: yiimigrate

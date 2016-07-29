@@ -121,6 +121,6 @@ Vagrant.configure(2) do |config|
      cd /vagrant
 
      # Start services
-     DOCKER_UIDGID="0:0" docker-compose up -d
+     DOCKER_UIDGID="0:0" make
   SHELL
 end
