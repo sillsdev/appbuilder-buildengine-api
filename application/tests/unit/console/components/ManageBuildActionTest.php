@@ -46,8 +46,8 @@ class ManageBuildActionTest extends UnitTestBase
         $buildsAction = new ManageBuildsAction();
         $params = [];
         $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'startBuildIfNotBuilding');
-        $jenkinsBuild = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params, 5, 1));
-        $this->assertNull($jenkinsBuild, " *** Build should be null if build in progress");
+        $lastbuildNumber = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params));
+        $this->assertNull($lastbuildNumber, " *** Build should be null if build in progress");
     }
     public function testStartBuildNotBuilding()
     {
@@ -57,20 +57,13 @@ class ManageBuildActionTest extends UnitTestBase
         $buildsAction = new ManageBuildsAction();
         $params = [];
         $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'startBuildIfNotBuilding');
-        $jenkinsBuild = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params, 5, 1));
-        $this->assertNotNull($jenkinsBuild, " *** Build should not be null if build not in progress");
-        $this->assertEquals(2, $jenkinsBuild->getNumber(), " *** Build number increments by one");
+        $lastbuildNumber = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params));
+        $this->assertNotNull($lastbuildNumber, " *** LastBuildNumber should not be null if build not in progress");
+        $this->assertEquals(1, $lastbuildNumber, " *** LastBuildNumber should be the same as last build");
     }
     public function testStartBuildTimeout()
     {
-        $this->setContainerObjects();
-        $jenkins = new MockJenkins();
-        $jenkinsJob = new MockJenkinsJob($jenkins, false, 20, 1, "testJob3");
-        $buildsAction = new ManageBuildsAction();
-        $params = [];
-        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'startBuildIfNotBuilding');
-        $jenkinsBuild = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params, 2, 1));
-        $this->assertNull($jenkinsBuild, " *** Build should be null if timed out");
+        // No longer a timeout.  Leaving here to help with git diffs.
     }
     public function testStartBuildFirstBuild()
     {
@@ -80,9 +73,31 @@ class ManageBuildActionTest extends UnitTestBase
         $buildsAction = new ManageBuildsAction();
         $params = [];
         $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'startBuildIfNotBuilding');
-        $jenkinsBuild = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params, 5, 1));
-        $this->assertNotNull($jenkinsBuild, " *** Build should not be null if build not in progress");
-        $this->assertEquals(1, $jenkinsBuild->getNumber(), " *** Build number increments by one");
+        $lastbuildNumber = $method->invokeArgs($buildsAction, array( $jenkinsJob, $params, 5, 1));
+        $this->assertNotNull($lastbuildNumber, " *** Build should not be null if build not in progress");
+        $this->assertEquals(0, $lastbuildNumber, " *** LastBuildNumber should be 0");
+    }
+    public function testCheckStartedBuildNotStarted()
+    {
+        $this->setContainerObjects();
+        $buildsAction = new ManageBuildsAction();
+        $build = Build::findOne(['id' => 22]);
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'checkBuildStarted');
+        $method->invokeArgs($buildsAction, array($build));
+        $build = Build::findOne(['id' => 22]);
+        $this->assertEquals(1, $build->build_number, " *** Build was not started so build_number should remain 1");
+        $this->assertEquals(Build::STATUS_ACCEPTED, $build->status, " *** Build was not started so status not changed");
+    }
+    public function testCheckStartedBuildStarted()
+    {
+        $this->setContainerObjects();
+        $buildsAction = new ManageBuildsAction();
+        $build = Build::findOne(['id' => 23]);
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'checkBuildStarted');
+        $method->invokeArgs($buildsAction, array($build));
+        $build = Build::findOne(['id' => 23]);
+        $this->assertEquals(1, $build->build_number, " *** Build was started so build_number should increment to 1");
+        $this->assertEquals(Build::STATUS_ACTIVE, $build->status, " *** Build was started so status updated");
     }
     public function testPerformAction()
     {
@@ -90,7 +105,7 @@ class ManageBuildActionTest extends UnitTestBase
         $buildsAction = new ManageBuildsAction();
         $buildsAction->performAction();
         $build = Build::findOne(['id' => 13]);
-        $this->assertEquals(Build::STATUS_ACTIVE, $build->status, " *** Status should be active");
+        $this->assertEquals(Build::STATUS_ACCEPTED, $build->status, " *** Status should be accepted");
         $build = Build::findOne(['id' => 14]);
         $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be postprocessing after successful completion");
         $this->assertEquals("SUCCESS", $build->result, " *** Result should be Success after good successful completion");

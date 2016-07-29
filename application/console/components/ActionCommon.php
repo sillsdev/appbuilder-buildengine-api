@@ -6,63 +6,60 @@ use JenkinsApi\Item\Job as JenkinsJob;
 
 class ActionCommon
 {
-     /**
-     * We can only get the build_number until the build has actually started.  So, if there is currently
-     * a build running, wait until the next cycle before trying.
+    /**
+     * If there isn't a build running, start a new build and return the last build number so that we can check when
+     * the new build is active (i.e. current build > last build).  If currently building, return null (and let caller
+     * try again later).
      * @param JenkinsJob $job
      * @param array $params
-     * @return JenkinsBuild|null
+     * @return last_build_number|null
      */
-    protected function startBuildIfNotBuilding($job, $params = array(), $timeoutSeconds = 60, $checkIntervalSeconds = 2)
+    protected function startBuildIfNotBuilding($job, $params = array())
     {
         // Note: JenkinsJob::isCurrentlyBuilding doesn't check for getLastBuild return null :-(
-        $startTime = time();
-        $build = null;
+        $lastBuildNumber = null;
         if (!$job->getLastBuild())
         {
             echo "...not built at all, so launch a build". PHP_EOL;
             $job->launch($params);
-            $lastBuild = null;
-            while ((time() < $startTime + $timeoutSeconds)
-                    && !$lastBuild)
-            {
-                sleep($checkIntervalSeconds);
-                $job->refresh();
-                $lastBuild = $job->getLastBuild();
-            }
-            $build = $lastBuild;
+            $lastBuildNumber = 0; // all real builds start > 0
         }
         else if (!$job->isCurrentlyBuilding())
         {
             echo "...not building, so launch a build". PHP_EOL;
 
             $lastBuild = $job->getLastBuild();
-            $lastNumber = $lastBuild->getNumber();
+            $lastBuildNumber = $lastBuild->getNumber();
 
             $job->launch($params);
-
-            $lastBuild = $job->getLastBuild();
-            while ((time() < $startTime + $timeoutSeconds)
-                && ($lastBuild->getNumber() == $lastNumber))
-            {
-                sleep($checkIntervalSeconds);
-                $job->refresh();
-                $lastBuild = $job->getLastBuild();
-            }
-            if ($lastBuild->getNumber() != $lastNumber)
-            {
-                $build = $lastBuild;
-            }
         }
-        if (is_null($build))
+        if (is_null($lastBuildNumber))
         {
-            echo '...There was no lastbuild for this job so $build is null {$job->getLastBuild()} '.  PHP_EOL;
+            echo '...is currentlyBuilding so wait'.  PHP_EOL;
         }
         else
         {
-            echo "...is building now. Returning build ". $build->getNumber() . PHP_EOL;
+            echo "...is launched. Returning last_build=". $lastBuildNumber . PHP_EOL;
         }
-        return $build;
+        return $lastBuildNumber;
+    }
+    /**
+     * If a new build has started since $lastBuildNumber, then return the value, else return null.
+     * @param JenkinsJob $job
+     * @param integer $lastBuildNumber
+     * @return integer build_number|null
+     */
+    protected function getStartedBuildNumber($job, $lastBuildNumber)
+    {
+        $build = $job->getLastBuild();
+        if (!is_null($build)) {
+            $buildNumber = $build->getNumber();
+            if ($buildNumber > $lastBuildNumber) {
+                return $buildNumber;
+            }
+        }
+
+        return null;
     }
     function try_lock($tokenSemaphore, $tokenValue) {
         sem_acquire($tokenSemaphore);

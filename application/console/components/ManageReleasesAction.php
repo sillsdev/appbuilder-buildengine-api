@@ -45,6 +45,9 @@ class ManageReleasesAction extends ActionCommon
                     case Release::STATUS_INITIALIZED:
                         $this->tryStartRelease($release);
                         break;
+                    case Release::STATUS_ACCEPTED:
+                        $this->checkReleaseStarted($release);
+                        break;
                     case Release::STATUS_ACTIVE:
                         $this->checkReleaseStatus($release);
                         break;
@@ -112,10 +115,11 @@ class ManageReleasesAction extends ActionCommon
             if (!is_null($jenkinsJob)) {
                 $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path);
 
-                if ($jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters)){
-                    $release->build_number = $jenkinsBuild->getNumber();
-                    echo "[$prefix] Started Build $release->build_number Channel: $release->channel APK: $artifactUrl Artifact: $path". PHP_EOL;
-                    $release->status = Release::STATUS_ACTIVE;
+                $lastBuildNumber = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
+                if (!is_null($lastBuildNumber) ){
+                    $release->build_number = $lastBuildNumber;
+                    echo "[$prefix] Launched Build LastBuildNumber: $release->build_number Channel: $release->channel APK: $artifactUrl Artifact: $path". PHP_EOL;
+                    $release->status = Release::STATUS_ACCEPTED;
                     $release->save();
                 }
             }
@@ -138,7 +142,36 @@ class ManageReleasesAction extends ActionCommon
             return null;
         }
     }
+    /**
+     * @param Release $release
+     */
+    private function checkReleaseStarted($release)
+    {
+        $logger = new Appbuilder_logger("ManageReleasesAction");
+        try {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] checkReleaseStarted: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
 
+            $jenkins = $this->jenkinsUtils->getPublishJenkins();
+            $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
+            if (!is_null($jenkinsJob)) {
+
+                $buildNumber = $this->getStartedBuildNumber($jenkinsJob, $release->build_number);
+                if (!is_null($buildNumber) ){
+                    $release->build_number = $buildNumber;
+                    echo "[$prefix] Started Build BuildNumber: $release->build_number Channel: $release->channel". PHP_EOL;
+                    $release->status = Release::STATUS_ACTIVE;
+                    $release->save();
+                }
+            }
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] checkReleaseStarted: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = $this->getlogReleaseDetails($release);
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
+
+    }
     /**
      *
      * @param Release $release

@@ -16,6 +16,7 @@ class Release extends ReleaseBase implements Linkable
 {
     
     const STATUS_INITIALIZED = 'initialized';
+    const STATUS_ACCEPTED = 'accepted';
     const STATUS_ACTIVE = 'active';
     const STATUS_EXPIRED = 'expired';
     const STATUS_COMPLETED = 'completed';
@@ -27,6 +28,9 @@ class Release extends ReleaseBase implements Linkable
      */
     public $validStatusTransitions = [
         self::STATUS_INITIALIZED => [
+            self::STATUS_ACCEPTED,
+        ],
+        self::STATUS_ACCEPTED => [
             self::STATUS_ACTIVE,
         ],
         self::STATUS_ACTIVE => [
@@ -63,7 +67,8 @@ class Release extends ReleaseBase implements Linkable
             ],
             [
                 'status', 'in', 'range' => [ 
-                    self::STATUS_ACTIVE, 
+                    self::STATUS_ACTIVE,
+                    self::STATUS_ACCEPTED,
                     self::STATUS_COMPLETED,
                     self::STATUS_EXPIRED,
                     self::STATUS_INITIALIZED,

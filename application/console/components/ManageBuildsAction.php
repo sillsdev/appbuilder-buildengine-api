@@ -43,6 +43,9 @@ class ManageBuildsAction extends ActionCommon
                     case Build::STATUS_INITIALIZED:
                         $this->tryStartBuild($job, $build);
                         break;
+                    case Build::STATUS_ACCEPTED:
+                        $this->checkBuildStarted($build);
+                        break;
                     case Build::STATUS_ACTIVE:
                         $this->checkBuildStatus($build);
                         break;
@@ -81,11 +84,11 @@ class ManageBuildsAction extends ActionCommon
             if (!is_null($jenkinsJob)) {
                 $versionCode = $this->getNextVersionCode($job, $build);
                 $parameters = array("VERSION_CODE" => $versionCode);
-                $jenkinsBuild = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
-                if (!is_null($jenkinsBuild)){
-                    $build->build_number = $jenkinsBuild->getNumber();
-                    echo "[$prefix] Started Build $build->build_number". PHP_EOL;
-                    $build->status = Build::STATUS_ACTIVE;
+                $lastBuildNumber = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
+                if (!is_null($lastBuildNumber)){
+                    $build->build_number = $lastBuildNumber;
+                    echo "[$prefix] Launched Build LastBuildNumber=$build->build_number". PHP_EOL;
+                    $build->status = Build::STATUS_ACCEPTED;
                     $build->save();
                 }
             }
@@ -106,6 +109,33 @@ class ManageBuildsAction extends ActionCommon
             $task = OperationQueue::UPDATEJOBS;
             OperationQueue::findOrCreate($task, null, null);
             return null;
+        }
+    }
+    /**
+     * @param Build $build
+     */
+    public function checkBuildStarted($build){
+        $logger = new Appbuilder_logger("ManageBuildsAction");
+        try {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] checkBuildStarted: Starting Build of ".$build->jobName(). PHP_EOL;
+
+            $jenkins = $this->jenkinsUtils->getJenkins();
+            $jenkinsJob = $this->getJenkinsJob($jenkins, $build);
+            if (!is_null($jenkinsJob)) {
+                $buildNumber = $this->getStartedBuildNumber($jenkinsJob, $build->build_number);
+                if (!is_null($buildNumber)){
+                    $build->build_number = $buildNumber;
+                    echo "[$prefix] Started Build: BuildNumber=$build->build_number". PHP_EOL;
+                    $build->status = Build::STATUS_ACTIVE;
+                    $build->save();
+                }
+            }
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] checkBuildStarted: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = JenkinsUtils::getlogBuildDetails($build);
+            $logger->appbuilderExceptionLog($logException, $e);
         }
     }
     /**
