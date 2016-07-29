@@ -75,11 +75,12 @@ Vagrant.configure(2) do |config|
 
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM: database needs more memory
-    vb.memory = "1024"
+    vb.memory = "2048"
 
     # A fix for speed issues with DNS resolution:
     # http://serverfault.com/questions/453185/vagrant-virtualbox-dns-10-0-2-3-not-working?rq=1
-    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    #vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
 
     # Set the timesync threshold to 59 seconds, instead of the default 20 minutes.
     # 59 seconds chosen to ensure SimpleSAML never gets too far out of date.
