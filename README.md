@@ -3,6 +3,11 @@ This is the Web Service interface for the SIL App Publishing Service. BuildEngin
 and transforms the data into Jenkins Job DSL configuration shared in a git Repository shared with
 the Jenkins build infrastructure (see [docker-appbuilder-jenkins](https://github.com/sillsdev/docker-appbuilder-jenkins)).
 
+## Build Status ##
+Develop: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=develop)](https://codeship.com/projects/155333)
+Master: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=master)](https://codeship.com/projects/155333)
+
+
 ## API Specs ##
 https://docs.google.com/a/sil.org/document/d/1FtHLCEOvOuSnBC1ryeEUH3Vx2Y5XqF_WhpkPpjWteqs/edit?usp=sharing
 
