@@ -5,6 +5,7 @@ the Jenkins build infrastructure (see [docker-appbuilder-jenkins](https://github
 
 ## Build Status ##
 Develop: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=develop)](https://codeship.com/projects/155333)
+
 Master: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=master)](https://codeship.com/projects/155333)
 
 
