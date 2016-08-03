@@ -37,16 +37,18 @@ class S3Test extends UnitTestBase
     }
 
     // tests
-    public function testSaveError()
+    public function testSaveConsoleText()
     {
 //        ParamFixture::setParams();
         $this->setContainerObjects();
         $jenkins = new MockJenkins();
         MockS3Client::clearGlobals();
         $s3 = new S3();
-        $publicUrl = $s3->saveErrorToS3("build_scriptureappbuilder_3", "1", $jenkins);
+        list($publicUrl, $s3Key) = $s3->saveConsoleTextToS3("build_scriptureappbuilder_3", "1", $jenkins);
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_3/1/consoleText";
-        $this->assertEquals($expected, $publicUrl, " *** Mismatching sent emails");
+        $this->assertEquals($expected, $publicUrl, " *** Mismatching console text URL");
+        $expected = "testing/jobs/build_scriptureappbuilder_3/1/consoleText";
+        $this->assertEquals($expected, $s3Key, " *** Mismatching console text key");
         $this->assertEquals(1, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
         $expected = "Contents of http://127.0.0.1/job/build_scriptureappbuilder_3/1/consoleText";
         $put = MockS3Client::$puts[0];
@@ -65,16 +67,23 @@ class S3Test extends UnitTestBase
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
         $extraContent = [ "play-listing/index.html"  => "<html></html>", "play-listing/manifest.json" => "{}" ];
         $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
-        $this->assertEquals(16, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
+        $this->assertEquals(17, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Kuna_Gospels-1.0.apk";
         $this->assertEquals($expected, $build->apk(), " *** Public URL for APK doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/about.txt";
         $this->assertEquals($expected, $build->about(), " *** Public URL for About doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/play-listing/index.html";
         $this->assertEquals($expected, $build->playListing(), " *** Public URL for Play Listing doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/version_code.txt";
+        $this->assertEquals($expected, $build->versionCode(), " *** Public URL for Version Code doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/package_name.txt";
+        $this->assertEquals($expected, $build->packageName(), " *** Public URL for Package Name doesn't match");
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/consoleText";
+        $this->assertEquals($expected, $build->consoleText(), " *** Public URL for Console Text doesn't match");
+
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/";
         $this->assertEquals($expected, $build->artifact_url_base, " *** Artifact URL Base doesn't match");
-        $expected = "about.txt,Kuna_Gospels-1.0.apk,package_name.txt,version_code.txt,play-listing/index.html";
+        $expected = "about.txt,Kuna_Gospels-1.0.apk,package_name.txt,version_code.txt,play-listing/index.html,consoleText";
         $this->assertEquals($expected, $build->artifact_files, "*** Artifact files doesn't match");
         codecept_debug("artifact_url_base=" . $build->artifact_url_base);
         codecept_debug("artiface_files=" . $build->artifact_files);

@@ -39,7 +39,7 @@ class S3 {
         $client->registerStreamWrapper();
         return $client;
     }
-    public function saveErrorToS3($jobName, $buildNumber, $jenkins)
+    public function saveConsoleTextToS3($jobName, $buildNumber, $jenkins)
     {
         $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $jobName, $buildNumber);
         $s3Url = self::getS3UrlBaseByNameNumber($jobName, $buildNumber).basename($errorUrl);
@@ -55,7 +55,7 @@ class S3 {
         ]);
 
         $publicUrl = $this->s3Client->getObjectUrl($s3bucket, $s3key);
-        return $publicUrl;
+        return array($publicUrl, $s3key);
     }
 
     /***
@@ -106,6 +106,11 @@ class S3 {
                 $build->handleArtifact($fileS3Key, $content);
             }
         }
+        $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+        $jenkins = $jenkinsUtils->getJenkins();
+        list($s3ErrorUrl, $s3Key) = $this->saveConsoleTextToS3($build->jobName(), $build->build_number, $jenkins);
+        $build->handleArtifact($s3Key, null);
+
     }
     private function getFileType($fileName) {
         $info = pathinfo($fileName);

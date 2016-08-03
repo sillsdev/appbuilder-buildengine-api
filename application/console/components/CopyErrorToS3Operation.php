@@ -35,7 +35,7 @@ class CopyErrorToS3Operation implements OperationInterface
             if ($release) {
                 $jenkins = $jenkinsUtils->getPublishJenkins();
                 $s3 = new S3();
-                $s3ErrorUrl = $s3->saveErrorToS3($release->jobName(), $release->build_number, $jenkins);
+                list($s3ErrorUrl, $s3Key) = $s3->saveConsoleTextToS3($release->jobName(), $release->build_number, $jenkins);
                 $release->error = $s3ErrorUrl;
                 $release->save();
             }
@@ -44,7 +44,7 @@ class CopyErrorToS3Operation implements OperationInterface
             if ($build) {
                 $jenkins = $jenkinsUtils->getJenkins();
                 $s3 = new S3();
-                $s3ErrorUrl = $s3->saveErrorToS3($build->jobName(), $build->build_number, $jenkins);
+                list($s3ErrorUrl, $s3Key) = $s3->saveConsoleTextToS3($build->jobName(), $build->build_number, $jenkins);
                 $build->error = $s3ErrorUrl;
                 $build->save();
             }
