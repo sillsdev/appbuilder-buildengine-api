@@ -24,6 +24,10 @@ COPY build/logentries.all.crt /opt/ssl/logentries.all.crt
 COPY build/php.ini /etc/php5/apache2/
 COPY build/php.ini /etc/php5/cli/
 
+# Copy logrotate file to manage logs
+COPY build/sab /etc/logrotate.d
+RUN chmod 0644 /etc/logrotate.d/sab
+
 # It is expected that /data is = application/ in project folder
 COPY application/ /data/
 
