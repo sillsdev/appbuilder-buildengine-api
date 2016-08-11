@@ -25,10 +25,6 @@ def parseOptions()
       cmd_options[:specId]= v
     end
   
-    opts.on('--app_name NAME', "Required: Specifies the name of the resulting app")  do |v|
-      cmd_options[:appName]= v
-    end
-  
     opts.on('--project_name NAME', "Required: Appended to org.bloomlibrary.books. to created the project name of the app")  do |v|
       cmd_options[:projectName]= v
     end
@@ -157,7 +153,7 @@ def get_fontString(fontSet)
   return fontString  
 end
 
-def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet)
+def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title)
   fontString = get_fontString(fontSet)
 
   #Set the version number of the app to the current RAB release number
@@ -168,10 +164,10 @@ def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet)
   keyOptions = "-ks \"#{$options[:ks]}\" -ksp \"#{$options[:ksp]}\" -ka \"#{$options[:ka]}\" -kap \"#{$options[:kap]}\""
   versionOptions = "-vc #{$options[:vc]} -vn #{versionNumber}"
   formattingOptions = "-l #{vernacularIsoCode} #{fontString} -cs \"#{colorScheme}\" "
-  projectOptions = "\"#{$options[:appName]}\" -p #{project}  -fp apk.output=\"#{$options[:destination]}/#{$options[:projectName]}\" -fp app.def=\"#{projectDir}\""
+  projectOptions = "\"#{title}\" -p #{project}  -fp apk.output=\"#{$options[:destination]}/#{$options[:projectName]}\" -fp app.def=\"#{projectDir}\""
   rabCommand = "reading-app-builder -new -build -n #{projectOptions} #{formattingOptions} #{keyOptions} #{versionOptions} #{bookFileList}"
   logEntry ("Begin building app")
-  logEntry ("  App Name: #{$options[:appName]}")
+  logEntry ("  App Name: #{title}")
   logEntry ("  Project: #{project}")
   logEntry ("  Version Number: #{versionNumber}")
   logEntry ("  Version Code: #{$options[:vc]}")
@@ -240,16 +236,29 @@ def checkForRequiredOptions()
     logEntry("ERROR: spec_id parameter is required")
     exit 255
   end
-  if ($options[:appName].empty?)
-    logEntry("ERROR: app_name parameter is required")
-    exit 255
-  end
   if ($options[:projectName].empty?)
     logEntry("ERROR: project_name parameter is required")
     exit 255
   end  
 end
 
+def getAppDetails(isoCode)
+  appDetails = Parse::Query.new('appDetailsInLanguage').tap do |q|
+    q.related_to("details", Parse::Pointer.new({
+    "className" => "appSpecification",
+    "androidStoreLanguageIso" => "#{isoCode}",
+    "objectId" => "#{$options[:specId]}"
+    }))
+  end.get
+
+  appDetailEntry = appDetails[0]
+  if (appDetailEntry.nil?)
+    logEntry("ERROR: appDetails not found for app")
+    exit 255
+  end
+  ap appDetailEntry
+  return appDetailEntry
+end
 #use keys below to access main bloom library
 #$parseApiKey = 'P6dtPT5Hg8PmBCOxhyN9SPmaJ8W4DcckyW0EZkIx'
 #$parseApplicationId = 'R6qNTeumQXjJCMutAJYAwPtip1qBulkFyLefkCE5'
@@ -261,7 +270,6 @@ $parseApplicationId = 'yrXftBF6mbAuVu3fO6LnhCJiHxZPIdE7gl1DUVGR'
 $parseHost = 'https://api.parse.com'
 $parsePath = '/1'
 $destination = 'books'
-$appName = ''
 $projectName = ''
 $keyStore = "KeyStore"
 $keyStorePassword = "password"
@@ -278,7 +286,6 @@ $options = { :specId => $specId,
              :parseHost => $parseHost,
              :parsePath => $parsePath,
              :destination => $destination,
-             :appName => $appName,
              :projectName => $projectName,
              :ks => $keyStore,
              :ksp => $keyStorePassword,
@@ -291,10 +298,17 @@ parseOptions()
 client = Parse.init :application_id => $options[:parseApplicationId],
                :api_key => $options[:parseApiKey]
 
-#View all appSpecs               
-#myAppSpecs = Parse::Query.new('appSpecification').get
-#ap myAppSpecs
-#exit
+#View all appSpecs
+=begin
+myAppSpecs = Parse::Query.new('appSpecification').get
+ap myAppSpecs
+puts "App Details"
+myAppDetails = Parse::Query.new('appDetailsInLanguage').get
+ap myAppDetails
+puts "all books"
+myAllBooks = Parse::Query.new('booksInApp').get
+ap myAllBooks
+=end
 
 # Make the destination directory if it doesn't exist
 destDir = makeDestDir('books')
@@ -305,7 +319,6 @@ $logFile = File.join(logDir, 'appbuildlog.txt')
 open($logFile, 'w') { |f|
   f.puts "Start build of #{$options[:appName]} app"
 }
-
 checkForRequiredOptions()
 
 # Get the app specification entry for the id entered
@@ -328,7 +341,15 @@ if (colorScheme.nil?)
   logEntry("WARNING: Color Scheme not found in App Specification Entry, defaulting to Dark Blue")
   colorScheme = "Dark Blue"
 end
-logEntry("appSpecification retrieved. Color Scheme: [#{colorScheme}] ISO Code: [#{vernacularIsoCode}]")
+defaultStoreLanguageIso = appSpecification['defaultStoreLanguageIso']
+storeDetails = getAppDetails(defaultStoreLanguageIso)
+appTitle = storeDetails['title']
+if (appTitle.nil?)
+  logEntry("ERROR: App Title not found in App Details")
+  exit 255
+end
+
+logEntry("appSpecification retrieved. Title: [#{appTitle}] Color Scheme: [#{colorScheme}] ISO Code: [#{vernacularIsoCode}]")
 
 # Retrieve the books associated with the app specifcation id
 booksInApps = getBooksInApp()
@@ -351,7 +372,7 @@ bookDirList.each { |bookDir|
 }
 
 #Build the app
-rabCommand = buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet)
+rabCommand = buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, appTitle)
 cmdStatus = runCommand(rabCommand)
 if (cmdStatus == 0)
   logEntry ("App build completed successfully")
