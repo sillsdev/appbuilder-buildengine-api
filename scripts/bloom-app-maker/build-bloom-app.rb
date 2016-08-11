@@ -164,8 +164,8 @@ def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title
   keyOptions = "-ks \"#{$options[:ks]}\" -ksp \"#{$options[:ksp]}\" -ka \"#{$options[:ka]}\" -kap \"#{$options[:kap]}\""
   versionOptions = "-vc #{$options[:vc]} -vn #{versionNumber}"
   formattingOptions = "-l #{vernacularIsoCode} #{fontString} -cs \"#{colorScheme}\" "
-  projectOptions = "\"#{title}\" -p #{project}  -fp apk.output=\"#{$options[:destination]}/#{$options[:projectName]}\" -fp app.def=\"#{projectDir}\""
-  rabCommand = "reading-app-builder -new -build -n #{projectOptions} #{formattingOptions} #{keyOptions} #{versionOptions} #{bookFileList}"
+  projectOptions = "-n \"#{title}\" -p #{project}  -fp apk.output=\"#{$options[:destination]}/#{$options[:projectName]}\" -fp app.def=\"#{projectDir}\""
+  rabCommand = "reading-app-builder -new -build #{projectOptions} #{formattingOptions} #{keyOptions} #{versionOptions} #{bookFileList}"
   logEntry ("Begin building app")
   logEntry ("  App Name: #{title}")
   logEntry ("  Project: #{project}")
