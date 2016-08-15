@@ -1,5 +1,5 @@
 <?php
-namespace tests\unit\common\components;
+namespace tests\unit\common\models;
 use tests\unit\UnitTestBase;
 
 use common\models\Job;
@@ -27,13 +27,19 @@ class BuildTest extends UnitTestBase
             'build' => BuildFixture::className(),
         ];
     }
-    /**
-     * This method is only here because if I don't put it in, the first test
-     * fails because the params isn't loaded.  Don't know why, but this fixed it
-     */
-    public function testDummy()
+    public function testHandleArtifact()
     {
-        $this->assertEquals(1,1);
+        $this->setContainerObjects();
+        $build = Build::findOne(['id' => 11]);
+        $build->artifact_url_base = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/";
+        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/consoleText";
+        $content = "Content";
+        $build->handleArtifact($s3Key, $content);
+        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/consoleText";
+        $this->assertEquals($expected, $build->consoleText(), " *** ConsoleText return incorrect");
+        // Make sure it was added to the artifacts
+        $expected = "consoleText";
+        $this->assertEquals($expected, $build->artifact_files, " *** Artifact list doesn't match");  
     }
     public function testArtifactTypeTest()
     {
@@ -54,17 +60,5 @@ class BuildTest extends UnitTestBase
         $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/testproject.apk";
         list ($type, $file) = $build->artifactType($s3Key);
         $this->assertEquals("apk", $type, " *** apk file type not detected");
-    }
-    public function handleArtifactTest()
-    {
-        $this->setContainerObjects();
-        $build = Build::findOne(['id' => 11]);
-        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/consoleText";
-        $content = "Content";
-        $file = $build->handleArtifact($s3Key, $content);
-        $this->assertEquals("consoleText", $file, " *** ConsoleText return incorrect");
-        // Make sure it was added to the artifacts
-        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/consoleText";
-        $this->assertEquals($expected, $build->consoleText(), " *** Public URL for Console Text doesn't match");  
     }
 }
