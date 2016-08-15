@@ -54,8 +54,6 @@ class SyncScriptsAction  extends ActionCommon
                                   '/ssh:\/\/git-codecommit/' => "ssh://$appBuilderGitSshUser@git-codecommit" ];
 
             $jobs = [];
-            // TODO: Apps should be pulled from a database?
-            $apps = ['scriptureappbuilder' => 1];
             $localScriptDir = $repoLocalPath . DIRECTORY_SEPARATOR . $scriptDir;
             $dataScriptDir = $viewPath.DIRECTORY_SEPARATOR."scripts";
             $utilitiesSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR."utilities";
@@ -65,6 +63,9 @@ class SyncScriptsAction  extends ActionCommon
             $totalUpdated = 0;
             $totalRemoved = 0;
             $this->recurse_copy($utilitiesSourceDir, $utilitiesDestDir);
+            // TODO: Apps should be pulled from a database?
+            $apps = ['scriptureappbuilder' => 1,
+                     'bloomappmaker' => 1];
             foreach (array_keys($apps) as $app) {
                 $appSourceDir = $dataScriptDir.DIRECTORY_SEPARATOR.$app;
                 $appDestDir = $localScriptDir . DIRECTORY_SEPARATOR .$app;
@@ -83,7 +84,6 @@ class SyncScriptsAction  extends ActionCommon
 
                 $jobs[$job->name()] = 1;
             }
-
             // Remove Scripts that are not in the database
             $globFileName = "*_*.groovy";
             foreach (glob($localScriptDir . DIRECTORY_SEPARATOR .  $globFileName) as $scriptFile)

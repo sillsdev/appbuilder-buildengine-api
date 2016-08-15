@@ -51,14 +51,17 @@ class Job extends JobBase implements Linkable
                 // This should come from another model
                 // 'app_id', 'exist', 'targetClass' => 'common\models\App', 'targetAttribute' => 'id',
                 // message => \Yii::t('app', 'Invalid App ID'),
-                'app_id', 'in', 'range' => ['scriptureappbuilder'],
+                'app_id', 'in', 'range' => [
+                    'scriptureappbuilder',
+                    'bloomappmaker'
+                    ],
             ],
             // The currently supported Git Urls are for AWS Codecommit
-            [
-                'git_url', 'url',
-                    'pattern' => '/^ssh:\/\/(\w+@)?git-codecommit\./',
-                'message' => \Yii::t('app', 'Git SSH Url is required.')
-            ],
+//            [
+//                'git_url', 'url',
+//                    'pattern' => '/^ssh:\/\/(\w+@)?git-codecommit\./',
+//                'message' => \Yii::t('app', 'Git SSH Url is required.')
+//            ],
             [
                 ['client_id'],'default', 'value' => function() {
                     return self::getCurrentClientId();

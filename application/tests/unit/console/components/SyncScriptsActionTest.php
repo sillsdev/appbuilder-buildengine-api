@@ -117,6 +117,16 @@ class SyncScriptsActionTest extends UnitTestBase
         $this->assertEquals(1, $added, " *** One added");
         $expectedString = "/tmp/appbuilder/appbuilder-ci-scripts/groovy/build_scriptureappbuilder_22.groovy";
         $this->assertEquals($expectedString, MockGitWorkingCopy::$lastAdded, " *** Wrong last filename added to Git");
+        $expectedString = "ssh://APKAJNELREDI767PX3QQ@git-codecommit.us-east-1.amazonaws.com/v1/repos/test";
+        $this->assertEquals($expectedString, $cronController->lastParms['gitUrl'], " *** Invalid GitUrl");
+        $expectedString = "s3://sil-appbuilder-artifacts/testing";
+        $this->assertEquals($expectedString, $cronController->lastParms['artifactUrlBase'], " *** Invalid Artifact URL Base");
+        $expectedString = "publish_scriptureappbuilder_22";
+        $this->assertEquals($expectedString, $cronController->lastParms['publishJobName'], " *** Invalid Publish Job Name");
+        $expectedString = "build_scriptureappbuilder_22";
+        $this->assertEquals($expectedString, $cronController->lastParms['buildJobName'], " *** Invalid Build Job Name");
+        $expectedString = "wycliffeusa";
+        $this->assertEquals($expectedString, $cronController->lastParms['publisherName'], " *** Invalid Publisher Name");
     }
     public function testRemoveScripts()
     {
@@ -182,14 +192,47 @@ class SyncScriptsActionTest extends UnitTestBase
         $syncScriptsAction = new SyncScriptsAction($cronController);
         MockFileUtils::setFileExistsVar(false);
         $syncScriptsAction->performAction();
-        $expectedString = "cron add=0 update =8 delete=0".PHP_EOL."update: build_scriptureappbuilder_22.groovy"
+        $expectedString = "cron add=0 update =10 delete=0".PHP_EOL."update: build_scriptureappbuilder_22.groovy"
                 .PHP_EOL."update: publish_scriptureappbuilder_22.groovy"
                 .PHP_EOL."update: build_scriptureappbuilder_23.groovy"
                 .PHP_EOL."update: publish_scriptureappbuilder_23.groovy"
                 .PHP_EOL."update: build_scriptureappbuilder_24.groovy"
                 .PHP_EOL."update: publish_scriptureappbuilder_24.groovy"
                 .PHP_EOL."update: build_scriptureappbuilder_25.groovy"
-                .PHP_EOL."update: publish_scriptureappbuilder_25.groovy".PHP_EOL;
+                .PHP_EOL."update: publish_scriptureappbuilder_25.groovy"
+                .PHP_EOL."update: build_bloomappmaker_26.groovy"
+                .PHP_EOL."update: publish_bloomappmaker_26.groovy".PHP_EOL;
         $this->assertEquals($expectedString, MockGitWorkingCopy::$lastCommitLine, " *** Last commit line");
     }
-}
+    public function testCreateScriptsAddBloomBook()
+    {
+        $this->setContainerObjects();
+        MockGitWrapper::resetTest();
+        $cronController = new MockCronController();
+        $syncScriptsAction = new SyncScriptsAction($cronController);
+        $syncScriptsAction->performAction();  // Run this to set $git
+        MockFileUtils::setFileExistsVar(false);
+        $gitSubstPatterns = [ '/ssh:\/\/([0-9A-Za-z]*)@git-codecommit/' => "ssh://APKAJNELREDI767PX3QQ@git-codecommit",
+                              '/ssh:\/\/git-codecommit/' => "ssh://APKAJNELREDI767PX3QQ@git-codecommit" ];
+        $method = $this->getPrivateMethod('console\components\SyncScriptsAction', 'createBuildScript');
+        $job = Job::findOne(['id' => 26]);
+        $testPath = "/tmp/appbuilder/appbuilder-ci-scripts/groovy";
+
+        list($updatesString, $added, $updated) = $method->invokeArgs($syncScriptsAction, array($job,$gitSubstPatterns, $testPath));
+        $expectedString = "add: build_bloomappmaker_26.groovy".PHP_EOL;
+        $this->assertEquals($expectedString, $updatesString, " *** Update string incorrect");
+        $this->assertEquals(0, $updated, " *** None updated");
+        $this->assertEquals(1, $added, " *** One added");
+        $expectedString = "/tmp/appbuilder/appbuilder-ci-scripts/groovy/build_bloomappmaker_26.groovy";
+        $this->assertEquals($expectedString, MockGitWorkingCopy::$lastAdded, " *** Wrong last filename added to Git");
+        $expectedString = "3XynOB";
+        $this->assertEquals($expectedString, $cronController->lastParms['gitUrl'], " *** Object ID was changed");
+        $expectedString = "s3://sil-appbuilder-artifacts/testing";
+        $this->assertEquals($expectedString, $cronController->lastParms['artifactUrlBase'], " *** Invalid Artifact URL Base");
+        $expectedString = "publish_bloomappmaker_26";
+        $this->assertEquals($expectedString, $cronController->lastParms['publishJobName'], " *** Invalid Publish Job Name");
+        $expectedString = "build_bloomappmaker_26";
+        $this->assertEquals($expectedString, $cronController->lastParms['buildJobName'], " *** Invalid Build Job Name");
+        $expectedString = "kalaammedia";
+        $this->assertEquals($expectedString, $cronController->lastParms['publisherName'], " *** Invalid Publisher Name");
+    }}
