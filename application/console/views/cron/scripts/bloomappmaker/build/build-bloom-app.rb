@@ -159,7 +159,7 @@ def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title
   #Set the version number of the app to the current RAB release number
   versionNumber = get_rabVersionNumber()
 
-  project = "org.bloombooks.books.#{$options[:projectName]}"
+  project = "org.bloomlibrary.book.#{$options[:projectName]}"
   projectDir = File.join(Dir.pwd, $options[:projectName])
   keyOptions = "-ks \"#{$options[:ks]}\" -ksp \"#{$options[:ksp]}\" -ka \"#{$options[:ka]}\" -kap \"#{$options[:kap]}\""
   versionOptions = "-vc #{$options[:vc]} -vn #{versionNumber}"
