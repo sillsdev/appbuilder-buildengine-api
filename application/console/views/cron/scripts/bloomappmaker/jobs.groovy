@@ -1,6 +1,6 @@
-package scriptureappbuilder;
-import scriptureappbuilder.keystore;
-import scriptureappbuilder.google;
+package bloomappmaker;
+import bloomappmaker.keystore;
+import bloomappmaker.google;
 
 class jobs {
     static gitBranch = '*/master'
@@ -34,8 +34,17 @@ killall Xvfb
     static artifactFiles = 'output/**'
 
     static void codecommitBuildJob(jobContext, gitUrl, publisherName, artifactUrlBase) {
+        def gitScriptUrl = System.getenv('BUILD_ENGINE_REPO_URL');
+        def gitUser = System.getenv('BUILD_ENGINE_GIT_SSH_USER');
+
+        if (gitUser) {
+          gitScriptUrl = "ssh://" + gitUser + "@" + gitScriptUrl.substring(6);
+        }
+        println "GitURL: " + gitScriptUrl;
+
+        gitScriptUrl = gitScriptUrl?.trim();
         jobContext.with {
-            description "Create App for ${gitUrl}"
+            description "Create Bloombook App for ID ${gitUrl}"
 
             wrappers {
                 xvfb('default') {
@@ -61,8 +70,8 @@ killall Xvfb
             scm {
                 git {
                     remote {
-                        url(gitUrl)
-                        credentials('appbuilder-buildagent')
+                        url(gitScriptUrl)
+                        credentials('buildengine')
                     }
                     branch(gitBranch)
                         configure { node ->
@@ -118,9 +127,10 @@ wget "${ARTIFACT_URL}version_code.txt"
 set +x
 supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
 '''
+
     static void googleplayPublishJob(jobContext, gitUrl, publisherName, buildJobName) {
         jobContext.with {
-            description "Publish App for ${gitUrl}"
+            description "Publish Bloombook App for ID ${gitUrl}"
 
             configure google."${publisherName}_credentialsBindingWrapper"()
 

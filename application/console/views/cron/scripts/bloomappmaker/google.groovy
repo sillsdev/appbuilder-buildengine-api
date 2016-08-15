@@ -1,5 +1,5 @@
 
-package scriptureappbuilder;
+package bloomappmaker;
 
 class google {
     static Closure wycliffeusa_credentialsBindingWrapper() {

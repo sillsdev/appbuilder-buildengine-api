@@ -1,4 +1,4 @@
-package scriptureappbuilder;
+package bloomappmaker;
 
 class keystore {
     static Closure wycliffeusa_credentialsBindingWrapper() {
