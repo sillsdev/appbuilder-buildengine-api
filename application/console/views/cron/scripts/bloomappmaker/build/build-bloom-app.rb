@@ -4,7 +4,7 @@ require 'optparse'
 require 'fileutils'
 require 'open3'
 require 'set'
-require 'csv'
+require "google_drive"
 
 def logEntry(textLine)
   puts textLine
@@ -77,15 +77,47 @@ def parseOptions()
   
   $options.merge!(cmd_options)  
 end
-
-def findFont(supportedFonts, font)
-  fontUrl = "unsupported"
-  (1..supportedFonts.count-1).each do |row|
-    if (supportedFonts[row][0] == font)
-      if (supportedFonts[row][1].nil? || supportedFonts[row][1].empty?)
-        fontUrl = supportedFonts[row][0]
+def downloadFont(supportedFonts, row, column, fontFiles, fontDir)
+  retVal = true
+  fontEntry = supportedFonts[row, column]
+  if (!fontEntry.empty?)
+    localFontFile = File.join(fontDir, fontEntry)
+    if (!File.exist?(localFontFile))
+      logEntry("    Downloading fontfile #{fontEntry}") 
+      googleFile = fontFiles.file_by_title(fontEntry)
+      if (! googleFile.nil?)
+        googleFile.download_to_file("#{localFontFile}")
+        if (File.exist?(localFontFile))
+          logEntry("    Download successful")
+        else
+          logEntry("ERROR Download failed")
+          retVal = false;
+        end
       else
-        fontUrl = supportedFonts[row][1]
+        logEntry("ERROR Download failed, couldn't find font file on Google drive")
+        retVal = false
+      end
+    end
+  end
+  return retVal
+end
+def findFont(supportedFonts, fontFiles, font, fontDir)
+  fontUrl = "unsupported"
+  (2..supportedFonts.num_rows).each do |row|
+    if (supportedFonts[row, 1] == font)
+      if (supportedFonts[row, 2].empty?)
+        fontUrl = supportedFonts[row, 1]
+      else
+        fontUrl = supportedFonts[row, 2]
+        logEntry("  Substituting #{fontUrl} for #{font}")
+        # TODO: Use bloom to substitute entry 1 for entry 0
+      end
+      #Check to see if we need to download fonts
+      (3..6).each do |column|
+        if (! downloadFont(supportedFonts, row, column, fontFiles, fontDir))
+          # Error already reported, mark this as unsupported to stop build
+          fontUrl = "unsupported"
+        end
       end
       break
     end
@@ -137,18 +169,20 @@ def addFontsInBook(fontSet, bookDir, bookFontFile)
 end
 
 def get_fontString(fontSet)
-  fonts = CSV.read($options[:fontFile])
+  fontDir = makeDestDir('fonts')
+  session = GoogleDrive::Session.from_config("config.json")
+  fontFiles = session.collection_by_url("https://drive.google.com/#folders/" + "0ByDMfZ-FJZsQYm1Hd3hDQ2Frd0k")
+  fonts = session.spreadsheet_by_key("144F1JA9XeIuYA4nz52HCHrsJqk7aunDQOvuqFC9vGw0").worksheets[0]
   fontString = ""
 
   fontSet.each { |font|
     puts font
-    fontEntry = findFont(fonts, font)
+    fontEntry = findFont(fonts, fontFiles, font, fontDir)
     if (fontEntry == "unsupported")
       logEntry("ERROR: Font #{font} is not supported")
       exit 255
     end
-    fontString = fontString + " -f \"#{fontEntry}\""
-    
+    fontString = fontString + " -f \"#{fontEntry}\"" 
   }
   return fontString  
 end
