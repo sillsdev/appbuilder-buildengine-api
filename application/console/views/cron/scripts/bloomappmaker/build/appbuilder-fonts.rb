@@ -17,7 +17,9 @@ class AppBuilderFonts
     self.fonts = []
   end
 
-  def add_font(family_name, file_name, weight = 'normal', style = 'normal')
+  def add_font(family_name, file_name, bold = false, italic = false)
+    weight = bold ? 'bold' : 'normal'
+    style = italic ? 'italic' : 'normal'
     font = AppBuilderFont.new(family_name, file_name, weight, style)
     self.fonts << font
   end
@@ -36,13 +38,17 @@ class AppBuilderFonts
     }
     builder.to_xml
   end
+
+  def count
+    return self.fonts.count
+  end
 end
 
 # fs = AppBuilderFonts.new
 # fs.add_font('Comic Sans', 'comic.ttf')
-# fs.add_font('Comic Sans', 'comicbd.ttf', 'bold')
+# fs.add_font('Comic Sans', 'comicbd.ttf', true)
 # fs.add_font('Times New Roman', 'times.ttf')
-# fs.add_font('Times New Roman', 'timesbd.ttf', 'bold')
-# fs.add_font('Times New Roman', 'timesi.ttf', 'normal', 'italic')
-# fs.add_font('Times New Roman', 'timesbi.ttf', 'bold', 'italic')
+# fs.add_font('Times New Roman', 'timesbd.ttf', true)
+# fs.add_font('Times New Roman', 'timesi.ttf', false, true)
+# fs.add_font('Times New Roman', 'timesbi.ttf', true, true)
 # File.write('fonts.xml', fs.to_xml)

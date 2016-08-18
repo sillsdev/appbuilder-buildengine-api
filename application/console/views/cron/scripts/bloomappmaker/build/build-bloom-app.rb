@@ -4,7 +4,8 @@ require 'optparse'
 require 'fileutils'
 require 'open3'
 require 'set'
-require "google_drive"
+require 'csv'
+require_relative 'appbuilder-fonts'
 
 def logEntry(textLine)
   puts textLine
@@ -29,8 +30,8 @@ def parseOptions()
       cmd_options[:projectName]= v
     end
     
-    opts.on('--font_file FONTFILE', "Required: Specifies the path containing a CSV list of the supported fonts")  do |v|
-      cmd_options[:fontFile]= v
+    opts.on('--font_dir PATH', "Required: Specifies the path of directory containing fonts and font CSV file")  do |v|
+      cmd_options[:fontDir]= v
     end
   
     opts.on('--api_key KEY', 'Specify the Parse API Key') do |v|
@@ -77,47 +78,32 @@ def parseOptions()
   
   $options.merge!(cmd_options)  
 end
-def downloadFont(supportedFonts, row, column, fontFiles, fontDir)
-  retVal = true
-  fontEntry = supportedFonts[row, column]
-  if (!fontEntry.empty?)
-    localFontFile = File.join(fontDir, fontEntry)
-    if (!File.exist?(localFontFile))
-      logEntry("    Downloading fontfile #{fontEntry}") 
-      googleFile = fontFiles.file_by_title(fontEntry)
-      if (! googleFile.nil?)
-        googleFile.download_to_file("#{localFontFile}")
-        if (File.exist?(localFontFile))
-          logEntry("    Download successful")
-        else
-          logEntry("ERROR Download failed")
-          retVal = false;
-        end
-      else
-        logEntry("ERROR Download failed, couldn't find font file on Google drive")
-        retVal = false
-      end
+def addFontFiles(supportedFonts, row)
+  fontName = supportedFonts[row][0]
+  (2..5).each do |column|
+    bold = ((column == 3) || (column == 5))
+    italic = ((column == 4) || (column == 5))
+    fontFileName = supportedFonts[row][column]
+    if (fontFileName.nil? || fontFileName.empty?)
+      #if we got to this routine, all columns should be filled in
+      return "unsupported"
+    end 
+    fontFilePath = File.join($options[:fontDir], fontFileName)
+    if (!File.exist?(fontFilePath))
+      return "unsupported"
     end
+    $newFonts.add_font(fontName, fontFilePath, bold, italic)
   end
-  return retVal
+  return "added"
 end
-def findFont(supportedFonts, fontFiles, font, fontDir)
+def findFont(supportedFonts, font)
   fontUrl = "unsupported"
-  (2..supportedFonts.num_rows).each do |row|
-    if (supportedFonts[row, 1] == font)
-      if (supportedFonts[row, 2].empty?)
-        fontUrl = supportedFonts[row, 1]
-      else
-        fontUrl = supportedFonts[row, 2]
-        logEntry("  Substituting #{fontUrl} for #{font}")
-        # TODO: Use bloom to substitute entry 1 for entry 0
-      end
-      #Check to see if we need to download fonts
-      (3..6).each do |column|
-        if (! downloadFont(supportedFonts, row, column, fontFiles, fontDir))
-          # Error already reported, mark this as unsupported to stop build
-          fontUrl = "unsupported"
-        end
+  (1..supportedFonts.count - 1).each do |row|
+    if (supportedFonts[row][0] == font)
+      fontUrl = supportedFonts[row][0]
+      #Check to see if we need to create font xml
+      if (!(supportedFonts[row][2].nil? || supportedFonts[row][2].empty?))
+        fontUrl = addFontFiles(supportedFonts, row)    
       end
       break
     end
@@ -169,21 +155,30 @@ def addFontsInBook(fontSet, bookDir, bookFontFile)
 end
 
 def get_fontString(fontSet)
-  fontDir = makeDestDir('fonts')
-  session = GoogleDrive::Session.from_config("config.json")
-  fontFiles = session.collection_by_url("https://drive.google.com/#folders/" + "0ByDMfZ-FJZsQYm1Hd3hDQ2Frd0k")
-  fonts = session.spreadsheet_by_key("144F1JA9XeIuYA4nz52HCHrsJqk7aunDQOvuqFC9vGw0").worksheets[0]
+  csvFileName = File.join($options[:fontDir], $csvFileName)
+  fonts = CSV.read(csvFileName)
   fontString = ""
-
+  
   fontSet.each { |font|
-    puts font
-    fontEntry = findFont(fonts, fontFiles, font, fontDir)
+    fontEntry = findFont(fonts, font)
     if (fontEntry == "unsupported")
       logEntry("ERROR: Font #{font} is not supported")
       exit 255
     end
-    fontString = fontString + " -f \"#{fontEntry}\"" 
+    if (fontEntry == "added")
+      logEntry("  Font #{font} added")
+    else
+      logEntry("  Font #{fontEntry} supported")
+      fontString = fontString + " -f \"#{fontEntry}\""
+   end
   }
+  xmlCount = $newFonts.count()
+  puts("Count #{xmlCount}")
+  if ($newFonts.count() > 0 )
+    fontXmlFile = File.join($options[:destination], $options[:projectName], $fontXmlFileName)
+    File.write(fontXmlFile, $newFonts.to_xml)
+    fontString = fontString + " -f \"#{fontXmlFile}\""
+  end
   return fontString  
 end
 
@@ -262,8 +257,8 @@ def downloadBook(book, destDir)
 end
 
 def checkForRequiredOptions()
-  if ($options[:fontFile].empty?)
-    logEntry("ERROR: font_file parameter is required")
+  if ($options[:fontDir].empty?)
+    logEntry("ERROR: font_dir parameter is required")
     exit 255
   end
   if ($options[:specId].empty?)
@@ -310,9 +305,13 @@ $keyStorePassword = "password"
 $appKey = "Key"
 $appKeyPassword = "password"
 $appVersionCode = 1
-$fontFile = ""
+$fontDir = ""
 $logFile = ""
 $specId = ""
+$newFonts = AppBuilderFonts.new
+
+$csvFileName = "Bloom App Maker Fonts.csv"
+$fontXmlFileName = "rabFonts.xml"
 
 $options = { :specId => $specId,
              :parseApiKey => $parseApiKey,
@@ -326,7 +325,7 @@ $options = { :specId => $specId,
              :ka => $appKey,
              :kap => $appKeyPassword,
              :vc => $appVersionCode,
-             :fontFile => $fontFile}
+             :fontDir => $fontDir}
 parseOptions()
 
 client = Parse.init :application_id => $options[:parseApplicationId],
