@@ -4,44 +4,35 @@ import bloomappmaker.google;
 
 class jobs {
     static gitBranch = '*/master'
-    static buildJobScript = '''
-PROJNAME=$(basename *.appDef .appDef)
-mv "${PROJNAME}.appDef" build.appDef
-mv "${PROJNAME}_data" build_data
-APPDEF_VERSION=$(grep "version code=" build.appDef|awk -F"\\"" '{print $2}')
-if [ "$APPDEF_VERSION" -ge "$VERSION_CODE" ]; then
-    VERSION_CODE=$((APPDEF_VERSION+1))
-fi
-VERSION_NUMBER=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
-{ set +x; } 2>/dev/null
-/usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc $VERSION_CODE -vn $VERSION_NUMBER
-set -x
-echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
-echo $VERSION_CODE > output/version_code.txt
-if [ -f "build_data/about/about.txt" ]; then
-  cp build_data/about/about.txt output/
-fi
-PUBLISH_DIR="build_data/publish/play-listing"
-if [ -d "$PUBLISH_DIR" ]; then
-  cp -r "$PUBLISH_DIR" output
-fi
-mv build_data "${PROJNAME}_data"
-mv build.appDef "${PROJNAME}.appDef"
-
-# Work-around for https://issues.jenkins-ci.org/browse/JENKINS-35102
-killall Xvfb
-'''
     static artifactFiles = 'output/**'
 
     static void codecommitBuildJob(jobContext, gitUrl, publisherName, artifactUrlBase) {
+        def buildJobScript = '''
+cd groovy/bloomappmaker/build
+bundle install
+ruby ./build-bloom-app.rb --spec_id PROJECT_URL --ks $KS --ksp $KSP --ka $KA --kap $KAP --api_key 'PARSE_API_KEY' --app_id 'PARSE_APP_ID' --dest $WORKSPACE/output --vc $VERSION_CODE --font_dir $WORKSPACE/groovy/bloomappmaker/build/fonts 
+# Work-around for https://issues.jenkins-ci.org/browse/JENKINS-35102
+killall Xvfb
+'''
         def gitScriptUrl = System.getenv('BUILD_ENGINE_REPO_URL');
         def gitUser = System.getenv('BUILD_ENGINE_GIT_SSH_USER');
+        def parseApiKey = System.getenv('PARSE_API_KEY');
+        if (parseApiKey?.trim()) {
+                buildJobScript = buildJobScript.replaceAll('PARSE_API_KEY', parseApiKey?.trim());
+        }
+        def parseAppId = System.getenv('PARSE_APP_ID');
+        if (parseAppId?.trim()) {
+                buildJobScript = buildJobScript.replaceAll('PARSE_APP_ID', parseAppId?.trim());
+        }
 
         if (gitUser) {
           gitScriptUrl = "ssh://" + gitUser + "@" + gitScriptUrl.substring(6);
         }
         println "GitURL: " + gitScriptUrl;
-
+        println "ProjectID: " + gitUrl;
+        if (gitUrl?.trim()) {
+            buildJobScript = buildJobScript.replaceAll('PROJECT_URL', gitUrl);
+        }
         gitScriptUrl = gitScriptUrl?.trim();
         jobContext.with {
             description "Create Bloombook App for ID ${gitUrl}"
@@ -83,6 +74,15 @@ killall Xvfb
                     extensions {
                         cleanBeforeCheckout()
                     }
+                    configure { git ->
+                        git / 'extensions' / 'hudson.plugins.git.extensions.impl.SparseCheckoutPaths' / 'sparseCheckoutPaths' {
+                            ['groovy/bloomappmaker'].each { mypath ->
+                             'hudson.plugins.git.extensions.impl.SparseCheckoutPath' {
+                                path("${mypath}")
+                        }
+                    }
+                }
+            }
                 }
             }
 
@@ -96,15 +96,6 @@ killall Xvfb
 
             publishers {
                 archiveArtifacts(artifactFiles)
-                    git {
-                        pushMerge(true)
-                        pushOnlyIfSuccess(true)
-                        forcePush(false)
-                        branch('origin', 'master')
-                        tag('origin', '$BUILD_TAG-$VERSION_CODE-$BUILD_TIMESTAMP') {
-                            create(true)
-                        }
-                    }
             }
 
             logRotator {

@@ -26,10 +26,6 @@ def parseOptions()
       cmd_options[:specId]= v
     end
   
-    opts.on('--project_name NAME', "Required: Appended to org.bloomlibrary.books. to created the project name of the app")  do |v|
-      cmd_options[:projectName]= v
-    end
-    
     opts.on('--font_dir PATH', "Required: Specifies the path of directory containing fonts and font CSV file")  do |v|
       cmd_options[:fontDir]= v
     end
@@ -155,6 +151,9 @@ def addFontsInBook(fontSet, bookDir, bookFontFile)
 end
 
 def get_fontString(fontSet)
+  #TODO Remove these two lines when full font support is added
+  fontString = " -f \"Andika New Basic\""
+  if (false)
   csvFileName = File.join($options[:fontDir], $csvFileName)
   fonts = CSV.read(csvFileName)
   fontString = ""
@@ -175,25 +174,26 @@ def get_fontString(fontSet)
   xmlCount = $newFonts.count()
   puts("Count #{xmlCount}")
   if ($newFonts.count() > 0 )
-    fontXmlFile = File.join($options[:destination], $options[:projectName], $fontXmlFileName)
+    fontXmlFile = File.join($options[:destination], $fontXmlFileName)
     File.write(fontXmlFile, $newFonts.to_xml)
     fontString = fontString + " -f \"#{fontXmlFile}\""
+  end
+  #TODO Remove this line when full font support is added
   end
   return fontString  
 end
 
 def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title)
   fontString = get_fontString(fontSet)
-
   #Set the version number of the app to the current RAB release number
   versionNumber = get_rabVersionNumber()
 
-  project = "org.bloomlibrary.book.#{$options[:projectName]}"
-  projectDir = File.join(Dir.pwd, $options[:projectName])
+  project = "#{$projectName}"
+  projectDir = File.join(Dir.pwd, $options[:specId])
   keyOptions = "-ks \"#{$options[:ks]}\" -ksp \"#{$options[:ksp]}\" -ka \"#{$options[:ka]}\" -kap \"#{$options[:kap]}\""
   versionOptions = "-vc #{$options[:vc]} -vn #{versionNumber}"
   formattingOptions = "-l #{vernacularIsoCode} #{fontString} -cs \"#{colorScheme}\" "
-  projectOptions = "-n \"#{title}\" -p #{project}  -fp apk.output=\"#{$options[:destination]}/#{$options[:projectName]}\" -fp app.def=\"#{projectDir}\""
+  projectOptions = "-n \"#{title}\" -p #{project} -ta 22 -fp apk.output=\"#{$options[:destination]}\" -fp app.def=\"#{projectDir}\""
   rabCommand = "reading-app-builder -new -build #{projectOptions} #{formattingOptions} #{keyOptions} #{versionOptions} #{bookFileList}"
   logEntry ("Begin building app")
   logEntry ("  App Name: #{title}")
@@ -265,10 +265,6 @@ def checkForRequiredOptions()
     logEntry("ERROR: spec_id parameter is required")
     exit 255
   end
-  if ($options[:projectName].empty?)
-    logEntry("ERROR: project_name parameter is required")
-    exit 255
-  end  
 end
 
 def getAppDetails(isoCode)
@@ -296,7 +292,7 @@ end
 $parseApiKey = 'KZA7c0gAuwTD6kZHyO5iZm0t48RplaU7o3SHLKnj'
 $parseApplicationId = 'yrXftBF6mbAuVu3fO6LnhCJiHxZPIdE7gl1DUVGR'
 
-$parseHost = 'https://api.parse.com'
+$parseHost = 'api.parse.com'
 $parsePath = '/1'
 $destination = 'books'
 $projectName = ''
@@ -319,7 +315,6 @@ $options = { :specId => $specId,
              :parseHost => $parseHost,
              :parsePath => $parsePath,
              :destination => $destination,
-             :projectName => $projectName,
              :ks => $keyStore,
              :ksp => $keyStorePassword,
              :ka => $appKey,
@@ -327,9 +322,14 @@ $options = { :specId => $specId,
              :vc => $appVersionCode,
              :fontDir => $fontDir}
 parseOptions()
-
+puts "host: #{$options[:parseHost]}"
+puts "path: #{$options[:parsePath]}"
 client = Parse.init :application_id => $options[:parseApplicationId],
-               :api_key => $options[:parseApiKey]
+               :api_key => $options[:parseApiKey],
+               :master_key => nil,
+               :quiet => false,
+               :host => "#{$options[:parseHost]}",
+               :path => "#{$options[:parsePath]}"
 
 #View all appSpecs
 =begin
@@ -344,6 +344,10 @@ ap myAllBooks
 =end
 
 # Make the destination directory if it doesn't exist
+unless File.directory?($options[:destination])
+  FileUtils.mkdir_p($options[:destination])
+end
+
 destDir = makeDestDir('books')
 bookFontFile = File.join(destDir, 'fonts')
 
@@ -373,6 +377,11 @@ colorScheme = appSpecification['colorScheme']
 if (colorScheme.nil?)
   logEntry("WARNING: Color Scheme not found in App Specification Entry, defaulting to Dark Blue")
   colorScheme = "Dark Blue"
+end
+$projectName = appSpecification['packageName']
+if ($projectName.nil?)
+  logEntry("ERROR: Package name not found in App Specification Entry")
+  exit 255
 end
 defaultStoreLanguageIso = appSpecification['defaultStoreLanguageIso']
 storeDetails = getAppDetails(defaultStoreLanguageIso)
