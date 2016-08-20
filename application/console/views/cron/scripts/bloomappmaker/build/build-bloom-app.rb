@@ -151,34 +151,32 @@ def addFontsInBook(fontSet, bookDir, bookFontFile)
 end
 
 def get_fontString(fontSet)
-  #TODO Remove these two lines when full font support is added
   fontString = " -f \"Andika New Basic\""
-  if (false)
   csvFileName = File.join($options[:fontDir], $csvFileName)
-  fonts = CSV.read(csvFileName)
-  fontString = ""
-  
-  fontSet.each { |font|
-    fontEntry = findFont(fonts, font)
-    if (fontEntry == "unsupported")
-      logEntry("ERROR: Font #{font} is not supported")
-      exit 255
+  if (File.exist?(csvFileName))
+    fonts = CSV.read(csvFileName)
+    fontString = ""
+
+    fontSet.each { |font|
+      fontEntry = findFont(fonts, font)
+      if (fontEntry == "unsupported")
+        logEntry("ERROR: Font #{font} is not supported")
+        exit 255
+      end
+      if (fontEntry == "added")
+        logEntry("  Font #{font} added")
+      else
+        logEntry("  Font #{fontEntry} supported")
+        fontString = fontString + " -f \"#{fontEntry}\""
+     end
+    }
+    xmlCount = $newFonts.count()
+    puts("Count #{xmlCount}")
+    if ($newFonts.count() > 0 )
+      fontXmlFile = File.join($options[:destination], $fontXmlFileName)
+      File.write(fontXmlFile, $newFonts.to_xml)
+      fontString = fontString + " -f \"#{fontXmlFile}\""
     end
-    if (fontEntry == "added")
-      logEntry("  Font #{font} added")
-    else
-      logEntry("  Font #{fontEntry} supported")
-      fontString = fontString + " -f \"#{fontEntry}\""
-   end
-  }
-  xmlCount = $newFonts.count()
-  puts("Count #{xmlCount}")
-  if ($newFonts.count() > 0 )
-    fontXmlFile = File.join($options[:destination], $fontXmlFileName)
-    File.write(fontXmlFile, $newFonts.to_xml)
-    fontString = fontString + " -f \"#{fontXmlFile}\""
-  end
-  #TODO Remove this line when full font support is added
   end
   return fontString  
 end
