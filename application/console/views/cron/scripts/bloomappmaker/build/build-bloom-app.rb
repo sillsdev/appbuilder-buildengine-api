@@ -196,7 +196,6 @@ def get_fontString(fontSet)
      end
     }
     xmlCount = $newFonts.count()
-    puts("Count #{xmlCount}")
     if ($newFonts.count() > 0 )
       fontXmlFile = File.join($options[:destination], $fontXmlFileName)
       File.write(fontXmlFile, $newFonts.to_xml)
@@ -331,7 +330,7 @@ $fontDir = ""
 $logFile = ""
 $specId = ""
 $newFonts = AppBuilderFonts.new
-$iconFile = "/home/vagrant/Downloads/amarok.png"
+$iconFile = ""
 
 $csvFileName = "Bloom App Maker Fonts.csv"
 $fontXmlFileName = "rabFonts.xml"
@@ -374,8 +373,7 @@ ap myAllBooks
 unless File.directory?($options[:destination])
   FileUtils.mkdir_p($options[:destination])
 end
-  iconDir = makeDestDir('icons')
-  icString = addIconFiles(iconDir)
+iconDir = makeDestDir('icons')
 
 destDir = makeDestDir('books')
 bookFontFile = File.join(destDir, 'fonts')
