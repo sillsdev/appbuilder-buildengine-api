@@ -15,6 +15,7 @@ GEM
       faraday
       faraday_middleware
     pkg-config (1.1.7)
+    rmagick (2.16.0)
 
 PLATFORMS
   ruby
@@ -23,6 +24,7 @@ DEPENDENCIES
   awesome_print
   nokogiri
   parse-ruby-client
+  rmagick
 
 BUNDLED WITH
    1.12.5

@@ -5,6 +5,8 @@ require 'fileutils'
 require 'open3'
 require 'set'
 require 'csv'
+require 'open-uri'
+require 'rmagick'
 require_relative 'appbuilder-fonts'
 
 def logEntry(textLine)
@@ -73,6 +75,29 @@ def parseOptions()
   end.parse!
   
   $options.merge!(cmd_options)  
+end
+def addIconFiles(iconDir)
+  icString = ""
+  # First download the icon File
+  downloadFile = File.join(iconDir, "originalIconFile.png")
+  File.open(downloadFile, 'wb') do |fo|
+    fo.write open($iconFile).read
+  end
+  if (File.exist?(downloadFile))
+    seventyTwoFile = File.join(iconDir, "seventyTwo.png")
+    oneFourFourFile = File.join(iconDir, "oneFourFour.png")
+    puts $iconFile
+    img = Magick::Image.read($iconFile).first
+    seventyTwoImage = img.resize(72, 72)
+    seventyTwoImage.write seventyTwoFile
+    oneFourFourImage = img.resize(144,144)
+    oneFourFourImage.write oneFourFourFile
+    icString = " -ic \"#{seventyTwoFile}\" -ic \"#{oneFourFourFile}\""
+  else
+    logEntry("ERROR Icon file [#{$iconFile}] does not exist")
+    exit 255
+  end
+  return icString
 end
 def addFontFiles(supportedFonts, row)
   fontName = supportedFonts[row][0]
@@ -186,13 +211,16 @@ def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title
   #Set the version number of the app to the current RAB release number
   versionNumber = get_rabVersionNumber()
 
+  iconDir = makeDestDir('icons')
+  icString = addIconFiles(iconDir)
+  
   project = "#{$projectName}"
   projectDir = File.join(Dir.pwd, $options[:specId])
   keyOptions = "-ks \"#{$options[:ks]}\" -ksp \"#{$options[:ksp]}\" -ka \"#{$options[:ka]}\" -kap \"#{$options[:kap]}\""
   versionOptions = "-vc #{$options[:vc]} -vn #{versionNumber}"
   formattingOptions = "-l #{vernacularIsoCode} #{fontString} -cs \"#{colorScheme}\" "
   projectOptions = "-n \"#{title}\" -p #{project} -ta 22 -fp apk.output=\"#{$options[:destination]}\" -fp app.def=\"#{projectDir}\""
-  rabCommand = "reading-app-builder -new -build #{projectOptions} #{formattingOptions} #{keyOptions} #{versionOptions} #{bookFileList}"
+  rabCommand = "reading-app-builder -new -build #{projectOptions} #{formattingOptions} #{icString} #{keyOptions} #{versionOptions} #{bookFileList}"
   logEntry ("Begin building app")
   logEntry ("  App Name: #{title}")
   logEntry ("  Project: #{project}")
@@ -303,6 +331,7 @@ $fontDir = ""
 $logFile = ""
 $specId = ""
 $newFonts = AppBuilderFonts.new
+$iconFile = "/home/vagrant/Downloads/amarok.png"
 
 $csvFileName = "Bloom App Maker Fonts.csv"
 $fontXmlFileName = "rabFonts.xml"
@@ -345,6 +374,8 @@ ap myAllBooks
 unless File.directory?($options[:destination])
   FileUtils.mkdir_p($options[:destination])
 end
+  iconDir = makeDestDir('icons')
+  icString = addIconFiles(iconDir)
 
 destDir = makeDestDir('books')
 bookFontFile = File.join(destDir, 'fonts')
@@ -381,6 +412,10 @@ if ($projectName.nil?)
   logEntry("ERROR: Package name not found in App Specification Entry")
   exit 255
 end
+$iconFile = appSpecification['icon1024x1024']
+if ($iconFile.nil?)
+  logEntry("ERROR: Icon File not found in App Specification Entry")
+end
 defaultStoreLanguageIso = appSpecification['defaultStoreLanguageIso']
 storeDetails = getAppDetails(defaultStoreLanguageIso)
 appTitle = storeDetails['title']
@@ -389,7 +424,7 @@ if (appTitle.nil?)
   exit 255
 end
 
-logEntry("appSpecification retrieved. Title: [#{appTitle}] Color Scheme: [#{colorScheme}] ISO Code: [#{vernacularIsoCode}]")
+logEntry("appSpecification retrieved. Title: [#{appTitle}] Color Scheme: [#{colorScheme}] ISO Code: [#{vernacularIsoCode}] Icon: [#{$iconFile}] Project Name: [#{$projectName}]")
 
 # Retrieve the books associated with the app specifcation id
 booksInApps = getBooksInApp()
