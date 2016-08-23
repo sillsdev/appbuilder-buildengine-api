@@ -112,6 +112,15 @@ def addPlayListingGraphics(appSpec, storeDetails, languageDir)
   File.open(downloadFile, 'wb') do |fo|
     fo.write open(featureGraphicUrl).read
   end
+  if (File.exist?(downloadFile))
+    img = Magick::Image.read(downloadFile).first
+    if ((img.rows == 500) && (img.columns == 1024))
+      logEntry("Successfully downloaded feature graphic file #{featureGraphicUrl}")
+    else
+      logEntry("ERROR Dimensions of feature graphic should be 1024x500.  Dimensions were columns: #{img.columns} rows: #{img.rows}")
+      logEntry("   for URL #{featureGraphicUrl}")
+    end
+  end
   
   screenshotDir = File.join(languageDir, "phoneScreenshots")
   makeDir(screenshotDir)
