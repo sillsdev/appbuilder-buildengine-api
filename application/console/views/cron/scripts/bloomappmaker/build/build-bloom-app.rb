@@ -80,24 +80,41 @@ def addIconFiles(iconDir)
   icString = ""
   # First download the icon File
   downloadFile = File.join(iconDir, "originalIconFile.png")
-  File.open(downloadFile, 'wb') do |fo|
+  seventyTwoFile = File.join(iconDir, "seventyTwo.png")
+  oneFourFourFile = File.join(iconDir, "oneFourFour.png")
+  img = Magick::Image.read(downloadFile).first
+  oneFourFourImage = img.resize(144,144)
+  oneFourFourImage.write oneFourFourFile
+  seventyTwoImage = img.resize(72, 72)
+  seventyTwoImage.write seventyTwoFile
+  icString = " -ic \"#{seventyTwoFile}\" -ic \"#{oneFourFourFile}\""
+  return icString
+end
+def addPlayListingGraphics(appSpec, storeDetails, languageDir)
+  baseIcon = File.join(Dir.pwd, $options[:specId], "icons", "originalIconFile.png")
+  File.open(baseIcon, 'wb') do |fo|
     fo.write open($iconFile).read
   end
-  if (File.exist?(downloadFile))
-    seventyTwoFile = File.join(iconDir, "seventyTwo.png")
-    oneFourFourFile = File.join(iconDir, "oneFourFour.png")
-    puts $iconFile
-    img = Magick::Image.read($iconFile).first
-    seventyTwoImage = img.resize(72, 72)
-    seventyTwoImage.write seventyTwoFile
-    oneFourFourImage = img.resize(144,144)
-    oneFourFourImage.write oneFourFourFile
-    icString = " -ic \"#{seventyTwoFile}\" -ic \"#{oneFourFourFile}\""
+  if (File.exist?(baseIcon))
+    logEntry("Successfully downloaded icon file: #{$iconFile}")
+    fiveOneTwoFile = File.join(languageDir, "icon.png")
+    img = Magick::Image.read(baseIcon).first
+    fiveOneTwoImage = img.resize(512,512)
+    fiveOneTwoImage.write fiveOneTwoFile
   else
     logEntry("ERROR Icon file [#{$iconFile}] does not exist")
     exit 255
   end
-  return icString
+
+  iconDir = makeTempDir('icons')
+  downloadFile = File.join(languageDir, "featureGraphic.png")
+  featureGraphicUrl = appSpec['featureGraphic1024x500']
+  File.open(downloadFile, 'wb') do |fo|
+    fo.write open(featureGraphicUrl).read
+  end
+  
+  screenshotDir = File.join(languageDir, "phoneScreenshots")
+  makeDir(screenshotDir)
 end
 def addFontFiles(supportedFonts, row)
   fontName = supportedFonts[row][0]
@@ -138,12 +155,16 @@ def get_rabVersionNumber()
   return versionNumber.strip
 end
 
-def makeDestDir(subDirName)
-  # Make the destination directory if it doesn't exist
-  destDir = File.join(Dir.pwd, $options[:specId], subDirName)
-  unless File.directory?(destDir)
-    FileUtils.mkdir_p(destDir)
+def makeDir(dirName)
+  unless File.directory?(dirName)
+    FileUtils.mkdir_p(dirName)
   end
+end
+
+def makeTempDir(subDirName)
+  # Make the directory if it doesn't exist
+  destDir = File.join(Dir.pwd, $options[:specId], subDirName)
+  makeDir(destDir)
   return destDir
 end
 
@@ -197,7 +218,7 @@ def get_fontString(fontSet)
     }
     xmlCount = $newFonts.count()
     if ($newFonts.count() > 0 )
-      fontXmlFile = File.join($options[:destination], $fontXmlFileName)
+      fontXmlFile = File.join($options[:fontDir], $fontXmlFileName)
       File.write(fontXmlFile, $newFonts.to_xml)
       fontString = fontString + " -f \"#{fontXmlFile}\""
     end
@@ -205,12 +226,40 @@ def get_fontString(fontSet)
   return fontString  
 end
 
+def createPlayListingEntry(appSpec, storeDetails)
+  playStoreDir = File.join($options[:destination], 'play-listing')
+  makeDir(playStoreDir)
+  
+  packageNameFile = File.join($options[:destination], 'package_name.txt')
+  File.open(packageNameFile, 'w') {|f| f.write($projectName) }
+
+  versionCodeFile = File.join($options[:destination], 'version_code.txt')
+  File.open(versionCodeFile, 'w') {|f| f.write($options[:vc]) }
+
+  defaultLanguage = storeDetails['androidStoreLanguageIso']
+  languageDir = File.join(playStoreDir, defaultLanguage)
+  makeDir(languageDir)
+    
+  title = storeDetails['title']
+  titleFileName = File.join(languageDir, "title.txt")
+  File.open(titleFileName, 'w') {|f| f.write(title) }
+
+  fullDescription = storeDetails['fullDescription']
+  fullDescriptionFileName = File.join(languageDir, "full_description.txt")
+  File.open(fullDescriptionFileName, 'w') {|f| f.write(fullDescription) }
+  
+  shortDescription = storeDetails['shortDescription']
+  shortDescriptionFileName = File.join(languageDir, "short_description.txt")
+  File.open(shortDescriptionFileName, 'w') {|f| f.write(shortDescription) }
+
+  addPlayListingGraphics(appSpec, storeDetails, languageDir)  
+end
 def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title)
   fontString = get_fontString(fontSet)
   #Set the version number of the app to the current RAB release number
   versionNumber = get_rabVersionNumber()
 
-  iconDir = makeDestDir('icons')
+  iconDir = makeTempDir('icons')
   icString = addIconFiles(iconDir)
   
   project = "#{$projectName}"
@@ -225,6 +274,7 @@ def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title
   logEntry ("  Project: #{project}")
   logEntry ("  Version Number: #{versionNumber}")
   logEntry ("  Version Code: #{$options[:vc]}")
+  logEntry ("  Build Command: #{rabCommand}")
   return rabCommand
 end
 
@@ -370,19 +420,18 @@ ap myAllBooks
 =end
 
 # Make the destination directory if it doesn't exist
-unless File.directory?($options[:destination])
-  FileUtils.mkdir_p($options[:destination])
-end
-iconDir = makeDestDir('icons')
-
-destDir = makeDestDir('books')
-bookFontFile = File.join(destDir, 'fonts')
-
-logDir = makeDestDir('log')
+logDir = File.join($options[:destination], 'log')
+makeDir(logDir)
 $logFile = File.join(logDir, 'appbuildlog.txt')
 open($logFile, 'w') { |f|
   f.puts "Start build of #{$options[:appName]} app"
 }
+
+iconDir = makeTempDir('icons')
+
+destDir = makeTempDir('books')
+bookFontFile = File.join(destDir, 'fonts')
+
 checkForRequiredOptions()
 
 # Get the app specification entry for the id entered
@@ -443,6 +492,8 @@ bookDirList.each { |bookDir|
   bookFileList = bookFileList + " -b \"#{htmBook}\""
   fontSet = addFontsInBook(fontSet, bookDir, bookFontFile)
 }
+
+createPlayListingEntry(appSpecification, storeDetails)
 
 #Build the app
 rabCommand = buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, appTitle)
