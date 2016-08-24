@@ -261,7 +261,7 @@ def createPlayListingEntry(appSpec, storeDetails)
   defaultLanguage = storeDetails['androidStoreLanguageIso']
   languageDir = File.join(playStoreDir, defaultLanguage)
   makeDir(languageDir)
-  defaultLanguageFile = File.join(playStoreDir, "default-languate.txt")
+  defaultLanguageFile = File.join(playStoreDir, "default-language.txt")
   File.open(defaultLanguageFile, 'w') {|f| f.write(defaultLanguage) }
     
   title = storeDetails['title']
