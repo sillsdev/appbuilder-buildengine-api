@@ -91,13 +91,16 @@ def addIconFiles(iconDir)
   return icString
 end
 def addPlayListingGraphics(appSpec, storeDetails, languageDir)
+  imagesDir = File.join(languageDir, "images")
+  makeDir(imagesDir)
+
   baseIcon = File.join(Dir.pwd, $options[:specId], "icons", "originalIconFile.png")
   File.open(baseIcon, 'wb') do |fo|
     fo.write open($iconFile).read
   end
   if (File.exist?(baseIcon))
     logEntry("Successfully downloaded icon file: #{$iconFile}")
-    fiveOneTwoFile = File.join(languageDir, "icon.png")
+    fiveOneTwoFile = File.join(imagesDir, "icon.png")
     img = Magick::Image.read(baseIcon).first
     fiveOneTwoImage = img.resize(512,512)
     fiveOneTwoImage.write fiveOneTwoFile
@@ -107,23 +110,33 @@ def addPlayListingGraphics(appSpec, storeDetails, languageDir)
   end
 
   iconDir = makeTempDir('icons')
-  downloadFile = File.join(languageDir, "featureGraphic.png")
+  downloadFile = File.join(imagesDir, "featureGraphic.png")
   featureGraphicUrl = appSpec['featureGraphic1024x500']
   File.open(downloadFile, 'wb') do |fo|
     fo.write open(featureGraphicUrl).read
   end
   if (File.exist?(downloadFile))
+    # For now creating "screenshot" image by taking the feature graphic and centering it
+    # on a black background the size of screenshot images
     img = Magick::Image.read(downloadFile).first
     if ((img.rows == 500) && (img.columns == 1024))
       logEntry("Successfully downloaded feature graphic file #{featureGraphicUrl}")
+      snapshotSizeImage = img.resize_to_fit(533, 949)
+      backImage = Magick::Image.new(533,949) { self.background_color = "black" }
+      screenShotImage = backImage.composite(snapshotSizeImage, Magick::CenterGravity, Magick::OverCompositeOp)
+      screenshotDir = File.join(imagesDir, "phoneScreenshots")
+      makeDir(screenshotDir)
+      screenshot1 = File.join(screenshotDir, "screen-0.png")
+      screenshot2 = File.join(screenshotDir, "screen-1.png")
+      screenShotImage.write screenshot1
+      screenShotImage.write screenshot2
     else
       logEntry("ERROR Dimensions of feature graphic should be 1024x500.  Dimensions were columns: #{img.columns} rows: #{img.rows}")
       logEntry("   for URL #{featureGraphicUrl}")
+      exit 255
     end
   end
   
-  screenshotDir = File.join(languageDir, "phoneScreenshots")
-  makeDir(screenshotDir)
 end
 def addFontFiles(supportedFonts, row)
   fontName = supportedFonts[row][0]
@@ -248,6 +261,8 @@ def createPlayListingEntry(appSpec, storeDetails)
   defaultLanguage = storeDetails['androidStoreLanguageIso']
   languageDir = File.join(playStoreDir, defaultLanguage)
   makeDir(languageDir)
+  defaultLanguageFile = File.join(playStoreDir, "default-languate.txt")
+  File.open(defaultLanguageFile, 'w') {|f| f.write(defaultLanguage) }
     
   title = storeDetails['title']
   titleFileName = File.join(languageDir, "title.txt")
@@ -359,8 +374,15 @@ def getAppDetails(isoCode)
     "objectId" => "#{$options[:specId]}"
     }))
   end.get
-
-  appDetailEntry = appDetails[0]
+  logEntry("Getting details for isoCode #{isoCode}")
+  appDetailEntry = nil
+  appDetails.each { |detail|
+    detailIsoCode = detail['androidStoreLanguageIso']
+    if (detailIsoCode == isoCode)
+      appDetailEntry = detail
+      break
+    end
+  }
   if (appDetailEntry.nil?)
     logEntry("ERROR: appDetails not found for app")
     exit 255
