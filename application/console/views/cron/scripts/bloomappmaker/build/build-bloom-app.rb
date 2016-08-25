@@ -76,6 +76,15 @@ def parseOptions()
   
   $options.merge!(cmd_options)  
 end
+def addAboutFile(storeDetails)
+  title = storeDetails['title']
+
+  aboutString = "<b>#{title}</b>\n<b>This app contains material obtained from <a href=\"http://bloomlibrary.org\">bloomlibrary.org</a></b>\nCopyright 2016\n"
+  aboutFile = File.join($options[:destination], 'about.txt')
+  File.open(aboutFile, 'w') {|f| f.write(aboutString) }
+  aboutOption = " -a #{aboutFile}"
+  return aboutOption
+end
 def addIconFiles(iconDir)
   icString = ""
   # First download the icon File
@@ -278,7 +287,7 @@ def createPlayListingEntry(appSpec, storeDetails)
 
   addPlayListingGraphics(appSpec, storeDetails, languageDir)  
 end
-def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title)
+def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title, aboutOption)
   fontString = get_fontString(fontSet)
   #Set the version number of the app to the current RAB release number
   versionNumber = get_rabVersionNumber()
@@ -292,7 +301,7 @@ def buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, title
   versionOptions = "-vc #{$options[:vc]} -vn #{versionNumber}"
   formattingOptions = "-l #{vernacularIsoCode} #{fontString} -cs \"#{colorScheme}\" "
   projectOptions = "-n \"#{title}\" -p #{project} -ta 22 -fp apk.output=\"#{$options[:destination]}\" -fp app.def=\"#{projectDir}\""
-  rabCommand = "reading-app-builder -new -build #{projectOptions} #{formattingOptions} #{icString} #{keyOptions} #{versionOptions} #{bookFileList}"
+  rabCommand = "reading-app-builder -new -build #{projectOptions} #{formattingOptions} #{aboutOption} #{icString} #{keyOptions} #{versionOptions} #{bookFileList}"
   logEntry ("Begin building app")
   logEntry ("  App Name: #{title}")
   logEntry ("  Project: #{project}")
@@ -525,9 +534,10 @@ bookDirList.each { |bookDir|
 }
 
 createPlayListingEntry(appSpecification, storeDetails)
+aboutOption = addAboutFile(storeDetails)
 
 #Build the app
-rabCommand = buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, appTitle)
+rabCommand = buildRabCommand(vernacularIsoCode, colorScheme, bookFileList, fontSet, appTitle, aboutOption)
 cmdStatus = runCommand(rabCommand)
 if (cmdStatus == 0)
   logEntry ("App build completed successfully")
