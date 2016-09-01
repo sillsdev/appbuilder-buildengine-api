@@ -3,7 +3,7 @@
 namespace common\components;
 
 use common\models\Build;
-use common\components\JenkinsUtils;
+use JenkinsApi\Jenkins;
 use yii\web\ServerErrorHttpException;
 
 /*
@@ -26,6 +26,16 @@ class S3 {
         $this->fileUtil = \Yii::$container->get('fileUtils');
     }
 
+    public static function getArtifactsBucket()
+    {
+        return \Yii::$app->params['buildEngineArtifactsBucket'];
+    }
+
+    public static function getAppEnv()
+    {
+        return \Yii::$app->params['appEnv'];
+    }
+
     /**
      * Configure and get the S3 Client
      * @return \Aws\S3\S3Client
@@ -39,11 +49,18 @@ class S3 {
         $client->registerStreamWrapper();
         return $client;
     }
+
+    /**
+     * @param string $jobName
+     * @param string $buildNumber
+     * @param Jenkins $jenkins
+     * @return array
+     */
     public function saveConsoleTextToS3($jobName, $buildNumber, $jenkins)
     {
         $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $jobName, $buildNumber);
-        $s3Url = self::getS3UrlBaseByNameNumber($jobName, $buildNumber).basename($errorUrl);
-        list ($s3bucket, $s3key) = self::getS3BucketKey($s3Url);
+        $s3bucket = S3::getArtifactsBucket();
+        $s3key = self::getS3KeyBaseByNameNumber($jobName, $buildNumber).basename($errorUrl);
         $consoleOutput = $this->fileUtil->file_get_contents($errorUrl);
 
         $this->s3Client->putObject([
@@ -61,21 +78,22 @@ class S3 {
     /***
      * @param Build $build
      * @param array $artifactUrls
-     * @param Array $extraContent
+     * @param array $extraContent
      * @throws ServerErrorHttpException
      */
     public function saveBuildToS3($build, $artifactUrls, $extraContent) {
-        $s3baseUrl = self::getS3UrlBase($build);
-        list ($baseS3Bucket, $baseS3Key) =  self::getS3BucketKey($s3baseUrl);
+        $baseS3Key = self::getS3KeyBase($build);
+        $baseS3Bucket = S3::getArtifactsBucket();
         $publicBaseUrl = $this->s3Client->getObjectUrl($baseS3Bucket, $baseS3Key);
         $build->beginArtifacts($publicBaseUrl);
 
         foreach ($artifactUrls as $url) {
             if (!is_null($url)) {
-                $s3url =  self::getS3Url($build, $url);
-                list ($fileS3Bucket, $fileS3Key) =  self::getS3BucketKey($s3url);
+                $fileS3Bucket = S3::getArtifactsBucket();
+                $fileS3Key =  self::getS3Key($build, $url);
 
-                echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL .".... $fileS3Bucket $s3url" .PHP_EOL;
+                echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL;
+                echo "... Bucket: $fileS3Bucket".PHP_EOL;
                 echo "... Key: $fileS3Key ".PHP_EOL;
 
                 $file = $this->fileUtil->file_get_contents($url);
@@ -94,10 +112,9 @@ class S3 {
 
         if (!empty($extraContent)) {
             foreach ($extraContent as $filename => $content) {
-                $s3url = self::getS3UrlBase($build) . $filename;
-                list ($fileS3Bucket, $fileS3Key) = self::getS3BucketKey($s3url);
+                $fileS3Key = self::getS3KeyBase($build) . $filename;
                 $this->s3Client->putObject([
-                    'Bucket' => $fileS3Bucket,
+                    'Bucket' => S3::getArtifactsBucket(),
                     'Key' => $fileS3Key,
                     'Body' => $content,
                     'ACL' => 'public-read',
@@ -108,7 +125,7 @@ class S3 {
         }
         $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
         $jenkins = $jenkinsUtils->getJenkins();
-        list($s3ErrorUrl, $s3Key) = $this->saveConsoleTextToS3($build->jobName(), $build->build_number, $jenkins);
+        list(, $s3Key) = $this->saveConsoleTextToS3($build->jobName(), $build->build_number, $jenkins);
         $build->handleArtifact($s3Key, null);
 
     }
@@ -136,33 +153,33 @@ class S3 {
     }
 
     /**
-     * Get the S3 Url to use to archive a build
+     * Get the S3 Key to use to archive a build
      * @param Build $build
      * @param string $artifactUrl
-     * @return string S3Url
+     * @return string S3Key
      */
-    public static function getS3Url($build, $artifactUrl)
+    public static function getS3Key($build, $artifactUrl)
     {
         $job = $build->job;
-        return self::getS3UrlByNameNumber($job->nameForBuild(), $build->build_number, $artifactUrl);
+        return self::getS3KeyByNameNumber($job->nameForBuild(), $build->build_number, $artifactUrl);
     }
 
     /**
-     * Get the S3 Url to use to archive a build
+     * Get the S3 Key to use to archive a build
      * @param Build $build
-     * @return string S3Url
+     * @return string S3Key
      */
-    public static function getS3UrlBase($build) {
+    public static function getS3KeyBase($build) {
         $job = $build->job;
-        return self::getS3UrlBaseByNameNumber($job->nameForBuild(), $build->build_number);
+        return self::getS3KeyBaseByNameNumber($job->nameForBuild(), $build->build_number);
     }
 
-    private static function getS3UrlBaseByNameNumber($name, $number) {
-        return JenkinsUtils::getArtifactUrlBase()."/jobs/".$name."/".$number."/";
+    private static function getS3KeyBaseByNameNumber($name, $number) {
+        return self::getAppEnv()."/jobs/".$name."/".$number."/";
     }
 
-    private static function getS3UrlByNameNumber($name, $number, $artifactUrl) {
-        return self::getS3UrlBaseByNameNumber($name, $number) . self::getArtifactOutputFile($artifactUrl);
+    private static function getS3KeyByNameNumber($name, $number, $artifactUrl) {
+        return self::getS3KeyBaseByNameNumber($name, $number) . self::getArtifactOutputFile($artifactUrl);
     }
 
     public static function getArtifactOutputFile($artifactUrl) {
@@ -171,35 +188,16 @@ class S3 {
     }
 
     /**
-     * Get the S3 Bucket and Key to use to archive a build
-     * @param string s3Url
-     * @return [string,string] Bucket, Key
-     */
-    private static function getS3BucketKey($s3Url)
-    {
-        $pattern = '/s3:\/\/([^\/]*)\/(.*)$/';
-        if (preg_match($pattern, $s3Url, $matches)){
-            $bucket = $matches[1];
-            $key = $matches[2];
-            return [$bucket, $key];
-        }
-
-        throw new ServerErrorHttpException("Failed to match $s3Url", 1444051300);
-    }
-    /**
      * Removes any S3 job folder that doesn't have a corresponding
      * record in the db
      *
-     * @param type $jobNames - Array of all of the job names
+     * @param array $jobNames - Array of all of the job names
      */
     public function removeS3FoldersWithoutJobRecord($jobNames)
     {
         $logInfo = ["Checking for S3 files to delete"];
-        // Strip s3:// off of the url base to get the bucket
-        $urlBase = \Yii::$app->params['buildEngineArtifactUrlBase'];
-        echo "URLBase $urlBase".PHP_EOL;
-        $startPos = strpos($urlBase, '//') + 2;
-        $bucket = substr($urlBase, $startPos, strlen($urlBase) - $startPos);
+        $bucket = S3::getArtifactsBucket();
+        echo "ArtifactsBucket $bucket".PHP_EOL;
 
         // Create a list of all of the files in S3 in this bucket.
         $prefix = \Yii::$app->params['appEnv']."/jobs/";

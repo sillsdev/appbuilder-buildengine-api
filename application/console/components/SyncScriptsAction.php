@@ -228,7 +228,6 @@ class SyncScriptsAction  extends ActionCommon
         $added = 0;
         $updated = 0;
         $retString = "";
-        $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
         $publisherName = $job->publisher_id;
         $jobName = $job->name();
         $buildJobName = $job->nameForBuild();
@@ -240,7 +239,6 @@ class SyncScriptsAction  extends ActionCommon
             'buildJobName' => $buildJobName,
             'publishJobName' => $publishJobName,
             'gitUrl' => $gitUrl,
-            'artifactUrlBase' => $artifactUrlBase,
         ]);
 
         $fileName = $type . "_" . $jobName . ".groovy";

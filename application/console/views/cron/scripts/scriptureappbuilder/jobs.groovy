@@ -33,7 +33,7 @@ killall Xvfb
 '''
     static artifactFiles = 'output/**'
 
-    static void codecommitBuildJob(jobContext, gitUrl, publisherName, artifactUrlBase) {
+    static void codecommitBuildJob(jobContext, gitUrl, publisherName) {
         jobContext.with {
             description "Create App for ${gitUrl}"
 

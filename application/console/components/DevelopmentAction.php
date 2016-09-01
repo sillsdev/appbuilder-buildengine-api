@@ -114,12 +114,12 @@ class DevelopmentAction {
         $jenkins = $this->jenkinsUtils->getJenkins();
         $jenkinsBaseUrl = $jenkins->getBaseUrl();
 
-        $artifactUrlBase = JenkinsUtils::getArtifactUrlBase();
+        $artifactsBucket = S3::getArtifactsBucket();
 
         echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL."  SshUser: $sshUser". PHP_EOL;
         echo "Jenkins:". PHP_EOL."  BuildEngineJenkinsMasterUrl: $jenkinsUrl". PHP_EOL."  Jenkins.baseUrl: $jenkinsBaseUrl". PHP_EOL;
         echo "Git:". PHP_EOL."  Name:$userName". PHP_EOL."  Email:$userEmail". PHP_EOL;
-        echo "Artifacts:". PHP_EOL."  UrlBase:$artifactUrlBase". PHP_EOL;
+        echo "Artifacts:". PHP_EOL."  Bucket:$artifactsBucket". PHP_EOL;
     }
     /**
      * Force the completed successful builds to upload the builds to S3. (Dev only)
@@ -264,15 +264,15 @@ class DevelopmentAction {
         $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
         $buildResult = $jenkinsBuild->getResult();
         $buildArtifact = $this->jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
-        $s3Url = S3::getS3Url($build, $buildArtifact);
+        $s3key = S3::getS3Key($build, $buildArtifact);
 
         $log['jenkins_buildResult'] = $buildResult;
         $log['jenkins_ArtifactUrl'] = $buildArtifact;
-        $log['S3: Url'] = $s3Url;
+        $log['S3: key'] = $s3key;
         
         echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
                         . "  Build: Result=$buildResult, Artifact=$buildArtifact". PHP_EOL
-                        . "  S3: Url=$s3Url". PHP_EOL;
+                        . "  S3: Key=$s3key". PHP_EOL;
         return $log;
     }
 }
