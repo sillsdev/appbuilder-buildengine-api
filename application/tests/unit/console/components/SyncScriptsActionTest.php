@@ -119,8 +119,6 @@ class SyncScriptsActionTest extends UnitTestBase
         $this->assertEquals($expectedString, MockGitWorkingCopy::$lastAdded, " *** Wrong last filename added to Git");
         $expectedString = "ssh://APKAJNELREDI767PX3QQ@git-codecommit.us-east-1.amazonaws.com/v1/repos/test";
         $this->assertEquals($expectedString, $cronController->lastParms['gitUrl'], " *** Invalid GitUrl");
-        $expectedString = "s3://sil-appbuilder-artifacts/testing";
-        $this->assertEquals($expectedString, $cronController->lastParms['artifactUrlBase'], " *** Invalid Artifact URL Base");
         $expectedString = "publish_scriptureappbuilder_22";
         $this->assertEquals($expectedString, $cronController->lastParms['publishJobName'], " *** Invalid Publish Job Name");
         $expectedString = "build_scriptureappbuilder_22";
@@ -227,8 +225,6 @@ class SyncScriptsActionTest extends UnitTestBase
         $this->assertEquals($expectedString, MockGitWorkingCopy::$lastAdded, " *** Wrong last filename added to Git");
         $expectedString = "3XynOB";
         $this->assertEquals($expectedString, $cronController->lastParms['gitUrl'], " *** Object ID was changed");
-        $expectedString = "s3://sil-appbuilder-artifacts/testing";
-        $this->assertEquals($expectedString, $cronController->lastParms['artifactUrlBase'], " *** Invalid Artifact URL Base");
         $expectedString = "publish_bloomappmaker_26";
         $this->assertEquals($expectedString, $cronController->lastParms['publishJobName'], " *** Invalid Publish Job Name");
         $expectedString = "build_bloomappmaker_26";
