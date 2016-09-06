@@ -78,19 +78,22 @@ class S3 {
     /***
      * @param Build $build
      * @param array $artifactUrls
+     * @param array $artifactRelativePaths
      * @param array $extraContent
      * @throws ServerErrorHttpException
      */
-    public function saveBuildToS3($build, $artifactUrls, $extraContent) {
+    public function saveBuildToS3($build, $artifactUrls, $artifactRelativePaths, $extraContent) {
         $baseS3Key = self::getS3KeyBase($build);
         $baseS3Bucket = S3::getArtifactsBucket();
         $publicBaseUrl = $this->s3Client->getObjectUrl($baseS3Bucket, $baseS3Key);
         $build->beginArtifacts($publicBaseUrl);
 
-        foreach ($artifactUrls as $url) {
+        // There maybe nulled out entries in the arrays (so for ($i=0; $i<count(); ++i) won't work
+        // Using array_map allows the parallel arrays to be itererated at the same time
+        foreach (array_map(null, $artifactUrls, $artifactRelativePaths) as list($url, $relativePath)) {
             if (!is_null($url)) {
                 $fileS3Bucket = S3::getArtifactsBucket();
-                $fileS3Key =  self::getS3Key($build, $url);
+                $fileS3Key =  self::getS3Key($build, $relativePath);
 
                 echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL;
                 echo "... Bucket: $fileS3Bucket".PHP_EOL;
@@ -155,13 +158,13 @@ class S3 {
     /**
      * Get the S3 Key to use to archive a build
      * @param Build $build
-     * @param string $artifactUrl
+     * @param string $relativePath
      * @return string S3Key
      */
-    public static function getS3Key($build, $artifactUrl)
+    public static function getS3Key($build, $relativePath)
     {
         $job = $build->job;
-        return self::getS3KeyByNameNumber($job->nameForBuild(), $build->build_number, $artifactUrl);
+        return self::getS3KeyByNameNumber($job->nameForBuild(), $build->build_number, $relativePath);
     }
 
     /**
@@ -178,15 +181,10 @@ class S3 {
         return self::getAppEnv()."/jobs/".$name."/".$number."/";
     }
 
-    private static function getS3KeyByNameNumber($name, $number, $artifactUrl) {
-        return self::getS3KeyBaseByNameNumber($name, $number) . self::getArtifactOutputFile($artifactUrl);
+    private static function getS3KeyByNameNumber($name, $number, $relativePath) {
+        return self::getS3KeyBaseByNameNumber($name, $number) .$relativePath;
     }
-
-    public static function getArtifactOutputFile($artifactUrl) {
-        $parts = explode("artifact/output/", $artifactUrl);
-        return $parts[1];
-    }
-
+    
     /**
      * Removes any S3 job folder that doesn't have a corresponding
      * record in the db

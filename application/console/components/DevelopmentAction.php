@@ -263,16 +263,17 @@ class DevelopmentAction {
         $jenkinsJob = $jenkins->getJob($build->job->name());
         $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
         $buildResult = $jenkinsBuild->getResult();
-        $buildArtifact = $this->jenkinsUtils->getApkArtifactUrl($jenkinsBuild);
-        $s3key = S3::getS3Key($build, $buildArtifact);
+        list($artifactUrls, $artifactRelativePaths) = $this->jenkinsUtils->getArtifactUrls($jenkinsBuild);
 
         $log['jenkins_buildResult'] = $buildResult;
-        $log['jenkins_ArtifactUrl'] = $buildArtifact;
-        $log['S3: key'] = $s3key;
-        
+        $i = 1;
+        foreach (array_map(null, $artifactUrls, $artifactRelativePaths) as list($url, $path)) {
+            $log['jenkins_artifact_'.$i] = "S3: Path=$path, Url=$url";
+            $i++;
+        }
+
         echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
-                        . "  Build: Result=$buildResult, Artifact=$buildArtifact". PHP_EOL
-                        . "  S3: Key=$s3key". PHP_EOL;
+                        . "  Build: Result=$buildResult". PHP_EOL;
         return $log;
     }
 }

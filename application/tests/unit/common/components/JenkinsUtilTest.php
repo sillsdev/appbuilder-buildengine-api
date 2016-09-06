@@ -22,11 +22,6 @@ class JenkinsUtilsTest extends UnitTestBase
     {
     }
 
-    /**
-     * This method is only here because if I don't put it in, the first test
-     * fails because the params isn't loaded.  Don't know why, but this fixed it
-     */
-
     public function testGetArtifactUrls()
     {
         $this->setContainerObjects();
@@ -36,7 +31,7 @@ class JenkinsUtilsTest extends UnitTestBase
 
         $jenkinsUtil = new JenkinsUtils();
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtil->getArtifactUrls($jenkinsBuild);
-        $this->assertEquals(14, count($artifactUrls), "*** Wrong number of artifacts");
+        $this->assertEquals(15, count($artifactUrls), "*** Wrong number of artifacts");
         $files = array ("about.txt", "Kuna_Gospels-1.0.apk", "package_name.txt",
             "play-listing/default-language.txt",
             "play-listing/es-419/full_description.txt",
@@ -45,11 +40,25 @@ class JenkinsUtilsTest extends UnitTestBase
             "play-listing/es-419/images/phoneScreenshots/screen-0.png",
             "play-listing/es-419/images/phoneScreenshots/screen-1.png",
             "play-listing/es-419/images/phoneScreenshots/screen-2.png",
+            "play-listing/es-419/images/phoneScreenshots/screen with bad @+% chars.png",
             "play-listing/es-419/short_description.txt",
             "play-listing/es-419/title.txt",
             "play-listing/es-419/whats_new.txt",
             "version_code.txt");
-        $expect = array_map(function($f) { return "http://127.0.0.1/job/testJob4/1/artifact/output/" . $f; }, $files);
+        $expectedFiles = array ("about.txt", "Kuna_Gospels-1.0.apk", "package_name.txt",
+            "play-listing/default-language.txt",
+            "play-listing/es-419/full_description.txt",
+            "play-listing/es-419/images/featureGraphic.png",
+            "play-listing/es-419/images/icon.png",
+            "play-listing/es-419/images/phoneScreenshots/screen-0.png",
+            "play-listing/es-419/images/phoneScreenshots/screen-1.png",
+            "play-listing/es-419/images/phoneScreenshots/screen-2.png",
+            "play-listing/es-419/images/phoneScreenshots/screen%20with%20bad%20%40%2B%25%20chars.png",
+            "play-listing/es-419/short_description.txt",
+            "play-listing/es-419/title.txt",
+            "play-listing/es-419/whats_new.txt",
+            "version_code.txt");
+        $expect = array_map(function($f) { return "http://127.0.0.1/job/testJob4/1/artifact/output/" . $f; }, $expectedFiles);
         $this->assertEquals($expect, $artifactUrls, "*** Artifacts array doesn't match");
         $this->assertEquals($files, $artifactRelativePaths, "*** RelativePaths array doesn't match");
     }

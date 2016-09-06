@@ -66,8 +66,8 @@ class S3Test extends UnitTestBase
         $jenkinsUtils = new JenkinsUtils();
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
         $extraContent = [ "play-listing/index.html"  => "<html></html>", "play-listing/manifest.json" => "{}" ];
-        $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
-        $this->assertEquals(17, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
+        $s3->saveBuildToS3($build, $artifactUrls, $artifactRelativePaths, $extraContent);
+        $this->assertEquals(18, count(MockS3Client::$puts), " *** Wrong number of puts to S3");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Kuna_Gospels-1.0.apk";
         $this->assertEquals($expected, $build->apk(), " *** Public URL for APK doesn't match");
         $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/about.txt";
@@ -85,8 +85,6 @@ class S3Test extends UnitTestBase
         $this->assertEquals($expected, $build->artifact_url_base, " *** Artifact URL Base doesn't match");
         $expected = "about.txt,Kuna_Gospels-1.0.apk,package_name.txt,version_code.txt,play-listing/index.html,consoleText";
         $this->assertEquals($expected, $build->artifact_files, "*** Artifact files doesn't match");
-        codecept_debug("artifact_url_base=" . $build->artifact_url_base);
-        codecept_debug("artiface_files=" . $build->artifact_files);
         $artifactPut = MockS3Client::$puts[0];
         $expected = "sil-appbuilder-artifacts";
         $this->assertEquals($expected, $artifactPut['Bucket'], " *** Bad bucket data");
@@ -145,19 +143,29 @@ class S3Test extends UnitTestBase
 */
     }
 
+    public function testGetS3Key()
+    {
+        $this->setContainerObjects();
+        MockS3Client::clearGlobals();
+        $build = Build::findOne(['id' => 11]);
+
+        $relativePaths = [
+            "about.txt" => "testing/jobs/build_scriptureappbuilder_22/1/about.txt",
+            "play-listing/en-us/title.txt" => "testing/jobs/build_scriptureappbuilder_22/1/play-listing/en-us/title.txt",
+            "play-listing/en-us/images/phoneScreenshots/screen shot1.png" => "testing/jobs/build_scriptureappbuilder_22/1/play-listing/en-us/images/phoneScreenshots/screen shot1.png"
+        ];
+
+        foreach ($relativePaths as $path => $expect) {
+            $result = S3::getS3Key($build, $path);
+            $this->assertEquals($expect, $result, "*** Wrong S3 Key");
+        }
+    }
     public function testGetArtifactOutputFile()
     {
-        $urls = [
-            "http://localhost:8080/job/testJb4/1/artifact/output/about.txt" => "about.txt",
-            "http://localhost:8080/job/testJb4/1/artifact/output/play-listing/en-us/title.txt" => "play-listing/en-us/title.txt",
-        ];
-        foreach ($urls as $url => $expect) {
-            $result = S3::getArtifactOutputFile($url);
-            $this->assertEquals($expect, $result, "*** Wrong output file");
-
-        }
+        // Function doesn't exist anymore
     }
     public function testGetS3Url()
     {
+        // Function doesn't exist anymore
     }
 }

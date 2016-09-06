@@ -47,9 +47,9 @@ class CopyToS3OperationTest extends UnitTestBase
         $expectedFiles = "about.txt,Kuna_Gospels-1.0.apk,package_name.txt,version_code.txt,play-listing/index.html,consoleText";
         $this->assertEquals($expectedBase, $build->artifact_url_base, " *** Incorrect Artifact Url Base");
         $this->assertEquals($expectedFiles, $build->artifact_files, " *** Incorrect Artifact Files");
-        $this->assertEquals(17, count(MockS3Client::$puts), " *** Wrong number of files");
+        $this->assertEquals(18, count(MockS3Client::$puts), " *** Wrong number of files");
         $expected = "testing/jobs/build_scriptureappbuilder_22/1/play-listing.html";
-        $testParms = MockS3Client::$puts[14];
+        $testParms = MockS3Client::$puts[15];
         $this->assertEquals($expected, $testParms['Key'], " *** Wrong file name");
         $expected = "text/html";
         $this->assertEquals($expected, $testParms['ContentType'], " *** Wrong Mime Type");
@@ -78,10 +78,18 @@ class CopyToS3OperationTest extends UnitTestBase
         list($artifactUrls, $artifactRelativePaths) = $jenkinsUtils->getArtifactUrls($jenkinsBuild);
         $copyOperation = new CopyToS3Operation($buildNumber);
         $method = $this->getPrivateMethod('console\components\CopyToS3Operation', 'getDefaultPath');
-        list($defaultLanguage, $newArtifactUrls) = $method->invokeArgs($copyOperation, array($artifactUrls));
+        list($defaultLanguage, $newArtifactUrls,$newArtifactRelativePaths) = $method->invokeArgs($copyOperation, array($artifactUrls, $artifactRelativePaths));
         $this->assertEquals("es-419", $defaultLanguage, " *** Wrong default language");
         $foundDefault = false;
         foreach ($newArtifactUrls as $key => $path) {
+            if (strpos($path, "default-language.txt") !== false) {
+                $foundDefault = true;
+                break;
+            }
+        }
+        $this->assertEquals(false, $foundDefault, " *** defaultLanguage.txt not removed from array");
+        $foundDefault = false;
+        foreach ($newArtifactRelativePaths as $key => $path) {
             if (strpos($path, "default-language.txt") !== false) {
                 $foundDefault = true;
                 break;

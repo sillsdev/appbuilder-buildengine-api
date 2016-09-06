@@ -90,7 +90,12 @@ class CopyToS3Operation implements OperationInterface
             foreach ($artifactRelativePaths as $path) {
                 if ((0 === strpos($path, "play-listing/")) && (strpos($path, 'default-language.txt') == false)) {
                     $publishIndex .= "<li><a href=\"$path\">$path</a></p></li>" . PHP_EOL;
-                    array_push($playRelativePaths, substr($path, strlen("play-listing/")));
+                    $filename = substr($path, strlen("play-listing/"));
+                    $encode = function($value) {
+                        return urlencode($value);
+                    };
+                    $encodedFilename = implode("/", array_map($encode,explode("/", $filename)));
+                    array_push($playRelativePaths, $encodedFilename);
                 }
             }
             $publishIndex .= "</ul></body></html>" . PHP_EOL;
@@ -99,22 +104,24 @@ class CopyToS3Operation implements OperationInterface
             if (!empty($defaultLanguage)) {
                 $manifest["default-language"] = $defaultLanguage;
             }
-            $extraContent["play-listing/manifest.json"] = json_encode($manifest, JSON_UNESCAPED_SLASHES);
+            $json = json_encode($manifest, JSON_UNESCAPED_SLASHES);
+            $extraContent["play-listing/manifest.json"] = $json;
         }
 
         return $extraContent;
     }
 
-    private function getDefaultPath($artifactUrls) {
+    private function  getDefaultPath($artifactUrls, $artifactRelativePaths) {
         $defaultLanguage = null;
         foreach ($artifactUrls as $key => $path) {
             if (strpos($path, "default-language.txt") !== false) {
                 $defaultLanguage = $this->fileUtil->file_get_contents($path);
                 unset ($artifactUrls[$key]);
+                unset ($artifactRelativePaths[$key]);
                 break;
             }
         }
-        return array($defaultLanguage, $artifactUrls);
+        return array($defaultLanguage, $artifactUrls, $artifactRelativePaths);
     }
     /**
      * Save the build to S3.
@@ -132,12 +139,12 @@ class CopyToS3Operation implements OperationInterface
             $logger->appbuilderErrorLog($log);
             echo "ERROR: No artifacts to save";
        } else {
-            list($defaultLanguage, $artifactUrls) = $this->getDefaultPath($artifactUrls);
+            list($defaultLanguage, $artifactUrls, $artifactRelativePaths) = $this->getDefaultPath($artifactUrls, $artifactRelativePaths);
             $extraContent = $this->getExtraContent($artifactRelativePaths, $defaultLanguage);
 
             # Save to S3
             $s3 = new S3();
-            $s3->saveBuildToS3($build, $artifactUrls, $extraContent);
+            $s3->saveBuildToS3($build, $artifactUrls, $artifactRelativePaths, $extraContent);
 
             # Log
             $log = JenkinsUtils::getlogBuildDetails($build);

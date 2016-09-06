@@ -60,7 +60,7 @@ class MockJenkinsUtils extends JenkinsUtils
                 array_push($artifactRelativePaths, $relativePath);
                 $artifactUrl = $this->getArtifactUrlFromRelativePath($jenkinsBuild, $testArtifact->relativePath);
                 array_push($artifactUrls, $artifactUrl);
-            }
+               }
         }
         return array($artifactUrls, $artifactRelativePaths);
     }

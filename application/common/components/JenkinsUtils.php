@@ -18,6 +18,9 @@ class JenkinsUtils
         $jenkins = new Jenkins($jenkinsUrl);
         return $jenkins;
     }
+    /**
+     * @return string
+     */
     public function getJenkinsBaseUrl(){
         return \Yii::$app->params['buildEngineJenkinsMasterUrl'];
     }
@@ -33,6 +36,10 @@ class JenkinsUtils
     public function getPublishJenkinsBaseUrl() {
         return \Yii::$app->params['publishJenkinsMasterUrl'];
     }
+    /**
+     * @param JenkinsBuild $jenkinsBuild
+     * @return array|null
+     */
     public function getArtifactUrls($jenkinsBuild) {
 
         $jenkinsArtifacts = $jenkinsBuild->get("artifacts");
@@ -47,13 +54,21 @@ class JenkinsUtils
         }
         return array($artifactUrls, $artifactRelativePaths);
     }
-
+    /**
+     * @param JenkinsBuild $jenkinsBuild
+     * @param string $relativePath
+     * @return string
+     */
     public function getArtifactUrlFromRelativePath($jenkinsBuild, $relativePath) {
+        $encode = function($value) {
+            return rawurlencode($value);
+        };
+        $encodedPath = implode("/", array_map($encode,explode("/", $relativePath)));
         $baseUrl = $jenkinsBuild->getJenkins()->getBaseUrl();
         $buildUrl = $jenkinsBuild->getBuildUrl();
         $pieces = explode("job", $buildUrl);
-        return $baseUrl."job".$pieces[1]."artifact/".$relativePath;
-
+        $artifactUrl = $baseUrl."job".$pieces[1]."artifact/".$encodedPath;
+        return $artifactUrl;
     }
      /**
      * Extract the Artifact Url from the Jenkins Build information.
@@ -131,7 +146,7 @@ class JenkinsUtils
      *
      * get build details for logging.
      * @param Build $build
-     * @return Array
+     * @return array
      */
     public static function getlogBuildDetails($build)
     {
