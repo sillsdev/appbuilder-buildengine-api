@@ -62,6 +62,14 @@ class CopyToS3Operation implements OperationInterface
         return $this->alertAfter;
     }
 
+    private static function encodePath($path) {
+        $encode = function($value) {
+            return urlencode($value);
+        };
+
+        return implode("/", array_map($encode,explode("/", $path)));
+    }
+
     private function getExtraContent($artifactRelativePaths, $defaultLanguage) {
         $hasPlayListing = false;
         $extraContent = array();
@@ -85,22 +93,19 @@ class CopyToS3Operation implements OperationInterface
             // Note: I tried using array_map/array_filter, but it changed the json
             // serialization from an array to a hash where the indexes were the old
             // positions in the array.
-            $playRelativePaths = array();
+            $playEncodedRelativePaths = array();
             $publishIndex = "<html><body><ul>" . PHP_EOL;
             foreach ($artifactRelativePaths as $path) {
                 if ((0 === strpos($path, "play-listing/")) && (strpos($path, 'default-language.txt') == false)) {
-                    $publishIndex .= "<li><a href=\"$path\">$path</a></p></li>" . PHP_EOL;
-                    $filename = substr($path, strlen("play-listing/"));
-                    $encode = function($value) {
-                        return urlencode($value);
-                    };
-                    $encodedFilename = implode("/", array_map($encode,explode("/", $filename)));
-                    array_push($playRelativePaths, $encodedFilename);
+                    $encodedPath = self::encodePath($path);
+                    $publishIndex .= "<li><a href=\"$encodedPath\">$path</a></p></li>" . PHP_EOL;
+                    $playRelativePath = substr($path, strlen("play-listing/"));
+                    array_push($playEncodedRelativePaths, self::encodePath($playRelativePath));
                 }
             }
             $publishIndex .= "</ul></body></html>" . PHP_EOL;
             $extraContent["play-listing.html"] = $publishIndex;
-            $manifest = [ "files" => $playRelativePaths ];
+            $manifest = [ "files" => $playEncodedRelativePaths ];
             if (!empty($defaultLanguage)) {
                 $manifest["default-language"] = $defaultLanguage;
             }
