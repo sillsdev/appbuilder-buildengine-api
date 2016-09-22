@@ -31,21 +31,46 @@ class OperationsQueueAction {
      */
     public function performAction()
     {
-        // Capture start time for log
-        $starttimestamp = time();
-        $queuedJobs = OperationQueue::find()->count();
-        // Do the work
-        for($i=0; $i<$queuedJobs; $i++){
-            if (!$this->processNextJob()) {
-                // No more jobs to process
-                break;
-            }
-            $attempts = $this->successfulJobs + $this->failedJobs;
-            if ($attempts >= $this->batchSize) {
-                break;
-            }
+        $prefix = Utils::getPrefix();
+
+        $tokenSemaphore = sem_get(20);
+        $tokenValue = shm_attach(21, 100);
+        if (!$this->try_lock($tokenSemaphore, $tokenValue)){
+            echo "[$prefix] OperationQueueAction: Semaphore Blocked" . PHP_EOL;
+            return;
         }
-        $this->logResults($starttimestamp, $queuedJobs);
+        echo "[$prefix] OperationQueue: Action start" . PHP_EOL;
+        try {
+            // Capture start time for log
+            $starttimestamp = time();
+            $queuedJobs = OperationQueue::find()->count();
+            // Do the work
+            for($i=0; $i<$queuedJobs; $i++){
+                if (!$this->processNextJob()) {
+                    // No more jobs to process
+                    break;
+                }
+                $attempts = $this->successfulJobs + $this->failedJobs;
+                if ($attempts >= $this->batchSize) {
+                    break;
+                }
+            }
+            $this->logResults($starttimestamp, $queuedJobs);
+        }
+        catch (\Exception $e) {
+            echo "Caught exception".PHP_EOL;
+            echo $e->getMessage() .PHP_EOL;
+            echo $e->getFile() . PHP_EOL;
+            echo $e->getLine() . PHP_EOL;
+            $logger = new Appbuilder_logger("OperationQueueAction");
+            $logException = [
+                'problem' => 'Caught exception',
+            ];
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
+        finally {
+            $this->release($tokenSemaphore, $tokenValue);
+        }
     }
     private function processNextJob()
     {
