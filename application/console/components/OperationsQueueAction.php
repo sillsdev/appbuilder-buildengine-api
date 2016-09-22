@@ -6,7 +6,7 @@ use common\components\Appbuilder_logger;
 use console\components\MaxRetriesExceededException;
 use common\helpers\Utils;
 
-class OperationsQueueAction {
+class OperationsQueueAction extends ActionCommon {
     private $verbose;
     private $batchSize;
     private $successfulJobs;
