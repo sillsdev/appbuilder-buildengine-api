@@ -16,6 +16,9 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <p>
         <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+        <?php if ($model->status == \common\models\Build::STATUS_POSTPROCESSING) {
+            echo Html::a('Retry Copy', ['retry-copy', 'id' => $model->id], ['class' => 'btn btn-warning']);
+        } ?>
         <?= Html::a('Delete', ['delete', 'id' => $model->id], [
             'class' => 'btn btn-danger',
             'data' => [

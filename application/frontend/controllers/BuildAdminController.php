@@ -2,6 +2,7 @@
 
 namespace frontend\controllers;
 
+use common\models\OperationQueue;
 use Yii;
 use common\models\Build;
 use yii\data\ActiveDataProvider;
@@ -89,6 +90,22 @@ class BuildAdminController extends Controller
                 'model' => $model,
             ]);
         }
+    }
+
+    /**
+     * Retry copying the results to S3 if
+     * @param integer $id
+     * @return mixed
+     */
+    public function actionRetryCopy($id)
+    {
+        $model = $this->findModel($id);
+
+        $task = OperationQueue::SAVETOS3;
+        $build_id = $model->id;
+        OperationQueue::findOrCreate($task, $build_id, null);
+
+        return $this->redirect(['operation-queue-admin/index']);
     }
 
     /**
