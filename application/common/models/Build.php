@@ -59,7 +59,25 @@ class Build extends BuildBase implements Linkable
             self::STATUS_COMPLETED
         ],
     ];
-
+    public $validChannelTransitions = [		
+        self::CHANNEL_UNPUBLISHED => [		
+            self::CHANNEL_ALPHA,		
+            self::CHANNEL_BETA,		
+            self::CHANNEL_PRODUCTION,		
+        ],
+        self::CHANNEL_ALPHA => [		
+            self::CHANNEL_ALPHA,
+            self::CHANNEL_BETA,		
+            self::CHANNEL_PRODUCTION,		
+        ],
+        self::CHANNEL_BETA => [
+           self::CHANNEL_BETA,
+           self::CHANNEL_PRODUCTION,		
+        ],
+        self::CHANNEL_PRODUCTION => [
+            self::CHANNEL_PRODUCTION,
+        ],
+     ];
     public function createRelease($channel) {
         $release = new Release();
         $release->build_id = $this->id;
@@ -76,7 +94,7 @@ class Build extends BuildBase implements Linkable
         ]);
     }
 
-       public function rules()
+    public function rules()
     {
         return ArrayHelper::merge(parent::rules(),[
             [
@@ -181,7 +199,19 @@ class Build extends BuildBase implements Linkable
 
         return false;
     }
+    public function isValidChannelTransition($new, $current = null)		
+     {
+        try {
+            $current = $current ?: $this->channel;		
+            if (in_array($new, $this->validChannelTransitions[$current])){		
+                return true;		
+            }		
+        }
+        catch (\Exception $e) {
+        }
 
+         return false;		
+     }
     public function jobName()
     {
         return $this->job->nameForBuild();

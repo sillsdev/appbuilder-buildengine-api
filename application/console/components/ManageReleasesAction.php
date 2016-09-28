@@ -113,7 +113,7 @@ class ManageReleasesAction extends ActionCommon
             $jenkins = $this->jenkinsUtils->getPublishJenkins();
             $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
             if (!is_null($jenkinsJob)) {
-                $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path);
+                $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path, "PROMOTE_FROM" => $release->promote_from);
 
                 $lastBuildNumber = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
                 if (!is_null($lastBuildNumber) ){

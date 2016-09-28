@@ -18,6 +18,7 @@ use Yii;
  * @property string $title
  * @property string $defaultLanguage
  * @property integer $build_number
+ * @property string $promote_from
  *
  * @property Build $build
  */
@@ -40,7 +41,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
             [['build_id', 'channel'], 'required'],
             [['build_id', 'build_number'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel', 'defaultLanguage'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'defaultLanguage', 'promote_from'], 'string', 'max' => 255],
             [['error'], 'string', 'max' => 2083],
             [['title'], 'string', 'max' => 30],
             [['build_id'], 'exist', 'skipOnError' => true, 'targetClass' => Build::className(), 'targetAttribute' => ['build_id' => 'id']],
@@ -64,6 +65,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
             'title' => Yii::t('app', 'Title'),
             'defaultLanguage' => Yii::t('app', 'Default Language'),
             'build_number' => Yii::t('app', 'Build Number'),
+            'promote_from' => Yii::t('app', 'Promote From'),
         ];
     }
 

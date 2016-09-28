@@ -47,6 +47,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format'=>"html",
                 'value' => $model->jenkinsUrl() ? Html::a($model->build_number, $model->jenkinsUrl()) : "<span>" . $model->build_number . "</span>",
             ],
+            'promote_from',
         ],
     ]) ?>
 

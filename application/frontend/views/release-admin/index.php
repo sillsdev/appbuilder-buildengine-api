@@ -56,6 +56,7 @@ $this->params['breadcrumbs'][] = $this->title;
             // 'title',
             // 'defaultLanguage',
             // 'build_number',
+            // 'promote_from',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

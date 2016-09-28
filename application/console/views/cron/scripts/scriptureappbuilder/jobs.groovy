@@ -116,7 +116,11 @@ wget "${ARTIFACT_URL}package_name.txt"
 wget "${ARTIFACT_URL}version_code.txt"
 
 set +x
-supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
+if [ -z "$PROMOTE_FROM" ]; then
+	supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
+else
+	supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $PROMOTE_FROM --track_promote_to $CHANNEL -m play-listing
+fi
 '''
     static void googleplayPublishJob(jobContext, gitUrl, publisherName, buildJobName) {
         jobContext.with {
@@ -130,6 +134,7 @@ supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-list
                 stringParam('ARTIFACT_URL', '', '' )
                 stringParam('APK_URL', '', '' )
                 stringParam('PUBLIC_URL', '', '')
+                stringParam('PROMOTE_FROM', '', '')
             }
             steps {
                 shell(publishJobScript)
