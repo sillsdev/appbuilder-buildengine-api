@@ -54,7 +54,7 @@ killall Xvfb
                 zenTimestamp('yyyy_MM_dd_HH_mm_Z')
             }
 
-            configure keystore."${publisherName}_credentialsBindingWrapper"()
+            configure keystore."credentialsBindingWrapper"(publisherName)
 
             label('android-sdk && app-builders')
 
@@ -126,7 +126,7 @@ fi
         jobContext.with {
             description "Publish App for ${gitUrl}"
 
-            configure google."${publisherName}_credentialsBindingWrapper"()
+            configure google."credentialsBindingWrapper"(publisherName)
 
             label('fastlane-supply')
             parameters {
