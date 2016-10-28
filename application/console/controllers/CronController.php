@@ -9,10 +9,12 @@ use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
 use common\components\FileUtils;
+use common\components\IAmWrapper;
 
 use console\components\SyncScriptsAction;
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
+use console\components\ManageProjectsAction;
 use console\components\OperationsQueueAction;
 use console\components\DevelopmentAction;
 use console\components\S3MaintenanceAction;
@@ -29,6 +31,7 @@ class CronController extends Controller
         \Yii::$container->set('fileUtils', 'common\components\FileUtils');
         \Yii::$container->set('jenkinsUtils', 'common\components\JenkinsUtils');
         \Yii::$container->set('gitWrapper', 'GitWrapper\GitWrapper');
+        \Yii::$container->set('iAmWrapper', 'common\components\IAmWrapper');
         parent::__construct($id, $module, $config);
     }
 
@@ -204,4 +207,14 @@ class CronController extends Controller
         $count = Job::recordCount();
         echo "Count:[$count]".PHP_EOL;
     }
+    /**
+     * Manage the state of the creation of a project repo
+     * until the status is complete.
+     */
+    public function actionManageProjects()
+    {
+        $manageProjectsAction = new ManageProjectsAction();
+        $manageProjectsAction->performAction();
+    }
+
 }

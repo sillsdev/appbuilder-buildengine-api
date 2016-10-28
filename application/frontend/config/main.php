@@ -55,7 +55,17 @@ return [
                         'DELETE <id>/build/<build_id:\d+>/release/<release_id:\d+>' => 'delete-release',
                     ]
                 ],
-            ]
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'project',
+                    'pluralize' => false,
+                    'extraPatterns' => [  // It doesn't look like these are needed, since they match the action names
+                        'GET' => 'index-projects',
+                        'GET <id>' => 'view-project',
+                        'DELETE <id>' => 'delete-project',
+                    ],
+                ],
+            ],
         ],
     ],
     'modules' => [

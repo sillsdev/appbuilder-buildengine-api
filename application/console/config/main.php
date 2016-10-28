@@ -13,6 +13,11 @@ $PUBLISH_JENKINS_MASTER_URL = getenv('PUBLISH_JENKINS_MASTER_URL');
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
 
+$AWS_ACCESS_KEY_ID = getenv('AWS_ACCESS_KEY_ID');
+$AWS_SECRET_ACCESS_KEY = getenv('AWS_SECRET_ACCESS_KEY');
+$AWS_REGION = getenv('AWS_REGION') ?: "us-east-1";
+$AWS_USER_ID = getenv('AWS_USER_ID');
+
 return [
     'id' => 'app-console',
     'basePath' => dirname(__DIR__),
@@ -47,6 +52,10 @@ return [
         'buildEngineArtifactsBucket' => $BUILD_ENGINE_ARTIFACTS_BUCKET,
         'publishJenkinsMasterUrl' => $PUBLISH_JENKINS_MASTER_URL,
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
+        'awsKeyId' => $AWS_ACCESS_KEY_ID,
+        'awsSecretKey' => $AWS_SECRET_ACCESS_KEY,
+        'awsRegion' => $AWS_REGION,
+        'awsUserId' => $AWS_USER_ID,
     ],
     'controllerMap' => [
         'fixture' => [
