@@ -49,7 +49,8 @@ class ProjectController extends ActiveController
         if (!$project) {
             throw new NotFoundHttpException("Project $id not found");
         }
-        $project->delete();
+        $project->status = Project::STATUS_DELETE_PENDING;
+        $project->save();
     }
     
     public function behaviors()

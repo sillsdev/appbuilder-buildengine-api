@@ -10,6 +10,7 @@ use Aws\Iam\Exception\IamException;
 use Aws\Iam\Exception\NoSuchEntityException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
+use yii\web\ServerErrorHttpException;
 
 use console\components\ActionCommon;
 
@@ -34,7 +35,7 @@ class ManageProjectsAction extends ActionCommon
             return;
         }
         try {
-            $logger = new Appbuilder_logger("ManageReleasesAction");
+            $logger = new Appbuilder_logger("ManageProjectsAction");
             $complete = Project::STATUS_COMPLETED;
             foreach (Project::find()->where("status!='$complete'")->each(50) as $project){
                 echo "cron/manage-projects: Project=$project->id, ". PHP_EOL;
@@ -44,7 +45,8 @@ class ManageProjectsAction extends ActionCommon
                     case Project::STATUS_INITIALIZED:
                         $this->tryCreateRepo($project);
                         break;
-                    case Project::STATUS_ACTIVE:
+                    case Project::STATUS_DELETE_PENDING:
+                        $this->tryDeleteRepo($project);
                         break;
                 }
             }
@@ -82,6 +84,9 @@ class ManageProjectsAction extends ActionCommon
         $log['Project-Result'] = $project->result;
 
         echo "Project=$project->id, Status=$project->status, Result=$project->result". PHP_EOL;
+        $output = new \Codeception\Lib\Console\Output([]);
+        $output->writeln('');
+        $output->writeln("Name=$projectName Project=$project->id, Status=$project->status, Result=$project->result");
 
         return $log;
     }
@@ -114,9 +119,7 @@ class ManageProjectsAction extends ActionCommon
                 /*
                  * Only need to return data that may have changed
                  */
-                return [
-                    'aws_public_key_id' => $publicKeyId
-                ];
+                return;
             }
             $repo = $this->createRepo($repoName);
             $repoSshUrl = $this->addUserToSshUrl($repo['repositoryMetadata']['cloneUrlSsh'], $publicKeyId);
@@ -135,32 +138,39 @@ class ManageProjectsAction extends ActionCommon
             echo "[$prefix] tryCreateRepo: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogProjectDetails($project);
             $logger->appbuilderExceptionLog($logException, $e);
+            $project->error = "File: ".$e->getFile()." Line: ".$e->getLine()." ".$e->getMessage();
             $project->status = Project::STATUS_COMPLETED;
             $project->result = Project::RESULT_FAILURE;
             $project->save();
        }
     }
-    /**
-     *
-     * @param Release $release
-     */
-    private function checkProjectStatus($release)
+    private function tryDeleteRepo($project)
     {
         $logger = new Appbuilder_logger("ManageProjectsAction");
         try {
             $prefix = Utils::getPrefix();
-            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
-
+            echo "[$prefix] tryDeleteRepo: Starting Delete of project ".$project->project_name. PHP_EOL;
+            if (! is_null($project->url)){
+                $project->status = Project::STATUS_DELETING;
+                $project->save();
+                $repoName = $this->constructRepoName($project);
+                $CCClient = $this->iAmWrapper->getCodecommitClient();
+                $CCClient->deleteRepository([
+                    'repositoryName' => $repoName,
+                ]);
+            }
+            $project->delete();
+            echo "[$prefix] tryDeleteRepo: Delete of project complete ". PHP_EOL;
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
-            echo "[$prefix] checkProjectStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            echo "Exception: " . $e->getMessage() . PHP_EOL;
-            echo $e->getFile() . PHP_EOL;
-            echo $e->getLine() . PHP_EOL;
-            $logException = $this->getlogProjectDetails($release);
+            echo "[$prefix] tryDeleteRepo: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = $this->getlogProjectDetails($project);
             $logger->appbuilderExceptionLog($logException, $e);
-            $this->failRelease($release);
-        }
+            $project->error = "File: ".$e->getFile()." Line: ".$e->getLine()." ".$e->getMessage();
+            $project->status = Project::STATUS_COMPLETED;
+            $project->result = Project::RESULT_FAILURE;
+            $project->save();
+       }
     }
     private function constructRepoName($project)
     {

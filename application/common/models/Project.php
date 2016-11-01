@@ -16,6 +16,8 @@ class Project extends ProjectBase implements Linkable
     const STATUS_INITIALIZED = 'initialized';
     const STATUS_ACTIVE = 'active';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_DELETE_PENDING = 'delete';
+    const STATUS_DELETING = 'deleting';
 
     const RESULT_SUCCESS = 'SUCCESS';
     const RESULT_FAILURE = 'FAILURE';
@@ -28,10 +30,21 @@ class Project extends ProjectBase implements Linkable
     public $validStatusTransitions = [
         self::STATUS_INITIALIZED => [
             self::STATUS_ACTIVE,
+            self::STATUS_DELETE_PENDING,
         ],
         self::STATUS_ACTIVE => [
             self::STATUS_COMPLETED,
+            self::STATUS_DELETE_PENDING,
         ],
+        self::STATUS_COMPLETED => [
+            self::STATUS_DELETE_PENDING,
+        ],
+        self::STATUS_DELETE_PENDING => [
+            self::STATUS_DELETING,
+        ],
+        self::STATUS_DELETING => [
+            self::STATUS_COMPLETED,
+        ]
     ];
     
     public function scenarios()
@@ -58,6 +71,8 @@ class Project extends ProjectBase implements Linkable
                     self::STATUS_ACTIVE,
                     self::STATUS_COMPLETED,
                     self::STATUS_INITIALIZED,
+                    self::STATUS_DELETE_PENDING,
+                    self::STATUS_DELETING,
                 ],
             ],
             [
