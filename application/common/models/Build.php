@@ -35,7 +35,7 @@ class Build extends BuildBase implements Linkable
     const ARTIFACT_PACKAGE_NAME = "package_name";
     const ARTIFACT_CONSOLE_TEXT = "consoleText";
 
-        /**
+     /**
      * Array of valid status transitions. The key is the starting
      * status and the values are valid options to be changed to.
      * @var array

@@ -39,7 +39,6 @@ class ManageReleasesActionTest extends UnitTestBase
     }
     public function testCheckStartedBuildNotStarted()
     {
-        return;
         $this->setContainerObjects();
         $releasesAction = new ManageReleasesAction();
         $release = Release::findOne(['id' => 16]);

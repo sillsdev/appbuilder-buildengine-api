@@ -53,5 +53,23 @@ class Utils
     {
         return date('Y-m-d H:i:s');
     }
+    /**
+     * Convert spaces to hyphens and remove all other non letter/number characters
+     * @param $string
+     * @return mixed
+     */
+    public static function lettersNumbersHyphensOnly($string)
+    {
+        /**
+         * Convert spaces to hyphens first
+         */
+        $string = str_replace(" ","-",$string);
 
+        /**
+         * Remove all other non letters/numbers
+         */
+        $string = preg_replace("/[^a-zA-Z0-9\-]/","",$string);
+
+        return $string;
+    }
 }

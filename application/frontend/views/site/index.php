@@ -12,7 +12,7 @@ $this->title = 'SIL App Builder Administration';
     <div class="body-content">
 
         <div class="row">
-            <div class="col-lg-3">
+            <div class="col-lg-2">
                 <h2>Job</h2>
 
                 <p>View, edit or remove entries from the job table.  Each entry in the table corresponds to
@@ -49,7 +49,7 @@ $this->title = 'SIL App Builder Administration';
 
                 <p><a class="btn btn-default" href="/client-admin">Client Administration &raquo;</a></p>
             </div>
-            <div class="col-lg-3">
+            <div class="col-lg-2">
                 <h2>Operation Queue</h2>
 
                 <p>View, edit or remove entries from the operation queue table.  Entries in this table relate to internal operations
@@ -57,6 +57,14 @@ $this->title = 'SIL App Builder Administration';
                     are present for reporting purposes only.
 
                 <p><a class="btn btn-default" href="/operation-queue-admin">Operation Queue Administration &raquo;</a></p>
+            </div>
+            <div class="col-lg-2">
+                <h2>Project</h2>
+
+                <p>View edit or remove entries from the project table.  Entries in this table are created via the REST client project
+                    API.  The table is used to create a source repository in the Amazon CodeCommit archives.
+
+                <p><a class="btn btn-default" href="/project-admin">Project Administration &raquo;</a></p>
             </div>
         </div>
 
