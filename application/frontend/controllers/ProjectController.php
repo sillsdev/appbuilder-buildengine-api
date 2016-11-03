@@ -31,21 +31,22 @@ class ProjectController extends ActiveController
     public $modelClass = 'common\models\Project';
 
     public function actionIndexProjects() {
-        throw new NotFoundHttpException("Index Projects not implemented");
+        $clientId = Project::getCurrentClientId();
+        $projects = Project::findAllByClientId($clientId);
+        if (!$projects) {
+            throw new NotFoundHttpException();
+        }
+        return $projects;
     }
     public function actionViewProject($id) {
-        $project = Project::findOne([
-            'id' => $id
-             ]);
+        $project = Project::findByIdFiltered($id);
         if (!$project) {
             throw new NotFoundHttpException("Project $id not found");
         }
         return $project;
     }
     public function actionDeleteProject($id) {
-        $project = Project::findOne([
-            'id' => $id
-             ]);
+        $project = Project::findByIdFiltered($id);
         if (!$project) {
             throw new NotFoundHttpException("Project $id not found");
         }

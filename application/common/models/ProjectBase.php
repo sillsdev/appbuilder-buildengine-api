@@ -20,6 +20,9 @@ use Yii;
  * @property string $publishing_key
  * @property string $created
  * @property string $updated
+ * @property integer $client_id
+ *
+ * @property Client $client
  */
 class ProjectBase extends \yii\db\ActiveRecord
 {
@@ -38,8 +41,10 @@ class ProjectBase extends \yii\db\ActiveRecord
     {
         return [
             [['created', 'updated'], 'safe'],
+            [['client_id'], 'integer'],
             [['status', 'result', 'error', 'user_id', 'group_id', 'app_id', 'project_name', 'language_code'], 'string', 'max' => 255],
             [['url', 'publishing_key'], 'string', 'max' => 1024],
+            [['client_id'], 'exist', 'skipOnError' => true, 'targetClass' => Client::className(), 'targetAttribute' => ['client_id' => 'id']],
         ];
     }
 
@@ -62,6 +67,15 @@ class ProjectBase extends \yii\db\ActiveRecord
             'publishing_key' => Yii::t('app', 'Publishing Key'),
             'created' => Yii::t('app', 'Created'),
             'updated' => Yii::t('app', 'Updated'),
+            'client_id' => Yii::t('app', 'Client ID'),
         ];
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getClient()
+    {
+        return $this->hasOne(Client::className(), ['id' => 'client_id']);
     }
 }

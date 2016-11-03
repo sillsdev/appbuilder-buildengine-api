@@ -84,6 +84,11 @@ class Project extends ProjectBase implements Linkable
                 // message => \Yii::t('app', 'Invalid App ID'),
                 'app_id', 'in', 'range' => ['scriptureappbuilder'],
             ],                    
+            [
+                ['client_id'],'default', 'value' => function() {
+                    return self::getCurrentClientId();
+                },
+            ],
         ]);
     }
     public function fields()
@@ -124,6 +129,68 @@ class Project extends ProjectBase implements Linkable
     }
     public function entityName()
     {
-        return strtoupper($this->group_id);
+        $entityName = strtoupper($this->group_id);
+        $client = $this->getLinkedClient();
+        if (!is_null($client)) {
+            $entityName = $client->prefix."-".$entityName;
+        }
+        return $entityName;
     }
+    public function getLinkedClient()
+    {
+        if (is_null($this->client_id)) {
+            return null;
+        }
+        return Client::findOne(['id' => $this->client_id]);
+     }
+    /**
+     * Returns array of all projects associated with the specified client
+     *
+     * @param integer $client_id
+     * @return array array of Build
+     */
+    public static function findAllByClientId($client_id)
+    {
+        if ($client_id) {
+            $projects = Project::find()->where('client_id = :client_id',
+                ['client_id'=>$client_id])->all();
+            return $projects;
+        } else {
+            /* No way I could find to find records where the 
+             * field is equal to null.  Always returned nothing
+             */
+            $projects = [];
+            foreach (Project::find()->each(50) as $project)
+            {
+                if ($project->client_id == null) {
+                    $projects[] = $project;
+                }
+            }
+            return $projects;
+        }
+    }
+    public static function findById($id)
+    {
+        return self::findOne(['id' => $id]);
+    }
+    public static function findByIdFiltered($id)
+    {
+        $project = self::findById($id);
+        if (!is_null($project)){
+            if ($project->client_id != self::getCurrentClientId()) {
+                $project = null;
+            }
+        }
+        return $project;
+    }
+    public static function getCurrentClientId() {
+        $cid = "";
+        $user = Utils::getCurrentUser();
+        if (!is_null($user)) {
+            $cid = $user->getClientId();
+        }
+        return $cid;
+    }
+
+                
 }
