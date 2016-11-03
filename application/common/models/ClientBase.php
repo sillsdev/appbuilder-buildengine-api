@@ -14,6 +14,7 @@ use Yii;
  * @property string $updated
  *
  * @property Job[] $jobs
+ * @property Project[] $projects
  */
 class ClientBase extends \yii\db\ActiveRecord
 {
@@ -58,5 +59,13 @@ class ClientBase extends \yii\db\ActiveRecord
     public function getJobs()
     {
         return $this->hasMany(Job::className(), ['client_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProjects()
+    {
+        return $this->hasMany(Project::className(), ['client_id' => 'id']);
     }
 }

@@ -38,6 +38,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'app_id',
             'project_name',
             'language_code',
+            [
+                'attribute'=>'client_id',
+                'format'=>"html",
+                'value' => $model->client_id ? Html::a($model->client_id, ['client-admin/view', 'id' => $model->client_id]) : "<span class='not-set'>(not set)</span>",
+            ],
             'publishing_key',
             'created',
             'updated',

@@ -84,9 +84,6 @@ class ManageProjectsAction extends ActionCommon
         $log['Project-Result'] = $project->result;
 
         echo "Project=$project->id, Status=$project->status, Result=$project->result". PHP_EOL;
-        $output = new \Codeception\Lib\Console\Output([]);
-        $output->writeln('');
-        $output->writeln("Name=$projectName Project=$project->id, Status=$project->status, Result=$project->result");
 
         return $log;
     }
@@ -99,7 +96,7 @@ class ManageProjectsAction extends ActionCommon
         $logger = new Appbuilder_logger("ManageProjectsAction");
         try {
             $prefix = Utils::getPrefix();
-            echo "[$prefix] tryCreateRepo: Starting Build of project ".$project->project_name. PHP_EOL;
+            echo "[$prefix] tryCreateRepo: Starting creation of project ".$project->project_name. PHP_EOL;
 
             $project->status = Project::STATUS_ACTIVE;
             $project->save();
@@ -116,10 +113,9 @@ class ManageProjectsAction extends ActionCommon
              */
             // TODO: THINK ABOUT HOW WE FIND OUT IF PROJECT REPO CREATED IF NECESSARY
             if ( ! is_null($project->url)) {
-                /*
-                 * Only need to return data that may have changed
-                 */
-                return;
+                if (!($project->url == "")){
+                    return;
+                }
             }
             $repo = $this->createRepo($repoName);
             $repoSshUrl = $this->addUserToSshUrl($repo['repositoryMetadata']['cloneUrlSsh'], $publicKeyId);
@@ -222,7 +218,7 @@ class ManageProjectsAction extends ActionCommon
         $groupName = $project->groupName();
         $entityCode = $project->entityName();
         try {
-            $result = $iamClient->getGroup([
+            $iamClient->getGroup([
                 'GroupName' => $groupName,
             ]);
         } catch (NoSuchEntityException $e) {
