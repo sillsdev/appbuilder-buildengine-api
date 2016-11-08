@@ -42,7 +42,8 @@ class ProjectBase extends \yii\db\ActiveRecord
         return [
             [['created', 'updated'], 'safe'],
             [['client_id'], 'integer'],
-            [['status', 'result', 'error', 'user_id', 'group_id', 'app_id', 'project_name', 'language_code'], 'string', 'max' => 255],
+            [['status', 'result', 'user_id', 'group_id', 'app_id', 'project_name', 'language_code'], 'string', 'max' => 255],
+            [['error'], 'string', 'max' => 2083],
             [['url', 'publishing_key'], 'string', 'max' => 1024],
             [['client_id'], 'exist', 'skipOnError' => true, 'targetClass' => Client::className(), 'targetAttribute' => ['client_id' => 'id']],
         ];
