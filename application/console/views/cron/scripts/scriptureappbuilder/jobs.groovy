@@ -14,7 +14,7 @@ if [ "$APPDEF_VERSION" -ge "$VERSION_CODE" ]; then
 fi
 VERSION_NUMBER=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
 { set +x; } 2>/dev/null
-/usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc $VERSION_CODE -vn $VERSION_NUMBER
+/usr/share/scripture-app-builder/sab.sh -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$WORKSPACE/output -vc $VERSION_CODE -vn $VERSION_NUMBER -ft share-app-link=true
 set -x
 echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > output/package_name.txt
 echo $VERSION_CODE > output/version_code.txt
