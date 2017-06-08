@@ -24,6 +24,11 @@ fi
 PUBLISH_DIR="build_data/publish/play-listing"
 if [ -d "$PUBLISH_DIR" ]; then
   cp -r "$PUBLISH_DIR" output
+  find output -name whats_new.txt | while read filename; do
+    DIR=$(dirname "${filename}")
+    mkdir "${DIR}/changelogs"
+    mv "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"
+  done
 fi
 mv build_data "${PROJNAME}_data"
 mv build.appDef "${PROJNAME}.appDef"

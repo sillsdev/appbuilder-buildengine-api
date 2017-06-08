@@ -313,8 +313,6 @@
                                             languages[aFile[0]]["full-description"] = files[i]
                                         } else if (files[i].includes("short")) {
                                             languages[aFile[0]]["short-description"] = files[i]
-                                        } else if (files[i].includes("new")) {
-                                            languages[aFile[0]]["whats-new"] = files[i]
                                         }
                                         break;
                                     case 3:
@@ -322,6 +320,8 @@
                                             languages[aFile[0]]["icon"] = files[i];
                                         } else if (files[i].includes("feature")) {
                                             languages[aFile[0]]["feature"] = files[i];
+                                        } else if (files[i].includes("changelogs")) {
+                                            languages[aFile[0]]["whats-new"] = files[i];
                                         }
                                         break;
                                     case 4:
