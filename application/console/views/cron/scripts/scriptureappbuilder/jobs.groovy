@@ -122,9 +122,9 @@ wget "${ARTIFACT_URL}version_code.txt"
 
 set +x
 if [ -z "$PROMOTE_FROM" ]; then
-	supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
+	fastlane supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing
 else
-	supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $PROMOTE_FROM --track_promote_to $CHANNEL -m play-listing
+	fastlane supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $PROMOTE_FROM --track_promote_to $CHANNEL -m play-listing
 fi
 '''
     static void googleplayPublishJob(jobContext, gitUrl, publisherName, buildJobName) {
