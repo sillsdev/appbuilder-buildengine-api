@@ -58,9 +58,20 @@ class MockS3Client
         $keyList[] = $object;
         $object['Key'] = "testing/jobs/build_scriptureappbuilder_22/1/version_code.txt";
         $keyList[] = $object;
+
+        $object['Key'] = "testing/jobs/build_scriptureappbuilder_24/27/about.txt";
+        $keyList[] = $object;
+        $object['Key'] = "testing/jobs/build_scriptureappbuilder_24/27/package_name.txt";
+        $keyList[] = $object;
+        $object['Key'] = "testing/jobs/build_scriptureappbuilder_24/27/Test-1.0.apk";
+        $keyList[] = $object;
+        $object['Key'] = "testing/jobs/build_scriptureappbuilder_24/27/version_code.txt";
+        $keyList[] = $object;
+        $object['Key'] = "testing/jobs/build_scriptureappbuilder_24/27/play-listing/index.html";
+        $keyList[] = $object;
+
         $contents['Contents'] = $keyList;
         $results[] = $contents;
         return $results;
     }
 }
-     

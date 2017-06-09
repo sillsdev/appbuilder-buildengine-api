@@ -226,5 +226,19 @@ return [
         'updated' => Utils::getDatetime(),
         'channel' => 'production',
         'version_code' => 7,
+    ],
+    'build17' => [
+        'id' => 27,
+        'job_id' => 24,
+        'status' => 'expired',
+        'build_number' => 25,
+        'result' => 'SUCCESS',
+        'error' => NULL,
+        'artifact_url_base' => 'https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_24/27/',
+        'artifact_files' => 'about.txt,package_name.txt,Test-1.0.apk,version_code.txt,play-listing/index.html',
+        'created' => Utils::getDatetime(),
+        'updated' => Utils::getDatetime(),
+        'channel' => 'production',
+        'version_code' => 7,
     ],];
 

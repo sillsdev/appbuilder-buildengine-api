@@ -11,6 +11,7 @@ use common\components\JenkinsUtils;
 use common\components\FileUtils;
 use common\components\IAmWrapper;
 
+use console\components\RemoveExpiredBuildsAction;
 use console\components\SyncScriptsAction;
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
@@ -87,23 +88,8 @@ class CronController extends Controller
     */
     public function actionRemoveExpiredBuilds()
     {
-        $logger = new Appbuilder_logger("CronController");
-        $prefix = Utils::getPrefix();
-        echo "[$prefix] actionRemoveExpiredBuilds: Started". PHP_EOL;
-        foreach (Build::find()->where([
-            'status' => Build::STATUS_EXPIRED])->each(50) as $build){
-            if ($build->apk() != null) {
-                echo "...Remove expired job $build->job_id id $build->id ". PHP_EOL;
-                $s3 = new S3();
-                $s3->removeS3Artifacts($build);
-                $build->clearArtifactUrl();
-                $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
-                $logBuildDetails['NOTE: ']='Remove expired S3 Artifacts for an expired build.';
-                $logger->appbuilderWarningLog($logBuildDetails);
-            }
-        }
-        echo "[$prefix] actionRemoveExpiredBuilds: Conpleted". PHP_EOL;
-
+        $removeExpiredBuildsAction = new RemoveExpiredBuildsAction();
+        $removeExpiredBuildsAction->performAction();
     }
 
     /**
