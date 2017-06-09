@@ -43,6 +43,7 @@ killall Xvfb
             description "Create App for ${gitUrl}"
 
             wrappers {
+                timestamps()
                 xvfb('default') {
                     screen('1024x768x24')
                     autoDisplayName(true)
