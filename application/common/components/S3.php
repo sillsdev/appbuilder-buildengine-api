@@ -36,6 +36,11 @@ class S3 {
         return \Yii::$app->params['appEnv'];
     }
 
+    public static function getArtifactsBucketRegion()
+    {
+        return \Yii::$app->params['buildEngineArtifactsBucketRegion'];
+    }
+
     /**
      * Configure and get the S3 Client
      * @return \Aws\S3\S3Client
@@ -43,7 +48,7 @@ class S3 {
     public static function getS3Client()
     {
         $client = new \Aws\S3\S3Client([
-            'region' => 'us-west-2',
+            'region' => S3::getArtifactsBucketRegion(),
             'version' => '2006-03-01'
             ]);
         $client->registerStreamWrapper();

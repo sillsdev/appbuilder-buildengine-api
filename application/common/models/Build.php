@@ -125,7 +125,7 @@ class Build extends BuildBase implements Linkable
             ],
             [
                 'artifact_url_base', 'url',
-                'pattern' => '/^https:\/\/s3-/',
+                'pattern' => '/^https:\/\/s3/',
                 'message' => \Yii::t('app', 'Artifact Url must be an https S3 Url.')
             ],            
             [
