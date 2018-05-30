@@ -113,7 +113,7 @@ be limited to alphanumeric characters, '.', '_', and '-' (CodeCommit limit).
 * [Associate AppBuilder SSH Key](#associate-buildengine-ssh-key) to a user in IAM
 * [Create BuildEngine CodeCommit Repository](#create-buildengine-codecommit-repository)
 * [Create S3 Folders](#create-s3-folders) to store credentials
-* [Give permissions to IAM user for CodeCommit and S3 Access](#give-permissions)
+* [Give permissions to IAM users](#give-permissions)
 * [Jenkins Configuration](#jenkins-configuration)
 * [Deploy containers](#deploy-containers) for AppBuilder
 * [Build Engine Configuration](#build-engine-configuration)
@@ -295,6 +295,8 @@ There are 3 different users involved in accessing S3 resources
     * CodeCommit: Write Job DSL configuration
     * S3: Access secrets
     * S3: Put build artifacts
+    * IAM: Create User and Groups, Manage SSH Key
+    * CodeCommit: Create Repository
 * App Builder
     * CodeCommit: Read Job DSL configuration
     * CodeCommit: Read/Write Project data
@@ -422,18 +424,55 @@ Create the following policies:
                 "codecommit:ListBranches"
             ],
             "Resource": [
-                "arn:aws:codecommit:us-east-1:117995318043:projects-APP_ENV-*"
+                "arn:aws:codecommit:us-east-1:117995318043:*"
             ]
         }
     ]
 }
 ```
 
+* Project creations (Create Users, Groups, and Project Repository)
+    + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
+    + Select "Create Your Own Policy"
+    + Set the Policy Name to "projects-creation-APPENV"
+    + Paste in this text and then click on "Create Policy"
+
+```javascript
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateGroup",
+                "iam:AddUserToGroup",
+                "iam:ListSSHPublicKeys",
+                "iam:GetSSHPublicKey",
+                "iam:UploadSSHPublicKey",
+                "iam:GetUser",
+                "iam:CreateUser",
+                "iam:GetGroup",
+                "iam:PutGroupPolicy"
+            ],
+            "Resource": ""
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "codecommit:CreateRepository",
+            "Resource": "arn:aws:codecommit::*:*"
+        }
+    ]
+}
+````
+    
 Attach the following policies to the "Build Engine" user:
 
 * s3-appbuilder-secrets-APP_ENV
 * s3-appbuilder-artifacts-APP_ENV
 * codecommit-ci-scripts-APP_ENV
+* projects-creation-APP_ENV
 
 Attach the following policies to the "App Builder" user:
 
