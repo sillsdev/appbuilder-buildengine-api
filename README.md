@@ -460,7 +460,10 @@ Create the following policies:
         {
             "Sid": "VisualEditor1",
             "Effect": "Allow",
-            "Action": "codecommit:CreateRepository",
+            "Action": [
+                "codecommit:CreateRepository",
+                "codecommit:DeleteRepository"
+            ],   
             "Resource": "arn:aws:codecommit::*:*"
         }
     ]
@@ -486,6 +489,7 @@ Attach the following policies to the "App Builder" user:
 In the directory where you cloned ```docker-appbuilder-jenkins```, do the following:
 
 * copy local.env.dist to local.env and update the variables. Replace SOME_KEY with your chosen environment string.
+* set ```AWS_USER_ID``` to the account number of the AWS account being used (see https://console.aws.amazon.com/support/home)
 * set ```EXPAND_S3_KEY``` and ```EXPAND_S3_SECRET``` to the ```Access Key Id``` and ```Secret Access Key``` of the App Builder User.
 * set ```BUILD_ENGINE_REPO_URL``` to the ssh url saved from creating the Build Engine repository.
 * set ```BUILD_ENGINE_REPO_BRANCH``` to master
