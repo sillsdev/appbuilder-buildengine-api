@@ -2,13 +2,13 @@
     "minimum-stability": "stable",
     "require": {
         "php": ">=5.4.0",
-        "yiisoft/yii2": "2.0.6",
+        "yiisoft/yii2": "^2.0.15",
         "yiisoft/yii2-gii": "*",
         "yiisoft/yii2-bootstrap": "*",
         "yiisoft/yii2-swiftmailer": "*",
         "cpliakas/git-wrapper": "*",
         "chbiel/jenkins-php-api": "*",
-        "aws/aws-sdk-php": "^3.4",
+        "aws/aws-sdk-php": "^3.56",
         "silinternational/yii2-jsonsyslog": "*"
     },
     "require-dev": {

@@ -40,7 +40,7 @@ RUN chown -R www-data:www-data \
     frontend/web/assets/
 
 # Install/cleanup composer dependencies
-RUN composer global require "fxp/composer-asset-plugin:^1.1.4" \
+RUN composer global require "fxp/composer-asset-plugin:^1.4.3" \
     && composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
 EXPOSE 80
