@@ -5,6 +5,7 @@ namespace common\components;
 use common\models\Build;
 use JenkinsApi\Jenkins;
 use yii\web\ServerErrorHttpException;
+use common\components\AWSCommon;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -12,7 +13,7 @@ use yii\web\ServerErrorHttpException;
  * and open the template in the editor.
  */
 
-class S3 {
+class S3 extends AWSCommon{
     public $s3Client;
     private $fileUtil;
     public function __construct() {
@@ -26,20 +27,6 @@ class S3 {
         $this->fileUtil = \Yii::$container->get('fileUtils');
     }
 
-    public static function getArtifactsBucket()
-    {
-        return \Yii::$app->params['buildEngineArtifactsBucket'];
-    }
-
-    public static function getAppEnv()
-    {
-        return \Yii::$app->params['appEnv'];
-    }
-
-    public static function getArtifactsBucketRegion()
-    {
-        return \Yii::$app->params['buildEngineArtifactsBucketRegion'];
-    }
 
     /**
      * Configure and get the S3 Client

@@ -7,18 +7,18 @@ use Yii;
 /**
  * This is the model class for table "build".
  *
- * @property integer $id
- * @property integer $job_id
+ * @property int $id
+ * @property int $job_id
  * @property string $status
- * @property integer $build_number
  * @property string $result
  * @property string $error
  * @property string $created
  * @property string $updated
  * @property string $channel
- * @property integer $version_code
+ * @property int $version_code
  * @property string $artifact_url_base
  * @property string $artifact_files
+ * @property string $build_guid
  *
  * @property Job $job
  * @property Release[] $releases
@@ -26,7 +26,7 @@ use Yii;
 class BuildBase extends \yii\db\ActiveRecord
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -34,22 +34,22 @@ class BuildBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
         return [
             [['job_id'], 'required'],
-            [['job_id', 'build_number', 'version_code'], 'integer'],
+            [['job_id', 'version_code'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel', 'artifact_files'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'artifact_files', 'build_guid'], 'string', 'max' => 255],
             [['error', 'artifact_url_base'], 'string', 'max' => 2083],
             [['job_id'], 'exist', 'skipOnError' => true, 'targetClass' => Job::className(), 'targetAttribute' => ['job_id' => 'id']],
         ];
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {
@@ -57,7 +57,6 @@ class BuildBase extends \yii\db\ActiveRecord
             'id' => Yii::t('app', 'ID'),
             'job_id' => Yii::t('app', 'Job ID'),
             'status' => Yii::t('app', 'Status'),
-            'build_number' => Yii::t('app', 'Build Number'),
             'result' => Yii::t('app', 'Result'),
             'error' => Yii::t('app', 'Error'),
             'created' => Yii::t('app', 'Created'),
@@ -66,6 +65,7 @@ class BuildBase extends \yii\db\ActiveRecord
             'version_code' => Yii::t('app', 'Version Code'),
             'artifact_url_base' => Yii::t('app', 'Artifact Url Base'),
             'artifact_files' => Yii::t('app', 'Artifact Files'),
+            'build_guid' => Yii::t('app', 'Build Guid'),
         ];
     }
 

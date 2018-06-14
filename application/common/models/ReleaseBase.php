@@ -7,8 +7,8 @@ use Yii;
 /**
  * This is the model class for table "release".
  *
- * @property integer $id
- * @property integer $build_id
+ * @property int $id
+ * @property int $build_id
  * @property string $status
  * @property string $created
  * @property string $updated
@@ -17,7 +17,7 @@ use Yii;
  * @property string $channel
  * @property string $title
  * @property string $defaultLanguage
- * @property integer $build_number
+ * @property int $build_number
  * @property string $promote_from
  *
  * @property Build $build
@@ -25,7 +25,7 @@ use Yii;
 class ReleaseBase extends \yii\db\ActiveRecord
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -33,7 +33,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
@@ -49,7 +49,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {

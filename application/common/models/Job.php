@@ -14,6 +14,10 @@ use common\helpers\Utils;
 
 class Job extends JobBase implements Linkable
 {
+    const APP_TYPE_SCRIPTUREAPP = 'scriptureappbuilder';
+    const APP_TYPE_READINGAPP = 'readingappbuilder';
+    const APP_TYPE_DICTIONARYAPP = 'dictionaryappbuilder';
+
     public function __construct($config = array()) {
         parent::__construct($config);
     }
@@ -178,6 +182,14 @@ class Job extends JobBase implements Linkable
         return "build_".$this->name();
     }
 
+    /**
+     * Returns the name of the code build process to run
+     * @return String
+     */
+    public function nameForBuildProcess()
+    {
+        return "build_".$this->app_id;
+    }
     /**
      * Convenience method to find the job by Id
      * @param integer $id

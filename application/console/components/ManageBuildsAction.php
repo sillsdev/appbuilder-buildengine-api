@@ -6,6 +6,9 @@ use common\models\OperationQueue;
 use common\components\Appbuilder_logger;
 use common\components\JenkinsUtils;
 
+use common\components\CodeCommit;
+use common\components\CodeBuild;
+
 use common\helpers\Utils;
 
 use console\components\ActionCommon;
@@ -14,9 +17,11 @@ use JenkinsApi\Item\Build as JenkinsBuild;
 
 class ManageBuildsAction extends ActionCommon
 {
+    private $cronController;
     private $jenkinsUtils;
-    public function __construct()
+    public function __construct($cronController)
     {
+        $this->cronController = $cronController;
         $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
     public function performAction()
@@ -34,17 +39,13 @@ class ManageBuildsAction extends ActionCommon
             $logger = new Appbuilder_logger("ManageBuildsAction");
             $complete = Build::STATUS_COMPLETED;
             foreach (Build::find()->where("status!='$complete'")->each(50) as $build){
-                $job = $build->job;
                 if ($build->status != Build::STATUS_EXPIRED) {
-                    $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
+                    $logBuildDetails = Build::getlogBuildDetails($build);
                     $logger->appbuilderWarningLog($logBuildDetails);
                 }
                 switch ($build->status){
                     case Build::STATUS_INITIALIZED:
-                        $this->tryStartBuild($job, $build);
-                        break;
-                    case Build::STATUS_ACCEPTED:
-                        $this->checkBuildStarted($build);
+                        $this->tryStartBuild($build);
                         break;
                     case Build::STATUS_ACTIVE:
                         $this->checkBuildStatus($build);
@@ -72,72 +73,43 @@ class ManageBuildsAction extends ActionCommon
      * Try to start a build.  If it starts, then update the database.
      * @param Build $build
      */
-    private function tryStartBuild($job, $build)
+    private function tryStartBuild($build)
     {
         $logger = new Appbuilder_logger("ManageBuildsAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Starting Build of ".$build->jobName(). PHP_EOL;
 
-            $jenkins = $this->jenkinsUtils->getJenkins();
-            $jenkinsJob = $this->getJenkinsJob($jenkins, $build);
-            if (!is_null($jenkinsJob)) {
-                $versionCode = $this->getNextVersionCode($job, $build);
-                $parameters = array("VERSION_CODE" => $versionCode);
-                $lastBuildNumber = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
-                if (!is_null($lastBuildNumber)){
-                    $build->build_number = $lastBuildNumber;
-                    echo "[$prefix] Launched Build LastBuildNumber=$build->build_number". PHP_EOL;
-                    $build->status = Build::STATUS_ACCEPTED;
-                    $build->save();
-                }
+            // Find the repo and commit id to be built
+            $job = $build->job;
+            $codecommit = new CodeCommit();
+            $branch = "master";
+            $gitUrl = $job->git_url;
+            $repoUrl = $codecommit->getSourceURL($gitUrl);
+            $commitId = $codecommit->getCommitId($gitUrl, $branch);
+
+            $script = $this->cronController->renderPartial("scripts/appbuilders_build", [
+            ]);
+            echo $script;
+            
+            // Start the build
+            $codeBuild = new CodeBuild();
+            $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script);
+            if (!is_null($lastBuildGuid)){
+                $build->build_guid = $lastBuildGuid;
+                echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
+                $build->status = Build::STATUS_ACTIVE;
+                $build->save();
             }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = JenkinsUtils::getlogBuildDetails($build);
+            $logException = Build::getlogBuildDetails($build);
             $logger->appbuilderExceptionLog($logException, $e);
+            $this->failBuild($build);
         }
     }
-    private function getJenkinsJob($jenkins, $build) {
-        try {
-            $jenkinsJob = $jenkins->getJob($build->jobName());
-            return $jenkinsJob;
-        } catch (\Exception $e) {
-            // If Jenkins is up and you can't get the job, then resync the scripts
-            echo "Job not found, trigger wrapper seed job".PHP_EOL;
-            $task = OperationQueue::UPDATEJOBS;
-            OperationQueue::findOrCreate($task, null, null);
-            return null;
-        }
-    }
-    /**
-     * @param Build $build
-     */
-    public function checkBuildStarted($build){
-        $logger = new Appbuilder_logger("ManageBuildsAction");
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkBuildStarted: Starting Build of ".$build->jobName(). PHP_EOL;
 
-            $jenkins = $this->jenkinsUtils->getJenkins();
-            $jenkinsJob = $this->getJenkinsJob($jenkins, $build);
-            if (!is_null($jenkinsJob)) {
-                $buildNumber = $this->getStartedBuildNumber($jenkinsJob, $build->build_number);
-                if (!is_null($buildNumber)){
-                    $build->build_number = $buildNumber;
-                    echo "[$prefix] Started Build: BuildNumber=$build->build_number". PHP_EOL;
-                    $build->status = Build::STATUS_ACTIVE;
-                    $build->save();
-                }
-            }
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkBuildStarted: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = JenkinsUtils::getlogBuildDetails($build);
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
     /**
      *
      * @param Build $build
@@ -149,7 +121,8 @@ class ManageBuildsAction extends ActionCommon
             echo "[$prefix] checkBuildStatus: Check Build of ".$build->jobName(). PHP_EOL;
 
             $job = $build->job;
-            if ($job){
+            if ($job) {       
+/*
                 $jenkins = $this->jenkinsUtils->getJenkins();
                 $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
@@ -183,11 +156,48 @@ class ManageBuildsAction extends ActionCommon
                     $logger->appbuilderWarningLog($log);
                     echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
                 }
+*/
+                $codeBuild = new CodeBuild();
+                $buildStatus = $codeBuild->getBuildStatus((string)$build->build_guid, $job->nameForBuildProcess());
+                $phase = $buildStatus['currentPhase'];
+                $status = $buildStatus['buildStatus'];
+                echo " phase: " . $phase . " status: " . $status .PHP_EOL;
+                if ($codeBuild->isBuildComplete($buildStatus)) 
+                {
+                    echo ' Build Complete' . PHP_EOL;
+                } else {
+                    echo ' Build Incomplete' . PHP_EOL;
+                }
+        
+                if ($codeBuild->isBuildComplete($buildStatus)) {
+                    $build->status = Build::STATUS_COMPLETED;
+                    $status = $codeBuild->getStatus($buildStatus);
+                    switch($status){
+                        case CodeBuild::STATUS_FAILED:
+                        case CodeBuild::STATUS_FAULT:
+                        case CodeBuild::STATUS_TIMED_OUT:
+                            $build->result = Build::RESULT_FAILURE;
+                            break;
+                        case CodeBuild::STATUS_STOPPED:
+                            $build->result = Build::RESULT_ABORTED;
+                            break;
+                        case CodeBuild::STATUS_SUCCEEDED:
+                            $build->result = Build::RESULT_SUCCESS;
+                            break;
+                    }
+                }
+                if (!$build->save()){
+                    throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
+                }
+                $log = Build::getlogBuildDetails($build);
+                $log['job id'] = $job->id;
+                $logger->appbuilderWarningLog($log);
+                echo "Job=$job->id, Build=$build->build_guid, Status=$build->status, Result=$build->result". PHP_EOL;
             }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
             echo "[$prefix] checkBuildStatus: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = JenkinsUtils::getlogBuildDetails($build);
+            $logException = Build::getlogBuildDetails($build);
             $logger->appbuilderErrorLog($logException);
             $this->failBuild($build);
         }
@@ -210,7 +220,7 @@ class ManageBuildsAction extends ActionCommon
     private function failBuild($build) {
         $logger = new Appbuilder_logger("ManageBuildsAction");
         try {
-            $build->result = JenkinsBuild::FAILURE;
+            $build->result = Build::RESULT_FAILURE;
             $build->status = Build::STATUS_COMPLETED;
             $build->save();
         } catch (\Exception $e) {

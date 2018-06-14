@@ -7,7 +7,7 @@ use Yii;
 /**
  * This is the model class for table "project".
  *
- * @property integer $id
+ * @property int $id
  * @property string $status
  * @property string $result
  * @property string $error
@@ -20,14 +20,14 @@ use Yii;
  * @property string $publishing_key
  * @property string $created
  * @property string $updated
- * @property integer $client_id
+ * @property int $client_id
  *
  * @property Client $client
  */
 class ProjectBase extends \yii\db\ActiveRecord
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -35,7 +35,7 @@ class ProjectBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
@@ -50,7 +50,7 @@ class ProjectBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {

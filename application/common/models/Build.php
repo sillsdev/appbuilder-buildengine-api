@@ -22,6 +22,10 @@ class Build extends BuildBase implements Linkable
     const STATUS_POSTPROCESSING = 'postprocessing';
     const STATUS_COMPLETED = 'completed';
 
+    const RESULT_SUCCESS = 'SUCCESS';
+    const RESULT_FAILURE = 'FAILURE';
+    const RESULT_ABORTED = 'ABORTED';
+
     const CHANNEL_UNPUBLISHED = 'unpublished';
     const CHANNEL_ALPHA = 'alpha';
     const CHANNEL_BETA = 'beta';
@@ -225,7 +229,7 @@ class Build extends BuildBase implements Linkable
         if ($this->job->jenkins_build_url == null) {
             return null;
         }
-        $buildUrl = $this->job->jenkins_build_url . $this->build_number . "/";
+        $buildUrl = $this->job->jenkins_build_url . $this->build_guid . "/";
         return $buildUrl;
     }
     /**
@@ -391,5 +395,33 @@ class Build extends BuildBase implements Linkable
     }
     public function consoleText() {
         return $this->getArtifactUrl("/consoleText$/");
+    }
+
+    /**
+     *
+     * get build details for logging.
+     * @param Build $build
+     * @return array
+     */
+    public static function getlogBuildDetails($build)
+    {
+        $jobName = $build->job->name();
+        $log = [
+            'jobName' => $jobName
+        ];
+        $log['buildId'] = $build->id;
+        $log['buildStatus'] = $build->status;
+        $log['buildNumber'] = $build->build_guid;
+        $log['buildResult'] = $build->result;
+        if (!is_null($build->artifact_url_base)) {
+            $log['buildArtifactUrlBase'] = $build->artifact_url_base;
+        }
+        if (!is_null($build->artifact_files)) {
+            $log['buildArtifactFiles'] = $build->artifact_files;
+        }
+
+        echo "Job=$jobName, Id=$build->id, Status=$build->status, Number=$build->build_guid, "
+                    . "Result=$build->result, ArtifactUrlBase=$build->artifact_url_base, ArtifactFiles=$build->artifact_files". PHP_EOL;
+        return $log;
     }
 }

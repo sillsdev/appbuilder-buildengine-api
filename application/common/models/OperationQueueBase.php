@@ -7,11 +7,11 @@ use Yii;
 /**
  * This is the model class for table "operation_queue".
  *
- * @property integer $id
+ * @property int $id
  * @property string $operation
- * @property integer $operation_object_id
+ * @property int $operation_object_id
  * @property string $operation_parms
- * @property integer $attempt_count
+ * @property int $attempt_count
  * @property string $last_attempt
  * @property string $try_after
  * @property string $start_time
@@ -22,7 +22,7 @@ use Yii;
 class OperationQueueBase extends \yii\db\ActiveRecord
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -30,7 +30,7 @@ class OperationQueueBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
@@ -44,7 +44,7 @@ class OperationQueueBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {

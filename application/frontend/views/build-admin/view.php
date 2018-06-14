@@ -40,9 +40,9 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             'status',
             [
-                'attribute'=>'build_number',
+                'attribute'=>'build_guid',
                 'format'=>"html",
-                'value' => $model->jenkinsUrl() ? Html::a($model->build_number, $model->jenkinsUrl()) : "<span>" . $model->build_number . "</span>",
+                'value' => $model->jenkinsUrl() ? Html::a($model->build_guid, $model->jenkinsUrl()) : "<span>" . $model->build_guid . "</span>",
             ],
             'result',
             'error:url',

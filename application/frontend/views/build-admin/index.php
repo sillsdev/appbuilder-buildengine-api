@@ -36,7 +36,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute'=>'build_number',
                 'format'=>"html",
                 'value' => function($data) {
-                    return $data->jenkinsUrl() ? Html::a($data->build_number, $data->jenkinsUrl()) : "<span>" . $data->build_number . "</span>";
+                    return $data->jenkinsUrl() ? Html::a($data->build_guid, $data->jenkinsUrl()) : "<span>" . $data->build_number . "</span>";
                 }
             ],
             // 'error',

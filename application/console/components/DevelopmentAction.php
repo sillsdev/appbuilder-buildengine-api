@@ -15,6 +15,9 @@ use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
 use console\components\OperationsQueueAction;
 
+use common\components\CodeCommit;
+use common\components\CodeBuild;
+
 use yii\console\Controller;
 use common\helpers\Utils;
 
@@ -29,11 +32,15 @@ class DevelopmentAction {
     const GETBUILDS = 'GETBUILDS';
     const UPDATEJOBS = 'UPDATEJOBS';
     const DELETEJOB = 'DELETEJOB';
+    const TESTAWSSTART = 'TESTAWSSTART';
+    const TESTAWSSTAT = 'TESTAWSSTAT';
     
     private $actionType;
     private $sendToAddress;
     private $jobIdToDelete;
     private $jenkinsUtils;
+    private $buildGuid;
+    private $buildNumber;
     
     public function __construct()
     {
@@ -44,6 +51,12 @@ class DevelopmentAction {
         }
         if ($this->actionType == self::DELETEJOB) {
             $this->jobIdToDelete = $argv[1];
+        }
+        if ($this->actionType == self::TESTAWSSTAT) {
+            $this->buildGuid = $argv[1];
+        }
+        if ($this->actionType == self::TESTAWSSTART) {
+            $this->buildNumber = $argv[1];
         }
         $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
@@ -74,7 +87,44 @@ class DevelopmentAction {
             case self::DELETEJOB:
                 $this->actionDeleteJob();
                 break;
+            case self::TESTAWSSTART:
+                $this->actionTestAwsStartBuild();
+                break;
+            case self::TESTAWSSTAT:
+                $this->actionTestAwsBuildStatus();
+                break;
         }  
+    }
+    private function actionTestAwsStartBuild()
+    {
+        echo "Testing Aws" . PHP_EOL;
+        $codecommit = new CodeCommit();
+        $branch = "master";
+        $gitUrl = "ssh://APKAILQEWQM3THXIQOOQ@git-codecommit.us-east-1.amazonaws.com/v1/repos/scriptureappbuilder-LSDEV-eng-t4test";
+        $repoUrl = $codecommit->getSourceURL($gitUrl);
+        $commitId = $codecommit->getCommitId($gitUrl, $branch);
+
+        $codeBuild = new CodeBuild();
+        $buildProcess = "build_scriptureappbuilder";
+        $jobNumber = "1";
+        $codeBuild->startBuild($repoUrl, $commitId, $buildProcess, $jobNumber, $this->buildNumber);
+    }
+    private function actionTestAwsBuildStatus()
+    {
+        echo "Testing Get Build Status" . PHP_EOL;
+        $codeBuild = new CodeBuild();
+        $buildProcess = "build_scriptureappbuilder";
+        $buildStatus = $codeBuild->getBuildStatus($this->buildGuid, $buildProcess);
+        $phase = $buildStatus['currentPhase'];
+        $status = $buildStatus['buildStatus'];
+        echo " phase: " . $phase . " status: " . $status .PHP_EOL;
+        if ($codeBuild->isBuildComplete($buildStatus)) 
+        {
+            echo ' Build Complete' . PHP_EOL;
+        } else {
+            echo ' Build Incomplete' . PHP_EOL;
+        }
+        var_dump($buildStatus);
     }
     /**
      * Test email action. Requires email adddress as parameter (Dev only)
@@ -163,10 +213,10 @@ class DevelopmentAction {
                     $logException = [
                     'problem' => 'Build not found.',
                     'jobName' => $jobName,
-                    'Number' => $build->build_number,
+                    'Number' => $build->build_guid,
                         ];
                     $logger->appbuilderExceptionLog($logException, $e);
-                    echo PHP_EOL . "Exception Job=$jobName, BuildNumber=$build->build_number ". PHP_EOL ."....Not found ". PHP_EOL;
+                    echo PHP_EOL . "Exception Job=$jobName, BuildNumber=$build->build_guid ". PHP_EOL ."....Not found ". PHP_EOL;
                 }
 
         }

@@ -7,15 +7,15 @@ use Yii;
 /**
  * This is the model class for table "job".
  *
- * @property integer $id
+ * @property int $id
  * @property string $request_id
  * @property string $git_url
  * @property string $app_id
  * @property string $publisher_id
  * @property string $created
  * @property string $updated
- * @property integer $client_id
- * @property integer $existing_version_code
+ * @property int $client_id
+ * @property int $existing_version_code
  * @property string $jenkins_build_url
  * @property string $jenkins_publish_url
  *
@@ -25,7 +25,7 @@ use Yii;
 class JobBase extends \yii\db\ActiveRecord
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -33,7 +33,7 @@ class JobBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
@@ -49,7 +49,7 @@ class JobBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {

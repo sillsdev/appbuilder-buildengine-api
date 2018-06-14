@@ -7,7 +7,7 @@ use Yii;
 /**
  * This is the model class for table "client".
  *
- * @property integer $id
+ * @property int $id
  * @property string $access_token
  * @property string $prefix
  * @property string $created
@@ -19,7 +19,7 @@ use Yii;
 class ClientBase extends \yii\db\ActiveRecord
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public static function tableName()
     {
@@ -27,7 +27,7 @@ class ClientBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function rules()
     {
@@ -40,7 +40,7 @@ class ClientBase extends \yii\db\ActiveRecord
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function attributeLabels()
     {

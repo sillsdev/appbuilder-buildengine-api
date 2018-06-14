@@ -50,7 +50,7 @@ class CronController extends Controller
      */
     public function actionManageBuilds()
     {
-        $manageBuildsAction = new ManageBuildsAction();
+        $manageBuildsAction = new ManageBuildsAction($this);
         $manageBuildsAction->performAction();
     }
 
@@ -116,6 +116,25 @@ class CronController extends Controller
     public function actionTestEmail($sendToAddress)
     {
         $developmentAction = new DevelopmentAction(DevelopmentAction::TESTEMAIL, $sendToAddress);
+        $developmentAction->performAction();
+    }
+    /**
+     * Test AWS Start build Code (Dev only)
+     * Requires a build number as parameter
+     */
+    public function actionTestAwsStart($buildNumber)
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::TESTAWSSTART, $buildNumber);
+        $developmentAction->performAction();
+    }
+
+    /**
+     * Test AWS Build Status function (Dev Only)
+     * Requires build guid as parameter
+     */
+    public function actionTestBuildStatus($buildGuid)
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::TESTAWSSTAT, $buildGuid);
         $developmentAction->performAction();
     }
     /**

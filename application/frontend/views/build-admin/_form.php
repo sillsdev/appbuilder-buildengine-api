@@ -16,7 +16,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'status')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'build_number')->textInput() ?>
+    <?= $form->field($model, 'build_guid')->textInput() ?>
 
     <?= $form->field($model, 'result')->textInput(['maxlength' => true]) ?>
 
