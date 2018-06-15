@@ -52,7 +52,7 @@ class Job extends JobBase implements Linkable
                 // This should come from another model
                 // 'app_id', 'exist', 'targetClass' => 'common\models\App', 'targetAttribute' => 'id',
                 // message => \Yii::t('app', 'Invalid App ID'),
-                'app_id', 'in', 'range' => ['scriptureappbuilder'],
+                'app_id', 'in', 'range' => ['scriptureappbuilder', 'readingappbuilder', 'dictionaryappbuilder'],
             ],
             // The currently supported Git Urls are for AWS Codecommit
             [
