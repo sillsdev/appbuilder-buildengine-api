@@ -33,12 +33,13 @@ class OperationsQueueAction extends ActionCommon {
     {
         $prefix = Utils::getPrefix();
 
-        $tokenSemaphore = sem_get(20);
+/*        $tokenSemaphore = sem_get(20);
         $tokenValue = shm_attach(21, 100);
         if (!$this->try_lock($tokenSemaphore, $tokenValue)){
             echo "[$prefix] OperationQueueAction: Semaphore Blocked" . PHP_EOL;
             return;
         }
+*/
         echo "[$prefix] OperationQueue: Action start" . PHP_EOL;
         try {
             // Capture start time for log
@@ -69,7 +70,7 @@ class OperationsQueueAction extends ActionCommon {
             $logger->appbuilderExceptionLog($logException, $e);
         }
         finally {
-            $this->release($tokenSemaphore, $tokenValue);
+//            $this->release($tokenSemaphore, $tokenValue);
         }
     }
     private function processNextJob()

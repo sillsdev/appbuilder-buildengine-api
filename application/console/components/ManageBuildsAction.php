@@ -94,7 +94,8 @@ class ManageBuildsAction extends ActionCommon
             
             // Start the build
             $codeBuild = new CodeBuild();
-            $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script);
+            $versionCode = $this->getNextVersionCode($job, $build);
+            $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script, (string)$versionCode);
             if (!is_null($lastBuildGuid)){
                 $build->build_guid = $lastBuildGuid;
                 echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
@@ -122,41 +123,7 @@ class ManageBuildsAction extends ActionCommon
 
             $job = $build->job;
             if ($job) {       
-/*
-                $jenkins = $this->jenkinsUtils->getJenkins();
-                $jenkinsJob = $jenkins->getJob($job->nameForBuild());
-                $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
-                if ($jenkinsBuild){
-                    $build->result = $jenkinsBuild->getResult();
-                    if (!$jenkinsBuild->isBuilding()){
-                        $build->status = Build::STATUS_COMPLETED;
-                        switch($build->result){
-                            case JenkinsBuild::FAILURE:
-                            case JenkinsBuild::ABORTED:
-                                $task = OperationQueue::SAVEERRORTOS3;
-                                $build_id = $build->id;
-                                OperationQueue::findOrCreate($task, $build_id, "build");
-                                break;
-                            case JenkinsBuild::SUCCESS:
-                                $build->status = Build::STATUS_POSTPROCESSING;
-                                $task = OperationQueue::SAVETOS3;
-                                $build_id = $build->id;
-                                OperationQueue::findOrCreate($task, $build_id, null);
-                                break;
-                        }
-//                        $task = OperationQueue::FINDEXPIREDBUILDS;
-//                        $job_id = $job->id;
-//                        OperationQueue::findOrCreate($task, $job_id, null);
-                    }
-                    if (!$build->save()){
-                        throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
-                    }
-                    $log = JenkinsUtils::getlogBuildDetails($build);
-                    $log['job id'] = $job->id;
-                    $logger->appbuilderWarningLog($log);
-                    echo "Job=$job->id, Build=$build->build_number, Status=$build->status, Result=$build->result". PHP_EOL;
-                }
-*/
+
                 $codeBuild = new CodeBuild();
                 $buildStatus = $codeBuild->getBuildStatus((string)$build->build_guid, $job->nameForBuildProcess());
                 $phase = $buildStatus['currentPhase'];
@@ -177,13 +144,19 @@ class ManageBuildsAction extends ActionCommon
                         case CodeBuild::STATUS_FAULT:
                         case CodeBuild::STATUS_TIMED_OUT:
                             $build->result = Build::RESULT_FAILURE;
+                            $build->error = $build->consoleText();
                             break;
                         case CodeBuild::STATUS_STOPPED:
                             $build->result = Build::RESULT_ABORTED;
+                            $build->error = $build->consoleText();
                             break;
                         case CodeBuild::STATUS_SUCCEEDED:
-                            $build->result = Build::RESULT_SUCCESS;
+                            $build->status = Build::STATUS_POSTPROCESSING;
+                            $task = OperationQueue::SAVETOS3;
+                            $build_id = $build->id;
+                            OperationQueue::findOrCreate($task, $build_id, null);
                             break;
+                    break;
                     }
                 }
                 if (!$build->save()){

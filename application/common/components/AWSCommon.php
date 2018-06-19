@@ -24,4 +24,12 @@ class AWSCommon
         return \Yii::$app->params['appEnv'];
     }
 
+    public static function getArtifactPath($build, $productionStage)
+    {
+        $job = $build->job;
+        $buildProcess = $job->nameForBuildProcess();
+        $jobNumber = (string)$job->id;
+        $artifactPath = $productionStage . '/jobs/' . $buildProcess . '_' . $jobNumber;
+        return $artifactPath;
+    }
 }

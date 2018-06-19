@@ -32,7 +32,6 @@ class DevelopmentAction {
     const GETBUILDS = 'GETBUILDS';
     const UPDATEJOBS = 'UPDATEJOBS';
     const DELETEJOB = 'DELETEJOB';
-    const TESTAWSSTART = 'TESTAWSSTART';
     const TESTAWSSTAT = 'TESTAWSSTAT';
     
     private $actionType;
@@ -40,7 +39,6 @@ class DevelopmentAction {
     private $jobIdToDelete;
     private $jenkinsUtils;
     private $buildGuid;
-    private $buildNumber;
     
     public function __construct()
     {
@@ -54,9 +52,6 @@ class DevelopmentAction {
         }
         if ($this->actionType == self::TESTAWSSTAT) {
             $this->buildGuid = $argv[1];
-        }
-        if ($this->actionType == self::TESTAWSSTART) {
-            $this->buildNumber = $argv[1];
         }
         $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
@@ -94,20 +89,6 @@ class DevelopmentAction {
                 $this->actionTestAwsBuildStatus();
                 break;
         }  
-    }
-    private function actionTestAwsStartBuild()
-    {
-        echo "Testing Aws" . PHP_EOL;
-        $codecommit = new CodeCommit();
-        $branch = "master";
-        $gitUrl = "ssh://APKAILQEWQM3THXIQOOQ@git-codecommit.us-east-1.amazonaws.com/v1/repos/scriptureappbuilder-LSDEV-eng-t4test";
-        $repoUrl = $codecommit->getSourceURL($gitUrl);
-        $commitId = $codecommit->getCommitId($gitUrl, $branch);
-
-        $codeBuild = new CodeBuild();
-        $buildProcess = "build_scriptureappbuilder";
-        $jobNumber = "1";
-        $codeBuild->startBuild($repoUrl, $commitId, $buildProcess, $jobNumber, $this->buildNumber);
     }
     private function actionTestAwsBuildStatus()
     {

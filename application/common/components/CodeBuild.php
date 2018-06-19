@@ -55,24 +55,21 @@ class CodeBuild extends AWSCommon {
      * @param string $repoHttpUrl
      * @param string $commitId
      * @param string $build
-     * @param string $buildProcess Name of CodeBuild project
-     * @param string $jobNumber
-     * @param string $buildNumber
      * @param string $buildSpec Buildspec script to be executed
+     * @param string $versionCode
      * @return string Guid part of build ID
      */
-    public function startBuild($repoHttpUrl, $commitId, $build, $buildSpec) {
+    public function startBuild($repoHttpUrl, $commitId, $build, $buildSpec, $versionCode) {
         $prefix = Utils::getPrefix();
         $job = $build->job;
         $buildProcess = $job->nameForBuildProcess();
         $jobNumber = (string)$job->id;
         $buildNumber = (string)$build->id;
-        echo "[$prefix] startBuild CodeBuild Project: " . $buildProcess . " URL: " .$repoHttpUrl . " commitId: " . $commitId . " jobNumber: " . $jobNumber . " buildNumber: " . $buildNumber . PHP_EOL;
+        echo "[$prefix] startBuild CodeBuild Project: " . $buildProcess . " URL: " .$repoHttpUrl . " commitId: " . $commitId . " jobNumber: " . $jobNumber . " buildNumber: " . $buildNumber . " versionCode: " . $versionCode . PHP_EOL;
         $artifacts_bucket = self::getArtifactsBucket();
-        $productionStage = self::getAppEnv();
         $buildApp = 'build_app';
         $buildPath = $this->getBuildPath($job);
-        $artifactPath = $productionStage . '/jobs/' . $buildProcess . '_' . $jobNumber;
+        $artifactPath = $this->getArtifactPath($build, 'codebuild-output');
         echo "Artifacts path: " . $artifactPath . PHP_EOL;
         $promise = $this->codeBuildClient->startBuildAsync([
             'projectName' => $buildApp,
@@ -97,6 +94,10 @@ class CodeBuild extends AWSCommon {
                 [
                     'name' => 'PUBLISHER',
                     'value' => $job->publisher_id,
+                ],
+                [
+                    'name' => 'VERSION_CODE',
+                    'value' => $versionCode,
                 ]
             ],
             'sourceLocationOverride' => $repoHttpUrl,
@@ -133,7 +134,7 @@ class CodeBuild extends AWSCommon {
         $builds = $result['builds'];
         try {
         $statusOfSelectedBuild = $builds[0];
-//        var_dump($statusOfSelectedBuild);
+        var_dump($statusOfSelectedBuild);
         
         return $statusOfSelectedBuild;
         } catch (\Exception $e) {
@@ -159,6 +160,7 @@ class CodeBuild extends AWSCommon {
         $status = $buildStatus['buildStatus'];
         return $status;
     }
+
     /**
      * Recreate the build id
      * 

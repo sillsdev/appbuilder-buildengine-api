@@ -21,11 +21,11 @@ class CopyToS3Operation implements OperationInterface
     private $alertAfter = 5;
     private $jenkinsUtils;
     private $fileUtil;
-    
+    private $s3;
+
     public function __construct($id)
     {
         $this->build_id = $id;
-        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
         $this->fileUtil = \Yii::$container->get('fileUtils');
     }
     public function performOperation()
@@ -36,6 +36,14 @@ class CopyToS3Operation implements OperationInterface
         if ($build) {
             $job = $build->job;
             if ($job){
+                $this->saveBuild($build);
+                $build->status = Build::STATUS_COMPLETED;
+                $build->result = Build::RESULT_SUCCESS;
+                if (!$build->save()){
+                    throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
+                }
+                $this->s3->removeCodeBuildFolder($build);
+/*
                 $jenkins = $this->jenkinsUtils->getJenkins();
                 $jenkinsJob = $jenkins->getJob($job->nameForBuild());
                 $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
@@ -45,7 +53,8 @@ class CopyToS3Operation implements OperationInterface
                     if (!$build->save()){
                         throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
                     }
-                }    
+                } 
+                */   
             }
         }
     }
@@ -61,6 +70,50 @@ class CopyToS3Operation implements OperationInterface
     {
         return $this->alertAfter;
     }
+    private function getExtraContent($build, $defaultLanguage) {
+        echo 'getExtraContent defaultLanguage: ' . $defaultLanguage . PHP_EOL;
+        $manifestFileContent = (string)$this->s3->readS3File($build, 'manifest.txt');
+        if (!empty($manifestFileContent)) {
+            $manifestFiles = explode("\n", $manifestFileContent);
+            if (count($manifestFiles) > 0) {
+                // Copy index.html to destination folder
+                $file = \Yii::getAlias("@common") . "/preview/playlisting/index.html";
+
+                $indexContents = $this->fileUtil->file_get_contents($file);
+                $this->s3->writeFileToS3($indexContents, "play-listing/index.html", $build);
+            }
+            $defaultLanguage = "";
+            foreach ($manifestFiles as $playListingFile) {
+                if (empty($defaultLanguage) && preg_match("/([^\/]*)\images\/icon.png$/", $playListingFile, $matches)) {
+                    $parts = explode("/", $playListingFile);
+                    $defaultLanguage = $parts[0];
+                    break;
+                }
+            }
+
+            // Note: I tried using array_map/array_filter, but it changed the json
+            // serialization from an array to a hash where the indexes were the old
+            // positions in the array.
+            $playEncodedRelativePaths = array();
+            $publishIndex = "<html><body><ul>" . PHP_EOL;
+            foreach ($manifestFiles as $path) {
+                if ((!empty($path)) && ($path != 'default-language.txt')) {
+                    $encodedPath = self::encodePath('play-listing/' . $path);
+                    $publishIndex .= "<li><a href=\"$encodedPath\">play-listing/$path</a></p></li>" . PHP_EOL;
+                    array_push($playEncodedRelativePaths, self::encodePath($path));
+                }
+            }
+            $publishIndex .= "</ul></body></html>" . PHP_EOL;
+            $this->s3->writeFileToS3($publishIndex, 'play-listing.html', $build);
+            $manifest = [ "files" => $playEncodedRelativePaths ];
+            if (!empty($defaultLanguage)) {
+                $manifest["default-language"] = $defaultLanguage;
+            }
+            $json = json_encode($manifest, JSON_UNESCAPED_SLASHES);
+            $jsonFileName = 'play-listing/manifest.json';
+            $this->s3->writeFileToS3($json, $jsonFileName, $build);
+        }
+    }
 
     private static function encodePath($path) {
         $encode = function($value) {
@@ -70,91 +123,37 @@ class CopyToS3Operation implements OperationInterface
         return implode("/", array_map($encode,explode("/", $path)));
     }
 
-    private function getExtraContent($artifactRelativePaths, $defaultLanguage) {
-        $hasPlayListing = false;
-        $extraContent = array();
 
-        foreach ($artifactRelativePaths as $path) {
-            if (preg_match("/play-listing/", $path)) {
-                $hasPlayListing = true;
-                // If default-language.txt file was not found, use entry with icon
-                if (empty($defaultLanguage) && preg_match("/play-listing\/([^\/]*)\/images\/icon.png$/", $path, $matches)) {
-                    $defaultLanguage = $matches[1];
-                    break;
-                }
-            }
-        }
-
-        if ($hasPlayListing) {
-            $file = \Yii::getAlias("@common") . "/preview/playlisting/index.html";
-
-            $extraContent["play-listing/index.html"] = $this->fileUtil->file_get_contents($file);
-
-            // Note: I tried using array_map/array_filter, but it changed the json
-            // serialization from an array to a hash where the indexes were the old
-            // positions in the array.
-            $playEncodedRelativePaths = array();
-            $publishIndex = "<html><body><ul>" . PHP_EOL;
-            foreach ($artifactRelativePaths as $path) {
-                if ((0 === strpos($path, "play-listing/")) && (strpos($path, 'default-language.txt') == false)) {
-                    $encodedPath = self::encodePath($path);
-                    $publishIndex .= "<li><a href=\"$encodedPath\">$path</a></p></li>" . PHP_EOL;
-                    $playRelativePath = substr($path, strlen("play-listing/"));
-                    array_push($playEncodedRelativePaths, self::encodePath($playRelativePath));
-                }
-            }
-            $publishIndex .= "</ul></body></html>" . PHP_EOL;
-            $extraContent["play-listing.html"] = $publishIndex;
-            $manifest = [ "files" => $playEncodedRelativePaths ];
-            if (!empty($defaultLanguage)) {
-                $manifest["default-language"] = $defaultLanguage;
-            }
-            $json = json_encode($manifest, JSON_UNESCAPED_SLASHES);
-            $extraContent["play-listing/manifest.json"] = $json;
-        }
-
-        return $extraContent;
+    /**
+     * getDefaultLanguage reads the default language from default-language.txt
+     * 
+     * @param Build $build - Current build object
+     * @return string Contents of default-language.txt or empty if file doesn't exist
+     */
+    private function  getDefaultLanguage($build) {
+        $defaultLanguage = $this->s3->readS3File($build, 'play-listing/default-language.txt');
+        return $defaultLanguage;
     }
 
-    private function  getDefaultPath($artifactUrls, $artifactRelativePaths) {
-        $defaultLanguage = null;
-        foreach ($artifactUrls as $key => $path) {
-            if (strpos($path, "default-language.txt") !== false) {
-                $defaultLanguage = $this->fileUtil->file_get_contents($path);
-                unset ($artifactUrls[$key]);
-                unset ($artifactRelativePaths[$key]);
-                break;
-            }
-        }
-        return array($defaultLanguage, $artifactUrls, $artifactRelativePaths);
-    }
     /**
      * Save the build to S3.
      * @param Build $build
      * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
-    private function saveBuild($build, $jenkinsBuild) {
+    private function saveBuild($build) {
+        echo "SaveBuild" . PHP_EOL;
         $logger = new Appbuilder_logger("CopyToS3Operation");
-        # Get list of artifacts from Jenkins build
-        list($artifactUrls, $artifactRelativePaths) = $this->jenkinsUtils->getArtifactUrls($jenkinsBuild);
-        if (!$artifactUrls) {
-            $log = JenkinsUtils::getlogBuildDetails($build);
-            $log['errorMessage'] = 'No artifacts to save';
-            $logger->appbuilderErrorLog($log);
-            echo "ERROR: No artifacts to save";
-       } else {
-            list($defaultLanguage, $artifactUrls, $artifactRelativePaths) = $this->getDefaultPath($artifactUrls, $artifactRelativePaths);
-            $extraContent = $this->getExtraContent($artifactRelativePaths, $defaultLanguage);
+        $this->s3 = new S3();
 
-            # Save to S3
-            $s3 = new S3();
-            $s3->saveBuildToS3($build, $artifactUrls, $artifactRelativePaths, $extraContent);
+        $this->s3->copyS3Folder($build);
+        $defaultLanguage = $this->getDefaultLanguage($build);
+        $this->getExtraContent($build, $defaultLanguage);
 
-            # Log
-            $log = JenkinsUtils::getlogBuildDetails($build);
+        # Log
+        $log = Build::getlogBuildDetails($build);
 
-            $logger->appbuilderWarningLog($log);
-       }
+        $logger->appbuilderWarningLog($log);
+
     }
 }

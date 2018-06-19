@@ -30,10 +30,6 @@ phases:
   build:
     commands:
       - KS="/secrets/${PUBLISHER}.keystore"
-      - echo "KS=${KS}"
-      - echo "KSP=${KSP}"
-      - echo "KA=${KA}"
-      - echo "KAP=${KAP}"
       - echo "BUILD_NUMBER=${BUILD_NUMBER}"
       - echo "VERSION_CODE=${VERSION_CODE}"
       - OUTPUT_DIR="/${BUILD_NUMBER}"

@@ -118,15 +118,6 @@ class CronController extends Controller
         $developmentAction = new DevelopmentAction(DevelopmentAction::TESTEMAIL, $sendToAddress);
         $developmentAction->performAction();
     }
-    /**
-     * Test AWS Start build Code (Dev only)
-     * Requires a build number as parameter
-     */
-    public function actionTestAwsStart($buildNumber)
-    {
-        $developmentAction = new DevelopmentAction(DevelopmentAction::TESTAWSSTART, $buildNumber);
-        $developmentAction->performAction();
-    }
 
     /**
      * Test AWS Build Status function (Dev Only)

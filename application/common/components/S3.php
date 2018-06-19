@@ -6,6 +6,7 @@ use common\models\Build;
 use JenkinsApi\Jenkins;
 use yii\web\ServerErrorHttpException;
 use common\components\AWSCommon;
+use Aws\Exception\AwsException;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -43,6 +44,128 @@ class S3 extends AWSCommon{
     }
 
     /**
+     * Gets the base prefix for the s3 within the bucket
+     * 
+     * @param Build $build Current build object
+     * @return string prefix 
+     */
+    public function getBasePrefixUrl($build, $productStage) {
+        $artifactPath = self::getArtifactPath($build, $productStage);
+        $buildNumber = (string)$build->id;
+        $repoUrl =  $artifactPath . "/" . $buildNumber . "/" ;
+        return $repoUrl;
+    }
+    /**
+     * This function reads a file from the build output
+     * 
+     * @param Build $build Current build object
+     * @param string $fileName Name of the file without path
+     * @return string Contains the contents of the file
+     */
+    public function readS3File($build, $fileName){
+        $fileContents = "";
+        try {
+            $filePath =  $this->getBasePrefixUrl($build, 'codebuild-output') . $fileName;
+            $result = $this->s3Client->getObject([
+                'Bucket' => self::getArtifactsBucket(),
+                'Key' => $filePath,
+            ]);
+            $fileContents = $result['Body'];
+        } catch (AwsException $e) {
+            // There is not a good way to check for file exists.  If file doesn't exist,
+            // it will be caught here and an empty string returned.
+            echo "readS3File: exception caught. Type: " . $e->getAwsErrorType() . PHP_EOL;
+        }
+        return $fileContents;
+    }
+
+    /**
+     * copyS3Folder copies the files from where they have been saved encrypted in s3 by codebuild
+     * to the final unencrypted artifacts folder. 
+     * NOTE: This move is required because the initial codebuild version encrypts the files
+     * with a key and there is no option to build them without encryption.
+     * 
+     * @param Build $build - The build associated with the successful build
+     */
+    public function copyS3Folder($build){
+        $artifactsBucket = self::getArtifactsBucket();
+        $sourcePrefix = $this->getBasePrefixUrl($build, 'codebuild-output');
+        $destPrefix = $this->getBasePrefixUrl($build, self::getAppEnv());
+        $baseS3Key = self::getS3KeyBase($build);
+        $publicBaseUrl = $this->s3Client->getObjectUrl($artifactsBucket, $destPrefix);
+        $build->beginArtifacts($publicBaseUrl);
+        $result = $this->s3Client->listObjectsV2([
+            'Bucket' => $artifactsBucket,
+            'Prefix' => $sourcePrefix, 
+        ]);
+        $fileCount = $result['KeyCount'];
+        $files = $result['Contents'];
+        foreach ($files as $file) {
+            $this->copyS3File($file, $sourcePrefix, $destPrefix, $build);
+        }
+    }
+    /**
+     * This method copies a single file from the encrypted source archive to
+     * the unencrypted destination archive
+     * 
+     * @param AWS/File $file - AWS object for source file
+     * @param string $sourcePrefix - The AWS path to the source folder
+     * @param string $destPrefix - The AWS path to the destination folder
+     * @param Build $build - Successful build associated with the copy
+     */
+    public function copyS3File($file, $sourcePrefix, $destPrefix, $build) {
+        $artifactsBucket = self::getArtifactsBucket();
+        $fileContents="";
+        $fileNameWithPrefix = $file['Key'];
+        $fileName = substr($fileNameWithPrefix, strlen($sourcePrefix));
+        switch ($fileName) {
+            case 'manifest.txt':
+                return;
+            case 'play-listing/default-language.txt':
+                return;
+            case 'version_code.txt':
+                $fileContents = (string)$this->readS3File($build, $fileName);
+                break;
+            default:
+                echo $fileName . PHP_EOL;
+                break;
+        }
+        $sourceFile = $artifactsBucket . '/' . $fileNameWithPrefix;
+        $destinationFile = $destPrefix . $fileName;
+        $contentType = $this->getFileType($fileName);
+        $return = $this->s3Client->copyObject([
+            'Bucket' => $artifactsBucket,
+            'CopySource' => $sourceFile,
+            'Key' => $destinationFile,
+            'ACL' => 'public-read',
+            'ContentType' => $this->getFileType($fileName),
+            'MetadataDirective' => 'REPLACE',
+            ]);
+        $build->handleArtifact($destinationFile, $fileContents);
+    }
+
+    public function writeFileToS3($fileContents, $fileName, $build) {
+        $fileS3Bucket = self::getArtifactsBucket();
+        $destPrefix = $this->getBasePrefixUrl($build, self::getAppEnv());
+        $fileS3Key = $destPrefix . $fileName;
+
+        $this->s3Client->putObject([
+            'Bucket' => $fileS3Bucket,
+            'Key' => $fileS3Key,
+            'Body' => $fileContents,
+            'ACL' => 'public-read',
+            'ContentType' => $this->getFileType($fileName)
+        ]);
+
+        $build->handleArtifact($fileS3Key, $fileContents);
+    }
+    public function removeCodeBuildFolder($build) {
+        $s3Folder = $this->getBasePrefixUrl($build, 'codebuild-output');
+        $s3Bucket = S3::getArtifactsBucket();
+        echo ("Deleting S3 bucket: $s3Bucket key: $s3Folder").PHP_EOL;
+        $this->s3Client->deleteMatchingObjects($s3Bucket, $s3Folder);
+    }
+    /**
      * @param string $jobName
      * @param string $buildNumber
      * @param Jenkins $jenkins
@@ -67,63 +190,6 @@ class S3 extends AWSCommon{
         return array($publicUrl, $s3key);
     }
 
-    /***
-     * @param Build $build
-     * @param array $artifactUrls
-     * @param array $artifactRelativePaths
-     * @param array $extraContent
-     * @throws ServerErrorHttpException
-     */
-    public function saveBuildToS3($build, $artifactUrls, $artifactRelativePaths, $extraContent) {
-        $baseS3Key = self::getS3KeyBase($build);
-        $baseS3Bucket = S3::getArtifactsBucket();
-        $publicBaseUrl = $this->s3Client->getObjectUrl($baseS3Bucket, $baseS3Key);
-        $build->beginArtifacts($publicBaseUrl);
-
-        // There maybe nulled out entries in the arrays (so for ($i=0; $i<count(); ++i) won't work
-        // Using array_map allows the parallel arrays to be itererated at the same time
-        foreach (array_map(null, $artifactUrls, $artifactRelativePaths) as list($url, $relativePath)) {
-            if (!is_null($url)) {
-                $fileS3Bucket = S3::getArtifactsBucket();
-                $fileS3Key =  self::getS3Key($build, $relativePath);
-
-                echo "..copy:" .PHP_EOL .".... $url" .PHP_EOL;
-                echo "... Bucket: $fileS3Bucket".PHP_EOL;
-                echo "... Key: $fileS3Key ".PHP_EOL;
-
-                $file = $this->fileUtil->file_get_contents($url);
-
-                $this->s3Client->putObject([
-                    'Bucket' => $fileS3Bucket,
-                    'Key' => $fileS3Key,
-                    'Body' => $file,
-                    'ACL' => 'public-read',
-                    'ContentType' => $this->getFileType($url)
-                ]);
-
-                $build->handleArtifact($fileS3Key, $file);
-            }
-        }
-
-        if (!empty($extraContent)) {
-            foreach ($extraContent as $filename => $content) {
-                $fileS3Key = self::getS3KeyBase($build) . $filename;
-                $this->s3Client->putObject([
-                    'Bucket' => S3::getArtifactsBucket(),
-                    'Key' => $fileS3Key,
-                    'Body' => $content,
-                    'ACL' => 'public-read',
-                    'ContentType' => $this->getFileType($filename)
-                ]);
-                $build->handleArtifact($fileS3Key, $content);
-            }
-        }
-        $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
-        $jenkins = $jenkinsUtils->getJenkins();
-        list(, $s3Key) = $this->saveConsoleTextToS3($build->jobName(), $build->build_number, $jenkins);
-        $build->handleArtifact($s3Key, null);
-
-    }
     private function getFileType($fileName) {
         $info = pathinfo($fileName);
         switch ($info['extension']) {
@@ -166,7 +232,7 @@ class S3 extends AWSCommon{
      */
     public static function getS3KeyBase($build) {
         $job = $build->job;
-        return self::getS3KeyBaseByNameNumber($job->nameForBuild(), $build->build_number);
+        return self::getS3KeyBaseByNameNumber($job->nameForBuild(), $build->id);
     }
 
     private static function getS3KeyBaseByNameNumber($name, $number) {

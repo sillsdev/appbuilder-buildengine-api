@@ -129,7 +129,7 @@ class Build extends BuildBase implements Linkable
             ],
             [
                 'artifact_url_base', 'url',
-                'pattern' => '/^https:\/\/s3/',
+                'pattern' => '/^https:\/\//',
                 'message' => \Yii::t('app', 'Artifact Url must be an https S3 Url.')
             ],            
             [
@@ -394,7 +394,12 @@ class Build extends BuildBase implements Linkable
         return $this->getArtifactUrl("/package_name\.txt$/");
     }
     public function consoleText() {
-        return $this->getArtifactUrl("/consoleText$/");
+        $region = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-west-2";
+        $regionUrl = 'https://console.aws.amazon.com/cloudwatch/home?region=' . $region;
+        $taskExtension = '#logEvent:group=/aws/codebuild/build_app;stream=' . $this->build_guid;
+        return $regionUrl . $taskExtension;
+    }
+    public function getCloudWatchUrl($guid) {
     }
 
     /**
