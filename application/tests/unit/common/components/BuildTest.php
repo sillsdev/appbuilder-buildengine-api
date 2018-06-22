@@ -55,16 +55,22 @@ class BuildTest extends UnitTestBase
         list ($type, $file) = $build->artifactType($s3Key);
         $this->assertEquals("apk", $type, " *** apk file type not detected");
     }
-    public function handleArtifactTest()
+    public function testHandleArtifact()
     {
         $this->setContainerObjects();
         $build = Build::findOne(['id' => 11]);
-        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/consoleText";
-        $content = "Content";
-        $file = $build->handleArtifact($s3Key, $content);
-        $this->assertEquals("consoleText", $file, " *** ConsoleText return incorrect");
-        // Make sure it was added to the artifacts
-        $expected = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/consoleText";
-        $this->assertEquals($expected, $build->consoleText(), " *** Public URL for Console Text doesn't match");  
+        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/version_code.txt";
+        $content = "5";
+        $build->handleArtifact($s3Key, $content);
+        $this->assertEquals(5, $build->version_code, " *** Wrong version code");
+        $this->assertEquals("version_code.txt", $build->artifact_files, " *** Problem adding artifact");
+    }
+    public function testFindAllRunningByJobId()
+    {
+        $this->setContainerObjects();
+        $builds = Build::findAllRunningByJobId('22');
+        $numberOfRunningBuilds = count($builds);
+        $this->assertEquals(2, $numberOfRunningBuilds, " *** Incorrect number of active builds");
+
     }
 }

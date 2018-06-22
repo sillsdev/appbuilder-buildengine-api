@@ -165,30 +165,6 @@ class S3 extends AWSCommon{
         echo ("Deleting S3 bucket: $s3Bucket key: $s3Folder").PHP_EOL;
         $this->s3Client->deleteMatchingObjects($s3Bucket, $s3Folder);
     }
-    /**
-     * @param string $jobName
-     * @param string $buildNumber
-     * @param Jenkins $jenkins
-     * @return array
-     */
-    public function saveConsoleTextToS3($jobName, $buildNumber, $jenkins)
-    {
-        $errorUrl = $jenkins->getBaseUrl().sprintf('job/%s/%s/consoleText', $jobName, $buildNumber);
-        $s3bucket = S3::getArtifactsBucket();
-        $s3key = self::getS3KeyBaseByNameNumber($jobName, $buildNumber).basename($errorUrl);
-        $consoleOutput = $this->fileUtil->file_get_contents($errorUrl);
-
-        $this->s3Client->putObject([
-            'Bucket' => $s3bucket,
-            'Key' => $s3key,
-            'Body' => $consoleOutput,
-            'ACL' => 'public-read',
-            'ContentType' => "text/plain"
-        ]);
-
-        $publicUrl = $this->s3Client->getObjectUrl($s3bucket, $s3key);
-        return array($publicUrl, $s3key);
-    }
 
     private function getFileType($fileName) {
         $info = pathinfo($fileName);

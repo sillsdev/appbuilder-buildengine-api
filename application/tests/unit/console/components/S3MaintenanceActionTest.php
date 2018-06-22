@@ -6,7 +6,7 @@ use tests\unit\UnitTestBase;
 use tests\unit\fixtures\common\models\JobFixture;
 use tests\unit\fixtures\common\models\BuildFixture;
 use tests\unit\fixtures\common\models\ReleaseFixture;
-use tests\mock\s3client\MockS3Client;
+use tests\mock\aws\s3\MockS3Client;
 
 class S3MaintenanceActionTest extends UnitTestBase
 {

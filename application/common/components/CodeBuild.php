@@ -107,7 +107,6 @@ class CodeBuild extends AWSCommon {
         echo "state: " . $state . PHP_EOL;
         $result = $promise->wait(true);
         $buildInfo = $result['build'];
-        $buildArn = $buildInfo['arn'];
         $buildId = $buildInfo['id'];
         $buildGuid = substr($buildId, strrpos($buildId, ':') + 1);
         echo "Build id: " . $buildId . " Guid: " . $buildGuid . PHP_EOL;
@@ -134,7 +133,7 @@ class CodeBuild extends AWSCommon {
         $builds = $result['builds'];
         try {
         $statusOfSelectedBuild = $builds[0];
-        var_dump($statusOfSelectedBuild);
+//        var_dump($statusOfSelectedBuild);
         
         return $statusOfSelectedBuild;
         } catch (\Exception $e) {
@@ -145,7 +144,7 @@ class CodeBuild extends AWSCommon {
     }
 
     /**
-     * This method returns a boolean of the completion status of the job
+     * This method returns the completion status of the job
      * based upon the build status object passed in
      */
     public function isBuildComplete($buildStatus) {

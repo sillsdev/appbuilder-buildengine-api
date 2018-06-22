@@ -26,6 +26,7 @@ class FindExpiredBuildsOperation implements OperationInterface
         echo "[$prefix] Check for expired builds for job $this->job_id" . PHP_EOL;
         $job = Job::findOne(['id' => $this->job_id]);
         if (!is_null($job)){
+            /*  Wait until we decide what to do for this one
             $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
             $jenkins = $jenkinsUtils->getJenkins();
             $jenkinsJob = $jenkins->getJob($job->nameForBuild());
@@ -38,6 +39,7 @@ class FindExpiredBuildsOperation implements OperationInterface
                     $build->save();
                 }
             }
+            */
         }
     }   
     public function getMaximumRetries()
