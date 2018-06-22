@@ -4,7 +4,6 @@ namespace console\components;
 use common\models\Build;
 use common\models\OperationQueue;
 use common\components\Appbuilder_logger;
-use common\components\JenkinsUtils;
 
 use common\components\CodeCommit;
 use common\components\CodeBuild;
@@ -18,11 +17,9 @@ use JenkinsApi\Item\Build as JenkinsBuild;
 class ManageBuildsAction extends ActionCommon
 {
     private $cronController;
-    private $jenkinsUtils;
     public function __construct($cronController)
     {
         $this->cronController = $cronController;
-        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
     public function performAction()
     {
@@ -43,6 +40,7 @@ class ManageBuildsAction extends ActionCommon
                     $logBuildDetails = Build::getlogBuildDetails($build);
                     $logger->appbuilderWarningLog($logBuildDetails);
                 }
+                // codecept_debug("Build: " . (string)$build->id);
                 switch ($build->status){
                     case Build::STATUS_INITIALIZED:
                         $this->tryStartBuild($build);
@@ -82,6 +80,15 @@ class ManageBuildsAction extends ActionCommon
 
             // Find the repo and commit id to be built
             $job = $build->job;
+
+            // Don't start job if a job for this build is currently running
+            $builds = Build::findAllRunningByJobId((string)$build->job_id);
+            // codecept_debug("Count of active builds: " . (string)count($builds));
+            if (count($builds) > 0) {
+                // codecept_debug("...is currentlyBuilding so wait");
+                echo '...is currentlyBuilding so wait'.  PHP_EOL;
+                return;
+            }
             $codecommit = new CodeCommit();
             $branch = "master";
             $gitUrl = $job->git_url;

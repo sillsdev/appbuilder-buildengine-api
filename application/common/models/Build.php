@@ -275,6 +275,19 @@ class Build extends BuildBase implements Linkable
        return $builds;
     }
     /**
+     * Returns array of all in progress builds associated with the specified job
+     *
+     * @param type $job_id
+     * @return type array of Build
+     */
+    public static function findAllRunningByJobId($job_id)
+    {
+        $builds = Build::find()->where('job_id = :job_id and (status = :active or status = :postprocessing)',
+                ['job_id'=>$job_id, 'active'=>Build::STATUS_ACTIVE, 'postprocessing'=>Build::STATUS_POSTPROCESSING])->all();
+        return $builds;
+    }
+
+    /**
      * Returns array of all builds associated with the specified job
      *
      * @param type $job_id
@@ -398,8 +411,6 @@ class Build extends BuildBase implements Linkable
         $regionUrl = 'https://console.aws.amazon.com/cloudwatch/home?region=' . $region;
         $taskExtension = '#logEvent:group=/aws/codebuild/build_app;stream=' . $this->build_guid;
         return $regionUrl . $taskExtension;
-    }
-    public function getCloudWatchUrl($guid) {
     }
 
     /**
