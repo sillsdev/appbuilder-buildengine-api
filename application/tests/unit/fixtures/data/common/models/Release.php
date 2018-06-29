@@ -14,7 +14,7 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 1,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b21',
     ],
     'release2' => [
         'id' => 11,
@@ -27,7 +27,7 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 1,
+        'build_guid' => NULL,
     ],
     'release3' => [
         'id' => 12,
@@ -40,7 +40,7 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 5,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b25',
     ],
     'release4' => [
         'id' => 13,
@@ -53,7 +53,7 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 3,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b23',
     ],
     'release5' => [
         'id' => 14,
@@ -66,7 +66,7 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 4,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b24',
     ],    
     'release6' => [
         'id' => 15,
@@ -79,12 +79,12 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 99,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b99',
     ],
     'release7' => [
         'id' => 16,
         'build_id' => 12,
-        'status' => 'accepted',
+        'status' => 'active',
         'result' => NULL,
         'error' => NULL,
         'created' => Utils::getDatetime(),
@@ -92,7 +92,7 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 1,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b11',
     ],
     'release8' => [
         'id' => 17,
@@ -105,6 +105,6 @@ return [
         'channel' => 'alpha',
         'title' => NULL,
         'defaultLanguage' => NULL,
-        'build_number' => 0,
+        'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b20',
     ],
 ];

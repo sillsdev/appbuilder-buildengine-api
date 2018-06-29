@@ -6,6 +6,7 @@ use common\models\Release;
 use common\models\OperationQueue;
 use common\components\Appbuilder_logger;
 use common\components\JenkinsUtils;
+use common\components\CodeBuild;
 
 use console\components\ActionCommon;
 
@@ -17,14 +18,14 @@ use JenkinsApi\Item\Job as JenkinsJob;
 
 class ManageReleasesAction extends ActionCommon
 {
-    private $jenkinsUtils;
-    public function __construct()
+    private $cronController;
+    public function __construct($cronController)
     {
-        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
+        $this->cronController = $cronController;
     }
     public function performAction()
     {
-        $tokenSemaphore = sem_get(8);
+/*        $tokenSemaphore = sem_get(8);
         $tokenValue = shm_attach(9, 100);
 
         if (!$this->try_lock($tokenSemaphore, $tokenValue)){
@@ -32,6 +33,7 @@ class ManageReleasesAction extends ActionCommon
             echo "[$prefix] ManageReleasesAction: Semaphore Blocked" . PHP_EOL;
             return;
         }
+        */
         try {
             $logger = new Appbuilder_logger("ManageReleasesAction");
             $complete = Release::STATUS_COMPLETED;
@@ -45,10 +47,7 @@ class ManageReleasesAction extends ActionCommon
                     case Release::STATUS_INITIALIZED:
                         $this->tryStartRelease($release);
                         break;
-                    case Release::STATUS_ACCEPTED:
-                        $this->checkReleaseStarted($release);
-                        break;
-                    case Release::STATUS_ACTIVE:
+                   case Release::STATUS_ACTIVE:
                         $this->checkReleaseStatus($release);
                         break;
                 }
@@ -66,7 +65,7 @@ class ManageReleasesAction extends ActionCommon
             $logger->appbuilderExceptionLog($logException, $e);
          }
         finally {
-            $this->release($tokenSemaphore, $tokenValue);
+//            $this->release($tokenSemaphore, $tokenValue);
         }
     }
     /*===============================================  logging ============================================*/
@@ -88,10 +87,10 @@ class ManageReleasesAction extends ActionCommon
         ];
         $log['Release-id'] = $release->id;
         $log['Release-Status'] = $release->status;
-        $log['Release-Build'] = $release->build_number;
+        $log['Release-Build'] = (string) $release->build_guid;
         $log['Release-Result'] = $release->result;
 
-        echo "Release=$release->id, Build=$release->build_number, Status=$release->status, Result=$release->result". PHP_EOL;
+        echo "Release=$release->id, Build=$release->build_guid, Status=$release->status, Result=$release->result". PHP_EOL;
 
         return $log;
     }
@@ -110,18 +109,19 @@ class ManageReleasesAction extends ActionCommon
             $artifactUrl = $build->apk();
             $path = $build->artifact_url_base;
 
-            $jenkins = $this->jenkinsUtils->getPublishJenkins();
-            $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
-            if (!is_null($jenkinsJob)) {
-                $parameters = array("CHANNEL" => $release->channel, "APK_URL" => $artifactUrl, "ARTIFACT_URL" => $path, "PROMOTE_FROM" => $release->promote_from);
+            $script = $this->cronController->renderPartial("scripts/appbuilders_publish", [
+                ]);
 
-                $lastBuildNumber = $this->startBuildIfNotBuilding($jenkinsJob, $parameters);
-                if (!is_null($lastBuildNumber) ){
-                    $release->build_number = $lastBuildNumber;
-                    echo "[$prefix] Launched Build LastBuildNumber: $release->build_number Channel: $release->channel APK: $artifactUrl Artifact: $path". PHP_EOL;
-                    $release->status = Release::STATUS_ACCEPTED;
-                    $release->save();
-                }
+            echo $script;
+            
+            // Start the build
+            $codeBuild = new CodeBuild();
+            $lastBuildGuid = $codeBuild->startRelease($release, (string) $script);
+            if (!is_null($lastBuildGuid)){
+                $release->build_guid = $lastBuildGuid;
+                echo "[$prefix] Launched Build LastBuildNumber=$release->build_guid". PHP_EOL;
+                $release->status = Release::STATUS_ACTIVE;
+                $release->save();
             }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
@@ -145,65 +145,47 @@ class ManageReleasesAction extends ActionCommon
     /**
      * @param Release $release
      */
-    private function checkReleaseStarted($release)
-    {
-        $logger = new Appbuilder_logger("ManageReleasesAction");
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkReleaseStarted: Starting Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
-
-            $jenkins = $this->jenkinsUtils->getPublishJenkins();
-            $jenkinsJob = $this->getJenkinsJob($jenkins, $release);
-            if (!is_null($jenkinsJob)) {
-
-                $buildNumber = $this->getStartedBuildNumber($jenkinsJob, $release->build_number);
-                if (!is_null($buildNumber) ){
-                    $release->build_number = $buildNumber;
-                    echo "[$prefix] Started Build BuildNumber: $release->build_number Channel: $release->channel". PHP_EOL;
-                    $release->status = Release::STATUS_ACTIVE;
-                    $release->save();
-                }
-            }
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] checkReleaseStarted: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = $this->getlogReleaseDetails($release);
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-
-    }
-    /**
-     *
-     * @param Release $release
-     */
     private function checkReleaseStatus($release)
     {
-        $logger = new Appbuilder_logger("ManageReleasesAction");
+        $logger = new Appbuilder_logger("ManageBuildsAction");
         try {
             $prefix = Utils::getPrefix();
-            echo "[$prefix] Check Build of ".$release->jobName()." for Channel ".$release->channel.PHP_EOL;
+            echo "[$prefix] checkReleaseStatus: Checking Build of ".$release->jobName()." for Channel ".$release->channel. PHP_EOL;
 
-            $jenkins = $this->jenkinsUtils->getPublishJenkins();
-            $jenkinsJob = $jenkins->getJob($release->jobName());
-            $jenkinsBuild = $jenkinsJob->getBuild($release->build_number);
-            if ($jenkinsBuild){
-                $release->result = $jenkinsBuild->getResult();
-                if (!$jenkinsBuild->isBuilding()){
+            $build = $release->build;
+            echo "Build id : " . $build->id . PHP_EOL;
+            $job = $build->job;
+            if ($job) {       
+                $codeBuild = new CodeBuild();
+                $buildStatus = $codeBuild->getBuildStatus((string)$release->build_guid, 'publish_app');
+                $phase = $buildStatus['currentPhase'];
+                $status = $buildStatus['buildStatus'];
+                echo " phase: " . $phase . " status: " . $status .PHP_EOL;
+                if ($codeBuild->isBuildComplete($buildStatus)) 
+                {
+                    echo ' Build Complete' . PHP_EOL;
+                } else {
+                    echo ' Build Incomplete' . PHP_EOL;
+                }
+        
+                if ($codeBuild->isBuildComplete($buildStatus)) {
                     $release->status = Release::STATUS_COMPLETED;
-                    switch($release->result){
-                        case JenkinsBuild::FAILURE:
-                        case JenkinsBuild::ABORTED:
-                            $task = OperationQueue::SAVEERRORTOS3;
-                            $release_id = $release->id;
-                            OperationQueue::findOrCreate($task, $release_id, "release");
+                    $status = $codeBuild->getStatus($buildStatus);
+                    switch($status){
+                        case CodeBuild::STATUS_FAILED:
+                        case CodeBuild::STATUS_FAULT:
+                        case CodeBuild::STATUS_TIMED_OUT:
+                            $release->result = Build::RESULT_FAILURE;
                             break;
-                        case JenkinsBuild::SUCCESS:
-                            if ($build = $this->getBuild($release->build_id))
-                            {
-                                $build->channel = $release->channel;
-                                $build->save();
-                            }
+                        case CodeBuild::STATUS_STOPPED:
+                            $release->result = Build::RESULT_ABORTED;
                             break;
+                        case CodeBuild::STATUS_SUCCEEDED:
+                            $release->result = Build::RESULT_SUCCESS;
+                            $build->channel = $release->channel;
+                            $build->save();
+                            break;
+                    break;
                     }
                 }
                 if (!$release->save()){
@@ -214,7 +196,7 @@ class ManageReleasesAction extends ActionCommon
             }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
-            echo "[$prefix] checkReleaseStatus Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            echo "[$prefix] checkBuildStatus: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             echo "Exception: " . $e->getMessage() . PHP_EOL;
             echo $e->getFile() . PHP_EOL;
             echo $e->getLine() . PHP_EOL;
@@ -222,7 +204,10 @@ class ManageReleasesAction extends ActionCommon
             $logger->appbuilderExceptionLog($logException, $e);
             $this->failRelease($release);
         }
+
+
     }
+
     private function getBuild($id)
     {
         $build = Build::findOne(['id' => $id]);
@@ -234,7 +219,7 @@ class ManageReleasesAction extends ActionCommon
     }
     private function failRelease($release) {
         try {
-            $release->result = JenkinsBuild::FAILURE;
+            $release->result = Build::RESULT_FAILURE;
             $release->status = Release::STATUS_COMPLETED;
             $release->save();
         } catch (\Exception $e) {

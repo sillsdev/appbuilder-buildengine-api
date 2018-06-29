@@ -44,16 +44,22 @@ class S3 extends AWSCommon{
     }
 
     /**
-     * Gets the base prefix for the s3 within the bucket
-     * 
+     * gets the s3 arn of a specific file
+     *
      * @param Build $build Current build object
+     * @param string $productStage - stg or prd
+     * @param string $filename - Name of s3 file that arn is requested for
      * @return string prefix 
      */
-    public function getBasePrefixUrl($build, $productStage) {
-        $artifactPath = self::getArtifactPath($build, $productStage);
-        $buildNumber = (string)$build->id;
-        $repoUrl =  $artifactPath . "/" . $buildNumber . "/" ;
-        return $repoUrl;
+    public static function getS3Arn($build, $productStage, $filename) {
+        $prefix = 'arn:aws:s3:::';
+        $bucket = self::getArtifactsBucket();
+        $baseUrl = self::getBasePrefixUrl($build, $productStage);
+        $arn = $prefix . $bucket . "/" . $baseUrl . "/";
+        if (!empty($filename)) {
+            $arn = $arn . $filename;
+        }
+        return $arn;
     }
     /**
      * This function reads a file from the build output
@@ -65,7 +71,7 @@ class S3 extends AWSCommon{
     public function readS3File($build, $fileName){
         $fileContents = "";
         try {
-            $filePath =  $this->getBasePrefixUrl($build, 'codebuild-output') . $fileName;
+            $filePath =  self::getBasePrefixUrl($build, 'codebuild-output') . "/" . $fileName;
             $result = $this->s3Client->getObject([
                 'Bucket' => self::getArtifactsBucket(),
                 'Key' => $filePath,
@@ -89,8 +95,8 @@ class S3 extends AWSCommon{
      */
     public function copyS3Folder($build){
         $artifactsBucket = self::getArtifactsBucket();
-        $sourcePrefix = $this->getBasePrefixUrl($build, 'codebuild-output');
-        $destPrefix = $this->getBasePrefixUrl($build, self::getAppEnv());
+        $sourcePrefix = self::getBasePrefixUrl($build, 'codebuild-output') . "/";
+        $destPrefix = self::getBasePrefixUrl($build, self::getAppEnv()) . "/";
         $baseS3Key = self::getS3KeyBase($build);
         $publicBaseUrl = $this->s3Client->getObjectUrl($artifactsBucket, $destPrefix);
         $build->beginArtifacts($publicBaseUrl);
@@ -146,8 +152,8 @@ class S3 extends AWSCommon{
 
     public function writeFileToS3($fileContents, $fileName, $build) {
         $fileS3Bucket = self::getArtifactsBucket();
-        $destPrefix = $this->getBasePrefixUrl($build, self::getAppEnv());
-        $fileS3Key = $destPrefix . $fileName;
+        $destPrefix = self::getBasePrefixUrl($build, self::getAppEnv());
+        $fileS3Key = $destPrefix . "/" . $fileName;
 
         $this->s3Client->putObject([
             'Bucket' => $fileS3Bucket,
@@ -160,7 +166,7 @@ class S3 extends AWSCommon{
         $build->handleArtifact($fileS3Key, $fileContents);
     }
     public function removeCodeBuildFolder($build) {
-        $s3Folder = $this->getBasePrefixUrl($build, 'codebuild-output');
+        $s3Folder = self::getBasePrefixUrl($build, 'codebuild-output') . "/";
         $s3Bucket = S3::getArtifactsBucket();
         echo ("Deleting S3 bucket: $s3Bucket key: $s3Folder").PHP_EOL;
         $this->s3Client->deleteMatchingObjects($s3Bucket, $s3Folder);

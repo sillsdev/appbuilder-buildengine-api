@@ -18,6 +18,11 @@ class MockCodeBuildClient
         $overrides = $parms['environmentVariablesOverride'];
         $buildOverride = $overrides[0];
         $promise = new MockPromise();
+        if ($buildOverride['name'] === 'BUILD_NUMBER') {
+            $promise->build = true;
+        } else {
+            $promise->build = false;
+        }
         $promise->buildNumber = $buildOverride['value'];
         return($promise);
     }
@@ -57,14 +62,17 @@ class MockCodeBuildClient
                 $build = $build1;
                 break;
             case 'build_app:7447f3ea-00ce-4ad7-ab95-db0e1b25dd5e':
+            case 'publish_app:f16d4385-5579-4139-8c1e-a3937e88b23':
                 // codecept_debug("Build failed");
                 $build = $build3;
                 break;
             case 'build_app:f16d4385-5579-4139-8c1e-a3937e88bda':
+            case 'publish_app:f16d4385-5579-4139-8c1e-a3937e88b11':
                 // codecept_debug("Build stopped");
                 $build = $build4;
                 break;
             case 'build_app:f16d4385-5579-4139-8c1e-a3937e88b99':
+            case 'publish_app:f16d4385-5579-4139-8c1e-a3937e88b99':
                 // codecept_debug('Build timed out');
                 $build = $build5;
                 break;

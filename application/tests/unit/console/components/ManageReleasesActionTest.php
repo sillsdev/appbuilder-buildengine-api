@@ -3,6 +3,7 @@ namespace tests\unit\console\components;
 
 use tests\mock\jenkins\MockJenkins;
 use tests\mock\jenkins\MockJenkinsJob;
+use tests\mock\console\controllers\MockCronController;
 use common\models\Build;
 use common\models\Release;
 use common\models\OperationQueue;
@@ -37,36 +38,27 @@ class ManageReleasesActionTest extends UnitTestBase
             'operation' => OperationQueueFixture::className(),
         ];
     }
-    public function testCheckStartedBuildNotStarted()
+    public function testTryStartReleaseNotStarted()
     {
         $this->setContainerObjects();
-        $releasesAction = new ManageReleasesAction();
-        $release = Release::findOne(['id' => 16]);
-        $method = $this->getPrivateMethod('console\components\ManageReleasesAction', 'checkReleaseStarted');
+        $cronController = new MockCronController();
+        $releasesAction = new ManageReleasesAction($cronController);
+        $release = Release::findOne(['id' => 11]);
+        $method = $this->getPrivateMethod('console\components\ManageReleasesAction', 'tryStartRelease');
         $method->invokeArgs($releasesAction, array($release));
-        $release = Release::findOne(['id' => 16]);
-        $this->assertEquals(1, $release->build_number, " *** Release was not started so build_number should remain 1");
-        $this->assertEquals(Release::STATUS_ACCEPTED, $release->status, " *** Release was not started so status not changed");
-    }
-    public function testCheckStartedBuildStarted()
-    {
-        $this->setContainerObjects();
-        $releasesAction = new ManageReleasesAction();
-        $release = Release::findOne(['id' => 17]);
-        $method = $this->getPrivateMethod('console\components\ManageReleasesAction', 'checkReleaseStarted');
-        $method->invokeArgs($releasesAction, array($release));
-        $release = Release::findOne(['id' => 17]);
-        $this->assertEquals(1, $release->build_number, " *** Release was started so build_number should increment to 1");
-        $this->assertEquals(Release::STATUS_ACTIVE, $release->status, " *** Release was started so status updated");
+        $release = Release::findOne(['id' => 11]);
+        $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c8c', $release->build_guid, " *** Incorrect build guid");
+        $this->assertEquals(Release::STATUS_ACTIVE, $release->status, " *** Release not active after start");
     }
     public function testPerformAction()
     {
         $this->setContainerObjects();
-        $releasesAction = new ManageReleasesAction();
+        $cronController = new MockCronController();
+        $releasesAction = new ManageReleasesAction($cronController);
         $releasesAction->performAction();
         $release = Release::findOne(['id' => 11]);
-        $this->assertEquals(Release::STATUS_ACCEPTED, $release->status, " *** Status should be accepted");
-        $this->assertEquals(1, $release->build_number, " *** build number should stay at 1 when going to accepted");
+        $this->assertEquals(Release::STATUS_ACTIVE, $release->status, " *** Status should be active");
+        $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c8c', $release->build_guid, " *** Wrong guid for build 11");
         $release = Release::findOne(['id' => 12]);
         $this->assertEquals(Release::STATUS_COMPLETED, $release->status, " *** Status should be completed after successful completion");
         $this->assertEquals("SUCCESS", $release->result, " *** Result should be set to successful after a good build");
@@ -75,15 +67,24 @@ class ManageReleasesActionTest extends UnitTestBase
         $release = Release::findOne(['id' => 13]);
         $this->assertEquals(Build::STATUS_COMPLETED, $release->status, " *** Status should be completed after failure");
         $this->assertEquals("FAILURE", $release->result, " *** result should be failure after a failed build");
-        $release = Release::findOne(['id' => 14]);
+        $release = Release::findOne(['id' => 16]);
         $this->assertEquals(Build::STATUS_COMPLETED, $release->status, " *** Status should be completed after abort");
         $this->assertEquals("ABORTED", $release->result, " *** result should be aborted after an aborted build");
-        $queuedRecords = OperationQueue::find()->count();
-        $this->assertEquals(2, $queuedRecords, " *** Queued record count should be ");
-        $queuedErrorRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVEERRORTOS3])->count();
-        $this->assertEquals(2, $queuedErrorRecords, " *** SAVEERRORTOS3 Count should be 2 ");
         $release = Release::findOne(['id' => 15]);
         $this->assertEquals(Build::STATUS_COMPLETED, $release->status, " *** Status should be completed after failure");
         $this->assertEquals("FAILURE", $release->result, " *** result should be failure after a failed build");
     }
+    public function testFailRelease()
+    {
+        $this->setContainerObjects();
+        $cronController = new MockCronController();
+        $releasesAction = new ManageReleasesAction($cronController);
+        $release = Release::findOne(['id' => 15]);
+        $method = $this->getPrivateMethod('console\components\ManageReleasesAction', 'failRelease');
+        $method->invokeArgs($releasesAction, array($release));
+        $release = Release::findOne(['id' => 15]);
+        $this->assertEquals(Build::STATUS_COMPLETED, $release->status, " *** Status should be completed after failure");
+        $this->assertEquals("FAILURE", $release->result, " *** result should be failure after a failed build");
+    }
+
 }

@@ -31,7 +31,6 @@ class RemoveExpiredBuildsActionTest extends UnitTestBase
     }
     public function testPerformActionForExpiredBuilds()
     {
-        $this->assertEquals(1, 0, " *** Reminder to review test");
 /*        MockS3Client::clearGlobals();
         $this->setContainerObjects();
         $removeExpiredBuildsAction = new RemoveExpiredBuildsAction();

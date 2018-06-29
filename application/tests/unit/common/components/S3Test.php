@@ -40,9 +40,20 @@ class S3Test extends UnitTestBase
         MockS3Client::clearGlobals();
         $s3 = new S3();
         $build = Build::findOne(['id' => 11]);
-        $prefix = $s3->getBasePrefixUrl($build, S3::getAppEnv());
-        $expected = "testing/jobs/build_scriptureappbuilder_22/11/";
+        $prefix = S3::getBasePrefixUrl($build, S3::getAppEnv());
+        $expected = "testing/jobs/build_scriptureappbuilder_22/11";
         $this->assertEquals($expected, $prefix, " ***Prefix doesn't match");
+    }
+    public function testGetS3Arn()
+    {
+        $this->setContainerObjects();
+        MockS3Client::clearGlobals();
+        $s3 = new S3();
+        $build = Build::findOne(['id' => 11]);
+        $arn = S3::getS3Arn($build, S3::getAppEnv(), "testname.apk");
+        $expected = 'arn:aws:s3:::sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/11/testname.apk';
+        $this->assertEquals($expected, $arn, " ***Arn doesn't match");
+
     }
     public function testReadS3File()
     {
@@ -79,8 +90,8 @@ class S3Test extends UnitTestBase
         $s3 = new S3();
         $build = Build::findOne(['id' => 11]);
         $artifactsBucket = S3::getArtifactsBucket();
-        $sourcePrefix = $s3->getBasePrefixUrl($build, 'codebuild-output');
-        $destPrefix = $s3->getBasePrefixUrl($build, S3::getAppEnv());
+        $sourcePrefix = S3::getBasePrefixUrl($build, 'codebuild-output') . "/";
+        $destPrefix = S3::getBasePrefixUrl($build, S3::getAppEnv()) . "/";
         $filename = 'codebuild-output/jobs/build_scriptureappbuilder_22/11/package_name.txt';
         $file = [
             'Key' => $filename,

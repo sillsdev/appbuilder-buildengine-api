@@ -9,10 +9,11 @@ version: 0.2
 env:
   variables:
     "PUBLISHER" : "wycliffeusa"
-    "SECRETS_DIR" : "/secrets"
     "BUILD_NUMBER" : "0"
     "VERSION_CODE" : "42"
     "APP_BUILDER_SCRIPT_PATH" : "scripture-app-builder"
+    "SECRETS_BUCKET": "sil-prd-aps-secrets"
+    "SECRETS_DIR" : "/secrets"
     
 phases:
   install:
@@ -20,7 +21,7 @@ phases:
   pre_build:
     commands:
       - OUTPUT_DIR="/${BUILD_NUMBER}"
-      - SECRETS_S3="s3://sil-prd-aps-secrets/jenkins/build/google_play_store/${PUBLISHER}"
+      - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/build/google_play_store/${PUBLISHER}"
       - mkdir "${SECRETS_DIR}"
       - mkdir "${OUTPUT_DIR}"
       - /root/.local/bin/aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
@@ -29,7 +30,7 @@ phases:
       - export KAP=$(cat "${SECRETS_DIR}/kap.txt")
   build:
     commands:
-      - KS="/secrets/${PUBLISHER}.keystore"
+      - KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
       - echo "BUILD_NUMBER=${BUILD_NUMBER}"
       - echo "VERSION_CODE=${VERSION_CODE}"
       - OUTPUT_DIR="/${BUILD_NUMBER}"
@@ -37,6 +38,7 @@ phases:
       - mv "${PROJNAME}.appDef" build.appDef
       - mv "${PROJNAME}_data" build_data
       - APPDEF_VERSION=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
+      - echo "APPDEF_VERSION=${APPDEF_VERSION}"
       - if [ "$APPDEF_VERSION" -ge "$VERSION_CODE" ]; then VERSION_CODE=$((APPDEF_VERSION+1)); fi
       - VERSION_NUMBER=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
       - $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ta 22 -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$OUTPUT_DIR -vc $VERSION_CODE -vn $VERSION_NUMBER -ft share-app-link=true

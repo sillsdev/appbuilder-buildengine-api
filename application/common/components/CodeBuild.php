@@ -67,6 +67,7 @@ class CodeBuild extends AWSCommon {
         $buildNumber = (string)$build->id;
         echo "[$prefix] startBuild CodeBuild Project: " . $buildProcess . " URL: " .$repoHttpUrl . " commitId: " . $commitId . " jobNumber: " . $jobNumber . " buildNumber: " . $buildNumber . " versionCode: " . $versionCode . PHP_EOL;
         $artifacts_bucket = self::getArtifactsBucket();
+        $secretsBucket = self::getSecretsBucket();
         $buildApp = 'build_app';
         $buildPath = $this->getBuildPath($job);
         $artifactPath = $this->getArtifactPath($build, 'codebuild-output');
@@ -98,6 +99,10 @@ class CodeBuild extends AWSCommon {
                 [
                     'name' => 'VERSION_CODE',
                     'value' => $versionCode,
+                ],
+                [
+                    'name' => 'SECRETS_BUCKET',
+                    'value' => $secretsBucket,
                 ]
             ],
             'sourceLocationOverride' => $repoHttpUrl,
@@ -124,7 +129,7 @@ class CodeBuild extends AWSCommon {
         $prefix = Utils::getPrefix();
         echo "[$prefix] getBuildStatus CodeBuild Project: " . $buildProcess . " BuildGuid: " . $guid . PHP_EOL;
 
-        $buildId = $this->getBuildId($guid, 'build_app');
+        $buildId = $this->getBuildId($guid, $buildProcess);
         $result = $this->codeBuildClient->batchGetBuilds([
             'ids' => [
                 $buildId
@@ -196,5 +201,95 @@ class CodeBuild extends AWSCommon {
                 break;
         }
         return $retVal;
+    }
+    /**
+     * Starts a publish action
+     */
+    public function startRelease($release, $releaseSpec)
+    {
+        echo 'startRelease: ' . PHP_EOL;
+        $prefix = Utils::getPrefix();
+        $releaseNumber = (string)$release->id;
+        $build = $release->build;
+        $job = $build->job;
+        $artifactUrl = $build->apk();
+        $secretsBucket = self::getSecretsBucket();
+        $publishApp = 'publish_app';
+        $promoteFrom = $release->promote_from;
+        if (is_null($promoteFrom)) {
+            $promoteFrom = "";
+        }
+
+        $sourceLocation = $this->getSourceLocation($build);
+        $s3Artifacts = $this->getArtifactsLocation($build);
+        echo 'Source location: ' . $sourceLocation . PHP_EOL;
+
+        $promise = $this->codeBuildClient->startBuildAsync([
+            'projectName' => $publishApp,
+            'buildspecOverride' => $releaseSpec,
+            'environmentVariablesOverride' => [
+                [
+                    'name' => 'RELEASE_NUMBER',
+                    'value' => $releaseNumber,
+                ],
+                [
+                    'name' => 'CHANNEL',
+                    'value' => $release->channel,
+                ],
+                [
+                    'name' => 'PUBLISHER',
+                    'value' => $job->publisher_id,
+                ],
+                [
+                    'name' => 'SECRETS_BUCKET',
+                    'value' => $secretsBucket,
+                ],
+                [
+                    'name' => 'PROMOTE_FROM',
+                    'value' => $promoteFrom,
+                ],
+                [
+                    'name' => 'ARTIFACTS_S3_DIR',
+                    'value' => $s3Artifacts,
+                ]
+            ],
+            'sourceLocationOverride' => $sourceLocation,
+        ]);
+        $state = $promise->getState();
+        echo "state: " . $state . PHP_EOL;
+        $result = $promise->wait(true);
+        $buildInfo = $result['build'];
+        $buildId = $buildInfo['id'];
+        $buildGuid = substr($buildId, strrpos($buildId, ':') + 1);
+        echo "Build id: " . $buildId . " Guid: " . $buildGuid . PHP_EOL;
+        return $buildGuid;
+    }
+    /**
+     * Get the url for the apk file in a format that codebuild accepts for an S3 Source
+     * We are using the apk file as a source, even though we're not really using it because
+     * codebuild requires a source and if S3 is the type, it must be a zip file.
+     *
+     * @param Build $build - build object for this operation
+     * @return string - Arn format for the apk file
+     */
+    private function getSourceLocation($build)
+    {
+        $appEnv = S3::getAppEnv();
+        $apkFilename = $build->apkFilename();
+        $sourceLocation = S3::getS3Arn($build, $appEnv, $apkFilename);
+        return $sourceLocation;
+    }
+    /**
+     * Get the URL for the S3 artifacts folder in the format required by the buildspec
+     *
+     * @param Build $build - build object for this operation
+     * @return string - s3:// url format for s3 artifacts folder
+     */
+    private function getArtifactsLocation($build)
+    {
+        $artifactsBucket = self::getArtifactsBucket();
+        $artifactFolder = self::getBasePrefixUrl($build, self::getAppEnv());
+        $artifactsLocation = 's3://' . $artifactsBucket . '/' . $artifactFolder;
+        return($artifactsLocation);
     }
 }

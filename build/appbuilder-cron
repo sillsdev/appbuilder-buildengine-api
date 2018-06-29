@@ -1,10 +1,10 @@
 # m h dom mon dow user	command
-* * * * * root /data/yii cron/sync-scripts  2>&1 >> /var/log/syncscripts.log
+#* * * * * root /data/yii cron/sync-scripts  2>&1 >> /var/log/syncscripts.log
 * * * * * root /data/yii cron/manage-builds  2>&1 >> /var/log/managebuilds.log
 * * * * * root /data/yii cron/manage-releases  2>&1 >> /var/log/managereleases.log
 * * * * * root /data/yii cron/manage-projects  2>&1 >> /var/log/manageprojects.log
 * * * * * root /data/yii cron/send-emails  2>&1 >> /var/log/sendemails.log
 * * * * * root /data/yii cron/operation-queue  2>&1 >> /var/log/operationqueue.log
-30 0 * * * root /data/yii cron/remove-expired-builds  2>&1 >> /var/log/expiredbuilds.log
-40 0 * * * root /data/yii cron/s3-maintenance 2>&1 >> /var/log/s3maintenance.log
+#30 0 * * * root /data/yii cron/remove-expired-builds  2>&1 >> /var/log/expiredbuilds.log
+#40 0 * * * root /data/yii cron/s3-maintenance 2>&1 >> /var/log/s3maintenance.log
 

@@ -60,7 +60,7 @@ class CronController extends Controller
      */
     public function actionManageReleases()
     {
-        $manageReleasesAction = new ManageReleasesAction();
+        $manageReleasesAction = new ManageReleasesAction($this);
         $manageReleasesAction->performAction();
     }
     /**

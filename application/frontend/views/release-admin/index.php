@@ -42,10 +42,10 @@ $this->params['breadcrumbs'][] = $this->title;
             'status',
             'result',
             [
-                'attribute'=>'build_number',
+                'attribute'=>'build_guid',
                 'format'=>"html",
                 'value' => function($data) {
-                    return $data->jenkinsUrl() ? Html::a($data->build_number, $data->jenkinsUrl()) : "<span>" . $data->build_number . "</span>";
+                    return $data->jenkinsUrl() ? Html::a($data->build_guid, $data->jenkinsUrl()) : "<span>" . $data->build_guid . "</span>";
                 }
             ],
             // 'created',
@@ -55,7 +55,7 @@ $this->params['breadcrumbs'][] = $this->title;
             // 'channel',
             // 'title',
             // 'defaultLanguage',
-            // 'build_number',
+            // 'build_guid',
             // 'promote_from',
 
             ['class' => 'yii\grid\ActionColumn'],

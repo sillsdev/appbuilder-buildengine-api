@@ -32,6 +32,7 @@ class SyncScriptsActionTest extends UnitTestBase
             'build' => BuildFixture::className(),
         ];
     }
+    /*
     public function testGetRepoClone()
     {
         $this->setContainerObjects();
@@ -192,4 +193,5 @@ class SyncScriptsActionTest extends UnitTestBase
                 .PHP_EOL."update: publish_scriptureappbuilder_25.groovy".PHP_EOL;
         $this->assertEquals($expectedString, MockGitWorkingCopy::$lastCommitLine, " *** Last commit line");
     }
+    */
 }

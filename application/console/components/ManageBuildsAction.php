@@ -132,7 +132,7 @@ class ManageBuildsAction extends ActionCommon
             if ($job) {       
 
                 $codeBuild = new CodeBuild();
-                $buildStatus = $codeBuild->getBuildStatus((string)$build->build_guid, $job->nameForBuildProcess());
+                $buildStatus = $codeBuild->getBuildStatus((string)$build->build_guid, 'build_app');
                 $phase = $buildStatus['currentPhase'];
                 $status = $buildStatus['buildStatus'];
                 echo " phase: " . $phase . " status: " . $status .PHP_EOL;

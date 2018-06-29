@@ -8,9 +8,11 @@ use tests\mock\aws\codebuild\MockCodeBuildClient;
 
 use common\models\Job;
 use common\models\Build;
+use common\models\Release;
 
 use tests\unit\fixtures\common\models\JobFixture;
 use tests\unit\fixtures\common\models\BuildFixture;
+use tests\unit\fixtures\common\models\ReleaseFixture;
 
 class CodeBuildTest extends UnitTestBase
 {
@@ -29,6 +31,7 @@ class CodeBuildTest extends UnitTestBase
         return [
             'job' => JobFixture::className(),
             'build' => BuildFixture::className(),
+            'release' => ReleaseFixture::className(),
         ];
     }
 
@@ -89,5 +92,101 @@ class CodeBuildTest extends UnitTestBase
         $versionCode = '1';
         $retVal = $codebuild->startBuild($url, $commitId, $build, $buildspec, $versionCode);
         $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c7a', $retVal, " *** Wrong guid returned");
+        $this->assertEquals(1, count(MockCodeBuildClient::$builds), " *** Wrong number of builds");
+        $mockBuild = MockCodeBuildClient::$builds[0];
+        $environmentVariables = $mockBuild['environmentVariablesOverride'];
+        foreach ($environmentVariables as $environmentVariable) {
+            switch ($environmentVariable['name']) {
+                case 'BUILD_NUMBER':
+                    $buildNumber = $environmentVariable['value'];
+                    break;
+                case 'PUBLISHER':
+                    $publisher = $environmentVariable['value'];
+                    break;
+                case 'SECRETS_BUCKET':
+                    $secretsBucket = $environmentVariable['value'];
+                    break;
+                case 'APP_BUILDER_SCRIPT_PATH':
+                    $scriptPath = $environmentVariable['value'];
+                    break;
+                case 'VERSION_CODE':
+                    $versionCode = $environmentVariable['value'];
+                    break;
+                default:
+                    $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");     
+            }
+        }
+
+        $this->assertEquals("13", $buildNumber, " *** Wrong build number");
+        $this->assertEquals("wycliffeusa", $publisher, " *** Wrong publisher");
+        $this->assertEquals("sil-prd-aps-secrets", $secretsBucket, " *** Wrong secrets bucket");
+        $this->assertEquals("1", $versionCode, " *** Wrong version code");
+        $this->assertEquals("scripture-app-builder", $scriptPath, " *** Bad script path");
+    }
+    public function testGetSourceLocation()
+    {
+        $this->setContainerObjects();
+        MockCodeBuildClient::clearGlobals();
+        $codebuild = new CodeBuild();
+        $method = $this->getPrivateMethod('common\components\CodeBuild', 'getSourceLocation');
+        $build = Build::findOne(['id' => 19]);
+        $apkArn = $method->invokeArgs($codebuild, array( $build));
+        $expected = 'arn:aws:s3:::sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_25/19/Test-1.0.apk';
+        $this->assertEquals($expected, $apkArn, " *** Wrong Arn returned");
+    }
+    public function testGetArtifactsLocation()
+    {
+        $this->setContainerObjects();
+        MockCodeBuildClient::clearGlobals();
+        $codebuild = new CodeBuild();
+        $method = $this->getPrivateMethod('common\components\CodeBuild', 'getArtifactsLocation');
+        $build = Build::findOne(['id' => 19]);
+        $apkArn = $method->invokeArgs($codebuild, array( $build));
+        $expected = 's3://sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_25/19';
+        $this->assertEquals($expected, $apkArn, " *** Wrong S3 location url returned");
+    }
+    public function testStartRelease()
+    {
+        $this->setContainerObjects();
+        MockCodeBuildClient::clearGlobals();
+        $codebuild = new CodeBuild();
+        $release = Release::findOne(['id' => 12]);
+        $buildspec = '      - echo "This is a test"';
+        $retVal = $codebuild->startRelease($release, $buildspec);
+        $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c8a', $retVal, " *** Wrong guid returned");
+        $this->assertEquals(1, count(MockCodeBuildClient::$builds), " *** Wrong number of builds");
+        $mockBuild = MockCodeBuildClient::$builds[0];
+        $environmentVariables = $mockBuild['environmentVariablesOverride'];
+        foreach ($environmentVariables as $environmentVariable) {
+            switch ($environmentVariable['name']) {
+                case 'RELEASE_NUMBER':
+                    $buildNumber = $environmentVariable['value'];
+                    break;
+                case 'PUBLISHER':
+                    $publisher = $environmentVariable['value'];
+                    break;
+                case 'SECRETS_BUCKET':
+                    $secretsBucket = $environmentVariable['value'];
+                    break;
+                case 'CHANNEL':
+                    $channel = $environmentVariable['value'];
+                    break;
+                case 'ARTIFACTS_S3_DIR':
+                    $artifactDir = $environmentVariable['value'];
+                    break;
+                case 'PROMOTE_FROM':
+                    $promoteFrom = $environmentVariable['value'];
+                    break;
+                default:
+                    $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");     
+            }
+        }
+
+        $this->assertEquals("12", $buildNumber, " *** Wrong build number");
+        $this->assertEquals("wycliffeusa", $publisher, " *** Wrong publisher");
+        $this->assertEquals("sil-prd-aps-secrets", $secretsBucket, " *** Wrong secrets bucket");
+        $this->assertEquals("s3://sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/12", $artifactDir, " *** Wrong artifact directory");
+        $this->assertEquals("alpha", $channel, " *** Bad channel");
+        $this->assertEquals("", $promoteFrom, " *** Wrong promote from value");
     }
 }

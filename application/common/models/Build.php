@@ -380,17 +380,27 @@ class Build extends BuildBase implements Linkable
     }
 
     private function getArtifactUrl($pattern) {
+        $filename = $this->getArtifactFilename($pattern);
+        if (!empty($filename))
+        {
+            return $this->artifact_url_base . $filename;
+        }
+        return null;
+    }
+    private function getArtifactFilename($pattern) {
         if (!empty($this->artifact_files)) {
             $files = explode(",", $this->artifact_files);
             foreach ($files as $file) {
                 if (preg_match($pattern, $file)) {
-                    return $this->artifact_url_base . $file;
+                    return $file;
                 }
             }
         }
         return null;
     }
-
+    public function apkFilename() {
+        return $this->getArtifactFilename("/\.apk$/");
+    }
     public function apk() {
         return $this->getArtifactUrl("/\.apk$/");
     }
