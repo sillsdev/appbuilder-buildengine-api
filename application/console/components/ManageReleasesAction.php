@@ -5,16 +5,12 @@ use common\models\Build;
 use common\models\Release;
 use common\models\OperationQueue;
 use common\components\Appbuilder_logger;
-use common\components\JenkinsUtils;
 use common\components\CodeBuild;
 
 use console\components\ActionCommon;
 
 use common\helpers\Utils;
 use yii\web\NotFoundHttpException;
-
-use JenkinsApi\Item\Build as JenkinsBuild;
-use JenkinsApi\Item\Job as JenkinsJob;
 
 class ManageReleasesAction extends ActionCommon
 {
@@ -128,18 +124,6 @@ class ManageReleasesAction extends ActionCommon
             echo "[$prefix] tryStartRelease: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = $this->getlogReleaseDetails($release);
             $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
-    private function getJenkinsJob($jenkins, $release) {
-        try {
-            $jenkinsJob = $jenkins->getJob($release->jobName());
-            return $jenkinsJob;
-        } catch (\Exception $e) {
-            // If Jenkins is up and you can't get the job, then resync the scripts
-            echo "Job not found, trigger wrapper seed job".PHP_EOL;
-            $task = OperationQueue::UPDATEJOBS;
-            OperationQueue::findOrCreate($task, null, null);
-            return null;
         }
     }
     /**

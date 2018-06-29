@@ -4,7 +4,6 @@ namespace common\models;
 use common\models\EmailQueue;
 use common\components\EmailUtils;
 use console\components\CopyToS3Operation;
-use console\components\CopyErrorToS3Operation;
 use console\components\FindExpiredBuildsOperation;
 use console\components\UpdateJobsOperation;
 use console\components\MaxRetriesExceededException;
@@ -21,7 +20,6 @@ class OperationQueue extends OperationQueueBase
     const UPDATEJOBS = 'UPDATEJOBS';
     const SAVETOS3 = 'SAVETOS3';
     const FINDEXPIREDBUILDS = 'FINDEXPIREDBUILDS';
-    const SAVEERRORTOS3 = "SAVEERRORTOS3";
 
     public function rules()
     {
@@ -81,8 +79,6 @@ class OperationQueue extends OperationQueueBase
             case OperationQueue::FINDEXPIREDBUILDS:
                 $operationObject = new FindExpiredBuildsOperation($id);
                 break;
-            case OperationQueue::SAVEERRORTOS3:
-                $operationObject = new CopyErrorToS3Operation($id, $operation_parms);
         }
         return $operationObject;
     }

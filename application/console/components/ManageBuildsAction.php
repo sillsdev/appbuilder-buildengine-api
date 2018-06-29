@@ -12,8 +12,6 @@ use common\helpers\Utils;
 
 use console\components\ActionCommon;
 
-use JenkinsApi\Item\Build as JenkinsBuild;
-
 class ManageBuildsAction extends ActionCommon
 {
     private $cronController;

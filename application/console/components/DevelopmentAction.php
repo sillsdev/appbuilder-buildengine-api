@@ -10,7 +10,6 @@ use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
 
-use console\components\SyncScriptsAction;
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
 use console\components\OperationsQueueAction;
@@ -141,14 +140,9 @@ class DevelopmentAction {
         $userEmail = \Yii::$app->params['buildEngineGitUserEmail'];
         $sshUser = \Yii::$app->params['buildEngineGitSshUser'] ?: "";
 
-        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
-        $jenkins = $this->jenkinsUtils->getJenkins();
-        $jenkinsBaseUrl = $jenkins->getBaseUrl();
-
         $artifactsBucket = S3::getArtifactsBucket();
 
         echo "Repo:". PHP_EOL."  URL:$repoUrl". PHP_EOL."  Branch:$repoBranch". PHP_EOL."  Path:$repoLocalPath". PHP_EOL."  Scripts:$scriptDir". PHP_EOL."  Key:$privateKey". PHP_EOL."  SshUser: $sshUser". PHP_EOL;
-        echo "Jenkins:". PHP_EOL."  BuildEngineJenkinsMasterUrl: $jenkinsUrl". PHP_EOL."  Jenkins.baseUrl: $jenkinsBaseUrl". PHP_EOL;
         echo "Git:". PHP_EOL."  Name:$userName". PHP_EOL."  Email:$userEmail". PHP_EOL;
         echo "Artifacts:". PHP_EOL."  Bucket:$artifactsBucket". PHP_EOL;
     }

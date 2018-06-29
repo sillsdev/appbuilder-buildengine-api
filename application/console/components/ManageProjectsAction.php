@@ -3,7 +3,6 @@ namespace console\components;
 
 use common\models\Project;
 use common\components\Appbuilder_logger;
-use common\components\JenkinsUtils;
 use Aws\CodeCommit\CodeCommitClient;
 use Aws\Iam\IamClient;
 use Aws\Iam\Exception\IamException;

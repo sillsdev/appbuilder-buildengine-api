@@ -45,7 +45,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute'=>'build_guid',
                 'format'=>"html",
-                'value' => $model->jenkinsUrl() ? Html::a($model->build_guid, $model->jenkinsUrl()) : "<span>" . $model->build_guid . "</span>",
+                'value' => "<span>" . $model->build_guid . "</span>",
             ],
             'promote_from',
         ],

@@ -125,7 +125,7 @@ class Job extends JobBase implements Linkable
     }
 
     /**
-     * Return the name of the job to use with Jenkins
+     * Return the name of the job
      * @return string
      */
     public function name()
@@ -165,7 +165,7 @@ class Job extends JobBase implements Linkable
         }
     }
     /**
-     * Return the nae of the job to use with Jenkins when publishing
+     * Return the nae of the job to use when publishing
      * @return String
      */
     public function nameForPublish()
@@ -174,7 +174,7 @@ class Job extends JobBase implements Linkable
     }
 
     /**
-     * Return the nae of the job to use with Jenkins when publishing
+     * Return the nae of the job to use when publishing
      * @return String
      */
     public function nameForBuild()
@@ -210,7 +210,7 @@ class Job extends JobBase implements Linkable
         return $job;
     }
     /**
-     * Create an entry containing the name of all Jenkins
+     * Create an entry containing the name of all 
      * build and publish jobs that are valid based on the
      * current database contents
      * @return array of Strings

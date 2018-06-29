@@ -221,17 +221,6 @@ class Build extends BuildBase implements Linkable
         return $this->job->nameForBuild();
     }
 
-    public function jenkinsUrl()
-    {
-        if ($this->status == Build::STATUS_EXPIRED) {
-            return null;
-        }
-        if ($this->job->jenkins_build_url == null) {
-            return null;
-        }
-        $buildUrl = $this->job->jenkins_build_url . $this->build_guid . "/";
-        return $buildUrl;
-    }
     /**
      * Returns the build specified by $build_id.  The inclusion of the $job_id
      * is done for validation purposes since this is also passed into the actions

@@ -3,7 +3,6 @@
 namespace common\components;
 
 use common\models\Build;
-use JenkinsApi\Jenkins;
 use yii\web\ServerErrorHttpException;
 use common\components\AWSCommon;
 use Aws\Exception\AwsException;

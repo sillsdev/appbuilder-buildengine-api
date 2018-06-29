@@ -119,13 +119,11 @@ class Appbuilder_logger {
     */
     public function outputToLogger($log, $level, $logtype)
     {
-        $jenkinsUrl = \Yii::$app->params['buildEngineJenkinsMasterUrl'];
         $prefix = self::getPrefix();
         $callingFunction = $this->get_calling_function();
         echo PHP_EOL . " callingFunction is:" .PHP_EOL ." $callingFunction" . PHP_EOL . PHP_EOL;
         $logPrefix = [
             'date' => $prefix,
-            'jenkinsUrl' => $jenkinsUrl,
             'functionAndClass' => $callingFunction
         ];
         $category = "$logtype" . "$this->area" . '-' . "$this->functionName";

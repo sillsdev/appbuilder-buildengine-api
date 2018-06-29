@@ -12,7 +12,6 @@ use common\components\FileUtils;
 use common\components\IAmWrapper;
 
 use console\components\RemoveExpiredBuildsAction;
-use console\components\SyncScriptsAction;
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
 use console\components\ManageProjectsAction;
@@ -36,14 +35,6 @@ class CronController extends Controller
         parent::__construct($id, $module, $config);
     }
 
-    /**
-     * Synchronize the Job configuration in database with groovy scripts.
-     */
-    public function actionSyncScripts()
-    {
-        $syncScriptsAction = new SyncScriptsAction($this);
-        $syncScriptsAction->performAction();
-    }
     /**
      * Manage the state of the builds and process the current state
      * until the status is complete.

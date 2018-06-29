@@ -7,11 +7,9 @@ use common\models\Job;
 use common\models\Build;
 use common\components\S3;
 use common\components\Appbuilder_logger;
-use common\components\JenkinsUtils;
 
 use common\helpers\Utils;
 
-use JenkinsApi\Item\Build as JenkinsBuild;
 
 class CopyToS3Operation implements OperationInterface
 {
@@ -19,7 +17,6 @@ class CopyToS3Operation implements OperationInterface
     private $maxRetries = 50;
     private $maxDelay = 30;
     private $alertAfter = 5;
-    private $jenkinsUtils;
     private $fileUtil;
     private $s3;
 
@@ -43,18 +40,6 @@ class CopyToS3Operation implements OperationInterface
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
                 }
                 $this->s3->removeCodeBuildFolder($build);
-/*
-                $jenkins = $this->jenkinsUtils->getJenkins();
-                $jenkinsJob = $jenkins->getJob($job->nameForBuild());
-                $jenkinsBuild = $jenkinsJob->getBuild($build->build_number);
-                if ($jenkinsBuild){
-                    $this->saveBuild($build, $jenkinsBuild);
-                    $build->status = Build::STATUS_COMPLETED;
-                    if (!$build->save()){
-                        throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
-                    }
-                } 
-                */   
             }
         }
     }
@@ -138,7 +123,6 @@ class CopyToS3Operation implements OperationInterface
     /**
      * Save the build to S3.
      * @param Build $build
-     * @param JenkinsBuild $jenkinsBuild
      * @return string
      */
     private function saveBuild($build) {
