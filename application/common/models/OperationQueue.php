@@ -4,8 +4,6 @@ namespace common\models;
 use common\models\EmailQueue;
 use common\components\EmailUtils;
 use console\components\CopyToS3Operation;
-use console\components\FindExpiredBuildsOperation;
-use console\components\UpdateJobsOperation;
 use console\components\MaxRetriesExceededException;
 
 use common\helpers\Utils;
@@ -17,9 +15,7 @@ use yii\helpers\ArrayHelper;
  */
 class OperationQueue extends OperationQueueBase
 {
-    const UPDATEJOBS = 'UPDATEJOBS';
     const SAVETOS3 = 'SAVETOS3';
-    const FINDEXPIREDBUILDS = 'FINDEXPIREDBUILDS';
 
     public function rules()
     {
@@ -70,14 +66,8 @@ class OperationQueue extends OperationQueueBase
     public static function createOperationObject($operation, $id, $operation_parms) {
         $operationObject = null;
         switch($operation){
-            case OperationQueue::UPDATEJOBS:
-                $operationObject = new UpdateJobsOperation();
-                break;
             case OperationQueue::SAVETOS3:
                 $operationObject = new CopyToS3Operation($id);
-                break;
-            case OperationQueue::FINDEXPIREDBUILDS:
-                $operationObject = new FindExpiredBuildsOperation($id);
                 break;
         }
         return $operationObject;

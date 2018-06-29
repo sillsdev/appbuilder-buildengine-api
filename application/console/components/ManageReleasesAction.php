@@ -141,6 +141,7 @@ class ManageReleasesAction extends ActionCommon
             $job = $build->job;
             if ($job) {       
                 $codeBuild = new CodeBuild();
+                
                 $buildStatus = $codeBuild->getBuildStatus((string)$release->build_guid, 'publish_app');
                 $phase = $buildStatus['currentPhase'];
                 $status = $buildStatus['buildStatus'];

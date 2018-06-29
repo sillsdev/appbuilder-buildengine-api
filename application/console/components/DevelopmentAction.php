@@ -29,7 +29,6 @@ class DevelopmentAction {
     const GETCOMPLETED = 'GETCOMPLETED';
     const GETREMAINING = 'GETREMAINING';
     const GETBUILDS = 'GETBUILDS';
-    const UPDATEJOBS = 'UPDATEJOBS';
     const DELETEJOB = 'DELETEJOB';
     const TESTAWSSTAT = 'TESTAWSSTAT';
     
@@ -74,9 +73,6 @@ class DevelopmentAction {
                 break;
             case self::GETBUILDS:
                 $this->actionGetBuilds();
-                break;
-            case self::UPDATEJOBS:
-                $this->actionUpdateJobs();
                 break;
             case self::DELETEJOB:
                 $this->actionDeleteJob();
@@ -254,10 +250,6 @@ class DevelopmentAction {
         }
     }
 
-    private function actionUpdateJobs() {
-            $task = OperationQueue::UPDATEJOBS;
-            OperationQueue::findOrCreate($task, null, null);
-    }
     private function actionDeleteJob() {
         echo "Deleting job $this->jobIdToDelete".PHP_EOL;
         $job = Job::findById($this->jobIdToDelete);

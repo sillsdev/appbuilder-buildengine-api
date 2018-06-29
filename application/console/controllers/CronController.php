@@ -7,7 +7,6 @@ use common\models\Job;
 use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
-use common\components\JenkinsUtils;
 use common\components\FileUtils;
 use common\components\IAmWrapper;
 
@@ -29,7 +28,6 @@ class CronController extends Controller
     public function __construct($id, $module, $config = [])
     {
         \Yii::$container->set('fileUtils', 'common\components\FileUtils');
-        \Yii::$container->set('jenkinsUtils', 'common\components\JenkinsUtils');
         \Yii::$container->set('gitWrapper', 'GitWrapper\GitWrapper');
         \Yii::$container->set('iAmWrapper', 'common\components\IAmWrapper');
         parent::__construct($id, $module, $config);
@@ -162,14 +160,6 @@ class CronController extends Controller
     public function actionForceUploadBuilds()
     {
         $developmentAction = new DevelopmentAction(DevelopmentAction::FORCEUPLOAD);
-        $developmentAction->performAction();
-    }
-    /**
-     * Force the wrapper seed jobs to execute (Dev only)
-     */
-    public function actionUpdateJobs()
-    {
-        $developmentAction = new DevelopmentAction(DevelopmentAction::UPDATEJOBS);
         $developmentAction->performAction();
     }
     /**

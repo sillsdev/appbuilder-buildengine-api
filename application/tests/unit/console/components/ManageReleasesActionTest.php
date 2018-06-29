@@ -1,8 +1,6 @@
 <?php
 namespace tests\unit\console\components;
 
-use tests\mock\jenkins\MockJenkins;
-use tests\mock\jenkins\MockJenkinsJob;
 use tests\mock\console\controllers\MockCronController;
 use common\models\Build;
 use common\models\Release;

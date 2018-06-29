@@ -5,7 +5,6 @@ namespace console\components;
 use common\models\Build;
 use common\components\S3;
 use common\components\Appbuilder_logger;
-use common\components\JenkinsUtils;
 
 use common\helpers\Utils;
 
@@ -15,7 +14,6 @@ class RemoveExpiredBuildsAction
     public function performAction()
     {
         $logger = new Appbuilder_logger("RemoveExpiredBuildsAction");
-        $jenkinsUtils = \Yii::$container->get('jenkinsUtils');
         $prefix = Utils::getPrefix();
         echo "[$prefix] RemoveExpiredBuildsAction: Started". PHP_EOL;
 
@@ -26,7 +24,7 @@ class RemoveExpiredBuildsAction
                 $s3 = new S3();
                 $s3->removeS3Artifacts($build);
                 $build->clearArtifacts();
-                $logBuildDetails = JenkinsUtils::getlogBuildDetails($build);
+                $logBuildDetails = Build::getlogBuildDetails($build);
                 $logBuildDetails['NOTE: ']='Remove expired S3 Artifacts for an expired build.';
                 $logger->appbuilderWarningLog($logBuildDetails);
             }
