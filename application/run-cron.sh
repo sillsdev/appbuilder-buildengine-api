@@ -31,6 +31,8 @@ env | while read line ; do
    fi
 done
 
+/data/yii cron/aws-startup 2>&1 >> /var/log/aws-startup.log
+
 # Add env vars to doorman-cron to make available to scripts
 cat /etc/cron.d/appbuilder-cron >> /etc/cron.d/appbuilder
 

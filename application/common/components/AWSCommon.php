@@ -62,6 +62,6 @@ class AWSCommon
 
     public static function getRoleName($baseName)
     {
-        return 'codebuild-' . self::getCodeBuildProjectName($baseName) . '-service-role';
+        return 'codebuild-' . $baseName . '-service-role-' . self::getAppEnv();
     }
 }

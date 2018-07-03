@@ -10,6 +10,7 @@ use common\components\EmailUtils;
 use common\components\FileUtils;
 use common\components\IAmWrapper;
 
+use console\components\AwsStartupAction;
 use console\components\RemoveExpiredBuildsAction;
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
@@ -31,6 +32,12 @@ class CronController extends Controller
         \Yii::$container->set('gitWrapper', 'GitWrapper\GitWrapper');
         \Yii::$container->set('iAmWrapper', 'common\components\IAmWrapper');
         parent::__construct($id, $module, $config);
+    }
+
+    public function actionAwsStartup()
+    {
+        $awsStartup = new AwsStartupAction();
+        $awsStartup->performAction();
     }
 
     /**
