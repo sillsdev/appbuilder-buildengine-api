@@ -28,6 +28,16 @@ class AWSCommon
     {
         return \Yii::$app->params['buildEngineSecretsBucket'];
     }
+
+    public static function getCodeBuildImageTag()
+    {
+        return \Yii::$app->params['codeBuildImageTag'];
+    }
+    public static function getCodeBuildImage()
+    {
+        return \Yii::$app->params['codeBuildImage'];
+    }
+
     public static function getArtifactPath($build, $productionStage)
     {
         $job = $build->job;

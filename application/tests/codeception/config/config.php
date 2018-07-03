@@ -14,6 +14,8 @@ $BUILD_ENGINE_JENKINS_MASTER_URL =  "http://192.168.70.241:8080";
 $BUILD_ENGINE_ARTIFACTS_BUCKET = "sil-appbuilder-artifacts";
 $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = "us-west-2";
 $BUILD_ENGINE_SECRETS_BUCKET = "sil-prd-aps-secrets";
+$CODE_BUILD_IMAGE = "sillsdev/appbuilder-agent";
+$CODE_BUILD_IMAGE_TAG = "refactor";
 $PUBLISH_JENKINS_MASTER_URL = "http://192.168.70.242:8080";
 $MYSQL_HOST = getenv('MYSQL_HOST') ?: 'localhost';
 $MYSQL_DATABASE = getenv('MYSQL_DATABASE') ?: 'example';
@@ -87,6 +89,8 @@ return [
         'buildEngineArtifactsBucket' => $BUILD_ENGINE_ARTIFACTS_BUCKET,
         'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
         'buildEngineSecretsBucket' => $BUILD_ENGINE_SECRETS_BUCKET,
+        'codeBuildImage' => $CODE_BUILD_IMAGE,
+        'codeBuildImageTag' => $CODE_BUILD_IMAGE_TAG,
         'publishJenkinsMasterUrl' => $PUBLISH_JENKINS_MASTER_URL,
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
         'adminEmail' => $ADMIN_EMAIL,

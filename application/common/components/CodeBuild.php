@@ -213,7 +213,7 @@ class CodeBuild extends AWSCommon {
         $job = $build->job;
         $artifactUrl = $build->apk();
         $secretsBucket = self::getSecretsBucket();
-        $publishApp = 'publish_app';
+        $publishApp = self::getCodeBuildProjectName('publish_app');
         $promoteFrom = $release->promote_from;
         if (is_null($promoteFrom)) {
             $promoteFrom = "";
@@ -316,7 +316,7 @@ class CodeBuild extends AWSCommon {
             'cache' => $cache,
             'environment' => [ // REQUIRED
                 'computeType' => 'BUILD_GENERAL1_SMALL', // REQUIRED
-                'image' => 'sillsdev/appbuilder-agent:refactor', // REQUIRED
+                'image' => self::getCodeBuildImage() . ":" . self::getCodeBuildImageTag(), // REQUIRED
                 'privilegedMode' => false,
                 'type' => 'LINUX_CONTAINER', // REQUIRED
             ],

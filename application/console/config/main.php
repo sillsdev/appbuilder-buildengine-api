@@ -11,6 +11,8 @@ $BUILD_ENGINE_JENKINS_MASTER_URL = getenv('BUILD_ENGINE_JENKINS_MASTER_URL') ?: 
 $BUILD_ENGINE_ARTIFACTS_BUCKET = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET')  ?: "unset";
 $BUILD_ENGINE_SECRETS_BUCKET = getenv('BUILD_ENGINE_SECRETS_BUCKET') ?: "unset";
 $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-west-2";
+$CODE_BUILD_IMAGE = getenv('CODE_BUILD_IMAGE') ?: "sillsdev/appbuilder-agent";
+$CODE_BUILD_IMAGE_TAG = getenv('CODE_BUILD_IMAGE_TAG') ?: "refactor";
 $PUBLISH_JENKINS_MASTER_URL = getenv('PUBLISH_JENKINS_MASTER_URL');
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
@@ -54,6 +56,8 @@ return [
         'buildEngineArtifactsBucket' => $BUILD_ENGINE_ARTIFACTS_BUCKET,
         'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
         'buildEngineSecretsBucket' => $BUILD_ENGINE_SECRETS_BUCKET,
+        'codeBuildImage' => $CODE_BUILD_IMAGE,
+        'codeBuildImageTag' => $CODE_BUILD_IMAGE_TAG,
         'publishJenkinsMasterUrl' => $PUBLISH_JENKINS_MASTER_URL,
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
         'awsKeyId' => $AWS_ACCESS_KEY_ID,
