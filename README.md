@@ -1,7 +1,5 @@
 # appbuilder-buildengine-api #
-This is the Web Service interface for the SIL App Publishing Service. BuildEngine creates entries in a database
-and transforms the data into Jenkins Job DSL configuration shared in a git Repository shared with
-the Jenkins build infrastructure (see [docker-appbuilder-jenkins](https://github.com/sillsdev/docker-appbuilder-jenkins)).
+This is the Web Service interface for the SIL App Publishing Service.
 
 ## Build Status ##
 Develop: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=develop)](https://codeship.com/projects/155333)
@@ -41,12 +39,18 @@ For the SIL App Publishing Service, Doorman will provide the following services:
 ### Dependencies ###
 In production, there is a dependency on Amazon Web Services for the following services:
 
+* [CloudWatch](https://aws.amazon.com/cloudwatch/)
+* [CodeBuild](https://aws.amazon.com/codebuild/)
 * [CodeCommit](https://aws.amazon.com/codecommit/)[^1]
     * create repository for storing project configuration
 * [Identity and Access Management (IAM)](https://aws.amazon.com/iam/)
     * create users based on project provisioning requests
     * create group based on user's Entity of Assignment and add user to group
     * give permission to user to access CodeCommit Repo
+* [Relational Database Services (RDS)](https://aws.amazon.com/rds/)
+    * store project, build, and release information for BuildEngine Web Service
+    * Note: In development, we use a MariaDB database to simulate RDS database
+* [S3](https://aws.amazon.com/s3/)
 
 ### Deployment ###
 The staging version is available at https://doorman-sab.gtis.guru.
@@ -57,65 +61,42 @@ are based on Linux Containers which is a virtualization strategy that reuses Lin
 applications in a mini Linux system.  Therefore, the host for these containers must be a Linux system (which can be run
 in a Virtual Machine on non-Linux systems for development).
 
-There are two sets of containers:
+There is a set of containers:
 
 * BuildEngine - RESTful Web Service used by Doorman
     * web - REST API implementation that takes requests and updates database
-    * cron - processes the updates to the database and interfaces with Jenkins; updates database with status from Jenkins
-* AppBuilder - Executes the building and publishing of Apps
-    * master - Jenkins instance
-    * slave - build agent that executes SAB to build apps and Google Play Developer APIs to publish apps
-
-BuildEngine manages the state of the Jenkins configuration using Jenkins [Job DSL Plugin](https://github.com/jenkinsci/job-dsl-plugin/wiki).
-BuildEngine writes the Job DSL scripts into a Git repository.  If it notices changes, it commits the changes, pushes to the remote repository,
-and attempts to re-run the Job-Wrapper-Seed job on the Jenkins master (via Jenkins REST API).  This job processes the Job DSL scripts in the
-Git repository which reconfigures Jenkins.
+    * cron - processes the updates to the database and interfaces with CodeBuild; updates database with status from CodeBuild
 
 ### Deployment ###
 
 In production, the containers are deployed to a docker container service, like [Amazon ECS](https://aws.amazon.com/ecs/).
 For local development, these containers can be deployed to:
 
- * Native Docker: Linux
+ * Docker CE: Linux or Mac
  * Vagrant: Windows or Linux
- * Docker Toolbox: Mac
+
 
 Note: Docker Toolbox exists for Windows, however it an [issue with interactive terminal](https://github.com/docker/docker/issues/12469) (docker -it container command).
 This limitation makes it difficult to debug issues during development and is not recommended.
 
-### Dependencies ###
-In production or development, there is a dependency on Amazon Web Services for the following services:
-
-* [Simple Storage Service (S3)](https://aws.amazon.com/s3/)
-    * store sensitive information including private keys and credentials
-    * store build artifacts accessible to users
-* [CodeCommit](https://aws.amazon.com/codecommit/)[^1]
-    * synchronizing data between the BuildEngine Web Service and Jenkins build infrastructure
-    * Note: In development, it might be possible to use another git system.  Need to test.
-* [Relational Database Services (RDS)](https://aws.amazon.com/rds/)
-    * store project, build, and release information for BuildEngine Web Service
-    * Note: In development, we use a MariaDB database to simulate RDS database
-
-For SIL development or staging, please contact @chris_hubbard or @rickmaclean for access to the SIL LSDev account.
+For SIL development or staging, please contact @chris_hubbard for access to the SIL LSDev account.
 
 # Development setup instructions #
 
-APP_ENV is a variable that differentiates development, staging, and production environments.
+**APP_ENV** is a variable that differentiates development, staging, and production environments.
 For development environments, you should use the form "development-USERNAME-MACHINE" (e.g. development-chrish-win).
-Whenever you use see APP_ENV in the directions, please substitute with your chosen environment string.  APP_ENV should
-be limited to alphanumeric characters, '.', '_', and '-' (CodeCommit limit).
+Whenever you see **APP_ENV** in the directions, please substitute with your chosen environment string.  **APP_ENV** should
+be limited to alphanumeric characters, '.', '\_', and '-' (CodeCommit limit).
+
+**AWS_USER_ID** is a 12 digit number that you can get from [AWS Support Center](https://console.aws.amazon.com/support/home)
+Whenever you see **AWS_USER_ID** in the directions, please substitute with the value from your account.
 
 * On Windows, you will need to install [Git for Windows](https://git-scm.com/download/win) and execute commands from a Git Bash shell.
-* [Clone Source Repositories](#clone-source-repositories) for  ```appbuilder-buildengine-api``` and ```docker-appbuilder-jenkins```
+* [Clone Source Repositories](#clone-source-repositories) for  ```appbuilder-buildengine-api``` and ```docker-appbuilder-agent```
 * [Create BuildEngine SSH Key](#create-buildengine-ssh-key) to be used to authenticate git access to jenkins config data
 * [Associate BuildEngine SSH Key](#associate-buildengine-ssh-key) to a user in IAM
-* [Create AppBuilder SSH Key](#create-appbuilder-ssh-key) to be used to authenticate git access to projects
-* [Associate AppBuilder SSH Key](#associate-buildengine-ssh-key) to a user in IAM
-* [Create BuildEngine CodeCommit Repository](#create-buildengine-codecommit-repository)
 * [Create S3 Folders](#create-s3-folders) to store credentials
 * [Give permissions to IAM users](#give-permissions)
-* [Jenkins Configuration](#jenkins-configuration)
-* [Deploy containers](#deploy-containers) for AppBuilder
 * [Build Engine Configuration](#build-engine-configuration)
 * [Deploy containers](#deploy-containers) for BuildEngine
 
@@ -124,7 +105,7 @@ You will need to authenticate to GitHub to be able to clone the repositories. Yo
 
 ```bash
 git clone https://github.com/sillsdev/appbuilder-buildengine-api
-git clone https://github.com/sillsdev/docker-appbuilder-jenkins
+git clone https://github.com/sillsdev/docker-appbuilder-agent
 ```
 
 Or you can create an SSH Key, store the private and public key in ~/.ssh, and associate the public key with your GitHub account.
@@ -135,7 +116,7 @@ chmod 700 ~/.ssh
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
 # login to https://github.com/settings/keys/ and "New SSH Key" using ~/.ssh/id_rsa.pub
 git clone git@github.com:sillsdev/appbuilder-buildengine-api
-git clone git@github.com:sillsdev/docker-appbuilder-jenkins
+git clone git@github.com:sillsdev/docker-appbuilder-agent
 ```
 
 If you want to create a separate SSH Key just for GitHub, you can create the SSH Key in a subdirectory of ~/.ssh and then add an entry to
@@ -179,52 +160,6 @@ You need to associate the SSH Public Key with a user in IAM.
 
 [Back](#development-setup-instructions)
 
-#### Create AppBuilder SSH Key ####
-BuildEngine uses git to synchronize the git Repository with ssh keys for authentication.
-
-1. Create ~/.ssh/appbuilder directory
-2. Create ssh key in ~/.ssh/appbuilder directory (use an empty key phrase)
-```bash
-mkdir -p ~/.ssh/appbuilder
-chmod 700 ~/.ssh/appbuilder
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/appbuilder/id_rsa
-openssl rsa -in ~/.ssh/appbuilder/id_rsa -pubout > ~/.ssh/appbuilder/id_rsa_pub.pem
-```
-
-This will also save the public key to ~/.ssh/appbuilder/id_rsa.pub
-
-[Back](#development-setup-instructions)
-
-#### Associate AppBuilder SSH Key ###
-AppBuilder uses SSH authentication to access the CodeCommit Repo for projects.  You need to associate the SSH Public Key
-with a user in IAM.
-
-1. In AWS, go to IAM service and create or select a user which will be the "App Builder" user for your deployment
-    + Note: You will need the ```Access Key Id``` and ```Secret Access Key``` for this user later.
-2. Select the Security Credentials tab
-3. Click on "Upload SSH public key" button
-4. Open ~/.ssh/appbuilder/id_rsa.pub with a text editor and copy all of the text
-5. Paste the text into the "Upload SSH public key" page.
-6. Click on the "Upload SSH public Key" button
-7. You should see a new entry under "SSH keys for AWS CodeCommit". Save the value of "SSH Key ID" for the new uploaded key to ~/.ssh/appbuilder/ssh_key_id.txt
-
-[Back](#development-setup-instructions)
-
-#### Create BuildEngine CodeCommit Repository ####
-We use a Git repository to store Jenkins Job DSL configuration.  BuildEngine takes information from the Database and generates
-Job DSL files for each of the jobs in the database, commits any changes to the configuration, and notifies Jenkins to reconfigure
-the jobs (i.e. execute Job-Wrapper-Seed job which processes the Job DSL files from the Git repository.
-
-To use a CodeCommit Repository for BuildEngine:
-1. Go to  [AWS CodeCommit](https://console.aws.amazon.com/codecommit/home)
-2. Click "Create new repository"
-3. Set the repository name to ci-scripts-APP_ENV
-4. Click on the "Clone URL" dropdown and select SSH.  Copy the URL and keep for later.
-
-The format of the URL should be ssh://git-commit.us-east-1.amazonaws.com/v1/repos/REPO where REPO is the repository name you entered.
-
-[Back](#development-setup-instructions)
-
 #### Create S3 Folders ####
 BuildEngine and AppBuilder use [s3-expand](https://github.com/silinternational/s3-expand) to extract credentials needed to
 access resources. 
@@ -239,13 +174,9 @@ sil-appbuilder-secrets/APP_ENV/buildengine_api/ssh/id_rsa
 sil-appbuilder-secrets/APP_ENV/buildengine_api/ssh/id_rsa.pub
 ```
 
-Jenkins is used to initiate jobs that can build the application and/or publish them to the Google Play Store.
-The system can be set up so that one instance of Jenkins performs both of these tasks or it can be configured to perform only one
-of the two functions, allowing another instance of Jenkins to perform the other.  For a typical development
-environment, the same Jenkins instance will be used for both, so both sets of keys described below should be
-included.
+CodeBuild is used to initiate jobs that can build the application and/or publish them to the Google Play Store.
 
-If the credentials being saved here are to support a system that will build the application using AppBuilder:
+The credentials being saved here are to support a system that will build the application using AppBuilder:
 
 * Create the following folders in [AWS S3](https://console.aws.amazon.com/s3/home)
 ```
@@ -283,7 +214,7 @@ If the credentials being saved here are to support a system that will publish th
 ```
 sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
 ```
-* Upload playstore_api_issuer.txt and playstore_api_key.p12 to ```sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa```
+* Upload playstore_api.json to ```sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa```
 
  
 [Back](#development-setup-instructions)
@@ -292,15 +223,10 @@ sil-appbuilder-secrets/APP_ENV/jenkins/publish/google_play_store/wycliffeusa
 There are 3 different users involved in accessing S3 resources
 
 * Build Engine
-    * CodeCommit: Write Job DSL configuration
     * S3: Access secrets
     * S3: Put build artifacts
     * IAM: Create User and Groups, Manage SSH Key
     * CodeCommit: Create Repository
-* App Builder
-    * CodeCommit: Read Job DSL configuration
-    * CodeCommit: Read/Write Project data
-    * S3: Access secrets
 * End User
     * CodeCommit: Read/Write Project data
 
@@ -322,13 +248,6 @@ Create the following policies:
                 "s3:GetBucketLocation",
                 "s3:ListBucket"
             ],
-            "Condition": {
-                "StringLike": {
-                    "s3:prefix": [
-                        "APP_ENV/*"
-                    ]
-                }
-            },
             "Resource": [
                 "arn:aws:s3:::sil-appbuilder-secrets"
             ]
@@ -339,7 +258,7 @@ Create the following policies:
                 "s3:GetObject"
             ],
             "Resource": [
-                "arn:aws:s3:::sil-appbuilder-secrets/APP_ENV/*"
+                "arn:aws:s3:::sil-appbuilder-secrets/*"
             ]
         }
     ]
@@ -379,32 +298,6 @@ Create the following policies:
 }
 ```
 
-* CodeCommit Repository for Job DSL configuration
-    + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
-    + Select "Create Your Own Policy"
-    + Set the Policy Name to "codecommit-ci-scripts-APPENV"
-    + Paste in this text and then click on "Create Policy"
-
-```javascript
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-           "Effect": "Allow",
-            "Action": [
-                "codecommit:GetBranch",
-                "codecommit:GitPull",
-                "codecommit:GitPush",
-                "codecommit:ListBranches"
-            ],
-            "Resource": [
-                "arn:aws:codecommit:us-east-1:117995318043:ci-scripts-APP_ENV"
-            ]
-        }
-    ]
-}
-```
-
 * CodeCommit Repository for project data
     + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
     + Select "Create Your Own Policy"
@@ -424,17 +317,17 @@ Create the following policies:
                 "codecommit:ListBranches"
             ],
             "Resource": [
-                "arn:aws:codecommit:us-east-1:117995318043:*"
+                "arn:aws:codecommit:us-east-1:AWS_USER_ID:*"
             ]
         }
     ]
 }
 ```
 
-* Project creations (Create Users, Groups, and Project Repository)
+* Project creations and building
     + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
     + Select "Create Your Own Policy"
-    + Set the Policy Name to "projects-creation-APPENV"
+    + Set the Policy Name to "projects-creation-and-building-APPENV"
     + Paste in this text and then click on "Create Policy"
 
 ```javascript
@@ -453,7 +346,15 @@ Create the following policies:
                 "iam:GetUser",
                 "iam:CreateUser",
                 "iam:GetGroup",
-                "iam:PutGroupPolicy"
+                "iam:PutGroupPolicy",
+                "iam:GetRole",
+                "iam:CreateRole",
+                "iam:AttachRolePolicy",
+                "iam:PassRole",
+                "codebuild:CreateProject",
+                "codebuild:BatchGetProjects",
+                "codebuild:BatchGetBuilds",
+                "codebuild:StartBuild"
             ],
             "Resource": ""
         },
@@ -461,6 +362,7 @@ Create the following policies:
             "Sid": "VisualEditor1",
             "Effect": "Allow",
             "Action": [
+                "codecommit:GetRepository",
                 "codecommit:CreateRepository",
                 "codecommit:DeleteRepository"
             ],   
@@ -469,38 +371,82 @@ Create the following policies:
     ]
 }
 ````
-    
+* CodeBuild Base Policy for Building
+    + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
+    + Select "Create Your Own Policy"
+    + Set the Policy Name to "codebuild-basepolicy-build_app-APPENV"
+    + Paste in this text and then click on "Create Policy"
+````
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:logs:us-east-1:AWS_USER_ID:log-group:/aws/codebuild/build_app",
+        "arn:aws:logs:us-east-1:AWS_USER_ID:log-group:/aws/codebuild/build_app:*"
+      ],
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::codepipeline-us-east-1-*"
+      ],
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:GetObjectVersion"
+      ]
+    }
+  ]
+}
+````
+
+* CodeBuild Base Policy for Publishing
+    + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
+    + Select "Create Your Own Policy"
+    + Set the Policy Name to "codebuild-basepolicy-publish_app-APPENV"
+    + Paste in this text and then click on "Create Policy"
+````
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:logs:us-east-1:AWS_USER_ID:log-group:/aws/codebuild/publish_app",
+        "arn:aws:logs:us-east-1:AWS_USER_ID:log-group:/aws/codebuild/publish_app:*"
+      ],
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::codepipeline-us-east-1-*"
+      ],
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:GetObjectVersion"
+      ]
+    }
+  ]
+}
+````
 Attach the following policies to the "Build Engine" user:
 
 * s3-appbuilder-secrets-APP_ENV
 * s3-appbuilder-artifacts-APP_ENV
-* codecommit-ci-scripts-APP_ENV
-* projects-creation-APP_ENV
-
-Attach the following policies to the "App Builder" user:
-
-* s3-appbuilder-secrets-APP_ENV
-* s3-appbuilder-artifacts-APP_ENV
-* codecommit-projects-APP_ENV
-
-[Back](#development-setup-instructions)
-
-#### Jenkins Configuration ####
-In the directory where you cloned ```docker-appbuilder-jenkins```, do the following:
-
-* copy local.env.dist to local.env and update the variables. Replace SOME_KEY with your chosen environment string.
-* set ```AWS_USER_ID``` to the account number of the AWS account being used (see https://console.aws.amazon.com/support/home)
-* set ```EXPAND_S3_KEY``` and ```EXPAND_S3_SECRET``` to the ```Access Key Id``` and ```Secret Access Key``` of the App Builder User.
-* set ```BUILD_ENGINE_REPO_URL``` to the ssh url saved from creating the Build Engine repository.
-* set ```BUILD_ENGINE_REPO_BRANCH``` to master
-* set ```BUILD_ENGINE_GIT_SSH_USER``` to the value stored in ~/.ssh/buildengine_api/ssh_key_id.txt
-* set ```BUILD_ENGINE_JENKINS_MASTER_URL``` to the url of Jenkins.  This depends how you will deploy this app:
-    + If you will be using vagrant (Windows or Linux): ```http://192.168.70.241:8080```
-    + If you will be using native docker (Linux): ```http://localhost:8080```
-    + If you will be using docker-machine (Mac): run ```docker-engine ip default``` to determine IP, port 8080
-        + most likely will be: http://192.168.99.100:8080
-
-in ```docker-appbuilder-jenkins``` will match ```APPBUILDER_JENKINS_URL``` in ```appbuilder-buildengine-api```
+* projects-creation-and-building-APP_ENV
 
 [Back](#development-setup-instructions)
 
@@ -510,11 +456,11 @@ In the directory where you cloned ```appbuilder-buildengine-api```, do the follo
 * copy local.env.dist to local.env and update the variables. Replace SOME_KEY with your chosen environment string.
 * set ```EXPAND_S3_KEY``` and ```EXPAND_S3_SECRET``` to the ```Access Key Id``` and ```Secret Access Key``` of the Build Engine User.
 * set ```AWS_ACCESS_KEY_ID``` and ```AWS_SECRET_ACCESS_KEY``` to the ```Access Key Id``` and ```Secret Access Key``` of the Build Engine User.
+itory.
+* set ```AWS_USER_ID``` to the value from [AWS Support Center](https://console.aws.amazon.c
 * set ```BUILD_ENGINE_GIT_SSH_USER``` to the value of ~/.ssh/buildengine_api/ssh_key_id.txt
 * set ```APPBUILDER_GIT_SSH_USER``` to the value stored in ~/.ssh/appbuilder/ssh_key_id.txt
-* set ```BUILD_ENGINE_REPO_URL``` to the ssh url saved from creating the Build Engine repository.
-* set ```BUILD_ENGINE_JENKINS_MASTER_URL``` to value used in ```docker-appbuilder-jenkins```
-* set ```PUBLISH_JENKINS_MASTER_URL``` to value used in ```docker-appbuilder-jenkins```
+* set ```BUILD_ENGINE_REPO_URL``` to the ssh url saved from creating the Build Engine reposom/support/home)
 * set ```API_ACCESS_TOKEN``` to some unique string to your environment.
     + This will be used during testing for HTTP Bearer Token Authentication.
     + See [RFC6750](https://tools.ietf.org/html/rfc6750) for more details.
@@ -529,8 +475,8 @@ echo 'export DOCKER_UIDGID="$(id -u):$(id -g)"' >> ~/.profile
 source ~/.profile
 ```
 
-#### Native: Linux ####
-* [Install Docker](https://docs.docker.com/engine/installation/linux/ubuntulinux/)
+#### Docker CE: Linux ####
+* [Install Docker CE](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
 * [Install Docker-Compose](https://docs.docker.com/compose/install/)
 * NOTE: DOCKER_UIDGID needs to be set in environment
 * Start services
@@ -540,22 +486,20 @@ docker-compose up -d
 
 #### Vagrant: Windows or Linux ####
 * [Install VirtualBox](https://virtualbox.org)
-* [Install Vagrant 1.7.4](https://vagrantup.com)
+* [Install Vagrant](https://vagrantup.com)
 * Start vagrant & services
 ```bash
 vagrant up
 vagrant ssh
 ```
 
-#### Docker Toolbox: Mac ####
-* [Install Docker Toolbox](https://docs.docker.com/engine/installation/mac/)
+#### Docker CE: Mac ####
+* [Install Docker CE for Mac](https://docs.docker.com/docker-for-mac/install/)
+* [Install Docker-Compose](https://docs.docker.com/compose/install/)
 * NOTE: DOCKER_UIDGID needs to be set in environment
 * Start docker and services
 ```bash
-docker-machine start default
-eval $(docker-machine env default)
 docker-compose up -d
-docker-machine ip default # to know what the IP Address to use for docker host
 ```
 
 [Back](#development-setup-instructions)
