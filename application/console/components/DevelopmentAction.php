@@ -21,6 +21,7 @@ use yii\console\Controller;
 use common\helpers\Utils;
 
 use JenkinsApi\Item\Build as JenkinsBuild;
+use common\components\IAmWrapper;
 
 class DevelopmentAction {
     const TESTEMAIL = 'TESTEMAIL';
@@ -31,6 +32,7 @@ class DevelopmentAction {
     const GETBUILDS = 'GETBUILDS';
     const DELETEJOB = 'DELETEJOB';
     const TESTAWSSTAT = 'TESTAWSSTAT';
+    const TESTIAM = 'TESTIAM';
     
     private $actionType;
     private $sendToAddress;
@@ -51,7 +53,6 @@ class DevelopmentAction {
         if ($this->actionType == self::TESTAWSSTAT) {
             $this->buildGuid = $argv[1];
         }
-        $this->jenkinsUtils = \Yii::$container->get('jenkinsUtils');
     }
     
     public function performAction() {
@@ -77,11 +78,11 @@ class DevelopmentAction {
             case self::DELETEJOB:
                 $this->actionDeleteJob();
                 break;
-            case self::TESTAWSSTART:
-                $this->actionTestAwsStartBuild();
-                break;
             case self::TESTAWSSTAT:
                 $this->actionTestAwsBuildStatus();
+                break;
+            case self::TESTIAM:
+                $this->actionTestIam();
                 break;
         }  
     }
@@ -118,6 +119,14 @@ class DevelopmentAction {
         if(!$mail->save()){
             echo "Failed to send email" . PHP_EOL;
         }
+    }
+    private function actionTestIam()
+    {
+        $iam = new IAmWrapper();
+        $arn = $iam->getRoleArn('build_app');
+//        $cb = new CodeBuild();
+//        $answer = $cb->projectExists('build_app');
+//        $answer = $cb->createProject();
     }
     /**
      * Get Configuration (Dev only)

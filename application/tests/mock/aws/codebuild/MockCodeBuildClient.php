@@ -56,23 +56,31 @@ class MockCodeBuildClient
             'buildComplete' => true,
         ];
         $build = $build2;
+        // codecept_debug("id: " . $id);
         switch ($id) {
             case 'build_app:7049fc2a-db58-4c33-8d4e-c0c568b25c7a':
+            case 'build_app-testing:7049fc2a-db58-4c33-8d4e-c0c568b25c7a':
                 // codecept_debug("Build in progress");
                 $build = $build1;
                 break;
             case 'build_app:7447f3ea-00ce-4ad7-ab95-db0e1b25dd5e':
             case 'publish_app:f16d4385-5579-4139-8c1e-a3937e88b23':
+            case 'build_app-testing:7447f3ea-00ce-4ad7-ab95-db0e1b25dd5e':
+            case 'publish_app-testing:f16d4385-5579-4139-8c1e-a3937e88b23':
                 // codecept_debug("Build failed");
                 $build = $build3;
                 break;
             case 'build_app:f16d4385-5579-4139-8c1e-a3937e88bda':
             case 'publish_app:f16d4385-5579-4139-8c1e-a3937e88b11':
+            case 'build_app-testing:f16d4385-5579-4139-8c1e-a3937e88bda':
+            case 'publish_app-testing:f16d4385-5579-4139-8c1e-a3937e88b11':
                 // codecept_debug("Build stopped");
                 $build = $build4;
                 break;
             case 'build_app:f16d4385-5579-4139-8c1e-a3937e88b99':
             case 'publish_app:f16d4385-5579-4139-8c1e-a3937e88b99':
+            case 'build_app-testing:f16d4385-5579-4139-8c1e-a3937e88b99':
+            case 'publish_app-testing:f16d4385-5579-4139-8c1e-a3937e88b99':
                 // codecept_debug('Build timed out');
                 $build = $build5;
                 break;

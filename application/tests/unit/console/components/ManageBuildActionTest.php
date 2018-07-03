@@ -120,7 +120,7 @@ class ManageBuildActionTest extends UnitTestBase
         $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be postprocessing after successful completion");
         $this->assertNull($build->result, " *** Result should remain null when postprocessing");
         $build = Build::findOne(['id' => 15]);
-        $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after failure");
+        $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be complete after failure");
         $this->assertEquals("FAILURE", $build->result, " *** Result should be Failure after failed build");
         $build = Build::findOne(['id' => 16]);
         $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after abort");

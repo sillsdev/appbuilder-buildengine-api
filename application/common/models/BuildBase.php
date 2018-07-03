@@ -19,6 +19,7 @@ use Yii;
  * @property string $artifact_url_base
  * @property string $artifact_files
  * @property string $build_guid
+ * @property string $console_text_url
  *
  * @property Job $job
  * @property Release[] $releases
@@ -42,7 +43,7 @@ class BuildBase extends \yii\db\ActiveRecord
             [['job_id'], 'required'],
             [['job_id', 'version_code'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel', 'artifact_files', 'build_guid'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'artifact_files', 'build_guid', 'console_text_url'], 'string', 'max' => 255],
             [['error', 'artifact_url_base'], 'string', 'max' => 2083],
             [['job_id'], 'exist', 'skipOnError' => true, 'targetClass' => Job::className(), 'targetAttribute' => ['job_id' => 'id']],
         ];
@@ -66,6 +67,7 @@ class BuildBase extends \yii\db\ActiveRecord
             'artifact_url_base' => Yii::t('app', 'Artifact Url Base'),
             'artifact_files' => Yii::t('app', 'Artifact Files'),
             'build_guid' => Yii::t('app', 'Build Guid'),
+            'console_text_url' => Yii::t('app', 'Console Text Url'),
         ];
     }
 

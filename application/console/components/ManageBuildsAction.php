@@ -95,7 +95,6 @@ class ManageBuildsAction extends ActionCommon
 
             $script = $this->cronController->renderPartial("scripts/appbuilders_build", [
             ]);
-            echo $script;
             
             // Start the build
             $codeBuild = new CodeBuild();
@@ -103,6 +102,7 @@ class ManageBuildsAction extends ActionCommon
             $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script, (string)$versionCode);
             if (!is_null($lastBuildGuid)){
                 $build->build_guid = $lastBuildGuid;
+                $build->console_text_url = CodeBuild::getConsoleTextUrl('build_app', $lastBuildGuid);
                 echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
                 $build->status = Build::STATUS_ACTIVE;
                 $build->save();
@@ -128,9 +128,8 @@ class ManageBuildsAction extends ActionCommon
 
             $job = $build->job;
             if ($job) {       
-
                 $codeBuild = new CodeBuild();
-                $buildStatus = $codeBuild->getBuildStatus((string)$build->build_guid, 'build_app');
+                $buildStatus = $codeBuild->getBuildStatus((string)$build->build_guid, CodeBuild::getCodeBuildProjectName('build_app'));
                 $phase = $buildStatus['currentPhase'];
                 $status = $buildStatus['buildStatus'];
                 echo " phase: " . $phase . " status: " . $status .PHP_EOL;

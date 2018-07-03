@@ -49,5 +49,19 @@ class AWSCommon
         $repoUrl =  $artifactPath . "/" . $buildNumber;
         return $repoUrl;
     }
+    /**
+     *  Get the project name which is the prd or stg plus build_app or publish_app
+     *
+     * @param string $baseName build_app or publish_app
+     * @return string app name
+     */
+    public static function getCodeBuildProjectName($baseName)
+    {
+        return ($baseName . "-" . self::getAppEnv());
+    }
 
+    public static function getRoleName($baseName)
+    {
+        return 'codebuild-' . self::getCodeBuildProjectName($baseName) . '-service-role';
+    }
 }

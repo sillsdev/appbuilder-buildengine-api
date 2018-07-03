@@ -406,10 +406,7 @@ class Build extends BuildBase implements Linkable
         return $this->getArtifactUrl("/package_name\.txt$/");
     }
     public function consoleText() {
-        $region = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-west-2";
-        $regionUrl = 'https://console.aws.amazon.com/cloudwatch/home?region=' . $region;
-        $taskExtension = '#logEvent:group=/aws/codebuild/build_app;stream=' . $this->build_guid;
-        return $regionUrl . $taskExtension;
+        return $this->console_text_url;
     }
 
     /**

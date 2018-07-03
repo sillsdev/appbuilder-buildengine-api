@@ -21,7 +21,7 @@ class ManageReleasesAction extends ActionCommon
     }
     public function performAction()
     {
-/*        $tokenSemaphore = sem_get(8);
+        $tokenSemaphore = sem_get(8);
         $tokenValue = shm_attach(9, 100);
 
         if (!$this->try_lock($tokenSemaphore, $tokenValue)){
@@ -29,7 +29,7 @@ class ManageReleasesAction extends ActionCommon
             echo "[$prefix] ManageReleasesAction: Semaphore Blocked" . PHP_EOL;
             return;
         }
-        */
+
         try {
             $logger = new Appbuilder_logger("ManageReleasesAction");
             $complete = Release::STATUS_COMPLETED;
@@ -61,7 +61,7 @@ class ManageReleasesAction extends ActionCommon
             $logger->appbuilderExceptionLog($logException, $e);
          }
         finally {
-//            $this->release($tokenSemaphore, $tokenValue);
+            $this->release($tokenSemaphore, $tokenValue);
         }
     }
     /*===============================================  logging ============================================*/
@@ -115,6 +115,7 @@ class ManageReleasesAction extends ActionCommon
             $lastBuildGuid = $codeBuild->startRelease($release, (string) $script);
             if (!is_null($lastBuildGuid)){
                 $release->build_guid = $lastBuildGuid;
+                $release->console_text_url = CodeBuild::getConsoleTextUrl('publish_app', $lastBuildGuid);
                 echo "[$prefix] Launched Build LastBuildNumber=$release->build_guid". PHP_EOL;
                 $release->status = Release::STATUS_ACTIVE;
                 $release->save();
@@ -142,7 +143,7 @@ class ManageReleasesAction extends ActionCommon
             if ($job) {       
                 $codeBuild = new CodeBuild();
                 
-                $buildStatus = $codeBuild->getBuildStatus((string)$release->build_guid, 'publish_app');
+                $buildStatus = $codeBuild->getBuildStatus((string)$release->build_guid, CodeBuild::getCodeBuildProjectName('publish_app'));
                 $phase = $buildStatus['currentPhase'];
                 $status = $buildStatus['buildStatus'];
                 echo " phase: " . $phase . " status: " . $status .PHP_EOL;

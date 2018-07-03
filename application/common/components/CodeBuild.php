@@ -67,7 +67,7 @@ class CodeBuild extends AWSCommon {
         echo "[$prefix] startBuild CodeBuild Project: " . $buildProcess . " URL: " .$repoHttpUrl . " commitId: " . $commitId . " jobNumber: " . $jobNumber . " buildNumber: " . $buildNumber . " versionCode: " . $versionCode . PHP_EOL;
         $artifacts_bucket = self::getArtifactsBucket();
         $secretsBucket = self::getSecretsBucket();
-        $buildApp = 'build_app';
+        $buildApp = self::getCodeBuildProjectName('build_app');
         $buildPath = $this->getBuildPath($job);
         $artifactPath = $this->getArtifactPath($build, 'codebuild-output');
         echo "Artifacts path: " . $artifactPath . PHP_EOL;
@@ -290,5 +290,70 @@ class CodeBuild extends AWSCommon {
         $artifactFolder = self::getBasePrefixUrl($build, self::getAppEnv());
         $artifactsLocation = 's3://' . $artifactsBucket . '/' . $artifactFolder;
         return($artifactsLocation);
+    }
+
+    /**
+     * This function creates a project in CodeBuild
+     *
+     * @param string $base_name base project being built, e.g. build_app or publish_app
+     * @param string $role_arn Arn for the IAm role
+     * @param Array $cache Strings defining the cache parameter of the build
+     * @param Array $source Strings defining the source parameter of the build
+     *
+     */
+    public function createProject($base_name, $role_arn, $cache, $source) {
+        $project_name = self::getCodeBuildProjectName($base_name);
+        $artifacts_bucket = self::getArtifactsBucket();
+        $result = $this->codeBuildClient->createProject([
+            'artifacts' => [ // REQUIRED
+                'location' => $artifacts_bucket, // output bucket
+                'name' => '/',                   // name of output artifact object
+                'namespaceType' => 'NONE',
+                'packaging' => 'NONE',
+                'path' => 'codebuild-output',         // path to output artifacts
+                'type' => 'S3',                  // REQUIRED
+            ],
+            'cache' => $cache,
+            'environment' => [ // REQUIRED
+                'computeType' => 'BUILD_GENERAL1_SMALL', // REQUIRED
+                'image' => 'sillsdev/appbuilder-agent:refactor', // REQUIRED
+                'privilegedMode' => false,
+                'type' => 'LINUX_CONTAINER', // REQUIRED
+            ],
+            'name' => $project_name, // REQUIRED
+            'serviceRole' => $role_arn,
+            'source' => $source,
+        ]);
+    }
+
+    public static function getConsoleTextUrl($baseName, $guid)
+    {
+        $projectName = self::getCodeBuildProjectName($baseName);
+        $region = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-west-2";
+        $regionUrl = 'https://console.aws.amazon.com/cloudwatch/home?region=' . $region;
+        $taskExtension = '#logEvent:group=/aws/codebuild/' . $projectName . ';stream=' . $guid;
+        return $regionUrl . $taskExtension;
+
+    }
+    /**
+     * Checks to see if the current project exists
+     *
+     * @param string $projectName - Name of the project to search for
+     * @return boolean true if project found
+     */
+    public function projectExists($projectName)
+    {
+        echo "Check project " . $projectName . " exists" . PHP_EOL;
+        $retVal = true;
+        $result = $this->codeBuildClient->batchGetProjects([
+            'names' => [
+                $projectName
+            ]
+        ]);
+        $projects = $result['projects'];
+        if (count($projects) == 0) {
+            $retVal = false;
+        }
+        return $retVal;
     }
 }

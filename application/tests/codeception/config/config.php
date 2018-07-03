@@ -25,6 +25,7 @@ $TEST_MYSQL_USER = getenv('TEST_MYSQL_USER') ?: 'example';
 $TEST_MYSQL_PASSWORD = getenv('TEST_MYSQL_PASSWORD') ?: 'example';
 $ADMIN_EMAIL = 'nobody@nowhere.com';
 $APP_ENV = "testing";
+$AWS_USER_ID = "117995318043";
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
         \Yii::$app->params['buildEngineGitUserName'] = $BUILD_ENGINE_GIT_USER_NAME;
@@ -90,6 +91,7 @@ return [
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
         'adminEmail' => $ADMIN_EMAIL,
         'appEnv' => $APP_ENV,
+        'awsUserId' => $AWS_USER_ID,
         'max_email_attempts' => 5,
         'max_emails_per_try' => 20,
     ],
