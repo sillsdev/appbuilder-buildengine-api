@@ -99,48 +99,7 @@ class IAmWrapper extends AWSCommon
             return "";
         }
     }
-    /**
-     * Creates the appropriate role for the specified project for the current production stage
-     *
-     * @param string $projectName - base project name, i.e. build_app or publish_app
-     * @return string arn for the role that was created
-     */
-    public function createRole($projectName)
-    {
-        $trustPolicyDocument = [
-            'Version' => "2012-10-17",
-            'Statement' => [
-                [
-                    'Effect' => 'Allow',
-                    'Principal' => [
-                    'Service' => 'codebuild.amazonaws.com'
-                    ],
-                    'Action' => 'sts:AssumeRole'
-                ]
-            ]
-        ];
-        $fullRoleName = self::getRoleName($projectName);
-        echo "create Role " . $fullRoleName . PHP_EOL;
-        $result = $this->iamClient->createRole([
-            'AssumeRolePolicyDocument' => Json::encode($trustPolicyDocument),
-            'Path' => '/',
-            'RoleName' => $fullRoleName,
-        ]);
-        $role = $result['Role'];
-        $roleArn = $role['Arn'];
-        return $roleArn;
-    }
 
-    public function attachRolePolicy($projectName, $policyName)
-    {
-        $fullRoleName = self::getRoleName($projectName);
-        $policyArn = self::getPolicyArn($policyName);
-        echo 'Attaching ' . $policyArn . ' to ' . $fullRoleName . PHP_EOL;
-        $result = $this->iamClient->attachRolePolicy([
-            'PolicyArn' => $policyArn,
-            'RoleName' => $fullRoleName,
-        ]);
-    }
     /**
      * gets the iam arn of a specific iam policy
      *

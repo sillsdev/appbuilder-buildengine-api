@@ -26,68 +26,54 @@ class AwsStartupAction extends ActionCommon
             $projectName = 'build_app';
             $prefix = Utils::getPrefix();
             echo "[$prefix] AwsStartupAction: create CodeBuild project: $projectName" . PHP_EOL;
-            $codeBuild = new CodeBuild();
-            $iamWrapper = new IAmWrapper();
-            // Build build role if necessary
-            $buildProjectName = CodeBuild::getCodeBuildProjectName($projectName);
-            if (!$codeBuild->projectExists($buildProjectName))
-            {
-                echo "  Creating build project " . $buildProjectName . PHP_EOL;
-                // Project doesn't exist, build it
-                if (!$iamWrapper->doesRoleExist($projectName))
-                {
-                    echo "  Creating role for " . $buildProjectName . PHP_EOL;
-                    // Role doesn't exist make it
-                    $roleArn = $iamWrapper->createRole($projectName);
-                    $iamWrapper->attachRolePolicy($projectName, 's3-appbuilder-secrets');
-                    $iamWrapper->attachRolePolicy($projectName, 's3-appbuilder-artifacts');
-                    $iamWrapper->attachRolePolicy($projectName, 'codecommit-projects');
-                    $iamWrapper->attachRolePolicy($projectName, 'codebuild-basepolicy-build_app');
-                }
-                // Create the codebuild project
-                $cache =  [
-                    'location' => CodeBuild::getArtifactsBucket() . '/codebuild-cache',
-                    'type' => 'S3',
-                ];
-                $source = [
-                    'buildspec' => 'version: 0.2',
-                    'gitCloneDepth' => 1,
-                    'location' => 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/sample',
-                    'type' => 'CODECOMMIT',
-                ];
-                $roleArn = $iamWrapper->getRoleArn($projectName);
-                $codeBuild->createProject($projectName, $roleArn, $cache, $source);
-                echo "  Project created" . PHP_EOL;
-            }
-            // Build publish role if necessary
+            $cache =  [
+                'location' => CodeBuild::getArtifactsBucket() . '/codebuild-cache',
+                'type' => 'S3',
+            ];
+            $source = [
+                'buildspec' => 'version: 0.2',
+                'gitCloneDepth' => 1,
+                'location' => 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/sample',
+                'type' => 'CODECOMMIT',
+            ];
+            $this->createProject($projectName, $cache, $source, $logger);
+
+           // Build publish role if necessary
             $projectName = 'publish_app';
             echo "[$prefix] AwsStartupAction: create CodeBuild project: $projectName" . PHP_EOL;
+            $cache = [
+                'type' => 'NO_CACHE',
+            ];
+            $source = [
+                'buildspec' => 'version: 0.2',
+                'gitCloneDepth' => 1,
+                'location' =>  'arn:aws:s3:::prd-aps-artifacts/prd/jobs/build_scriptureappbuilder_1/1/sample.apk',
+                'type' => 'S3',
+            ];
+            $this->createProject($projectName, $cache, $source, $logger);
+
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] createCodeBuildProject: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = [
+                'problem' => 'Failed to create CodeBuild Project',
+                'projectName' => $projectName
+            ];
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
+    }
+    private function createProject($projectName, $cache, $source, $logger)
+    {
+        try {
+            echo "[$prefix] AwsStartupAction: create CodeBuild project: $projectName" . PHP_EOL;
+            $codeBuild = new CodeBuild();
+            $iamWrapper = new IAmWrapper();
             $publishProjectName = CodeBuild::getCodeBuildProjectName($projectName);
             if (!$codeBuild->projectExists($publishProjectName))
             {
                 echo "  Creating build project " . $buildProjectName . PHP_EOL;
 
-                // Project doesn't exist, build it
-                if (!$iamWrapper->doesRoleExist($projectName))
-                {
-                    // Role doesn't exist make it
-                    echo "  Creating role for " . $buildProjectName . PHP_EOL;
-                    $roleArn = $iamWrapper->createRole($projectName);
-                    $iamWrapper->attachRolePolicy($projectName, 's3-appbuilder-secrets');
-                    $iamWrapper->attachRolePolicy($projectName, 's3-appbuilder-artifacts');
-                    $iamWrapper->attachRolePolicy($projectName, 'codebuild-basepolicy-publish_app');
-                }
-                // Create the codebuild project
-                $cache = [
-                    'type' => 'NO_CACHE',
-                ];
-                $source = [
-                    'buildspec' => 'version: 0.2',
-                    'gitCloneDepth' => 1,
-                    'location' =>  'arn:aws:s3:::prd-aps-artifacts/prd/jobs/build_scriptureappbuilder_1/1/sample.apk',
-                    'type' => 'S3',
-                ];
-                $roleArn = $iamWrapper->getRoleArn($projectName);
+               $roleArn = $iamWrapper->getRoleArn($projectName);
                 $codeBuild->createProject($projectName, $roleArn, $cache, $source);
                 echo "  Project created" . PHP_EOL;
             }
@@ -101,5 +87,6 @@ class AwsStartupAction extends ActionCommon
             ];
             $logger->appbuilderExceptionLog($logException, $e);
         }
+
     }
 }
