@@ -329,9 +329,18 @@ class CodeBuild extends AWSCommon {
     public static function getConsoleTextUrl($baseName, $guid)
     {
         $projectName = self::getCodeBuildProjectName($baseName);
-        $region = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-west-2";
+        $region = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-east-1";
         $regionUrl = 'https://console.aws.amazon.com/cloudwatch/home?region=' . $region;
         $taskExtension = '#logEvent:group=/aws/codebuild/' . $projectName . ';stream=' . $guid;
+        return $regionUrl . $taskExtension;
+
+    }
+    public static function getCodeBuildUrl($baseName, $guid)
+    {
+        $projectName = self::getCodeBuildProjectName($baseName);
+        $region = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-east-1";
+        $regionUrl = 'https://console.aws.amazon.com/codebuild/home?region=' . $region;
+        $taskExtension = '#/builds/' . $projectName . ':' . $guid . '/view/new';
         return $regionUrl . $taskExtension;
 
     }

@@ -115,6 +115,7 @@ class ManageReleasesAction extends ActionCommon
             $lastBuildGuid = $codeBuild->startRelease($release, (string) $script);
             if (!is_null($lastBuildGuid)){
                 $release->build_guid = $lastBuildGuid;
+                $release->codebuild_url = CodeBuild::getCodeBuildUrl('publish_app', $lastBuildGuid);
                 $release->console_text_url = CodeBuild::getConsoleTextUrl('publish_app', $lastBuildGuid);
                 echo "[$prefix] Launched Build LastBuildNumber=$release->build_guid". PHP_EOL;
                 $release->status = Release::STATUS_ACTIVE;

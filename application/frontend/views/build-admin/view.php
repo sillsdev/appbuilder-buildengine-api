@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute'=>'build_guid',
                 'format'=>"html",
-                'value' =>  "<span>" . $model->build_guid . "</span>",
+                'value' =>  Html::a($model->build_guid, $model->codebuild_url),
             ],
             'result',
             'error:url',

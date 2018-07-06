@@ -102,6 +102,7 @@ class ManageBuildsAction extends ActionCommon
             $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script, (string)$versionCode);
             if (!is_null($lastBuildGuid)){
                 $build->build_guid = $lastBuildGuid;
+                $build->codebuild_url = CodeBuild::getCodeBuildUrl('build_app', $lastBuildGuid);
                 $build->console_text_url = CodeBuild::getConsoleTextUrl('build_app', $lastBuildGuid);
                 echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
                 $build->status = Build::STATUS_ACTIVE;
