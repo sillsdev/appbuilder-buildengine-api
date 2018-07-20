@@ -65,6 +65,10 @@ return [
                         'DELETE <id>' => 'delete-project',
                     ],
                 ],
+                [   'class' => 'yii\rest\UrlRule',
+                    'controller' => 'system',
+                    'pluralize' => 'false',
+                ]
             ],
         ],
     ],
