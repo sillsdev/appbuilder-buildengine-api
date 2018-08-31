@@ -65,13 +65,13 @@ class AwsStartupAction extends ActionCommon
     private function createProject($projectName, $cache, $source, $logger)
     {
         try {
+            $prefix = Utils::getPrefix();
             echo "[$prefix] AwsStartupAction: create CodeBuild project: $projectName" . PHP_EOL;
             $codeBuild = new CodeBuild();
             $iamWrapper = new IAmWrapper();
-            $publishProjectName = CodeBuild::getCodeBuildProjectName($projectName);
-            if (!$codeBuild->projectExists($publishProjectName))
+            if (!$codeBuild->projectExists($projectName))
             {
-                echo "  Creating build project " . $buildProjectName . PHP_EOL;
+                echo "  Creating build project " . $projectName . PHP_EOL;
 
                $roleArn = $iamWrapper->getRoleArn($projectName);
                 $codeBuild->createProject($projectName, $roleArn, $cache, $source);

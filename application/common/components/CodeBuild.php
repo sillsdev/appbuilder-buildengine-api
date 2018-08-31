@@ -347,11 +347,12 @@ class CodeBuild extends AWSCommon {
     /**
      * Checks to see if the current project exists
      *
-     * @param string $projectName - Name of the project to search for
+     * @param string $baseName - Name of the project to search for
      * @return boolean true if project found
      */
-    public function projectExists($projectName)
+    public function projectExists($baseName)
     {
+        $projectName = self::getCodeBuildProjectName($baseName);
         echo "Check project " . $projectName . " exists" . PHP_EOL;
         $retVal = true;
         $result = $this->codeBuildClient->batchGetProjects([
