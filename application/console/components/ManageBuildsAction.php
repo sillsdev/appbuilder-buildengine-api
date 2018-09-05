@@ -149,11 +149,11 @@ class ManageBuildsAction extends ActionCommon
                         case CodeBuild::STATUS_FAULT:
                         case CodeBuild::STATUS_TIMED_OUT:
                             $build->result = Build::RESULT_FAILURE;
-                            $build->error = $build->consoleText();
+                            $build->error = $build->cloudWatch();
                             break;
                         case CodeBuild::STATUS_STOPPED:
                             $build->result = Build::RESULT_ABORTED;
-                            $build->error = $build->consoleText();
+                            $build->error = $build->cloudWatch();
                             break;
                         case CodeBuild::STATUS_SUCCEEDED:
                             $build->status = Build::STATUS_POSTPROCESSING;

@@ -39,9 +39,9 @@ class BuildTest extends UnitTestBase
     {
         $this->setContainerObjects();
         $build = Build::findOne(['id' => 11]);
-        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/consoleText";
+        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/cloudWatch";
         list ($type, $file) = $build->artifactType($s3Key);
-        $this->assertEquals("consoleText", $type, " *** Console Text file type not detected");
+        $this->assertEquals("cloudWatch", $type, " *** Cloud Watch file type not detected");
         $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/play-listing/index.html";
         list ($type, $file) = $build->artifactType($s3Key);
         $this->assertEquals("play-listing", $type, " *** play listing file type not detected");
@@ -54,6 +54,9 @@ class BuildTest extends UnitTestBase
         $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/testproject.apk";
         list ($type, $file) = $build->artifactType($s3Key);
         $this->assertEquals("apk", $type, " *** apk file type not detected");
+        $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/testproject.log";
+        list ($type, $file) = $build->artifactType($s3Key);
+        $this->assertEquals("buildLog", $type, " *** buildLog file type not detected");
     }
     public function testHandleArtifact()
     {

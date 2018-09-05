@@ -37,7 +37,8 @@ class Build extends BuildBase implements Linkable
     const ARTIFACT_ABOUT = "about";
     const ARTIFACT_PLAY_LISTING = "play-listing";
     const ARTIFACT_PACKAGE_NAME = "package_name";
-    const ARTIFACT_CONSOLE_TEXT = "consoleText";
+    const ARTIFACT_CLOUD_WATCH = "cloudWatch";
+    const ARTIFACT_BUILD_LOG = "buildLog";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -167,7 +168,8 @@ class Build extends BuildBase implements Linkable
                     self::ARTIFACT_PLAY_LISTING => $this->playListing(),
                     self::ARTIFACT_VERSION_CODE => $this->versionCode(),
                     self::ARTIFACT_PACKAGE_NAME => $this->packageName(),
-                    self::ARTIFACT_CONSOLE_TEXT => $this->consoleText() ];
+                    self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
+                    self::ARTIFACT_BUILD_LOG => $this->buildLog()];
             },
             'created' => function(){
                 return Utils::getIso8601($this->created);
@@ -316,8 +318,10 @@ class Build extends BuildBase implements Linkable
         $type = "unknown";
         $path_parts = pathinfo($key);
         $file = $path_parts['basename'];
-        if ( $file == "consoleText") {
-            $type = self::ARTIFACT_CONSOLE_TEXT;
+        if ( $file == "cloudWatch") {
+            $type = self::ARTIFACT_CLOUD_WATCH;
+        } else if ($path_parts['extension'] === "log") {
+            $type = self::ARTIFACT_BUILD_LOG;
         } else if ($path_parts['extension'] === "apk") {
             $type = self::ARTIFACT_APK;
         } else if ($file === "version_code.txt") {
@@ -358,7 +362,8 @@ class Build extends BuildBase implements Linkable
             case self::ARTIFACT_APK:
             case self::ARTIFACT_PLAY_LISTING:
             case self::ARTIFACT_PACKAGE_NAME:
-            case self::ARTIFACT_CONSOLE_TEXT;
+            case self::ARTIFACT_CLOUD_WATCH:
+            case self::ARTIFACT_BUILD_LOG:
                 break;
 
             default:
@@ -405,8 +410,11 @@ class Build extends BuildBase implements Linkable
     public function packageName() {
         return $this->getArtifactUrl("/package_name\.txt$/");
     }
-    public function consoleText() {
+    public function cloudWatch() {
         return $this->console_text_url;
+    }
+    public function buildLog() {
+        return $this->getArtifactUrl("/\.log$/");
     }
 
     /**

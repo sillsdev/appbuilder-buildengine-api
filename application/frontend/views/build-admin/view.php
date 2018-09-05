@@ -49,7 +49,13 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'artifacts',
                 'format'=>'html',
-                'value'=> Html::a("apk", $model->apk()) . ", " . Html::a("about", $model->about()) . ", " . Html::a("play-listing", $model->playListing()) . ", " . Html::a("version_code", $model->versionCode()) . ", " . Html::a("package_name", $model->packageName()) . ", " . Html::a("consoleText", $model->consoleText()),
+                'value'=> Html::a("apk", $model->apk()) . ", " .
+                          Html::a("about", $model->about()) . ", " .
+                          Html::a("play-listing", $model->playListing()) . ", " .
+                          Html::a("version_code", $model->versionCode()) . ", " .
+                          Html::a("package_name", $model->packageName()) . ", " .
+                          Html::a("cloudWatch", $model->cloudWatch()) . ", " .
+                          Html::a("buildLog", $model->buildLog())
             ],
             'created',
             'updated',
