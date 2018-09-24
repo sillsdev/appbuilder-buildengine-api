@@ -56,7 +56,7 @@ class BuildTest extends UnitTestBase
         $this->assertEquals("apk", $type, " *** apk file type not detected");
         $s3Key = "testing/jobs/build_scriptureappbuilder_22/1/testproject.log";
         list ($type, $file) = $build->artifactType($s3Key);
-        $this->assertEquals("buildLog", $type, " *** buildLog file type not detected");
+        $this->assertEquals("consoleText", $type, " *** consoleText file type not detected");
     }
     public function testHandleArtifact()
     {

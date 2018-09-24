@@ -55,7 +55,7 @@ $this->params['breadcrumbs'][] = $this->title;
                           Html::a("version_code", $model->versionCode()) . ", " .
                           Html::a("package_name", $model->packageName()) . ", " .
                           Html::a("cloudWatch", $model->cloudWatch()) . ", " .
-                          Html::a("buildLog", $model->buildLog())
+                          Html::a("consoleText", $model->consoleText())
             ],
             'created',
             'updated',
