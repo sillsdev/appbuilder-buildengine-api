@@ -185,6 +185,7 @@ class S3 extends AWSCommon{
                $contentType = "image/jpeg";
                 break;
             case "txt":
+            case "log":
                 $contentType = "text/plain";
                 break;
             default:
