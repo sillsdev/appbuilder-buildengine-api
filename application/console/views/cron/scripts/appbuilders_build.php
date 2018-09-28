@@ -28,6 +28,7 @@ phases:
       - export KSP=$(cat "${SECRETS_DIR}/ksp.txt")
       - export KA=$(cat "${SECRETS_DIR}/ka.txt")
       - export KAP=$(cat "${SECRETS_DIR}/kap.txt")
+      - export GRADLE_OPTS="-Dorg.gradle.daemon=false"
   build:
     commands:
       - KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
