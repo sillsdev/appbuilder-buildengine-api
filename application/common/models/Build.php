@@ -39,6 +39,7 @@ class Build extends BuildBase implements Linkable
     const ARTIFACT_PACKAGE_NAME = "package_name";
     const ARTIFACT_CLOUD_WATCH = "cloudWatch";
     const ARTIFACT_CONSOLE_TEXT = "consoleText";
+    const ARTIFACT_WHATS_NEW = "whats_new";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -168,6 +169,7 @@ class Build extends BuildBase implements Linkable
                     self::ARTIFACT_PLAY_LISTING => $this->playListing(),
                     self::ARTIFACT_VERSION_CODE => $this->versionCode(),
                     self::ARTIFACT_PACKAGE_NAME => $this->packageName(),
+                    self::ARTIFACT_WHATS_NEW => $this->whatsNew(),
                     self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
                     self::ARTIFACT_CONSOLE_TEXT => $this->consoleText()];
             },
@@ -330,6 +332,8 @@ class Build extends BuildBase implements Linkable
             $type = self::ARTIFACT_PACKAGE_NAME;
         } else if ($file === "about.txt") {
             $type = self::ARTIFACT_ABOUT;
+        } else if ($file === "whats_new.txt") {
+            $type = self::ARTIFACT_WHATS_NEW;
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING;
             $file = "play-listing/index.html";
@@ -362,6 +366,7 @@ class Build extends BuildBase implements Linkable
             case self::ARTIFACT_APK:
             case self::ARTIFACT_PLAY_LISTING:
             case self::ARTIFACT_PACKAGE_NAME:
+            case self::ARTIFACT_WHATS_NEW:
             case self::ARTIFACT_CLOUD_WATCH:
             case self::ARTIFACT_CONSOLE_TEXT:
                 break;
@@ -409,6 +414,9 @@ class Build extends BuildBase implements Linkable
     }
     public function packageName() {
         return $this->getArtifactUrl("/package_name\.txt$/");
+    }
+    public function whatsNew() {
+        return $this->getArtifactUrl("/whats_new\.txt$/");
     }
     public function cloudWatch() {
         return $this->console_text_url;
