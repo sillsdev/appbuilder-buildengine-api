@@ -53,7 +53,7 @@ phases:
       - if [ -f $LIST_DIR$MANIFEST_FILE ]; then rm $LIST_DIR$MANIFEST_FILE; fi;
       - FILE_LIST=$(find $PLAY_LISTING_DIR -type f -print)
       - for f in $FILE_LIST; do fn=${f#*"$PLAY_LISTING_DIR/"}; echo $fn >> $OUTPUT_DIR/$MANIFEST_FILE; done
-      - if [ -d "$PLAY_LISTING_DIR" ]; then cp -r "$PLAY_LISTING_DIR" $OUTPUT_DIR; find $OUTPUT_DIR -name whats_new.txt | while read filename; do DIR=$(dirname "${filename}"); mkdir "${DIR}/changelogs"; mv "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"; done; fi
+      - if [ -d "$PLAY_LISTING_DIR" ]; then cp -r "$PLAY_LISTING_DIR" $OUTPUT_DIR; find $OUTPUT_DIR -name whats_new.txt | while read filename; do DIR=$(dirname "${filename}"); cp "$filename" $OUTPUT_DIR; mkdir "${DIR}/changelogs"; mv "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"; done; fi
       - mv build_data "${PROJNAME}_data"
       - mv build.appDef "${PROJNAME}.appDef"
       #- if [ "$CODEBUILD_BUILD_SUCCEEDING" -gt "0" ]; then git remote -v; git tag $VERSION_CODE; git push origin $VERSION_CODE; fi
