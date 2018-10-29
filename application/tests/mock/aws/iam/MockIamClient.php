@@ -16,12 +16,24 @@ class MockIamClient
     public static $getKeyParms;
     function createUser($parms)
     {
-        return new MockIamUser($parms);
+        $this->parms = $parms;
+        $metadata = [
+            'Path' => $parms['Path'],
+            'UserName' => $parms['UserName']
+        ];
+        return([
+            'User' => $metadata
+        ]);
     }
     function addUserToGroup($parms)
     {
         $this->parms = $parms;
         return new MockIamResult($parms);
+    }
+    function removeUserFromGroup($parms)
+    {
+        $this->parms = $parms;
+        return new MockIamResult([]);
     }
     function uploadSSHPublicKey($parms)
     {

@@ -63,6 +63,7 @@ return [
                         'GET' => 'index-projects',
                         'GET <id>' => 'view-project',
                         'DELETE <id>' => 'delete-project',
+                        'PUT <id>' => 'modify-project',
                     ],
                 ],
                 [   'class' => 'yii\rest\UrlRule',
