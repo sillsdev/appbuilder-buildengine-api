@@ -61,9 +61,14 @@ class ProjectController extends ActiveController
         }
         $publishing_key = \Yii::$app->request->getBodyParam('publishing_key', null);
         $user_id = \Yii::$app->request->getBodyParam('user_id', null);
+        $url = $project->url;
         if (($publishing_key == null) || ($user_id == null))
         {
             throw new BadRequestHttpException("Publishing key or user id not set");
+        }
+        if ($url == null)
+        {
+            throw new BadRequestHttpException("Attempting to modify project with no url");
         }
         // Start modify operation
         $task = OperationQueue::UPDATEPROJECT;
