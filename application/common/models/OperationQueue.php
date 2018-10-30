@@ -4,6 +4,7 @@ namespace common\models;
 use common\models\EmailQueue;
 use common\components\EmailUtils;
 use console\components\CopyToS3Operation;
+use console\components\ProjectUpdateOperation;
 use console\components\MaxRetriesExceededException;
 
 use common\helpers\Utils;
@@ -16,6 +17,7 @@ use yii\helpers\ArrayHelper;
 class OperationQueue extends OperationQueueBase
 {
     const SAVETOS3 = 'SAVETOS3';
+    const UPDATEPROJECT = 'UPDATEPROJECT';
 
     public function rules()
     {
@@ -38,6 +40,7 @@ class OperationQueue extends OperationQueueBase
              ]);
         if(!$job){
             $job = self::createOperation($operation, $id, $parms);
+        return;
         } else {
             // If another identical entry is requested, reset the timer
             // and retry counts
@@ -69,6 +72,9 @@ class OperationQueue extends OperationQueueBase
             case OperationQueue::SAVETOS3:
                 $operationObject = new CopyToS3Operation($id);
                 break;
+            case OperationQueue::UPDATEPROJECT:
+                $operationObject = new ProjectUpdateOperation($id, $operation_parms);
+                break;
         }
         return $operationObject;
     }
@@ -90,7 +96,6 @@ class OperationQueue extends OperationQueueBase
             ->andWhere('`try_after` <= :now',[':now' => $currentTime])
             ->orderBy('try_after',SORT_ASC)
             ->one();
- 
         /**
          * If there are no jobs ready in queue, return null
          */

@@ -1,6 +1,7 @@
 <?php
 namespace frontend\controllers;
 
+use common\models\OperationQueue;
 use common\models\Project;
 
 use yii\rest\ActiveController;
@@ -53,7 +54,29 @@ class ProjectController extends ActiveController
         $project->status = Project::STATUS_DELETE_PENDING;
         $project->save();
     }
-    
+    public function actionModifyProject($id) {
+        $project = Project::findByIdFiltered($id);
+        if (!$project) {
+            throw new NotFoundHttpException("Project $id not found");
+        }
+        $publishing_key = \Yii::$app->request->getBodyParam('publishing_key', null);
+        $user_id = \Yii::$app->request->getBodyParam('user_id', null);
+        $url = $project->url;
+        if (($publishing_key == null) || ($user_id == null))
+        {
+            throw new BadRequestHttpException("Publishing key or user id not set");
+        }
+        if ($url == null)
+        {
+            throw new BadRequestHttpException("Attempting to modify project with no url");
+        }
+        // Start modify operation
+        $task = OperationQueue::UPDATEPROJECT;
+        $project_id = $project->id;
+        $parms = $publishing_key . ',' . $user_id;
+        OperationQueue::findOrCreate($task, $project_id, $parms);
+        return $project;
+    }
     public function behaviors()
     {
         return ArrayHelper::merge(parent::behaviors(), [

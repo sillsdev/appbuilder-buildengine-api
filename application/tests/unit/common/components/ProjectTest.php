@@ -50,4 +50,18 @@ class ProjectTest extends UnitTestBase
         $entityName = $project->entityName();
         $this->assertEquals('SIL', $entityName, " *** Invalid entity name");
     }
+    public function testRepoName()
+    {
+        $project = Project::findOne(['id' => 102]);
+        $repoName = $project->repoName();
+        $expected = "scriptureappbuilder-SIL-cuk-San-Blas-Kuna-Gospels";
+        $this->assertEquals($expected, $repoName, " *** Repo name build failed");
+    }
+    public function testRepoNameFilterInvalidCharacters()
+    {
+        $project = Project::findOne(['id' => 103]);
+        $repoName = $project->repoName();
+        $expected = "scriptureappbuilder-SIL-cuk-San-Blas-Kuna-Gospels";
+        $this->assertEquals($expected, $repoName, " *** Repo name build failed");
+    }
 }

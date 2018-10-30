@@ -143,6 +143,14 @@ class Project extends ProjectBase implements Linkable
         }
         return Client::findOne(['id' => $this->client_id]);
      }
+     function repoName()
+     {
+         $repoName = $this->app_id.'-'.$this->entityName().'-'.$this->language_code . '-' . $this->project_name;
+
+         $repoName = Utils::lettersNumbersHyphensOnly($repoName);
+
+         return $repoName;
+     }
     /**
      * Returns array of all projects associated with the specified client
      *

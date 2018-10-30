@@ -44,7 +44,7 @@ class ManageProjectsAction extends ActionCommon
                 $logger->appbuilderWarningLog($logProjectDetails);
                 switch ($project->status){
                     case Project::STATUS_INITIALIZED:
-                        $this->tryCreateRepo($project);
+                        $this->tryCreateRepo($project, $logger);
                         break;
                     case Project::STATUS_DELETE_PENDING:
                         $this->tryDeleteRepo($project);
@@ -92,20 +92,19 @@ class ManageProjectsAction extends ActionCommon
      *
      * @param Release $release
      */
-    private function tryCreateRepo($project)
+    private function tryCreateRepo($project, $logger)
     {
-        $logger = new Appbuilder_logger("ManageProjectsAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryCreateRepo: Starting creation of project ".$project->project_name. PHP_EOL;
 
             $project->status = Project::STATUS_ACTIVE;
             $project->save();
-            $repoName = $this->constructRepoName($project);
-            $user = $this->createAwsAccount($project);
+            $repoName = $project->repoName();
+            $user = $this->iAmWrapper->createAwsAccount($project->user_id);
             $this->findOrCreateIamCodeCommitGroup($project);
-            $this->addUserToIamGroup($project->user_id, $project->groupName());
-            $public_key = $this->addPublicSshKey($project->user_id, $project->publishing_key);
+            $this->iAmWrapper->addUserToIamGroup($project->user_id, $project->groupName());
+            $public_key = $this->iAmWrapper->addPublicSshKey($project->user_id, $project->publishing_key);
             $publicKeyId = $public_key['SSHPublicKey']['SSHPublicKeyId'];
 
             /*
@@ -141,9 +140,8 @@ class ManageProjectsAction extends ActionCommon
             $project->save();
        }
     }
-    private function tryDeleteRepo($project)
+    private function tryDeleteRepo($project, $logger)
     {
-        $logger = new Appbuilder_logger("ManageProjectsAction");
         try {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryDeleteRepo: Starting Delete of project ".$project->project_name. PHP_EOL;
@@ -168,39 +166,6 @@ class ManageProjectsAction extends ActionCommon
             $project->result = Project::RESULT_FAILURE;
             $project->save();
        }
-    }
-    private function constructRepoName($project)
-    {
-        $repoName = $project->app_id.'-'.$project->entityName().'-'.$project->language_code . '-' . $project->project_name;
-
-        $repoName = Utils::lettersNumbersHyphensOnly($repoName);
-
-        return $repoName;
-    }
-    private function createAwsAccount($project)
-    {
-        $iamClient = $this->iAmWrapper->getIamClient();
-
-        try {
-            $user = $iamClient->createUser([
-                'Path' => '/sab-codecommit-users/',
-                'UserName' => $project->user_id
-            ]);
-
-            return $user;
-        } catch (IamException $e) {
-            if($e->getAwsErrorCode() == 'EntityAlreadyExists') { // They already have an account - pass back their account
-                $user = $iamClient->getUser([
-                    'UserName' => $project->user_id
-                ]);
-
-                return $user;
-            }
-
-            $message = sprintf('SAB: Unable to create account. code=%s : message=%s', $e->getCode(), $e->getMessage());
-            \Yii::error($message, 'service');
-            throw new ServerErrorHttpException($message, 1437423331, $e);
-        }
     }
     /**
      * Create IAM Group for organization for access management to repo
@@ -261,74 +226,7 @@ class ManageProjectsAction extends ActionCommon
             'PolicyDocument' => Json::encode($policy),
         ]);     
     }
-    private function addUserToIamGroup($username, $groupName)
-    {
-        $iamClient = $this->iAmWrapper->getIamClient();
 
-        $result = $iamClient->addUserToGroup([
-            'GroupName' => $groupName,
-            'UserName' => $username
-        ]);
-
-        return $result;
-    }
-    private function addPublicSshKey($username, $publicKey)
-    {
-        $iamClient = $this->iAmWrapper->getIamClient();
-        try {
-            $result = $iamClient->uploadSSHPublicKey([
-                'SSHPublicKeyBody' => $publicKey,
-                'UserName' => $username
-            ]);
-
-            return $result;
-        } catch (IamException $e) {
-            if($e->getAwsErrorCode()=='DuplicateSSHPublicKey'){
-                try{
-                    $keysForRequester = $iamClient->listSSHPublicKeys([
-                        'UserName' => $username
-                    ]);
-
-                    foreach ($keysForRequester['SSHPublicKeys'] as $requesterKey) {
-                        $key = $iamClient->getSSHPublicKey([
-                            'UserName' => $username,
-                            'SSHPublicKeyId' => $requesterKey['SSHPublicKeyId'],
-                            'Encoding' => 'SSH'
-                        ]);
-
-                        if ($this->isEqual($key['SSHPublicKey']['SSHPublicKeyBody'], $publicKey)) {
-                            return $key;
-                        }
-                    }
-
-                    $message = sprintf('SAB: Unable to find a matching ssh key for user. code=%s : message=%s', $e->getCode(), $e->getMessage());
-                    throw new ServerErrorHttpException($message, 1451819839);
-                } catch (IamException $e) {
-                    $message = sprintf('SAB: Unable to get users existing ssh key(s). code=%s : message=%s', $e->getCode(), $e->getMessage());
-                    throw new ServerErrorHttpException($message, 1441819828, $e);
-                }
-            }
-
-            $message = sprintf('SAB: Unable to add ssh key to user. code=%s : message=%s', $e->getCode(), $e->getMessage());
-            throw new ServerErrorHttpException($message, 1441809827, $e);
-        }
-    }    
-    /**
-     * used to determine whether two openSSH formatted keys are equal (without regard to comment portion of key)
-     * @param $openSSHKey1 format expected:  type data comment
-     * @param $openSSHKey2 format expected:  type data comment
-     * @return bool
-     */
-    private function isEqual($openSSHKey1, $openSSHKey2) {
-        list($type1, $data1) = explode(" ", $openSSHKey1);
-        list($type2, $data2) = explode(" ", $openSSHKey2);
-
-        if ($type1 == $type2 && $data1 == $data2) {
-            return true;
-        }
-
-        return false;
-    }
     /**
      * @param $repoName
      * @return \Guzzle\Service\Resource\Model
