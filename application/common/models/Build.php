@@ -34,6 +34,7 @@ class Build extends BuildBase implements Linkable
     const ARTIFACT_UNKNOWN = "unknown";
     const ARTIFACT_APK = "apk";
     const ARTIFACT_VERSION_CODE = "version_code";
+    const ARTIFACT_VERSION = "version";
     const ARTIFACT_ABOUT = "about";
     const ARTIFACT_PLAY_LISTING = "play-listing";
     const ARTIFACT_PACKAGE_NAME = "package_name";
@@ -168,6 +169,7 @@ class Build extends BuildBase implements Linkable
                     self::ARTIFACT_ABOUT => $this->about(),
                     self::ARTIFACT_PLAY_LISTING => $this->playListing(),
                     self::ARTIFACT_VERSION_CODE => $this->versionCode(),
+                    self::ARTIFACT_VERSION => $this->version(),
                     self::ARTIFACT_PACKAGE_NAME => $this->packageName(),
                     self::ARTIFACT_WHATS_NEW => $this->whatsNew(),
                     self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
@@ -328,6 +330,8 @@ class Build extends BuildBase implements Linkable
             $type = self::ARTIFACT_APK;
         } else if ($file === "version_code.txt") {
             $type = self::ARTIFACT_VERSION_CODE;
+        } else if ($file === "version.json") {
+            $type = self::ARTIFACT_VERSION;
         } else if ($file === "package_name.txt") {
             $type = self::ARTIFACT_PACKAGE_NAME;
         } else if ($file === "about.txt") {
@@ -361,6 +365,12 @@ class Build extends BuildBase implements Linkable
             case self::ARTIFACT_VERSION_CODE:
                 $this->version_code = $contents;
                 break;
+
+// FUTURE: pull version_code from version.json (as versionCode property)
+//            case self::ARTIFACT_VERSION_CODE:
+//                $version = json_decode($contents);
+//                $this->version_code = $version['versionCode']; // NOT TESTED!
+//                break;
 
             case self::ARTIFACT_ABOUT:
             case self::ARTIFACT_APK:
@@ -411,6 +421,9 @@ class Build extends BuildBase implements Linkable
     }
     public function versionCode() {
         return $this->getArtifactUrl("/version_code\.txt$/");
+    }
+    public function version() {
+        return $this->getArtifactUrl("/version\.json$/");
     }
     public function packageName() {
         return $this->getArtifactUrl("/package_name\.txt$/");

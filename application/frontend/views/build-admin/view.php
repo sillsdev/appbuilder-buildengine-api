@@ -53,6 +53,7 @@ $this->params['breadcrumbs'][] = $this->title;
                           Html::a("about", $model->about()) . ", " .
                           Html::a("play-listing", $model->playListing()) . ", " .
                           Html::a("version_code", $model->versionCode()) . ", " .
+                          Html::a("version", $model->version()) . ", " .
                           Html::a("package_name", $model->packageName()) . ", " .
                           Html::a("whats_new", $model->whatsNew()) . ", " .
                           Html::a("cloudWatch", $model->cloudWatch()) . ", " .

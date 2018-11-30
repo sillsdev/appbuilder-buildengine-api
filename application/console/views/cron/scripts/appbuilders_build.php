@@ -41,10 +41,11 @@ phases:
       - APPDEF_VERSION=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
       - echo "APPDEF_VERSION=${APPDEF_VERSION}"
       - if [ "$APPDEF_VERSION" -ge "$VERSION_CODE" ]; then VERSION_CODE=$((APPDEF_VERSION+1)); fi
-      - VERSION_NUMBER=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
-      - $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$OUTPUT_DIR -vc $VERSION_CODE -vn $VERSION_NUMBER -ft share-app-link=true
+      - VERSION_NAME=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
+      - $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$OUTPUT_DIR -vc $VERSION_CODE -vn $VERSION_NAME -ft share-app-link=true
       - echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > $OUTPUT_DIR/package_name.txt
       - echo $VERSION_CODE > $OUTPUT_DIR/version_code.txt
+      - echo "{ \"version\" : \"${VERSION_NAME}.${VERSION_CODE}\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" }" > $OUTPUT_DIR/version.json
       - if [ -f "build_data/about/about.txt" ]; then cp build_data/about/about.txt $OUTPUT_DIR/; fi
       - PUBLISH_DIR="build_data/publish"
       - PLAY_LISTING_DIR="${PUBLISH_DIR}/play-listing"

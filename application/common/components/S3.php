@@ -128,6 +128,7 @@ class S3 extends AWSCommon{
                 return;
             case 'play-listing/default-language.txt':
                 return;
+            //case: 'version.json': FUTURE: get versionCode from version.json
             case 'version_code.txt':
                 $fileContents = (string)$this->readS3File($build, $fileName);
                 break;
@@ -187,6 +188,9 @@ class S3 extends AWSCommon{
             case "txt":
             case "log":
                 $contentType = "text/plain";
+                break;
+            case "json":
+                $contentType = "application/json";
                 break;
             default:
                 $contentType = "application/octet-stream";
