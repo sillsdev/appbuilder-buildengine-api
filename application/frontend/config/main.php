@@ -2,6 +2,7 @@
 
 /* Get frontend-specific config settings from ENV vars or set defaults. */
 $FRONT_COOKIE_KEY = getenv('FRONT_COOKIE_KEY') ?: null;
+$BASE_URL = getenv('API_BASE_URL') ?: null;
 
 return [
     'id' => 'app-frontend',
@@ -37,6 +38,7 @@ return [
             'enablePrettyUrl' => true,
             'enableStrictParsing' => false,
             'showScriptName' => false,
+            'baseUrl' => $BASE_URL,
             'rules' => [
                 [
                     'class' => 'yii\rest\UrlRule',
