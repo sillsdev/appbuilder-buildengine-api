@@ -45,7 +45,7 @@ phases:
       - $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks $KS -ksp $KSP -ka $KA -kap $KAP -fp apk.output=$OUTPUT_DIR -vc $VERSION_CODE -vn $VERSION_NAME -ft share-app-link=true
       - echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > $OUTPUT_DIR/package_name.txt
       - echo $VERSION_CODE > $OUTPUT_DIR/version_code.txt
-      - echo "{ \"version\" : \"${VERSION_NAME}.${VERSION_CODE}\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" }" > $OUTPUT_DIR/version.json
+      - "echo \"{ \\\"version\\\" : \\\"${VERSION_NAME}.${VERSION_CODE}\\\", \\\"versionName\\\" : \\\"${VERSION_NAME}\\\", \\\"versionName\\\" : \\\"${VERSION_NAME}\\\" } \" > $OUTPUT_DIR/version.json"
       - if [ -f "build_data/about/about.txt" ]; then cp build_data/about/about.txt $OUTPUT_DIR/; fi
       - PUBLISH_DIR="build_data/publish"
       - PLAY_LISTING_DIR="${PUBLISH_DIR}/play-listing"
