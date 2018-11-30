@@ -7,12 +7,22 @@ db:
     image: silintl/mariadb:latest
     container_name: db
     ports:
-        - "3306"
+        - "3306:3306"
     environment:
         MYSQL_ROOT_PASSWORD: r00tp@ss!
         MYSQL_DATABASE: appbuilder
         MYSQL_USER: appbuilder
         MYSQL_PASSWORD: appbuilder
+
+adminer:
+    image: adminer
+    container_name: db-adminer
+    restart: always
+    ports:
+      - "19080:8080"
+    links:
+      - db:db.docker
+
 testDb:
     image: silintl/mariadb:latest
     container_name: testDb
