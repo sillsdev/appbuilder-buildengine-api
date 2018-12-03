@@ -366,8 +366,8 @@ class Build extends BuildBase implements Linkable
                 $this->version_code = $contents;
                 break;
 
+            case self::ARTIFACT_VERSION:
 // FUTURE: pull version_code from version.json (as versionCode property)
-//            case self::ARTIFACT_VERSION_CODE:
 //                $version = json_decode($contents);
 //                $this->version_code = $version['versionCode']; // NOT TESTED!
 //                break;
