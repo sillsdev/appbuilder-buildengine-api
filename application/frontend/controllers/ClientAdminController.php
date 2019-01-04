@@ -34,6 +34,7 @@ class ClientAdminController extends Controller
     {
         $dataProvider = new ActiveDataProvider([
             'query' => Client::find(),
+            'sort' => ['defaultOrder' => ['id'=>SORT_DESC]],
         ]);
 
         return $this->render('index', [

@@ -34,6 +34,7 @@ class OperationQueueAdminController extends Controller
     {
         $dataProvider = new ActiveDataProvider([
             'query' => OperationQueue::find(),
+            'sort' => ['defaultOrder' => ['id'=>SORT_DESC]],
         ]);
 
         return $this->render('index', [

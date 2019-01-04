@@ -34,6 +34,7 @@ class ProjectAdminController extends Controller
     {
         $dataProvider = new ActiveDataProvider([
             'query' => Project::find(),
+            'sort' => ['defaultOrder' => ['id'=>SORT_DESC]],
         ]);
 
         return $this->render('index', [
