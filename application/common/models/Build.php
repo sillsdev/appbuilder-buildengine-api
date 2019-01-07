@@ -37,6 +37,7 @@ class Build extends BuildBase implements Linkable
     const ARTIFACT_VERSION = "version";
     const ARTIFACT_ABOUT = "about";
     const ARTIFACT_PLAY_LISTING = "play-listing";
+    const ARTIFACT_PLAY_LISTING_MANIFEST = "play-listing-manifest";
     const ARTIFACT_PACKAGE_NAME = "package_name";
     const ARTIFACT_CLOUD_WATCH = "cloudWatch";
     const ARTIFACT_CONSOLE_TEXT = "consoleText";
@@ -168,6 +169,7 @@ class Build extends BuildBase implements Linkable
                     self::ARTIFACT_APK => $this->apk(),
                     self::ARTIFACT_ABOUT => $this->about(),
                     self::ARTIFACT_PLAY_LISTING => $this->playListing(),
+                    self::ARTIFACT_PLAY_LISTING_MANIFEST => $this->playListingManifest(),
                     self::ARTIFACT_VERSION_CODE => $this->versionCode(),
                     self::ARTIFACT_VERSION => $this->version(),
                     self::ARTIFACT_PACKAGE_NAME => $this->packageName(),
@@ -341,6 +343,9 @@ class Build extends BuildBase implements Linkable
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING;
             $file = "play-listing/index.html";
+        } else if (preg_match("/play-listing\/manifest.json$/", $key)) {
+            $type = self::ARTIFACT_PLAY_LISTING_MANIFEST;
+            $file = "play-listing/manifest.json";
         }
 
         return array($type, $file);
@@ -375,6 +380,7 @@ class Build extends BuildBase implements Linkable
             case self::ARTIFACT_ABOUT:
             case self::ARTIFACT_APK:
             case self::ARTIFACT_PLAY_LISTING:
+            case self::ARTIFACT_PLAY_LISTING_MANIFEST:
             case self::ARTIFACT_PACKAGE_NAME:
             case self::ARTIFACT_WHATS_NEW:
             case self::ARTIFACT_CLOUD_WATCH:
@@ -418,6 +424,9 @@ class Build extends BuildBase implements Linkable
     }
     public function playListing() {
         return $this->getArtifactUrl("/play-listing\/index\.html$/");
+    }
+    public function playListingManifest() {
+        return $this->getArtifactUrl("/play-listing\/manifest\.json$/");
     }
     public function versionCode() {
         return $this->getArtifactUrl("/version_code\.txt$/");

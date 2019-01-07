@@ -52,6 +52,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value'=> Html::a("apk", $model->apk()) . ", " .
                           Html::a("about", $model->about()) . ", " .
                           Html::a("play-listing", $model->playListing()) . ", " .
+                          Html::a("play-listing-manifest", $model->playListingManifest()) . ", " .
                           Html::a("version_code", $model->versionCode()) . ", " .
                           Html::a("version", $model->version()) . ", " .
                           Html::a("package_name", $model->packageName()) . ", " .
