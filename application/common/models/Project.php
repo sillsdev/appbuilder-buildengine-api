@@ -11,6 +11,8 @@ use yii\web\Linkable;
 use yii\helpers\Url;
 
 use common\helpers\Utils;
+use common\components\S3;
+
 class Project extends ProjectBase implements Linkable
 {
     const STATUS_INITIALIZED = 'initialized';
@@ -142,15 +144,33 @@ class Project extends ProjectBase implements Linkable
             return null;
         }
         return Client::findOne(['id' => $this->client_id]);
-     }
-     function repoName()
-     {
-         $repoName = $this->app_id.'-'.$this->entityName().'-'.$this->language_code . '-' . $this->project_name;
+    }
 
-         $repoName = Utils::lettersNumbersHyphensOnly($repoName);
+    function repoName()
+    {
+        $repoName = $this->app_id.'-'.$this->entityName().'-'.$this->language_code . '-' . $this->project_name;
 
-         return $repoName;
-     }
+        $repoName = Utils::lettersNumbersHyphensOnly($repoName);
+
+        return $repoName;
+    }
+
+    function s3Path()
+    {
+        $s3path = "s3://". S3::getProjectsBucket().'/'.$this->app_id.'/';
+
+        $s3folder = $this->language_code.'-'.$this->id.'-'.$this->project_name;
+        $s3path = $s3path . Utils::lettersNumbersHyphensOnly($s3folder);
+
+        return $s3path;
+    }
+
+    public function setS3Project() {
+        $this->url = $this->s3Path();
+        $this->status = self::STATUS_COMPLETED;
+        $this->result = self::RESULT_SUCCESS;
+    }
+
     /**
      * Returns array of all projects associated with the specified client
      *
@@ -199,6 +219,4 @@ class Project extends ProjectBase implements Linkable
         }
         return $cid;
     }
-
-                
 }
