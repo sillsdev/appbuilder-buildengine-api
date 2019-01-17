@@ -9,6 +9,7 @@ $BUILD_ENGINE_REPO_LOCAL_PATH = getenv('BUILD_ENGINE_REPO_LOCAL_PATH') ?: "/tmp/
 $BUILD_ENGINE_REPO_SCRIPT_DIR = getenv('BUILD_ENGINE_REPO_SCRIPT_DIR') ?: "groovy";
 $BUILD_ENGINE_JENKINS_MASTER_URL = getenv('BUILD_ENGINE_JENKINS_MASTER_URL') ?: "unset";
 $BUILD_ENGINE_ARTIFACTS_BUCKET = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET')  ?: "unset";
+$BUILD_ENGINE_PROJECTS_BUCKET = getenv('BUILD_ENGINE_PROJECTS_BUCKET')  ?: "unset";
 $BUILD_ENGINE_SECRETS_BUCKET = getenv('BUILD_ENGINE_SECRETS_BUCKET') ?: "unset";
 $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-west-2";
 $CODE_BUILD_IMAGE = getenv('CODE_BUILD_IMAGE') ?: "sillsdev/appbuilder-agent";
@@ -55,6 +56,7 @@ return [
         'buildEngineJenkinsMasterUrl' => $BUILD_ENGINE_JENKINS_MASTER_URL,
         'buildEngineArtifactsBucket' => $BUILD_ENGINE_ARTIFACTS_BUCKET,
         'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
+        'buildEngineProjectsBucket' => $BUILD_ENGINE_PROJECTS_BUCKET,
         'buildEngineSecretsBucket' => $BUILD_ENGINE_SECRETS_BUCKET,
         'codeBuildImage' => $CODE_BUILD_IMAGE,
         'codeBuildImageTag' => $CODE_BUILD_IMAGE_TAG,
