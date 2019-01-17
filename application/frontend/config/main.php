@@ -62,6 +62,7 @@ return [
                     'controller' => 'project',
                     'pluralize' => false,
                     'extraPatterns' => [  // It doesn't look like these are needed, since they match the action names
+                        'POST' => 'new-project',
                         'GET' => 'index-projects',
                         'GET <id>' => 'view-project',
                         'DELETE <id>' => 'delete-project',
