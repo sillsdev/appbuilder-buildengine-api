@@ -3,6 +3,7 @@
 /* Get frontend-specific config settings from ENV vars or set defaults. */
 $FRONT_COOKIE_KEY = getenv('FRONT_COOKIE_KEY') ?: null;
 $BASE_URL = getenv('API_BASE_URL') ?: null;
+$BUILD_ENGINE_PROJECTS_BUCKET = getenv('BUILD_ENGINE_PROJECTS_BUCKET') ?: "unset";
 
 return [
     'id' => 'app-frontend',
@@ -79,5 +80,7 @@ return [
     'modules' => [
 
     ],
-    'params' => [],
+    'params' => [
+        'buildEngineProjectsBucket' => $BUILD_ENGINE_PROJECTS_BUCKET,
+    ],
 ];

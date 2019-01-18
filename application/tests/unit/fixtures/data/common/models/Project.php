@@ -79,6 +79,14 @@ return [
         'created' => Utils::getDatetime(),
         'updated' => Utils::getDatetime(),
     ],
-
+    'project7' => [
+        'id' => 107,
+        'status' => 'initialized',
+        'app_id' => 'scriptureappbuilder',
+        'project_name' => 'San Blas Kuna Gospels',
+        'language_code' => 'cuk',
+        'created' => Utils::getDatetime(),
+        'updated' => Utils::getDatetime(),
+    ],
     
 ];

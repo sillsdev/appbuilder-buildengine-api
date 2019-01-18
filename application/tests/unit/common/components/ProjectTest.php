@@ -64,4 +64,13 @@ class ProjectTest extends UnitTestBase
         $expected = "scriptureappbuilder-SIL-cuk-San-Blas-Kuna-Gospels";
         $this->assertEquals($expected, $repoName, " *** Repo name build failed");
     }
+    public function testSetS3Project()
+    {
+        $project = Project::findOne(['id' => 107]);
+        $project->setS3Project();
+        $expected_url = "s3://sil-prd-aps-projects/scriptureappbuilder/cuk-107-San-Blas-Kuna-Gospels";
+        $this->assertEquals('completed', $project->status, " *** Status is not completed");
+        $this->assertEquals('SUCCESS', $project->result, "*** Result is not success");
+        $this->assertEquals($expected_url, $project->url, "*** s3 url is incorrect");
+    }
 }

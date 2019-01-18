@@ -157,7 +157,8 @@ class Project extends ProjectBase implements Linkable
 
     function s3Path()
     {
-        $s3path = "s3://". S3::getProjectsBucket().'/'.$this->app_id.'/';
+        $project_folder = str_replace('"', "", S3::getProjectsBucket()); 
+        $s3path = "s3://". $project_folder .'/'.$this->app_id.'/';
 
         $s3folder = $this->language_code.'-'.$this->id.'-'.$this->project_name;
         $s3path = $s3path . Utils::lettersNumbersHyphensOnly($s3folder);
