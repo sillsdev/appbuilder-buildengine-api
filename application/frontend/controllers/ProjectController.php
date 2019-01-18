@@ -34,11 +34,13 @@ class ProjectController extends ActiveController
     public function actionNewProject() {
         $storage_type = \Yii::$app->request->getBodyParam('storage_type', null);
         $project = new Project();
-        $project->load($_POST);
+        $project->load(\Yii::$app->request->post(), '');
+        $project->save();
+
         if ($storage_type === "s3") {
             $project->setS3Project();
+            $project->save();
         }
-        $project->save();
         return $project;
     }
     public function actionIndexProjects() {
