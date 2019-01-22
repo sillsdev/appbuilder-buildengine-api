@@ -59,11 +59,11 @@ class Job extends JobBase implements Linkable
                 'app_id', 'in', 'range' => ['scriptureappbuilder', 'readingappbuilder', 'dictionaryappbuilder'],
             ],
             // The currently supported Git Urls are for AWS Codecommit
-            [
-                'git_url', 'url',
-                    'pattern' => '/^ssh:\/\/(\w+@)?git-codecommit\./',
-                'message' => \Yii::t('app', 'Git SSH Url is required.')
-            ],
+            //[
+            //    'git_url', 'url',
+            //        'pattern' => '/^ssh:\/\/(\w+@)?git-codecommit\./',
+            //    'message' => \Yii::t('app', 'Git SSH Url is required.')
+            //],
             [
                 ['client_id'],'default', 'value' => function() {
                     return self::getCurrentClientId();

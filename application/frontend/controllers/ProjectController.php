@@ -35,12 +35,16 @@ class ProjectController extends ActiveController
         $storage_type = \Yii::$app->request->getBodyParam('storage_type', null);
         $project = new Project();
         $project->load(\Yii::$app->request->post(), '');
-        $project->save();
 
         if ($storage_type === "s3") {
-            $project->setS3Project();
+            // Need to save to initialize id field.  Need to make sure that
+            // the status is marked complete so that manage projects won't
+            // happen to catch it here and try to create codecreate repository
+            $project->status = Project::STATUS_COMPLETED; // TODO: Remove when git is no longer supported
             $project->save();
+            $project->setS3Project();
         }
+       $project->save();
         return $project;
     }
     public function actionIndexProjects() {
