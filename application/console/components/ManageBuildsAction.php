@@ -87,27 +87,49 @@ class ManageBuildsAction extends ActionCommon
                 echo '...is currentlyBuilding so wait'.  PHP_EOL;
                 return;
             }
-            $codecommit = new CodeCommit();
-            $branch = "master";
             $gitUrl = $job->git_url;
-            $repoUrl = $codecommit->getSourceURL($gitUrl);
-            $commitId = $codecommit->getCommitId($gitUrl, $branch);
+            // Check to see if codebuild project
+            $codeCommitProject = (substr( $gitUrl, 0, 6) === "ssh://");
+            if ($codeCommitProject) {
+                // Left this block intact to make it easier to remove when codecommit is not supported
+                $codecommit = new CodeCommit();
+                $branch = "master";
+                $repoUrl = $codecommit->getSourceURL($gitUrl);
+                $commitId = $codecommit->getCommitId($gitUrl, $branch);
 
-            $script = $this->cronController->renderPartial("scripts/appbuilders_build", [
-            ]);
+                $script = $this->cronController->renderPartial("scripts/appbuilders_build", [
+                ]);
+                // Start the build
+                $codeBuild = new CodeBuild();
+                $versionCode = $this->getNextVersionCode($job, $build);
+                $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script, (string)$versionCode, $codeCommitProject);
+                if (!is_null($lastBuildGuid)){
+                    $build->build_guid = $lastBuildGuid;
+                    $build->codebuild_url = CodeBuild::getCodeBuildUrl('build_app', $lastBuildGuid);
+                    $build->console_text_url = CodeBuild::getConsoleTextUrl('build_app', $lastBuildGuid);
+                    echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
+                    $build->status = Build::STATUS_ACTIVE;
+                    $build->save();
+                }
+           }
+           else {
+                $script = $this->cronController->renderPartial("scripts/appbuilders_s3_build", [
+                    ]);
+                // Start the build
+                $codeBuild = new CodeBuild();
+                $commitId = ""; // TODO: Remove when git is removed
+                $versionCode = $this->getNextVersionCode($job, $build);
+                $lastBuildGuid = $codeBuild->startBuild($gitUrl, (string)$commitId, $build, (string) $script, (string)$versionCode, $codeCommitProject);
+                if (!is_null($lastBuildGuid)){
+                    $build->build_guid = $lastBuildGuid;
+                    $build->codebuild_url = CodeBuild::getCodeBuildUrl('build_app', $lastBuildGuid);
+                    $build->console_text_url = CodeBuild::getConsoleTextUrl('build_app', $lastBuildGuid);
+                    echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
+                    $build->status = Build::STATUS_ACTIVE;
+                    $build->save();
+                }
+           }
             
-            // Start the build
-            $codeBuild = new CodeBuild();
-            $versionCode = $this->getNextVersionCode($job, $build);
-            $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script, (string)$versionCode);
-            if (!is_null($lastBuildGuid)){
-                $build->build_guid = $lastBuildGuid;
-                $build->codebuild_url = CodeBuild::getCodeBuildUrl('build_app', $lastBuildGuid);
-                $build->console_text_url = CodeBuild::getConsoleTextUrl('build_app', $lastBuildGuid);
-                echo "[$prefix] Launched Build LastBuildNumber=$build->build_guid". PHP_EOL;
-                $build->status = Build::STATUS_ACTIVE;
-                $build->save();
-            }
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
             echo "[$prefix] tryStartBuild: Exception:" . PHP_EOL . (string)$e . PHP_EOL;

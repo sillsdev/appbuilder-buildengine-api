@@ -51,70 +51,123 @@ class CodeBuild extends AWSCommon {
     /**
      * Start a build for the function
      * 
-     * @param string $repoHttpUrl
+     * @param string $repoUrl
      * @param string $commitId
      * @param string $build
      * @param string $buildSpec Buildspec script to be executed
      * @param string $versionCode
      * @return string Guid part of build ID
      */
-    public function startBuild($repoHttpUrl, $commitId, $build, $buildSpec, $versionCode) {
+    public function startBuild($repoUrl, $commitId, $build, $buildSpec, $versionCode, $codeCommit) {
         $prefix = Utils::getPrefix();
         $job = $build->job;
         $buildProcess = $job->nameForBuildProcess();
         $jobNumber = (string)$job->id;
         $buildNumber = (string)$build->id;
-        echo "[$prefix] startBuild CodeBuild Project: " . $buildProcess . " URL: " .$repoHttpUrl . " commitId: " . $commitId . " jobNumber: " . $jobNumber . " buildNumber: " . $buildNumber . " versionCode: " . $versionCode . PHP_EOL;
+        echo "[$prefix] startBuild CodeBuild Project: " . $buildProcess . " URL: " .$repoUrl . " commitId: " . $commitId . " jobNumber: " . $jobNumber . " buildNumber: " . $buildNumber . " versionCode: " . $versionCode . PHP_EOL;
         $artifacts_bucket = self::getArtifactsBucket();
         $secretsBucket = self::getSecretsBucket();
         $buildApp = self::getCodeBuildProjectName('build_app');
         $buildPath = $this->getBuildPath($job);
         $artifactPath = $this->getArtifactPath($build, 'codebuild-output');
         echo "Artifacts path: " . $artifactPath . PHP_EOL;
-        $promise = $this->codeBuildClient->startBuildAsync([
-            'projectName' => $buildApp,
-            'artifactsOverride' => [
-                'location' => $artifacts_bucket, // output bucket
-                'name' => '/',                   // name of output artifact object
-                'namespaceType' => 'NONE',
-                'packaging' => 'NONE',
-                'path' => $artifactPath,         // path to output artifacts
-                'type' => 'S3',                  // REQUIRED
-            ],
-            'buildspecOverride' => $buildSpec,
-            'environmentVariablesOverride' => [
-                [
-                    'name' => 'BUILD_NUMBER',
-                    'value' => $buildNumber,
+        // Leaving all this code together to make it easier to remove when git is no longer supported
+        if ($codeCommit) {
+            echo "[$prefix] startBuild CodeCommit Project";
+            $promise = $this->codeBuildClient->startBuildAsync([
+                'projectName' => $buildApp,
+                'artifactsOverride' => [
+                    'location' => $artifacts_bucket, // output bucket
+                    'name' => '/',                   // name of output artifact object
+                    'namespaceType' => 'NONE',
+                    'packaging' => 'NONE',
+                    'path' => $artifactPath,         // path to output artifacts
+                    'type' => 'S3',                  // REQUIRED
                 ],
-                [
-                    'name' => 'APP_BUILDER_SCRIPT_PATH',
-                    'value' => $buildPath,
+                'buildspecOverride' => $buildSpec,
+                'environmentVariablesOverride' => [
+                    [
+                        'name' => 'BUILD_NUMBER',
+                        'value' => $buildNumber,
+                    ],
+                    [
+                        'name' => 'APP_BUILDER_SCRIPT_PATH',
+                        'value' => $buildPath,
+                    ],
+                    [
+                        'name' => 'PUBLISHER',
+                        'value' => $job->publisher_id,
+                    ],
+                    [
+                        'name' => 'VERSION_CODE',
+                        'value' => $versionCode,
+                    ],
+                    [
+                        'name' => 'SECRETS_BUCKET',
+                        'value' => $secretsBucket,
+                    ]
                 ],
-                [
-                    'name' => 'PUBLISHER',
-                    'value' => $job->publisher_id,
+                'sourceLocationOverride' => $repoUrl,
+                'sourceVersion' => $commitId
+            ]);
+            $state = $promise->getState();
+            echo "state: " . $state . PHP_EOL;
+            $result = $promise->wait(true);
+            $buildInfo = $result['build'];
+            $buildId = $buildInfo['id'];
+            $buildGuid = substr($buildId, strrpos($buildId, ':') + 1);
+            echo "Build id: " . $buildId . " Guid: " . $buildGuid . PHP_EOL;
+            return $buildGuid;
+        } else {
+            echo "[$prefix] startBuild S3 Project";
+            $promise = $this->codeBuildClient->startBuildAsync([
+                'projectName' => $buildApp,
+                'artifactsOverride' => [
+                    'location' => $artifacts_bucket, // output bucket
+                    'name' => '/',                   // name of output artifact object
+                    'namespaceType' => 'NONE',
+                    'packaging' => 'NONE',
+                    'path' => $artifactPath,         // path to output artifacts
+                    'type' => 'S3',                  // REQUIRED
                 ],
-                [
-                    'name' => 'VERSION_CODE',
-                    'value' => $versionCode,
+                'buildspecOverride' => $buildSpec,
+                'environmentVariablesOverride' => [
+                    [
+                        'name' => 'BUILD_NUMBER',
+                        'value' => $buildNumber,
+                    ],
+                    [
+                        'name' => 'APP_BUILDER_SCRIPT_PATH',
+                        'value' => $buildPath,
+                    ],
+                    [
+                        'name' => 'PUBLISHER',
+                        'value' => $job->publisher_id,
+                    ],
+                    [
+                        'name' => 'VERSION_CODE',
+                        'value' => $versionCode,
+                    ],
+                    [
+                        'name' => 'SECRETS_BUCKET',
+                        'value' => $secretsBucket,
+                    ],
+                    [
+                        'name' => 'PROJECT_S3',
+                        'value' => $repoUrl,
+                    ]
                 ],
-                [
-                    'name' => 'SECRETS_BUCKET',
-                    'value' => $secretsBucket,
-                ]
-            ],
-            'sourceLocationOverride' => $repoHttpUrl,
-            'sourceVersion' => $commitId     
-        ]);
-        $state = $promise->getState();
-        echo "state: " . $state . PHP_EOL;
-        $result = $promise->wait(true);
-        $buildInfo = $result['build'];
-        $buildId = $buildInfo['id'];
-        $buildGuid = substr($buildId, strrpos($buildId, ':') + 1);
-        echo "Build id: " . $buildId . " Guid: " . $buildGuid . PHP_EOL;
-        return $buildGuid;
+                'sourceTypeOverride' => 'NO_SOURCE'
+            ]);
+            $state = $promise->getState();
+            echo "state: " . $state . PHP_EOL;
+            $result = $promise->wait(true);
+            $buildInfo = $result['build'];
+            $buildId = $buildInfo['id'];
+            $buildGuid = substr($buildId, strrpos($buildId, ':') + 1);
+            echo "Build id: " . $buildId . " Guid: " . $buildGuid . PHP_EOL;
+            return $buildGuid;
+        }
     }
 
     /**
