@@ -88,5 +88,15 @@ return [
         'created' => Utils::getDatetime(),
         'updated' => Utils::getDatetime(),
     ],
-    
+    'project8' => [
+        'id' => 108,
+        'status' => 'complete',
+        'result' => 'SUCCESS',
+        'url' => 's3://dem-stg-aps-projects/scriptureappbuilder/en-cuk-108-SanBlasKunaGospels',
+        'app_id' => 'scriptureappbuilder',
+        'project_name' => 'SanBlasKunaGospels',
+        'language_code' => 'cuk',
+        'created' => Utils::getDatetime(),
+        'updated' => Utils::getDatetime(),
+    ],
 ];

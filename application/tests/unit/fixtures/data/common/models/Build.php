@@ -269,6 +269,20 @@ return [
         'channel' => 'unpublished',
         'version_code' => 2,
     ],
+    'build20' => [
+        'id' => 30,
+        'job_id' => 26,
+        'status' => 'initialized',
+        'build_guid' => NULL,
+        'result' => NULL,
+        'error' => NULL,
+        'artifact_url_base' => NULL,
+        'artifact_files' => NULL,
+        'created' => Utils::getDatetime(),
+        'updated' => Utils::getDatetime(),
+        'channel' => 'unpublished',
+        'version_code' => NULL,
+    ],
 
 ];
 

@@ -90,7 +90,7 @@ class CodeBuildTest extends UnitTestBase
         $build = Build::findOne(['id' => 13]);
         $buildspec = '      - echo "This is a test"';
         $versionCode = '1';
-        $retVal = $codebuild->startBuild($url, $commitId, $build, $buildspec, $versionCode);
+        $retVal = $codebuild->startBuild($url, $commitId, $build, $buildspec, $versionCode, true);
         $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c7a', $retVal, " *** Wrong guid returned");
         $this->assertEquals(1, count(MockCodeBuildClient::$builds), " *** Wrong number of builds");
         $mockBuild = MockCodeBuildClient::$builds[0];
@@ -122,6 +122,53 @@ class CodeBuildTest extends UnitTestBase
         $this->assertEquals("sil-prd-aps-secrets", $secretsBucket, " *** Wrong secrets bucket");
         $this->assertEquals("1", $versionCode, " *** Wrong version code");
         $this->assertEquals("scripture-app-builder", $scriptPath, " *** Bad script path");
+    }
+    public function testStartBuildS3()
+    {
+        $this->setContainerObjects();
+        MockCodeBuildClient::clearGlobals();
+        $codebuild = new CodeBuild();
+        $url = 's3://dem-stg-aps-projects/scriptureappbuilder/en-cuk-108-SanBlasKunaGospels';
+        $commitId = '07fc609fc5c2344afcf60d0f97cc7bb6f1945ede';
+        $build = Build::findOne(['id' => 30]);
+        $buildspec = '      - echo "This is a test"';
+        $versionCode = '1';
+        $retVal = $codebuild->startBuild($url, $commitId, $build, $buildspec, $versionCode, false);
+        $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c7c', $retVal, " *** Wrong guid returned");
+        $this->assertEquals(1, count(MockCodeBuildClient::$builds), " *** Wrong number of builds");
+        $mockBuild = MockCodeBuildClient::$builds[0];
+        $environmentVariables = $mockBuild['environmentVariablesOverride'];
+        foreach ($environmentVariables as $environmentVariable) {
+            switch ($environmentVariable['name']) {
+                case 'BUILD_NUMBER':
+                    $buildNumber = $environmentVariable['value'];
+                    break;
+                case 'PUBLISHER':
+                    $publisher = $environmentVariable['value'];
+                    break;
+                case 'SECRETS_BUCKET':
+                    $secretsBucket = $environmentVariable['value'];
+                    break;
+                case 'APP_BUILDER_SCRIPT_PATH':
+                    $scriptPath = $environmentVariable['value'];
+                    break;
+                case 'VERSION_CODE':
+                    $versionCode = $environmentVariable['value'];
+                    break;
+                case 'PROJECT_S3':
+                    $projectS3 = $environmentVariable['value'];
+                    break;
+                default:
+                    $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");
+            }
+        }
+
+        $this->assertEquals("30", $buildNumber, " *** Wrong build number");
+        $this->assertEquals("wycliffeusa", $publisher, " *** Wrong publisher");
+        $this->assertEquals("sil-prd-aps-secrets", $secretsBucket, " *** Wrong secrets bucket");
+        $this->assertEquals("1", $versionCode, " *** Wrong version code");
+        $this->assertEquals("scripture-app-builder", $scriptPath, " *** Bad script path");
+        $this->assertEquals($url, $projectS3, " *** Wrong project name");
     }
     public function testGetSourceLocation()
     {

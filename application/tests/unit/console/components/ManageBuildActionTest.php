@@ -91,6 +91,22 @@ class ManageBuildActionTest extends UnitTestBase
         $this->assertEquals(Build::STATUS_ACTIVE, $build->status, " *** Status incorrect");
         $this->assertEquals(1, count(MockCodeCommitClient::$getRepo), " *** Wrong count for number of GetRepository");
     }
+    public function testCheckStartedBuildS3NotStarted()
+    {
+        $this->setContainerObjects();
+        MockCodeCommitClient::clearGlobals();
+        MockCodeBuildClient::clearGlobals();
+        $cronController = new MockCronController();
+        $buildsAction = new ManageBuildsAction($cronController);
+        $build = Build::findOne(['id' => 30]);
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'tryStartBuild');
+        $method->invokeArgs($buildsAction, array($build));
+        $build = Build::findOne(['id' => 30]);
+        $this->assertEquals('7049fc2a-db58-4c33-8d4e-c0c568b25c7c', $build->build_guid, " *** Guid was not changed correctly");
+        $this->assertEquals(Build::STATUS_ACTIVE, $build->status, " *** Status incorrect");
+        $this->assertEquals(1, count(MockCodeBuildClient::$builds), " *** Wrong count for number of StartBuildAsync");
+        $this->assertEquals(0, count(MockCodeCommitClient::$getRepo), " *** Wrong count for number of GetRepository");
+    }
     public function testCheckStartedBuildStarted()
     {
         $this->setContainerObjects();
