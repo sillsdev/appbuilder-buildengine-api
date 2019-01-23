@@ -13,11 +13,17 @@ class MockPromise
     }
     public function wait($type)
     {
-        if ($this->build === true) {      
-            $id = 'build_app:7049fc2a-db58-4c33-8d4e-c0c568b25c7b';
-            if ($this->buildNumber === '13')
-            {
-                $id = 'build_app:7049fc2a-db58-4c33-8d4e-c0c568b25c7a';
+        if ($this->build === true) {
+            switch ($this->buildNumber) {
+                case '13':
+                    $id = 'build_app:7049fc2a-db58-4c33-8d4e-c0c568b25c7a';
+                    break;
+                case '30':
+                    $id = 'build_app:7049fc2a-db58-4c33-8d4e-c0c568b25c7c';
+                    break;
+                default:
+                    $id = 'build_app:7049fc2a-db58-4c33-8d4e-c0c568b25c7b';
+                    break;
             }
         } else {
             switch ($this->buildNumber) {
