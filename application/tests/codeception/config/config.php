@@ -13,6 +13,7 @@ $BUILD_ENGINE_REPO_SCRIPT_DIR =  "groovy";
 $BUILD_ENGINE_JENKINS_MASTER_URL =  "http://192.168.70.241:8080";
 $BUILD_ENGINE_ARTIFACTS_BUCKET = "sil-appbuilder-artifacts";
 $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = "us-west-2";
+$BUILD_ENGINE_PROJECTS_BUCKET = "sil-prd-aps-projects";
 $BUILD_ENGINE_SECRETS_BUCKET = "sil-prd-aps-secrets";
 $CODE_BUILD_IMAGE = "sillsdev/appbuilder-agent";
 $CODE_BUILD_IMAGE_TAG = "refactor";
@@ -27,7 +28,9 @@ $TEST_MYSQL_USER = getenv('TEST_MYSQL_USER') ?: 'example';
 $TEST_MYSQL_PASSWORD = getenv('TEST_MYSQL_PASSWORD') ?: 'example';
 $ADMIN_EMAIL = 'nobody@nowhere.com';
 $APP_ENV = "testing";
-$AWS_USER_ID = "117995318043";
+$AWS_USER_ID = "12342412342";
+$AWS_ACCESS_KEY_ID = "sasfdafafdsa";
+$AWS_SECRET_ACCESS_KEY = "afdsafsdfdsadfafsadafsd";
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
         \Yii::$app->params['buildEngineGitUserName'] = $BUILD_ENGINE_GIT_USER_NAME;
@@ -88,6 +91,7 @@ return [
         'buildEngineJenkinsMasterUrl' => "http://192.168.70.241:8080",
         'buildEngineArtifactsBucket' => $BUILD_ENGINE_ARTIFACTS_BUCKET,
         'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
+        'buildEngineProjectsBucket' => $BUILD_ENGINE_PROJECTS_BUCKET,
         'buildEngineSecretsBucket' => $BUILD_ENGINE_SECRETS_BUCKET,
         'codeBuildImage' => $CODE_BUILD_IMAGE,
         'codeBuildImageTag' => $CODE_BUILD_IMAGE_TAG,
@@ -96,6 +100,9 @@ return [
         'adminEmail' => $ADMIN_EMAIL,
         'appEnv' => $APP_ENV,
         'awsUserId' => $AWS_USER_ID,
+        'awsKeyId' => $AWS_ACCESS_KEY_ID,
+        'awsSecretKey' => $AWS_SECRET_ACCESS_KEY,
+        'awsRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
         'max_email_attempts' => 5,
         'max_emails_per_try' => 20,
     ],
