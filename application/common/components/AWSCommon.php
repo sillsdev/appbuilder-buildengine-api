@@ -29,7 +29,7 @@ class AWSCommon
         return \Yii::$app->params['buildEngineSecretsBucket'];
     }
 
-    public static function getProjectsBucket()
+    public static function  getProjectsBucket()
     {
         return \Yii::$app->params['buildEngineProjectsBucket'];
     }

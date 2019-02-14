@@ -30,6 +30,7 @@ class UnitTestBase extends DbTestCase
         \Yii::$container->set('gitWrapper', '\tests\mock\gitWrapper\MockGitWrapper');
         \Yii::$container->set('iAmWrapper', '\tests\mock\common\components\MockIAmWrapper');
         \Yii::$container->set('iAmClient', '\tests\mock\aws\iam\MockIamClient');
+        \Yii::$container->set("stsClient", '\tests\mock\aws\sts\MockStsClient');
     }
 }
 

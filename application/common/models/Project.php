@@ -155,23 +155,37 @@ class Project extends ProjectBase implements Linkable
         return $repoName;
     }
 
-    function s3Path()
+    /**
+     * @return string
+     */
+    public function getS3Bucket()
     {
-        $project_folder = str_replace('"', "", S3::getProjectsBucket()); 
-        $s3path = "s3://". $project_folder .'/';
+        return str_replace('"', "", S3::getProjectsBucket());
+    }
+
+    public function getS3Folder()
+    {
         $client = $this->getLinkedClient();
         $s3client = (is_null($client)) ? "" :  $client->prefix . '/';
         $s3app = $this->app_id.'/';
         $s3folder = $this->language_code.'-'.$this->id.'-'.$this->project_name;
-        $s3path = $s3path . $s3client . $s3app . Utils::lettersNumbersHyphensOnly($s3folder);
+        return $s3client . $s3app . Utils::lettersNumbersHyphensOnly($s3folder);
+
+    }
+    public function getS3Path()
+    {
+        $s3path = "s3://". $this->getS3Bucket() .'/' . $this->getS3Folder();
 
         return $s3path;
     }
-
     public function setS3Project() {
-        $this->url = $this->s3Path();
+        $this->url = $this->getS3Path();
         $this->status = self::STATUS_COMPLETED;
         $this->result = self::RESULT_SUCCESS;
+    }
+
+    public function isS3Project() {
+        return (substr($this->url, 0, 5) === "s3://");
     }
 
     /**
@@ -222,4 +236,5 @@ class Project extends ProjectBase implements Linkable
         }
         return $cid;
     }
+
 }

@@ -4,6 +4,7 @@
 $FRONT_COOKIE_KEY = getenv('FRONT_COOKIE_KEY') ?: null;
 $BASE_URL = getenv('API_BASE_URL') ?: null;
 $BUILD_ENGINE_PROJECTS_BUCKET = getenv('BUILD_ENGINE_PROJECTS_BUCKET') ?: "unset";
+$BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-east-1";
 
 return [
     'id' => 'app-frontend',
@@ -68,6 +69,7 @@ return [
                         'GET <id>' => 'view-project',
                         'DELETE <id>' => 'delete-project',
                         'PUT <id>' => 'modify-project',
+                        'POST <id>/token' => 'create-token'
                     ],
                 ],
                 [   'class' => 'yii\rest\UrlRule',
@@ -82,5 +84,6 @@ return [
     ],
     'params' => [
         'buildEngineProjectsBucket' => $BUILD_ENGINE_PROJECTS_BUCKET,
+        'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
     ],
 ];
