@@ -1,6 +1,7 @@
 <?php
 namespace frontend\controllers;
 
+use common\components\STS;
 use common\models\OperationQueue;
 use common\models\Project;
 
@@ -22,12 +23,12 @@ use yii\web\BadRequestHttpException;
  */
 class ProjectController extends ActiveController
 {
-//    private $jcUtils;
+    private $sts;
     
     public function __construct($id, $module, $config = [])
     {
-//        $this->jcUtils = new JobControllerUtils;
         parent::__construct($id, $module, $config);
+        $this->sts = new STS();
     }
     public $modelClass = 'common\models\Project';
 
@@ -92,6 +93,16 @@ class ProjectController extends ActiveController
         $parms = $publishing_key . ',' . $user_id;
         OperationQueue::findOrCreate($task, $project_id, $parms);
         return $project;
+    }
+    public function actionCreateToken($id) {
+        $name = \Yii::$app->request->getBodyParam('name', null);
+
+        $project = Project::findByIdFiltered($id);
+        if (!$project->isS3Project()) {
+            throw new BadRequestHttpException("Attempting to get token for wrong project type");
+        }
+
+        return $this->sts->getProjectAccessToken($project, $name);
     }
     public function behaviors()
     {
