@@ -192,6 +192,17 @@ class CronController extends Controller
         echo "Count:[$count]".PHP_EOL;
     }
     /**
+     * Return information for project token. (Dev only)
+     * Example: ./yii cron/project-token 1
+     * Note: This should only be used during developement for diagnosis.
+     */
+    public function actionProjectToken($projectId)
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::GETPROJECTTOKEN, $projectId);
+        $developmentAction->performAction();
+    }
+
+    /**
      * Manage the state of the creation of a project repo
      * until the status is complete.
      */

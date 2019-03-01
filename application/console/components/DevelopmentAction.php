@@ -4,11 +4,13 @@ namespace console\components;
 use common\models\Build;
 use common\models\EmailQueue;
 use common\models\Job;
+use common\models\Project;
 use common\models\OperationQueue;
 use common\components\S3;
 use common\components\Appbuilder_logger;
 use common\components\EmailUtils;
 use common\components\JenkinsUtils;
+use common\components\STS;
 
 use console\components\ManageBuildsAction;
 use console\components\ManageReleasesAction;
@@ -33,12 +35,14 @@ class DevelopmentAction {
     const DELETEJOB = 'DELETEJOB';
     const TESTAWSSTAT = 'TESTAWSSTAT';
     const TESTIAM = 'TESTIAM';
+    const GETPROJECTTOKEN = 'GETPROJECTTOKEN';
     
     private $actionType;
     private $sendToAddress;
     private $jobIdToDelete;
     private $jenkinsUtils;
     private $buildGuid;
+    private $projectId;
     
     public function __construct()
     {
@@ -52,6 +56,9 @@ class DevelopmentAction {
         }
         if ($this->actionType == self::TESTAWSSTAT) {
             $this->buildGuid = $argv[1];
+        }
+        if ($this->actionType == self::GETPROJECTTOKEN) {
+            $this->projectId = $argv[1];
         }
     }
     
@@ -83,6 +90,9 @@ class DevelopmentAction {
                 break;
             case self::TESTIAM:
                 $this->actionTestIam();
+                break;
+            case self::GETPROJECTTOKEN:
+                $this->actionGetProjectToken();
                 break;
         }  
     }
@@ -268,6 +278,21 @@ class DevelopmentAction {
             echo "Successfully deleted record".PHP_EOL;
         } else {
             echo "Failed to delete record".PHP_EOL;
+        }
+    }
+    private function actionGetProjectToken() {
+        echo "Getting token for project $this->projectId".PHP_EOL;
+        $project = Project::findById($this->projectId);
+        if ($project->isS3Project()) {
+            echo "Bucket: ". $project->getS3Bucket().PHP_EOL;
+            echo "Folder: ". $project->getS3Folder().PHP_EOL;
+            echo "Policy:".PHP_EOL.STS::getPolicy($project).PHP_EOL;
+            $sts = new STS();
+            $token = $sts->getProjectAccessToken($project, "TEST");
+            echo "Path: ". $project->getS3Path().PHP_EOL;
+            echo "export AWS_ACCESS_KEY_ID=".$token['AccessKeyId'].PHP_EOL;
+            echo "export AWS_SECRET_ACCESS_KEY=".$token['SecretAccessKey'].PHP_EOL;
+            echo "export AWS_SESSION_TOKEN=".$token['SessionToken'].PHP_EOL;
         }
     }
     /*===============================================  logging ============================================*/

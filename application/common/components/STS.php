@@ -58,6 +58,12 @@ class STS extends AWSCommon
 
     public function getProjectAccessToken($project, $name)
     {
+        $policy = self::getPolicy($project);
+        return $this->getFederationToken($name, $policy);
+    }
+
+    public static function getPolicy($project)
+    {
         $policy = '{
     "Version": "2012-10-17",
     "Statement": [
@@ -94,7 +100,6 @@ class STS extends AWSCommon
 
         $policy = str_replace("BUCKET", $project->getS3Bucket(), $policy);
         $policy = str_replace("FOLDER", $project->getS3Folder(), $policy);
-
-        return $this->getFederationToken($name, $policy);
+        return $policy;
     }
 }
