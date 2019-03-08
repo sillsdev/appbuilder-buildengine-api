@@ -43,6 +43,14 @@ class AWSCommon
         return \Yii::$app->params['codeBuildImage'];
     }
 
+    public static function getBuildScriptPath()
+    {
+        $bucket = str_replace('"', "", AWSCommon::getProjectsBucket());
+        $s3path = "s3://". $bucket .'/default';
+
+        return $s3path;
+
+    }
     public static function getArtifactPath($build, $productionStage)
     {
         $job = $build->job;

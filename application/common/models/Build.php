@@ -177,6 +177,8 @@ class Build extends BuildBase implements Linkable
                     self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
                     self::ARTIFACT_CONSOLE_TEXT => $this->consoleText()];
             },
+            'targets',
+            'environment',
             'created' => function(){
                 return Utils::getIso8601($this->created);
             },

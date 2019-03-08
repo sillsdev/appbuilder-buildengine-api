@@ -30,6 +30,8 @@ return [
         'updated' => Utils::getDatetime(),
         'channel' => 'unpublished',
         'version_code' => 2,
+        'targets' => 'apk play-listing',
+        'environment' => '{"VAR1":"VALUE1","VAR2":"VALUE2"}'
     ],
     'build3' => [
         'id' => 13,
@@ -282,6 +284,8 @@ return [
         'updated' => Utils::getDatetime(),
         'channel' => 'unpublished',
         'version_code' => NULL,
+        'targets' => 'play-listing',
+        'environment' => '{"VAR1":"VALUE1","VAR2":"VALUE2"}'
     ],
 
 ];

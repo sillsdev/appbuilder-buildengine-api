@@ -120,6 +120,45 @@ class CodeBuild extends AWSCommon {
             return $buildGuid;
         } else {
             echo "[$prefix] startBuild S3 Project";
+            $targets = $build->targets;
+            if (is_null($targets)) {
+                $targets = 'apk play-listing';
+            }
+            $environmentArray = [
+                [
+                    'name' => 'BUILD_NUMBER',
+                    'value' => $buildNumber,
+                ],
+                [
+                    'name' => 'APP_BUILDER_SCRIPT_PATH',
+                    'value' => $buildPath,
+                ],
+                [
+                    'name' => 'PUBLISHER',
+                    'value' => $job->publisher_id,
+                ],
+                [
+                    'name' => 'VERSION_CODE',
+                    'value' => $versionCode,
+                ],
+                [
+                    'name' => 'SECRETS_BUCKET',
+                    'value' => $secretsBucket,
+                ],
+                [
+                    'name' => 'PROJECT_S3',
+                    'value' => $repoUrl,
+                ],
+                [
+                    'name' => 'TARGETS',
+                    'value' => $targets,
+                ],
+                [
+                    'name' => 'SCRIPT_S3',
+                    'value' => S3::getBuildScriptPath(),
+                ]
+            ];
+            $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $build);
             $promise = $this->codeBuildClient->startBuildAsync([
                 'projectName' => $buildApp,
                 'artifactsOverride' => [
@@ -131,32 +170,7 @@ class CodeBuild extends AWSCommon {
                     'type' => 'S3',                  // REQUIRED
                 ],
                 'buildspecOverride' => $buildSpec,
-                'environmentVariablesOverride' => [
-                    [
-                        'name' => 'BUILD_NUMBER',
-                        'value' => $buildNumber,
-                    ],
-                    [
-                        'name' => 'APP_BUILDER_SCRIPT_PATH',
-                        'value' => $buildPath,
-                    ],
-                    [
-                        'name' => 'PUBLISHER',
-                        'value' => $job->publisher_id,
-                    ],
-                    [
-                        'name' => 'VERSION_CODE',
-                        'value' => $versionCode,
-                    ],
-                    [
-                        'name' => 'SECRETS_BUCKET',
-                        'value' => $secretsBucket,
-                    ],
-                    [
-                        'name' => 'PROJECT_S3',
-                        'value' => $repoUrl,
-                    ]
-                ],
+                'environmentVariablesOverride' => $adjustedEnvironmentArray,
                 'sourceTypeOverride' => 'NO_SOURCE'
             ]);
             $state = $promise->getState();
@@ -419,5 +433,18 @@ class CodeBuild extends AWSCommon {
             $retVal = false;
         }
         return $retVal;
+    }
+
+    private function addEnvironmentToArray($environmentVariables, $build)
+    {
+        $environmentArray = json_decode($build->environment);
+        foreach ($environmentArray as $key => $value) {
+            $entry = [
+                'name' => $key,
+                'value' => $value,
+            ];
+            $environmentVariables[] = $entry;
+        }
+        return $environmentVariables;
     }
 }

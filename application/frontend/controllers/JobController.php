@@ -73,11 +73,13 @@ class JobController extends ActiveController
        if (!$job){
            throw new NotFoundHttpException("Job $id not found", 1443810472);
        }
-       $build = $job->createBuild();
+       $targets = \Yii::$app->request->getBodyParam('targets', null);
+       $environment = \Yii::$app->request->getBodyParam('environment', null);
+       $environmentString = json_encode($environment);
+       $build = $job->createBuild($targets, $environmentString);
        if (!$build){
            throw new ServerErrorHttpException("Could not create Build for Job $id", 1443810508);
        }
-
        return $build;
     }
     public function actionDeleteBuild($id, $build_id) {

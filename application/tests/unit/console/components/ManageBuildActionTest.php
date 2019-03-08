@@ -54,11 +54,11 @@ class ManageBuildActionTest extends UnitTestBase
         $this->setContainerObjects();
         $cronController = new MockCronController();
         $buildsAction = new ManageBuildsAction($cronController);
-        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'getNextVersionCode');
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'getVersionCode');
         $build = Build::findOne(['id' => 13]);
         $job = $build->job;
         $versionCode = $method->invokeArgs($buildsAction, array( $job, $build));
-        $this->assertEquals(3, $versionCode, " *** version code should max for completed job +1"); 
+        $this->assertEquals(2, $versionCode, " *** version code should max for completed job"); 
     }
     public function testNextVersionWithSet()
     {
@@ -69,11 +69,11 @@ class ManageBuildActionTest extends UnitTestBase
         $job->existing_version_code = $initialVC;
         $job->save();
         $buildsAction = new ManageBuildsAction($cronController);
-        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'getNextVersionCode');
+        $method = $this->getPrivateMethod('console\components\ManageBuildsAction', 'getVersionCode');
         $build = Build::findOne(['id' => 13]);
         $job2 = $build->job;
         $versionCode = $method->invokeArgs($buildsAction, array( $job2, $build));
-        $this->assertEquals(11, $versionCode, " *** version code should be initial version code +1");
+        $this->assertEquals(10, $versionCode, " *** version code should be initial version code");
     }    /**
      * The start building tests test the method in ActionCommon
      */

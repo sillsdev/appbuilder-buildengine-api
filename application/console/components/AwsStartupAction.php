@@ -13,6 +13,7 @@ use common\helpers\Utils;
 
 class AwsStartupAction extends ActionCommon
 {
+    private $s3;
     /**
      * This method checks to see if the code build projects for build and publish exist
      * and builds them if they don't
@@ -60,6 +61,8 @@ class AwsStartupAction extends ActionCommon
                 'type' => 'S3',
             ];
             $this->createProject($projectName, $cache, $source, $logger);
+
+            $this ->copyBuildScriptFolder($logger);
 
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
@@ -112,6 +115,26 @@ class AwsStartupAction extends ActionCommon
             $logException = [
                 'problem' => 'Failed to create CodeBuild Project',
                 'projectName' => $projectName
+            ];
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
+    }
+    private function copyBuildScriptFolder($logger)
+    {
+        try {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] AwsStartupAction: copyBuildScriptFolder" . PHP_EOL;
+            $s3 = new S3();
+            $currentDir = getcwd();
+            $sourceFolder = '/data/console/views/cron/scripts/upload';
+            $bucket = str_replace('"', "", S3::getProjectsBucket());
+            $s3->uploadFolder($sourceFolder, $bucket);
+            echo "  Copy completed" . PHP_EOL;
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] createCodeBuildProject: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = [
+                'problem' => 'Failed to copy build script folder'
             ];
             $logger->appbuilderExceptionLog($logException, $e);
         }

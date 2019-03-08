@@ -101,7 +101,7 @@ class ManageBuildsAction extends ActionCommon
                 ]);
                 // Start the build
                 $codeBuild = new CodeBuild();
-                $versionCode = $this->getNextVersionCode($job, $build);
+                $versionCode = $this->getVersionCode($job, $build) + 1;
                 $lastBuildGuid = $codeBuild->startBuild($repoUrl, (string)$commitId, $build, (string) $script, (string)$versionCode, $codeCommitProject);
                 if (!is_null($lastBuildGuid)){
                     $build->build_guid = $lastBuildGuid;
@@ -114,11 +114,11 @@ class ManageBuildsAction extends ActionCommon
            }
            else {
                 $script = $this->cronController->renderPartial("scripts/appbuilders_s3_build", [
-                    ]);
+                   ]);
                 // Start the build
                 $codeBuild = new CodeBuild();
                 $commitId = ""; // TODO: Remove when git is removed
-                $versionCode = $this->getNextVersionCode($job, $build);
+                $versionCode = $this->getVersionCode($job, $build);
                 $lastBuildGuid = $codeBuild->startBuild($gitUrl, (string)$commitId, $build, (string) $script, (string)$versionCode, $codeCommitProject);
                 if (!is_null($lastBuildGuid)){
                     $build->build_guid = $lastBuildGuid;
@@ -203,7 +203,7 @@ class ManageBuildsAction extends ActionCommon
         }
     }
 
-    private function getNextVersionCode($job, $build) {
+    private function getVersionCode($job, $build) {
         $id = $job->id;
         $retval = $job->existing_version_code;
         foreach (Build::find()->where([
@@ -214,7 +214,6 @@ class ManageBuildsAction extends ActionCommon
                     $retval = $build->version_code;
                 }
         }
-        $retval = $retval + 1;
         return $retval;
     }
     private function failBuild($build) {
