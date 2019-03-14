@@ -45,8 +45,7 @@ class AWSCommon
 
     public static function getBuildScriptPath()
     {
-        $bucket = str_replace('"', "", AWSCommon::getProjectsBucket());
-        $s3path = "s3://". $bucket .'/default';
+        $s3path = "s3://". AWSCommon::getProjectsBucket() .'/default';
 
         return $s3path;
 

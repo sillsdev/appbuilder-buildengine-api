@@ -4,7 +4,11 @@ google_play() {
   PAJ="${SECRETS_DIR}/playstore_api.json"
   cd $ARTIFACTS_DIR
   set +x
-  if [ -z "$PROMOTE_FROM" ]; then	fastlane supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing; else fastlane supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $PROMOTE_FROM --track_promote_to $CHANNEL -m play-listing; fi
+  if [ -z "$PROMOTE_FROM" ]; then
+    fastlane supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $CHANNEL -m play-listing;
+  else
+    fastlane supply -j $PAJ -b *.apk -p $(cat package_name.txt) --track $PROMOTE_FROM --track_promote_to $CHANNEL -m play-listing;
+  fi
 }
 publish_gradle() {
   echo "Gradle $1"

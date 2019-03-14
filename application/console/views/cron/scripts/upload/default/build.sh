@@ -36,15 +36,27 @@ build_play_listing() {
   echo $(awk -F '[<>]' '/package/{print $3}' build.appDef) > $OUTPUT_DIR/package_name.txt
   echo $VERSION_CODE > $OUTPUT_DIR/version_code.txt
   echo "{ \"version\" : \"${VERSION_NAME}.${VERSION_CODE}\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > $OUTPUT_DIR/version.json
-  if [ -f "build_data/about/about.txt" ]; then cp build_data/about/about.txt $OUTPUT_DIR/; fi
+  if [ -f "build_data/about/about.txt" ]; then
+    cp build_data/about/about.txt $OUTPUT_DIR/;
+  fi
   PUBLISH_DIR="build_data/publish"
   PLAY_LISTING_DIR="${PUBLISH_DIR}/play-listing"
   LIST_DIR="${PLAY_LISTING_DIR}/"
   MANIFEST_FILE="manifest.txt"
-  if [ -f $LIST_DIR$MANIFEST_FILE ]; then rm $LIST_DIR$MANIFEST_FILE; fi;
+  if [ -f $LIST_DIR$MANIFEST_FILE ];
+    then rm $LIST_DIR$MANIFEST_FILE;
+  fi
   FILE_LIST=$(find $PLAY_LISTING_DIR -type f -print)
-  for f in $FILE_LIST; do fn=${f#*"$PLAY_LISTING_DIR/"}; echo $fn >> $OUTPUT_DIR/$MANIFEST_FILE; done
-  if [ -d "$PLAY_LISTING_DIR" ]; then cp -r "$PLAY_LISTING_DIR" $OUTPUT_DIR; find $OUTPUT_DIR -name whats_new.txt | while read filename; do DIR=$(dirname "${filename}"); cp "$filename" $OUTPUT_DIR; mkdir "${DIR}/changelogs"; mv "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"; done; fi
+  for f in $FILE_LIST; do fn=${f#*"$PLAY_LISTING_DIR/"};
+    echo $fn >> $OUTPUT_DIR/$MANIFEST_FILE;
+  done
+  if [ -d "$PLAY_LISTING_DIR" ]; then
+    cp -r "$PLAY_LISTING_DIR" $OUTPUT_DIR;
+    find $OUTPUT_DIR -name whats_new.txt | while read filename; do DIR=$(dirname "${filename}");
+      cp "$filename" $OUTPUT_DIR; mkdir "${DIR}/changelogs";
+      mv "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt";
+    done;
+  fi
 }
 
 build_gradle() {
