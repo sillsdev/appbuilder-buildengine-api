@@ -13,7 +13,6 @@ use common\helpers\Utils;
 
 class AwsStartupAction extends ActionCommon
 {
-    private $s3;
     /**
      * This method checks to see if the code build projects for build and publish exist
      * and builds them if they don't
@@ -78,7 +77,6 @@ class AwsStartupAction extends ActionCommon
             $prefix = Utils::getPrefix();
             echo "[$prefix] AwsStartupAction: copyDefaultProjectFolder" . PHP_EOL;
             $s3 = new S3();
-            $currentDir = getcwd();
             $sourceFolder = '/data/console/views/cron/scripts/project_default';
             $bucket = S3::getArtifactsBucket();
             $s3->uploadFolder($sourceFolder, $bucket);
