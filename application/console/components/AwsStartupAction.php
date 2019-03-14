@@ -28,7 +28,7 @@ class AwsStartupAction extends ActionCommon
             $projectName = 'build_app';
             $prefix = Utils::getPrefix();
             echo "[$prefix] AwsStartupAction: create CodeBuild project: $projectName" . PHP_EOL;
-            $cacheLocation = str_replace('"', "", S3::getArtifactsBucket()) . '/codebuild-cache';
+            $cacheLocation = S3::getArtifactsBucket() . '/codebuild-cache';
             $cache =  [
                 'location' => $cacheLocation,
                 'type' => 'S3',
@@ -48,7 +48,6 @@ class AwsStartupAction extends ActionCommon
             $bucket = S3::getArtifactsBucket();
             $baseUrl = 'default/default.zip';
             $defaultLocation = $prefix . $bucket . "/" . $baseUrl;
-            $defaultLocation = str_replace('"', "", $defaultLocation);
             echo "Location: $defaultLocation" . PHP_EOL;
             echo "[$prefix] AwsStartupAction: create CodeBuild project: $projectName" . PHP_EOL;
             $this->copyDefaultProjectFolder($logger);
@@ -81,7 +80,7 @@ class AwsStartupAction extends ActionCommon
             $s3 = new S3();
             $currentDir = getcwd();
             $sourceFolder = '/data/console/views/cron/scripts/project_default';
-            $bucket = str_replace('"', "", S3::getArtifactsBucket());
+            $bucket = S3::getArtifactsBucket();
             $s3->uploadFolder($sourceFolder, $bucket);
             echo "  Copy completed" . PHP_EOL;
         } catch (\Exception $e) {

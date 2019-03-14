@@ -356,7 +356,7 @@ class CodeBuild extends AWSCommon {
      */
     public function createProject($base_name, $role_arn, $cache, $source) {
         $project_name = self::getCodeBuildProjectName($base_name);
-        $artifacts_bucket = str_replace('"', "", self::getArtifactsBucket());
+        $artifacts_bucket = self::getArtifactsBucket();
         echo "Bucket: $artifacts_bucket" . PHP_EOL;
         $result = $this->codeBuildClient->createProject([
             'artifacts' => [ // REQUIRED
