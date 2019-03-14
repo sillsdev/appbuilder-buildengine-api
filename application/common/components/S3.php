@@ -16,13 +16,16 @@ use Aws\Exception\AwsException;
 class S3 extends AWSCommon{
     public $s3Client;
     private $fileUtil;
+    private $ut;
     public function __construct() {
         try {
             // Injected if Unit Test
-            $this->s3Client = \Yii::$container->get('s3Client'); 
+            $this->s3Client = \Yii::$container->get('s3Client');
+            $this->ut = true;
         } catch (\Exception $e) {
             // Get real S3 client
             $this->s3Client = self::getS3Client();
+            $this->ut = false;
         }
         $this->fileUtil = \Yii::$container->get('fileUtils');
     }
@@ -39,6 +42,22 @@ class S3 extends AWSCommon{
             'version' => '2006-03-01'
             ]);
         $client->registerStreamWrapper();
+        return $client;
+    }
+    function getS3ClientWithCredentials(){
+        if ($this->ut == true) {
+            return $this->s3Client;
+        }
+        $awsKey = \Yii::$app->params['awsKeyId'];
+        $awsSecret = \Yii::$app->params['awsSecretKey'];
+        $client = new \Aws\S3\S3Client([
+            'region' => S3::getArtifactsBucketRegion(),
+            'version' => '2006-03-01',
+            'credentials' => [
+                'key' => $awsKey,
+                'secret' => $awsSecret,
+            ]
+        ]);
         return $client;
     }
 
@@ -293,5 +312,12 @@ class S3 extends AWSCommon{
         $key = substr($path, strpos($path, '/', 1) + 1);
         $this->s3Client->deleteMatchingObjects($bucket, $key);
         echo "Deleted S3 bucket $bucket key $key " . PHP_EOL;
+    }
+    /**
+     * Copy a folder to s3
+     */
+    public function uploadFolder($folderName, $bucket) {
+        $client = $this->getS3ClientWithCredentials();
+        $client->uploadDirectory($folderName, $bucket);
     }
 }
