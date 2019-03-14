@@ -158,7 +158,7 @@ class CodeBuild extends AWSCommon {
                     'value' => S3::getBuildScriptPath(),
                 ]
             ];
-            $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $build);
+            $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $build->environment);
             $promise = $this->codeBuildClient->startBuildAsync([
                 'projectName' => $buildApp,
                 'artifactsOverride' => [
@@ -289,36 +289,50 @@ class CodeBuild extends AWSCommon {
         $sourceLocation = $this->getSourceLocation($build);
         $s3Artifacts = $this->getArtifactsLocation($build);
         echo 'Source location: ' . $sourceLocation . PHP_EOL;
+        $targets = $release->targets;
+        if (is_null($targets)) {
+            $targets = 'google-play';
+        }
 
+        $environmentArray = [
+            [
+                'name' => 'RELEASE_NUMBER',
+                'value' => $releaseNumber,
+            ],
+            [
+                'name' => 'CHANNEL',
+                'value' => $release->channel,
+            ],
+            [
+                'name' => 'PUBLISHER',
+                'value' => $job->publisher_id,
+            ],
+            [
+                'name' => 'SECRETS_BUCKET',
+                'value' => $secretsBucket,
+            ],
+            [
+                'name' => 'PROMOTE_FROM',
+                'value' => $promoteFrom,
+            ],
+            [
+                'name' => 'ARTIFACTS_S3_DIR',
+                'value' => $s3Artifacts,
+            ],
+            [
+                'name' => 'TARGETS',
+                'value' => $targets,
+            ],
+            [
+                'name' => 'SCRIPT_S3',
+                'value' => S3::getBuildScriptPath(),
+            ]
+        ];
+        $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $release->environment);
         $promise = $this->codeBuildClient->startBuildAsync([
             'projectName' => $publishApp,
             'buildspecOverride' => $releaseSpec,
-            'environmentVariablesOverride' => [
-                [
-                    'name' => 'RELEASE_NUMBER',
-                    'value' => $releaseNumber,
-                ],
-                [
-                    'name' => 'CHANNEL',
-                    'value' => $release->channel,
-                ],
-                [
-                    'name' => 'PUBLISHER',
-                    'value' => $job->publisher_id,
-                ],
-                [
-                    'name' => 'SECRETS_BUCKET',
-                    'value' => $secretsBucket,
-                ],
-                [
-                    'name' => 'PROMOTE_FROM',
-                    'value' => $promoteFrom,
-                ],
-                [
-                    'name' => 'ARTIFACTS_S3_DIR',
-                    'value' => $s3Artifacts,
-                ]
-            ],
+            'environmentVariablesOverride' => $adjustedEnvironmentArray,
             'sourceLocationOverride' => $sourceLocation,
         ]);
         $state = $promise->getState();
@@ -435,15 +449,17 @@ class CodeBuild extends AWSCommon {
         return $retVal;
     }
 
-    private function addEnvironmentToArray($environmentVariables, $build)
+    private function addEnvironmentToArray($environmentVariables, $environment)
     {
-        $environmentArray = json_decode($build->environment);
-        foreach ($environmentArray as $key => $value) {
-            $entry = [
-                'name' => $key,
-                'value' => $value,
-            ];
-            $environmentVariables[] = $entry;
+        if (!is_null($environment)){
+            $environmentArray = json_decode($environment);
+            foreach ($environmentArray as $key => $value) {
+                $entry = [
+                    'name' => $key,
+                    'value' => $value,
+                ];
+                $environmentVariables[] = $entry;
+            }
         }
         return $environmentVariables;
     }

@@ -27,7 +27,7 @@ class JobControllerUtils
         }
         return $job;
     }
-    public function publishBuild($id, $build_id, $channel, $title, $defaultLanguage) {
+    public function publishBuild($id, $build_id, $channel, $title, $defaultLanguage, $targets, $environment) {
         $this->validateJob($id);
         $runningRelease = Release::findOne([
             'build_id' => $build_id,
@@ -47,7 +47,8 @@ class JobControllerUtils
         $version_code = $build->version_code;
 
         $verify_result = $this->verifyChannel($id, $channel, $version_code);
-        $release = $build->createRelease($channel);
+        $environmentString = json_encode($environment);
+        $release = $build->createRelease($channel, $targets, $environmentString);
         $release->title = $title;
         $release->defaultLanguage = $defaultLanguage;
         $release->promote_from = $verify_result;

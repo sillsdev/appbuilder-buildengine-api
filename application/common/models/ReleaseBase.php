@@ -21,6 +21,8 @@ use Yii;
  * @property string $build_guid
  * @property string $console_text_url
  * @property string $codebuild_url
+ * @property string $targets
+ * @property string $environment
  *
  * @property Build $build
  */
@@ -43,7 +45,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
             [['build_id', 'channel'], 'required'],
             [['build_id'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel', 'defaultLanguage', 'promote_from', 'build_guid', 'console_text_url', 'codebuild_url'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'defaultLanguage', 'promote_from', 'build_guid', 'console_text_url', 'codebuild_url', 'targets', 'environment'], 'string', 'max' => 255],
             [['error'], 'string', 'max' => 2083],
             [['title'], 'string', 'max' => 30],
             [['build_id'], 'exist', 'skipOnError' => true, 'targetClass' => Build::className(), 'targetAttribute' => ['build_id' => 'id']],
@@ -70,6 +72,8 @@ class ReleaseBase extends \yii\db\ActiveRecord
             'build_guid' => Yii::t('app', 'Build Guid'),
             'console_text_url' => Yii::t('app', 'Console Text Url'),
             'codebuild_url' => Yii::t('app', 'Codebuild Url'),
+            'targets' => Yii::t('app', 'Targets'),
+            'environment' => Yii::t('app', 'Environment'),
         ];
     }
 

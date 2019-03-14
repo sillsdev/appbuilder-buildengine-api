@@ -43,7 +43,7 @@ class JobControllerUtilsTest extends UnitTestBase
     public function testPublishBuild()
     {
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('23', '21', 'alpha', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('23', '21', 'alpha', 'test', 'en', "google-play", "");
         $this->assertEquals('21', $release->build_id, "*** Build id in published release incorrect");
         $this->assertEquals('alpha', $release->channel, "*** Channel in published release incorrect");
         $this->assertNull($release->promote_from, "*** Promote from for unpublished build is not null");
@@ -51,7 +51,7 @@ class JobControllerUtilsTest extends UnitTestBase
     public function testPublishBuildAlphaToBeta()
     {
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('25', '24', 'beta', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('25', '24', 'beta', 'test', 'en', "google-play", "");
         $this->assertEquals('24', $release->build_id, "*** Build id in published release incorrect");
         $this->assertEquals('beta', $release->channel, "*** Channel in published release incorrect");
         $this->assertEquals('alpha', $release->promote_from, "*** Promote From incorrect");
@@ -59,7 +59,7 @@ class JobControllerUtilsTest extends UnitTestBase
     public function testPublishBuildAlphaToProduction()
     {
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('25', '24', 'production', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('25', '24', 'production', 'test', 'en', "google-play", "");
         $this->assertEquals('24', $release->build_id, "*** Build id in published release incorrect");
         $this->assertEquals('production', $release->channel, "*** Channel in published release incorrect");
         $this->assertEquals('alpha', $release->promote_from, "*** Promote From incorrect");
@@ -68,19 +68,19 @@ class JobControllerUtilsTest extends UnitTestBase
     {
         $this->setExpectedException('yii\\web\\ServerErrorHttpException');
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('24', '25', 'alpha', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('24', '25', 'alpha', 'test', 'en', "google-play", "");
     }
     public function testPublishBuildBetaToBeta()
     {
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('24', '25', 'beta', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('24', '25', 'beta', 'test', 'en', "google-play", "");
         $this->assertEquals('beta', $release->channel, "*** Channel in published release incorrect");
         $this->assertNull($release->promote_from);
     }
     public function testPublishBuildBetaToProduction()
     {
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('24', '25', 'production', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('24', '25', 'production', 'test', 'en', 'google-play', '');
         $this->assertEquals('production', $release->channel, "*** Channel in published release incorrect");
         $this->assertEquals('beta', $release->promote_from, "*** Promote From incorrect");
     }
@@ -88,13 +88,13 @@ class JobControllerUtilsTest extends UnitTestBase
     {
         $this->setExpectedException('yii\\web\\NotFoundHttpException');
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('87', '21', 'alpha', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('87', '21', 'alpha', 'test', 'en', 'google-play', '');
     }
     public function testPublishBuildExceptionBadUrl()
     {
         $this->setExpectedException('yii\\web\\ServerErrorHttpException');
         $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('22', '11', 'alpha', 'test', 'en');
+        $release = $jobControllerUtils->publishBuild('22', '11', 'alpha', 'test', 'en', 'google-play', '');
     }
     public function testVerifyChannel()
     {

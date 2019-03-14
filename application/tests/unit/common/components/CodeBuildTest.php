@@ -240,6 +240,18 @@ class CodeBuildTest extends UnitTestBase
                 case 'PROMOTE_FROM':
                     $promoteFrom = $environmentVariable['value'];
                     break;
+                case 'TARGETS':
+                    $targets = $environmentVariable['value'];
+                    break;
+                case 'SCRIPT_S3':
+                    $scriptS3 = $environmentVariable['value'];
+                    break;
+                case 'VAR1':
+                    $var1 = $environmentVariable['value'];
+                    break;
+                case 'VAR2' :
+                    $var2 = $environmentVariable['value'];
+                    break;
                 default:
                     $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");     
             }
@@ -251,6 +263,10 @@ class CodeBuildTest extends UnitTestBase
         $this->assertEquals("s3://sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/12", $artifactDir, " *** Wrong artifact directory");
         $this->assertEquals("alpha", $channel, " *** Bad channel");
         $this->assertEquals("", $promoteFrom, " *** Wrong promote from value");
+        $this->assertEquals("google-play", $targets, " *** Wrong target");
+        $this->assertEquals("s3://sil-prd-aps-projects/default", $scriptS3, " *** Wrong S3 Script");
+        $this->assertEquals("VALUE1", $var1, " *** Wrong test var1 value");
+        $this->assertEquals("VALUE2", $var2, " *** Wrong test var2 value");
     }
     public function testAddEnvironmentVariables()
     {
@@ -271,7 +287,7 @@ class CodeBuildTest extends UnitTestBase
         MockCodeBuildClient::clearGlobals();
         $codebuild = new CodeBuild();
         $method = $this->getPrivateMethod('common\components\CodeBuild', 'addEnvironmentToArray');
-        $returnedEnvironment = $method->invokeArgs($codebuild, array( $environmentArray, $build));
+        $returnedEnvironment = $method->invokeArgs($codebuild, array( $environmentArray, $build->environment));
         $this->assertEquals(4, sizeof($returnedEnvironment), "*** Wrong array size");
         $env0 = $returnedEnvironment[0];
         $env2 = $returnedEnvironment[2];

@@ -86,10 +86,12 @@ class Build extends BuildBase implements Linkable
             self::CHANNEL_PRODUCTION,
         ],
      ];
-    public function createRelease($channel) {
+    public function createRelease($channel, $targets, $environment) {
         $release = new Release();
         $release->build_id = $this->id;
         $release->channel = $channel;
+        $release->targets = $targets;
+        $release->environment = $environment;
         $release->save();
 
         return $release;

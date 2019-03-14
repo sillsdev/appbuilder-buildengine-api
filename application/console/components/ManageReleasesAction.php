@@ -108,8 +108,6 @@ class ManageReleasesAction extends ActionCommon
             $script = $this->cronController->renderPartial("scripts/appbuilders_publish", [
                 ]);
 
-            echo $script;
-            
             // Start the build
             $codeBuild = new CodeBuild();
             $lastBuildGuid = $codeBuild->startRelease($release, (string) $script);

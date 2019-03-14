@@ -48,6 +48,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' =>  Html::a($model->build_guid, $model->codebuild_url),
             ],
             'promote_from',
+            'targets',
+            'environment'
         ],
     ]) ?>
 
