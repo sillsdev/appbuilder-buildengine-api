@@ -21,6 +21,8 @@ use Yii;
  * @property string $build_guid
  * @property string $console_text_url
  * @property string $codebuild_url
+ * @property string $targets
+ * @property string $environment
  *
  * @property Job $job
  * @property Release[] $releases
@@ -44,7 +46,7 @@ class BuildBase extends \yii\db\ActiveRecord
             [['job_id'], 'required'],
             [['job_id', 'version_code'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel', 'artifact_files', 'build_guid', 'console_text_url', 'codebuild_url'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'artifact_files', 'build_guid', 'console_text_url', 'codebuild_url', 'targets', 'environment'], 'string', 'max' => 255],
             [['error', 'artifact_url_base'], 'string', 'max' => 2083],
             [['job_id'], 'exist', 'skipOnError' => true, 'targetClass' => Job::className(), 'targetAttribute' => ['job_id' => 'id']],
         ];
@@ -70,6 +72,8 @@ class BuildBase extends \yii\db\ActiveRecord
             'build_guid' => Yii::t('app', 'Build Guid'),
             'console_text_url' => Yii::t('app', 'Console Text Url'),
             'codebuild_url' => Yii::t('app', 'Codebuild Url'),
+            'targets' => Yii::t('app', 'Targets'),
+            'environment' => Yii::t('app', 'Environment'),
         ];
     }
 

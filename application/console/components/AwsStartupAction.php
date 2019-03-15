@@ -61,31 +61,14 @@ class AwsStartupAction extends ActionCommon
             ];
             $this->createProject($projectName, $cache, $source, $logger);
 
+            $this ->copyBuildScriptFolder($logger);
+
         } catch (\Exception $e) {
             $prefix = Utils::getPrefix();
             echo "[$prefix] createCodeBuildProject: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
             $logException = [
                 'problem' => 'Failed to create CodeBuild Project',
                 'projectName' => $projectName
-            ];
-            $logger->appbuilderExceptionLog($logException, $e);
-        }
-    }
-    private function copyDefaultProjectFolder($logger)
-    {
-        try {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] AwsStartupAction: copyDefaultProjectFolder" . PHP_EOL;
-            $s3 = new S3();
-            $sourceFolder = '/data/console/views/cron/scripts/project_default';
-            $bucket = S3::getArtifactsBucket();
-            $s3->uploadFolder($sourceFolder, $bucket);
-            echo "  Copy completed" . PHP_EOL;
-        } catch (\Exception $e) {
-            $prefix = Utils::getPrefix();
-            echo "[$prefix] copyDefaultProjectFolder: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
-            $logException = [
-                'problem' => 'Failed to copy project default folder'
             ];
             $logger->appbuilderExceptionLog($logException, $e);
         }
@@ -115,6 +98,38 @@ class AwsStartupAction extends ActionCommon
             ];
             $logger->appbuilderExceptionLog($logException, $e);
         }
-
+    }
+    private function copyDefaultProjectFolder($logger)
+    {
+        $prefix = Utils::getPrefix();
+        echo "[$prefix] AwsStartupAction: copyDefaultProjectFolder" . PHP_EOL;
+        $sourceFolder = '/data/console/views/cron/scripts/project_default';
+        $bucket = S3::getArtifactsBucket();
+        $this->copyFolder($logger, $sourceFolder, $bucket);
+    }
+    private function copyBuildScriptFolder($logger)
+    {
+        $prefix = Utils::getPrefix();
+        echo "[$prefix] AwsStartupAction: copyBuildScriptFolder" . PHP_EOL;
+        $sourceFolder = '/data/console/views/cron/scripts/upload';
+        $bucket = S3::getProjectsBucket();
+        $this->copyFolder($logger, $sourceFolder, $bucket);
+    }
+    private function copyFolder($logger, $sourceFolder, $bucket)
+    {
+        try {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] AwsStartupAction: copyFolder" . PHP_EOL;
+            $s3 = new S3();
+            $s3->uploadFolder($sourceFolder, $bucket);
+            echo "  Copy completed" . PHP_EOL;
+        } catch (\Exception $e) {
+            $prefix = Utils::getPrefix();
+            echo "[$prefix] copyFolder: Exception:" . PHP_EOL . (string)$e . PHP_EOL;
+            $logException = [
+                'problem' => 'Failed to copy folder'
+            ];
+            $logger->appbuilderExceptionLog($logException, $e);
+        }
     }
 }

@@ -158,6 +158,18 @@ class CodeBuildTest extends UnitTestBase
                 case 'PROJECT_S3':
                     $projectS3 = $environmentVariable['value'];
                     break;
+                case 'TARGETS':
+                    $targets = $environmentVariable['value'];
+                    break;
+                case 'SCRIPT_S3':
+                    $scriptS3 = $environmentVariable['value'];
+                    break;
+                case 'VAR1':
+                    $var1 = $environmentVariable['value'];
+                    break;
+                case 'VAR2' :
+                    $var2 = $environmentVariable['value'];
+                    break;
                 default:
                     $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");
             }
@@ -169,6 +181,10 @@ class CodeBuildTest extends UnitTestBase
         $this->assertEquals("1", $versionCode, " *** Wrong version code");
         $this->assertEquals("scripture-app-builder", $scriptPath, " *** Bad script path");
         $this->assertEquals($url, $projectS3, " *** Wrong project name");
+        $this->assertEquals('play-listing', $targets, " *** Wrong target");
+        $this->assertEquals('s3://sil-prd-aps-projects/default', $scriptS3, " ***Wrong S3 Script");
+        $this->assertEquals("VALUE1", $var1, " *** Wrong test var1 value");
+        $this->assertEquals("VALUE2", $var2, " *** Wrong test var2 value");
     }
     public function testGetSourceLocation()
     {
@@ -224,6 +240,18 @@ class CodeBuildTest extends UnitTestBase
                 case 'PROMOTE_FROM':
                     $promoteFrom = $environmentVariable['value'];
                     break;
+                case 'TARGETS':
+                    $targets = $environmentVariable['value'];
+                    break;
+                case 'SCRIPT_S3':
+                    $scriptS3 = $environmentVariable['value'];
+                    break;
+                case 'VAR1':
+                    $var1 = $environmentVariable['value'];
+                    break;
+                case 'VAR2' :
+                    $var2 = $environmentVariable['value'];
+                    break;
                 default:
                     $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");     
             }
@@ -235,5 +263,40 @@ class CodeBuildTest extends UnitTestBase
         $this->assertEquals("s3://sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/12", $artifactDir, " *** Wrong artifact directory");
         $this->assertEquals("alpha", $channel, " *** Bad channel");
         $this->assertEquals("", $promoteFrom, " *** Wrong promote from value");
+        $this->assertEquals("google-play", $targets, " *** Wrong target");
+        $this->assertEquals("s3://sil-prd-aps-projects/default", $scriptS3, " *** Wrong S3 Script");
+        $this->assertEquals("VALUE1", $var1, " *** Wrong test var1 value");
+        $this->assertEquals("VALUE2", $var2, " *** Wrong test var2 value");
+    }
+    public function testAddEnvironmentVariables()
+    {
+        $this->setContainerObjects();
+        $build = Build::findOne(['id' => 12]);
+        $buildNumber = '1';
+        $buildPath = 'build';
+        $environmentArray = [
+            [
+                'name' => 'BUILD_NUMBER',
+                'value' => $buildNumber,
+            ],
+            [
+                'name' => 'APP_BUILDER_SCRIPT_PATH',
+                'value' => $buildPath,
+            ],
+        ];
+        MockCodeBuildClient::clearGlobals();
+        $codebuild = new CodeBuild();
+        $method = $this->getPrivateMethod('common\components\CodeBuild', 'addEnvironmentToArray');
+        $returnedEnvironment = $method->invokeArgs($codebuild, array( $environmentArray, $build->environment));
+        $this->assertEquals(4, sizeof($returnedEnvironment), "*** Wrong array size");
+        $env0 = $returnedEnvironment[0];
+        $env2 = $returnedEnvironment[2];
+        $env3 = $returnedEnvironment[3];
+        $this->assertEquals("BUILD_NUMBER", $env0['name'], ' *** Wrong name for 1st env var');
+        $this->assertEquals("1", $env0['value'], " *** Wrong value for first env var");
+        $this->assertEquals("VAR1", $env2['name'], " *** Wrong name for 3rd env var");
+        $this->assertEquals("VALUE1", $env2['value'], " *** Wrong value for 3rd env var");
+        $this->assertEquals("VAR2", $env3['name'], " *** Wrong name for 4th env var");
+        $this->assertEquals("VALUE2", $env3['value'], " *** Wrong value for 4th env var");
     }
 }

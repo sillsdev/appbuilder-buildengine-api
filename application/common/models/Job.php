@@ -115,10 +115,12 @@ class Job extends JobBase implements Linkable
      *
      * @return Build
      */
-    public function createBuild()
+    public function createBuild($targets, $environment)
     {
             $build = new Build();
             $build->job_id = $this->id;
+            $build->targets = $targets;
+            $build->environment = $environment;
             $build->save();
 
             return $build;

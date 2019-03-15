@@ -41,6 +41,8 @@ return [
         'title' => NULL,
         'defaultLanguage' => NULL,
         'build_guid' => 'f16d4385-5579-4139-8c1e-a3937e88b25',
+        'targets' => 'google-play',
+        'environment' => '{"VAR1":"VALUE1","VAR2":"VALUE2"}'
     ],
     'release4' => [
         'id' => 13,

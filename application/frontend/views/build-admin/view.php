@@ -64,6 +64,8 @@ $this->params['breadcrumbs'][] = $this->title;
             'updated',
             'channel',
             'version_code',
+            'targets',
+            'environment'
         ],
     ]) ?>
 

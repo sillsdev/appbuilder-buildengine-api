@@ -120,6 +120,45 @@ class CodeBuild extends AWSCommon {
             return $buildGuid;
         } else {
             echo "[$prefix] startBuild S3 Project";
+            $targets = $build->targets;
+            if (is_null($targets)) {
+                $targets = 'apk play-listing';
+            }
+            $environmentArray = [
+                [
+                    'name' => 'BUILD_NUMBER',
+                    'value' => $buildNumber,
+                ],
+                [
+                    'name' => 'APP_BUILDER_SCRIPT_PATH',
+                    'value' => $buildPath,
+                ],
+                [
+                    'name' => 'PUBLISHER',
+                    'value' => $job->publisher_id,
+                ],
+                [
+                    'name' => 'VERSION_CODE',
+                    'value' => $versionCode,
+                ],
+                [
+                    'name' => 'SECRETS_BUCKET',
+                    'value' => $secretsBucket,
+                ],
+                [
+                    'name' => 'PROJECT_S3',
+                    'value' => $repoUrl,
+                ],
+                [
+                    'name' => 'TARGETS',
+                    'value' => $targets,
+                ],
+                [
+                    'name' => 'SCRIPT_S3',
+                    'value' => S3::getBuildScriptPath(),
+                ]
+            ];
+            $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $build->environment);
             $promise = $this->codeBuildClient->startBuildAsync([
                 'projectName' => $buildApp,
                 'artifactsOverride' => [
@@ -131,32 +170,7 @@ class CodeBuild extends AWSCommon {
                     'type' => 'S3',                  // REQUIRED
                 ],
                 'buildspecOverride' => $buildSpec,
-                'environmentVariablesOverride' => [
-                    [
-                        'name' => 'BUILD_NUMBER',
-                        'value' => $buildNumber,
-                    ],
-                    [
-                        'name' => 'APP_BUILDER_SCRIPT_PATH',
-                        'value' => $buildPath,
-                    ],
-                    [
-                        'name' => 'PUBLISHER',
-                        'value' => $job->publisher_id,
-                    ],
-                    [
-                        'name' => 'VERSION_CODE',
-                        'value' => $versionCode,
-                    ],
-                    [
-                        'name' => 'SECRETS_BUCKET',
-                        'value' => $secretsBucket,
-                    ],
-                    [
-                        'name' => 'PROJECT_S3',
-                        'value' => $repoUrl,
-                    ]
-                ],
+                'environmentVariablesOverride' => $adjustedEnvironmentArray,
                 'sourceTypeOverride' => 'NO_SOURCE'
             ]);
             $state = $promise->getState();
@@ -275,36 +289,50 @@ class CodeBuild extends AWSCommon {
         $sourceLocation = $this->getSourceLocation($build);
         $s3Artifacts = $this->getArtifactsLocation($build);
         echo 'Source location: ' . $sourceLocation . PHP_EOL;
+        $targets = $release->targets;
+        if (is_null($targets)) {
+            $targets = 'google-play';
+        }
 
+        $environmentArray = [
+            [
+                'name' => 'RELEASE_NUMBER',
+                'value' => $releaseNumber,
+            ],
+            [
+                'name' => 'CHANNEL',
+                'value' => $release->channel,
+            ],
+            [
+                'name' => 'PUBLISHER',
+                'value' => $job->publisher_id,
+            ],
+            [
+                'name' => 'SECRETS_BUCKET',
+                'value' => $secretsBucket,
+            ],
+            [
+                'name' => 'PROMOTE_FROM',
+                'value' => $promoteFrom,
+            ],
+            [
+                'name' => 'ARTIFACTS_S3_DIR',
+                'value' => $s3Artifacts,
+            ],
+            [
+                'name' => 'TARGETS',
+                'value' => $targets,
+            ],
+            [
+                'name' => 'SCRIPT_S3',
+                'value' => S3::getBuildScriptPath(),
+            ]
+        ];
+        $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $release->environment);
         $promise = $this->codeBuildClient->startBuildAsync([
             'projectName' => $publishApp,
             'buildspecOverride' => $releaseSpec,
-            'environmentVariablesOverride' => [
-                [
-                    'name' => 'RELEASE_NUMBER',
-                    'value' => $releaseNumber,
-                ],
-                [
-                    'name' => 'CHANNEL',
-                    'value' => $release->channel,
-                ],
-                [
-                    'name' => 'PUBLISHER',
-                    'value' => $job->publisher_id,
-                ],
-                [
-                    'name' => 'SECRETS_BUCKET',
-                    'value' => $secretsBucket,
-                ],
-                [
-                    'name' => 'PROMOTE_FROM',
-                    'value' => $promoteFrom,
-                ],
-                [
-                    'name' => 'ARTIFACTS_S3_DIR',
-                    'value' => $s3Artifacts,
-                ]
-            ],
+            'environmentVariablesOverride' => $adjustedEnvironmentArray,
             'sourceLocationOverride' => $sourceLocation,
         ]);
         $state = $promise->getState();
@@ -419,5 +447,20 @@ class CodeBuild extends AWSCommon {
             $retVal = false;
         }
         return $retVal;
+    }
+
+    private function addEnvironmentToArray($environmentVariables, $environment)
+    {
+        if (!is_null($environment)){
+            $environmentArray = json_decode($environment);
+            foreach ($environmentArray as $key => $value) {
+                $entry = [
+                    'name' => $key,
+                    'value' => $value,
+                ];
+                $environmentVariables[] = $entry;
+            }
+        }
+        return $environmentVariables;
     }
 }

@@ -73,11 +73,13 @@ class JobController extends ActiveController
        if (!$job){
            throw new NotFoundHttpException("Job $id not found", 1443810472);
        }
-       $build = $job->createBuild();
+       $targets = \Yii::$app->request->getBodyParam('targets', null);
+       $environment = \Yii::$app->request->getBodyParam('environment', null);
+       $environmentString = json_encode($environment);
+       $build = $job->createBuild($targets, $environmentString);
        if (!$build){
            throw new ServerErrorHttpException("Could not create Build for Job $id", 1443810508);
        }
-
        return $build;
     }
     public function actionDeleteBuild($id, $build_id) {
@@ -92,7 +94,9 @@ class JobController extends ActiveController
         $channel = \Yii::$app->request->getBodyParam('channel', null);
         $title = \Yii::$app->request->getBodyParam('title', null);
         $defaultLanguage = \Yii::$app->request->getBodyParam('defaultLanguage', null);
-        $release = $this->jcUtils->publishBuild($id, $build_id, $channel, $title, $defaultLanguage);
+        $targets = \Yii::$app->request->getBodyParam('targets', null);
+        $environment = \Yii::$app->request->getBodyParam('environment', null);
+         $release = $this->jcUtils->publishBuild($id, $build_id, $channel, $title, $defaultLanguage, $targets, $environment);
         return $release;
     }
 
