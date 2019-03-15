@@ -119,7 +119,7 @@ class CodeBuild extends AWSCommon {
             echo "Build id: " . $buildId . " Guid: " . $buildGuid . PHP_EOL;
             return $buildGuid;
         } else {
-            echo "[$prefix] startBuild S3 Project";
+            echo "[$prefix] startBuild S3 Project" . PHP_EOL;
             $targets = $build->targets;
             if (is_null($targets)) {
                 $targets = 'apk play-listing';
@@ -451,14 +451,21 @@ class CodeBuild extends AWSCommon {
 
     private function addEnvironmentToArray($environmentVariables, $environment)
     {
-        if (!is_null($environment)){
-            $environmentArray = json_decode($environment);
-            foreach ($environmentArray as $key => $value) {
-                $entry = [
-                    'name' => $key,
-                    'value' => $value,
-                ];
-                $environmentVariables[] = $entry;
+        if ($environment == 'null') {
+            $environment = null;
+        }
+        if (!is_null($environment)) {
+            try {
+                $environmentArray = json_decode($environment);
+                foreach ($environmentArray as $key => $value) {
+                    $entry = [
+                        'name' => $key,
+                        'value' => $value,
+                    ];
+                    $environmentVariables[] = $entry;
+                }
+            } catch  (\Exception $e) {
+                echo ("Exception caught and ignored");
             }
         }
         return $environmentVariables;
