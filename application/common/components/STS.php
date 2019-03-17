@@ -88,7 +88,10 @@ class STS extends AWSCommon
                 "s3:GetObjectAcl",
                 "s3:PutObjectAcl",
                 "s3:GetObjectTagging",
-                "s3:PutObjectTagging"
+                "s3:PutObjectTagging",
+                "s3:DeleteObject", 
+                "s3:DeleteObjectVersion",
+                "s3:PutLifeCycleConfiguration"
             ],
             "Resource": [
                 "arn:aws:s3:::BUCKET/FOLDER",
