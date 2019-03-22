@@ -47,7 +47,7 @@ class ManageProjectsAction extends ActionCommon
                         $this->tryCreateRepo($project, $logger);
                         break;
                     case Project::STATUS_DELETE_PENDING:
-                        $this->tryDeleteRepo($project);
+                        $this->tryDeleteRepo($project, $logger);
                         break;
                 }
             }

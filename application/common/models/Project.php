@@ -162,13 +162,17 @@ class Project extends ProjectBase implements Linkable
     {
         return str_replace('"', "", S3::getProjectsBucket());
     }
-
+    public function getS3BaseFolder()
+    {
+        $s3folder = $this->language_code.'-'.$this->id.'-'.$this->project_name;
+        return $s3folder;
+    }
     public function getS3Folder()
     {
         $client = $this->getLinkedClient();
         $s3client = (is_null($client)) ? "" :  $client->prefix . '/';
         $s3app = $this->app_id.'/';
-        $s3folder = $this->language_code.'-'.$this->id.'-'.$this->project_name;
+        $s3folder = $this->getS3BaseFolder();
         return $s3client . $s3app . Utils::lettersNumbersHyphensOnly($s3folder);
 
     }

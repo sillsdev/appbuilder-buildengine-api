@@ -203,6 +203,30 @@ class CronController extends Controller
     }
 
     /**
+     * Convert single project and associated jobs from ssh to S3. (Dev only)
+     * Example: ./yii cron/move-project-to-s3 2
+     * Note: Copies project files from ssh url to s3 bucket
+     *       Requires SSH Key of docker image to be registered with IAM user referenced by local.env
+     *       Requires that IAM User being used has policy that allows access to codebuild project folders
+     *       Changes URLs of project and jobs to point to S3 bucket
+     */
+    public function actionMoveProjectToS3($projectId)
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::MOVEPROJECT, $projectId);
+        $developmentAction->performAction();
+    }
+    /**
+     * Converts all successful projects with ssh url to S3 (Dev only)
+     * Calls the actionMoveProjectToS3 for all existing projects
+     * Only successful ssh projects will actually be affected
+     * Same requirements apply for this as for the actionMoveProjectsToS3
+     */
+    public function actionMoveAllProjectsToS3()
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::MOVEALLPROJECTS);
+        $developmentAction->performAction();
+    }
+    /**
      * Manage the state of the creation of a project repo
      * until the status is complete.
      */
