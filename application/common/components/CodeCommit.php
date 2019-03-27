@@ -49,6 +49,25 @@ class CodeCommit extends AWSCommon{
         return $cloneUrl;
     }
     /**
+     * Return ssh url of code commit archive derived from git url needed for CodeBuild
+     *
+     * @param string $git_url
+     * @return string http codecommit url
+     */
+    public function getSourceSshURL($git_url) {
+        $prefix = Utils::getPrefix();
+         echo "[$prefix] getSourceURL URL: " .$git_url . PHP_EOL;
+        $repo = substr($git_url, strrpos($git_url, '/') + 1);
+        $repoInfo = $this->codeCommitClient->getRepository([
+            'repositoryName' => $repo
+        ]);
+        $metadata = $repoInfo['repositoryMetadata'];
+        echo "cloneUrl: " . $metadata['cloneUrlSsh'] . PHP_EOL;
+        $cloneUrl = $metadata['cloneUrlSsh'];
+        return $cloneUrl;
+    }
+
+    /**
      *  Returns commit id of the specified branch for the specified repo
      * 
      * @param string $git_url

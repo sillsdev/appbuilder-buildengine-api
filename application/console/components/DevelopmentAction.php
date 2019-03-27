@@ -24,6 +24,7 @@ use common\helpers\Utils;
 
 use JenkinsApi\Item\Build as JenkinsBuild;
 use common\components\IAmWrapper;
+use GitWrapper\GitWrapper;
 
 class DevelopmentAction {
     const TESTEMAIL = 'TESTEMAIL';
@@ -36,7 +37,9 @@ class DevelopmentAction {
     const TESTAWSSTAT = 'TESTAWSSTAT';
     const TESTIAM = 'TESTIAM';
     const GETPROJECTTOKEN = 'GETPROJECTTOKEN';
-    
+    const MOVEPROJECT = 'MOVEPROJECTTOS3';
+    const MOVEALLPROJECTS = 'MOVEALLPROJECTSTOS3';
+
     private $actionType;
     private $sendToAddress;
     private $jobIdToDelete;
@@ -58,6 +61,9 @@ class DevelopmentAction {
             $this->buildGuid = $argv[1];
         }
         if ($this->actionType == self::GETPROJECTTOKEN) {
+            $this->projectId = $argv[1];
+        }
+        if ($this->actionType == self::MOVEPROJECT) {
             $this->projectId = $argv[1];
         }
     }
@@ -93,6 +99,12 @@ class DevelopmentAction {
                 break;
             case self::GETPROJECTTOKEN:
                 $this->actionGetProjectToken();
+                break;
+            case self::MOVEPROJECT:
+                $this->actionMoveProjectToS3();
+                break;
+            case self::MOVEALLPROJECTS:
+                $this->actionMoveAllProjectsToS3();
                 break;
         }  
     }
@@ -326,5 +338,85 @@ class DevelopmentAction {
         echo "Job=$jobName, Number=$build->build_number, Status=$build->status". PHP_EOL
                         . "  Build: Result=$buildResult". PHP_EOL;
         return $log;
+    }
+
+    private function actionMoveProjectToS3()
+    {
+        $project = Project::findById($this->projectId);
+        $this->moveProjectToS3($project);
+    }
+
+    private function actionMoveAllProjectsToS3()
+    {
+        $projects = Project::find()->all();
+        foreach ($projects as $project) {
+            $this->moveProjectToS3($project);
+        }
+    }
+    private function moveProjectToS3($project) {
+        echo "Moving project $project->id to S3".PHP_EOL;
+        if (!$this->isProjectConversionCandidate($project)) {
+            echo "Project " . $project->project_name . " does not require conversion." . PHP_EOL;
+        } else {
+            $s3 = new S3();
+            $baseFolder = $project->getS3BaseFolder();
+            $bucket = S3::getProjectsBucket();
+            if ($s3->doesObjectExist($bucket, $project->app_id, $baseFolder) == true)
+            {
+                echo "Folder exists on s3 already" . PHP_EOL;
+            } else {
+                $this->copyFolderFromCbToS3($project, $s3);
+                $sshUrl = $project->url;
+                $project->setS3Project();
+                $project->save();
+                $this->updateJobs($sshUrl, $project->url);
+            }
+        }
+        echo "Move project complete" . PHP_EOL;
+    }
+    private function copyFolderFromCbToS3($project, $s3)
+    {
+        // Test 2 URL: ssh://APKAIO63SIBNZAEHNXLA@git-codecommit.us-east-1.amazonaws.com/v1/repos/scriptureappbuilder-CHB-en-EnglishGreek03134
+        // Job ID 1
+        // Test 4 URL: ssh://APKAIO63SIBNZAEHNXLA@git-codecommit.us-east-1.amazonaws.com/v1/repos/scriptureappbuilder-DEM-CHB-en-Test0306
+        // Job ID 8
+        $baseFolder = $project->getS3BaseFolder();
+        echo "Copying Project Files for " . $baseFolder . PHP_EOL;
+        $gitWrapper = new GitWrapper();
+        $bucket = S3::getProjectsBucket();
+        Utils::deleteDir("/tmp/copy");
+        $tmpFolderName = "/tmp/copy/" . $project->project_name;
+        mkdir($tmpFolderName, 0777, true);
+        $codecommit = new CodeCommit();
+        $branch = "master";
+        $repoUrl = $codecommit->getSourceSshURL($project->url);
+        echo "Cloning URL: $repoUrl" . PHP_EOL;
+        $gitWrapper->cloneRepository($repoUrl, $tmpFolderName);
+        $gitDir = $tmpFolderName . "/.git";
+        Utils::deleteDir($gitDir);
+        $tmpS3FolderName = "/tmp/copy/" . $baseFolder;
+        echo "Renaming " . $tmpFolderName . "to " . $tmpS3FolderName . PHP_EOL;
+        rename($tmpFolderName, $tmpS3FolderName);
+        $keyPrefix = $project->app_id . "/";
+        echo "Copying from " . $tmpS3FolderName . " to S3 " . $bucket . " " . $keyPrefix . " " . $baseFolder . PHP_EOL;
+        $s3->uploadFolder("/tmp/copy", $bucket, $keyPrefix);
+        Utils::deleteDir("/tmp/copy");
+    }
+    private function isProjectConversionCandidate($project)
+    {
+        $isComplete = Project::STATUS_COMPLETED == $project->status;
+        $isSuccessful = Project::RESULT_SUCCESS == $project->result;
+        $retVal = $isComplete && $isSuccessful && !$project->isS3Project();
+        return $retVal;
+    }
+    private function updateJobs($sshUrl, $s3Url)
+    {
+        $jobs = Job::find()->where('git_url = :git_url',
+        ['git_url'=>$sshUrl])->all();
+        foreach ($jobs as $job) {
+            echo "Updating job id " . $job->id . PHP_EOL;
+            $job->git_url = $s3Url;
+            $job->save();
+        }
     }
 }

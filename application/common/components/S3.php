@@ -44,7 +44,7 @@ class S3 extends AWSCommon{
         $client->registerStreamWrapper();
         return $client;
     }
-    function getS3ClientWithCredentials(){
+    public function getS3ClientWithCredentials(){
         if ($this->ut == true) {
             return $this->s3Client;
         }
@@ -300,6 +300,33 @@ class S3 extends AWSCommon{
         }
         return $s3FolderArray;
     }
+    private function getS3ProjectArray($bucket, $prefix)
+    {
+        echo "Bucket: $bucket Prefix: $prefix".PHP_EOL;
+        $client = $this->getS3ClientWithCredentials();
+        $prefixLength = strlen($prefix);
+        $results = $client->getPaginator('ListObjects', [
+            'Bucket' => $bucket,
+            'Prefix' => $prefix
+        ]);
+        // Create an array of just the projects associated with those files
+        $s3FolderArray = array();
+        foreach ($results as $result) {
+            foreach ($result['Contents'] as $object) {
+                $key = $object['Key'];
+                $build = substr($key, $prefixLength + 1, strpos($key, '/', $prefixLength + 1) - ($prefixLength + 1));
+                if (!(is_null($build) || empty($build)))
+                {
+                    if (!array_key_exists($build, $s3FolderArray))
+                    {
+                        $s3FolderArray[$build] = 1;
+                    }
+                }
+            }
+        }
+        return $s3FolderArray;
+    }
+
     /**
      * Remove the artifacts for this build saved in S3
      *
@@ -316,8 +343,19 @@ class S3 extends AWSCommon{
     /**
      * Copy a folder to s3
      */
-    public function uploadFolder($folderName, $bucket) {
+    public function uploadFolder($folderName, $bucket, $keyPrefix = null) {
         $client = $this->getS3ClientWithCredentials();
-        $client->uploadDirectory($folderName, $bucket);
+        $client->uploadDirectory($folderName, $bucket, $keyPrefix);
+    }
+
+    public function doesObjectExist($bucket, $key, $project) {
+        $client = $this->getS3ClientWithCredentials();
+        $exists = false;
+        $s3FolderArray = $this->getS3ProjectArray($bucket, $key);
+        if (array_key_exists($project, $s3FolderArray))
+        {
+            $exists = true;
+        }
+        return $exists;
     }
 }

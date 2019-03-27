@@ -45,7 +45,7 @@ class ProjectController extends ActiveController
             $project->save();
             $project->setS3Project();
         }
-       $project->save();
+        $project->save();
         return $project;
     }
     public function actionIndexProjects() {
