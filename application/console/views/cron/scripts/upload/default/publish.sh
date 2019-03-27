@@ -31,4 +31,8 @@ do
     "google-play") google_play ;;
     *) publish_gradle "$target" ;;
   esac
+  if [ $? -ne 0 ]; then
+    echo "Target ${target} failed"
+    exit 1
+  fi
 done
