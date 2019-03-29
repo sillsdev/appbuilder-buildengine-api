@@ -226,6 +226,11 @@ class CronController extends Controller
         $developmentAction = new DevelopmentAction(DevelopmentAction::MOVEALLPROJECTS);
         $developmentAction->performAction();
     }
+    public function actionMigrateJobs()
+    {
+        $developmentAction = new DevelopmentAction(DevelopmentAction::MIGRATEJOBS);
+        $developmentAction->performAction();
+    }
     /**
      * Manage the state of the creation of a project repo
      * until the status is complete.

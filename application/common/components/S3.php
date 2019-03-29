@@ -312,7 +312,11 @@ class S3 extends AWSCommon{
         // Create an array of just the projects associated with those files
         $s3FolderArray = array();
         foreach ($results as $result) {
-            foreach ($result['Contents'] as $object) {
+            $contents = $result['Contents'];
+            if ($contents == null) {
+                continue;
+            }
+            foreach ($contents as $object) {
                 $key = $object['Key'];
                 $build = substr($key, $prefixLength + 1, strpos($key, '/', $prefixLength + 1) - ($prefixLength + 1));
                 if (!(is_null($build) || empty($build)))
