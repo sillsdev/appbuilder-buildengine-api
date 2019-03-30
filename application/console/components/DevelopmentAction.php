@@ -392,6 +392,7 @@ class DevelopmentAction {
         $baseFolder = Utils::lettersNumbersHyphensOnly($project->getS3BaseFolder());
         echo "Copying Project Files for " . $baseFolder . PHP_EOL;
         $gitWrapper = new GitWrapper();
+        $gitWrapper->setTimeout(600);
         $bucket = S3::getProjectsBucket();
         Utils::deleteDir("/tmp/copy");
         $tmpFolderName = "/tmp/copy/" . $project->project_name;
