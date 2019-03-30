@@ -39,6 +39,7 @@ class DevelopmentAction {
     const GETPROJECTTOKEN = 'GETPROJECTTOKEN';
     const MOVEPROJECT = 'MOVEPROJECTTOS3';
     const MOVEALLPROJECTS = 'MOVEALLPROJECTSTOS3';
+    const MIGRATEJOBS = 'MIGRATEJOBS';
 
     private $actionType;
     private $sendToAddress;
@@ -105,6 +106,9 @@ class DevelopmentAction {
                 break;
             case self::MOVEALLPROJECTS:
                 $this->actionMoveAllProjectsToS3();
+                break;
+            case self::MIGRATEJOBS:
+                $this->actionMigrateJobs();
                 break;
         }  
     }
@@ -359,13 +363,18 @@ class DevelopmentAction {
             echo "Project " . $project->project_name . " does not require conversion." . PHP_EOL;
         } else {
             $s3 = new S3();
-            $baseFolder = $project->getS3BaseFolder();
+            $s3Folder = $project->getS3Folder();
+            echo $s3Folder . PHP_EOL;
+            $baseFolder = Utils::lettersNumbersHyphensOnly($project->getS3BaseFolder());
+            echo $baseFolder . PHP_EOL;
+            $key = substr($s3Folder, 0, strrpos($s3Folder, '/'));
+            echo $key . PHP_EOL;
             $bucket = S3::getProjectsBucket();
-            if ($s3->doesObjectExist($bucket, $project->app_id, $baseFolder) == true)
+            if ($s3->doesObjectExist($bucket, $key, $baseFolder) == true)
             {
                 echo "Folder exists on s3 already" . PHP_EOL;
             } else {
-                $this->copyFolderFromCbToS3($project, $s3);
+                $this->copyFolderFromCbToS3($project, $key, $s3);
                 $sshUrl = $project->url;
                 $project->setS3Project();
                 $project->save();
@@ -374,15 +383,16 @@ class DevelopmentAction {
         }
         echo "Move project complete" . PHP_EOL;
     }
-    private function copyFolderFromCbToS3($project, $s3)
+    private function copyFolderFromCbToS3($project, $key, $s3)
     {
         // Test 2 URL: ssh://APKAIO63SIBNZAEHNXLA@git-codecommit.us-east-1.amazonaws.com/v1/repos/scriptureappbuilder-CHB-en-EnglishGreek03134
         // Job ID 1
         // Test 4 URL: ssh://APKAIO63SIBNZAEHNXLA@git-codecommit.us-east-1.amazonaws.com/v1/repos/scriptureappbuilder-DEM-CHB-en-Test0306
         // Job ID 8
-        $baseFolder = $project->getS3BaseFolder();
+        $baseFolder = Utils::lettersNumbersHyphensOnly($project->getS3BaseFolder());
         echo "Copying Project Files for " . $baseFolder . PHP_EOL;
         $gitWrapper = new GitWrapper();
+        $gitWrapper->setTimeout(600);
         $bucket = S3::getProjectsBucket();
         Utils::deleteDir("/tmp/copy");
         $tmpFolderName = "/tmp/copy/" . $project->project_name;
@@ -397,7 +407,7 @@ class DevelopmentAction {
         $tmpS3FolderName = "/tmp/copy/" . $baseFolder;
         echo "Renaming " . $tmpFolderName . "to " . $tmpS3FolderName . PHP_EOL;
         rename($tmpFolderName, $tmpS3FolderName);
-        $keyPrefix = $project->app_id . "/";
+        $keyPrefix = $key . "/";
         echo "Copying from " . $tmpS3FolderName . " to S3 " . $bucket . " " . $keyPrefix . " " . $baseFolder . PHP_EOL;
         $s3->uploadFolder("/tmp/copy", $bucket, $keyPrefix);
         Utils::deleteDir("/tmp/copy");
@@ -418,5 +428,57 @@ class DevelopmentAction {
             $job->git_url = $s3Url;
             $job->save();
         }
+    }
+    private function actionMigrateJobs()
+    {
+        echo "Migrating Jobs" . PHP_EOL;
+        $guid = Utils::createGUID();
+        echo "GUID: " . $guid . PHP_EOL;
+        $jobs = Job::find()->groupBy(['git_url'])->all();
+        foreach ($jobs as $job) {
+            $this->migrateJob($job->git_url, $job->client_id);
+        }
+        echo "Migration complete" . PHP_EOL;
+    }
+    private function migrateJob($git_url, $client_id)
+    {
+        $this->migrateCreateProject($git_url, $client_id);
+        $count = 1;
+        $jobs = Job::find()->where('git_url = :git_url',
+        ['git_url'=>$git_url])->all();
+        foreach ($jobs as $job) {
+            echo $count . "Migrating url " . $job->git_url . " client_id " . $job->client_id . PHP_EOL;
+            $count = $count + 1;
+            $guid = Utils::createGUID();
+            $job->request_id = $guid;
+            $job->save();
+        }
+    }
+    private function migrateCreateProject($git_url, $client_id)
+    {
+        $repo = substr($git_url, strrpos($git_url, '/') + 1);
+        $pos_group = strpos($repo, '-') + 1;
+        $app_id = substr($repo, 0, $pos_group - 1);
+        $rest = substr($repo, $pos_group);
+        $group = substr($rest, 0, strpos($rest, '-'));
+        $rest = substr($rest, strpos($rest, '-') + 1);
+        $lang = substr($rest, 0, strpos($rest, '-'));
+        $proj = substr($rest, strpos($rest, '-') + 1);
+        $proj = str_replace("-", " ", $proj);
+        if ($proj == '') {
+            echo "**** Bad project name - Using default ****" . PHP_EOL;
+            $proj = $lang .' Default';
+        }
+        echo "app_id: " . $app_id . " group: " . $group . " lang: " . $lang . " project: [" . $proj . "]" . PHP_EOL;
+        $project = new Project();
+        $project->status = Project::STATUS_COMPLETED;
+        $project->result = Project::RESULT_SUCCESS;
+        $project->url = $git_url;
+        $project->app_id = $app_id;
+        $project->client_id = $client_id;
+        $project->language_code = $lang;
+        $project->project_name = $proj;
+        $project->save();
+
     }
 }

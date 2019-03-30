@@ -72,6 +72,10 @@ class Utils
 
         return $string;
     }
+    /**
+     * Delete a folder and all files and subfolders it contains
+     * @param $dir Path to directory
+     */
     public static function deleteDir($dir) {
         if (is_dir($dir)) {
             $objects = scandir($dir);
@@ -85,5 +89,13 @@ class Utils
             }
             rmdir($dir);
         }
+    }
+    public static function createGUID()
+    {
+        if (function_exists('com_create_guid') === true)
+        {
+            return trim(com_create_guid(), '{}');
+        }
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(16384, 20479), mt_rand(32768, 49151), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535));
     }
 }
