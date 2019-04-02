@@ -45,14 +45,6 @@ class Job extends JobBase implements Linkable
                 ['request_id'], 'unique',
             ],
             [
-                'publisher_id', 'in', 'range' => [
-                    'wycliffeusa',
-                    'kalaammedia',
-                    'internetpublishingservice',
-                    'indhack',
-                    ]
-            ],
-            [
                 // This should come from another model
                 // 'app_id', 'exist', 'targetClass' => 'common\models\App', 'targetAttribute' => 'id',
                 // message => \Yii::t('app', 'Invalid App ID'),
