@@ -30,7 +30,6 @@ class CopyErrorToS3Operation implements OperationInterface
             if ($release) {
                 $s3 = new S3();
                 $s3->copyS3Folder($release);
-                $release->error = $release->consoleText();
                 $release->status = Release::STATUS_COMPLETED;
                 $release->save();
             }
@@ -39,7 +38,6 @@ class CopyErrorToS3Operation implements OperationInterface
             if ($build) {
                 $s3 = new S3();
                 $s3->copyS3Folder($build);
-                $build->error = $build->consoleText();
                 $build->status = Build::STATUS_COMPLETED;
                 $build->save();
             }

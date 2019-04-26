@@ -34,7 +34,7 @@ class CopyErrorToS3OperationTest extends UnitTestBase
         $copyOperation->performOperation();
         $release = Release::findOne(['id' => 10]);
         $expectedUrl = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/publish_scriptureappbuilder_22/10/console.log";
-        $this->assertEquals($expectedUrl, $release->error, " *** Incorrect Error Url");
+        $this->assertEquals($expectedUrl, $release->consoleText(), " *** Incorrect Error Url");
     }
     public function testPerformActionForBuildError()
     {
@@ -44,6 +44,6 @@ class CopyErrorToS3OperationTest extends UnitTestBase
         $copyOperation->performOperation();
         $build = Build::findOne(['id' => 17]);
         $expectedUrl = "https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/17/console.log";
-        $this->assertEquals($expectedUrl, $build->error, " *** Incorrect Error Url");
+        $this->assertEquals($expectedUrl, $build->consoleText(), " *** Incorrect Error Url");
     }
 }
