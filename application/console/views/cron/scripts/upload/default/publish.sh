@@ -1,14 +1,21 @@
 #!/bin/bash
 
 google_play() {
+  echo "OUTPUT_DIR=${OUTPUT_DIR}"
   PAJ="${SECRETS_DIR}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
   set +x
+  set -o pipefail
   if [ -z "$PROMOTE_FROM" ]; then
-    fastlane supply -j "$PAJ" -b ./*.apk -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing
+    fastlane supply -j "$PAJ" -b ./*.apk -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
   else
-    fastlane supply -j "$PAJ" -b ./*.apk -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing
+    fastlane supply -j "$PAJ" -b ./*.apk -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
   fi
+  exit_code=$?
+  set +o pipefail
+  echo "ls -l ${OUTPUT_DIR}"
+  ls -l ${OUTPUT_DIR}
+  return ${exit_code}
 }
 publish_gradle() {
   echo "Gradle $1"

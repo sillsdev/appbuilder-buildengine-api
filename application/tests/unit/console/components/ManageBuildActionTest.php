@@ -136,18 +136,20 @@ class ManageBuildActionTest extends UnitTestBase
         $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be postprocessing after successful completion");
         $this->assertNull($build->result, " *** Result should remain null when postprocessing");
         $build = Build::findOne(['id' => 15]);
-        $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be complete after failure");
+        $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be postprocessing after failure");
         $this->assertEquals("FAILURE", $build->result, " *** Result should be Failure after failed build");
         $build = Build::findOne(['id' => 16]);
-        $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after abort");
+        $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be completed after abort");
         $this->assertEquals("ABORTED", $build->result, " *** Result should be aborted after an aborted build");
         $build = Build::findOne(['id' => 21]);
-        $this->assertEquals(Build::STATUS_COMPLETED, $build->status, " *** Status should be completed after failure");
+        $this->assertEquals(Build::STATUS_POSTPROCESSING, $build->status, " *** Status should be completed after failure");
         $this->assertEquals("FAILURE", $build->result, " *** Result should be Failure after failed build");
         $queuedRecords = OperationQueue::find()->count();
-        $this->assertEquals(1, $queuedRecords, " *** Queued record count should be ");
+        $this->assertEquals(4, $queuedRecords, " *** Queued record count should be ");
         $queuedSaveRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVETOS3])->count();
         $this->assertEquals(1, $queuedSaveRecords, " *** SAVETOS3 Count should be 1 ");
+        $queuedSaveErrorRecords = OperationQueue::find()->where(['operation' => OperationQueue::SAVEERRORTOS3])->count();
+        $this->assertEquals(3, $queuedSaveErrorRecords, " *** SAVEERRORTOS3 Count should be 3 ");
     }
 
 }

@@ -164,27 +164,25 @@ class ManageBuildsAction extends ActionCommon
                 }
         
                 if ($codeBuild->isBuildComplete($buildStatus)) {
-                    $build->status = Build::STATUS_COMPLETED;
+                    $build->status = Build::STATUS_POSTPROCESSING;
                     $status = $codeBuild->getStatus($buildStatus);
                     switch($status){
                         case CodeBuild::STATUS_FAILED:
                         case CodeBuild::STATUS_FAULT:
                         case CodeBuild::STATUS_TIMED_OUT:
                             $build->result = Build::RESULT_FAILURE;
-                            $build->error = $build->cloudWatch();
+                            $this->handleFailure($build);
                             break;
                         case CodeBuild::STATUS_STOPPED:
                             $build->result = Build::RESULT_ABORTED;
-                            $build->error = $build->cloudWatch();
+                            $this->handleFailure($build);
                             break;
                         case CodeBuild::STATUS_SUCCEEDED:
-                            $build->status = Build::STATUS_POSTPROCESSING;
                             $task = OperationQueue::SAVETOS3;
                             $build_id = $build->id;
-                            OperationQueue::findOrCreate($task, $build_id, null);
+                            OperationQueue::findOrCreate($task, $build_id, "build");
                             break;
-                    break;
-                    }
+                     }
                 }
                 if (!$build->save()){
                     throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
@@ -203,6 +201,13 @@ class ManageBuildsAction extends ActionCommon
         }
     }
 
+    private function handleFailure($build)
+    {
+        $build->error = $build->cloudWatch();
+        $build_id = $build->id;
+        $task = OperationQueue::SAVEERRORTOS3;
+        OperationQueue::findOrCreate($task, $build_id, "build");
+    }
     private function getVersionCode($job, $build) {
         $id = $job->id;
         $retval = $job->existing_version_code;

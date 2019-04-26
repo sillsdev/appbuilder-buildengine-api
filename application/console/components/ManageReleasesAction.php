@@ -154,23 +154,27 @@ class ManageReleasesAction extends ActionCommon
                 }
         
                 if ($codeBuild->isBuildComplete($buildStatus)) {
-                    $release->status = Release::STATUS_COMPLETED;
+                    $release->status = Release::STATUS_POSTPROCESSING;
                     $status = $codeBuild->getStatus($buildStatus);
                     switch($status){
                         case CodeBuild::STATUS_FAILED:
                         case CodeBuild::STATUS_FAULT:
                         case CodeBuild::STATUS_TIMED_OUT:
                             $release->result = Build::RESULT_FAILURE;
+                            $this->handleFailure($release);
                             break;
                         case CodeBuild::STATUS_STOPPED:
                             $release->result = Build::RESULT_ABORTED;
+                            $this->handleFailure($release);
                             break;
                         case CodeBuild::STATUS_SUCCEEDED:
                             $release->result = Build::RESULT_SUCCESS;
                             $build->channel = $release->channel;
                             $build->save();
+                            $task = OperationQueue::SAVETOS3;
+                            $build_id = $build->id;
+                            OperationQueue::findOrCreate($task, $release->id, "release");
                             break;
-                    break;
                     }
                 }
                 if (!$release->save()){
@@ -191,6 +195,13 @@ class ManageReleasesAction extends ActionCommon
         }
 
 
+    }
+    private function handleFailure($release)
+    {
+        $release->error = $release->cloudWatch();
+        $release_id = $release->id;
+        $task = OperationQueue::SAVEERRORTOS3;
+        OperationQueue::findOrCreate($task, $release_id, "release");
     }
 
     private function getBuild($id)
