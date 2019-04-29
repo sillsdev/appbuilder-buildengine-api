@@ -39,7 +39,7 @@ class S3Test extends UnitTestBase
         MockS3Client::clearGlobals();
         $s3 = new S3();
         $build = Build::findOne(['id' => 11]);
-        $prefix = S3::getBasePrefixUrl($build, S3::getAppEnv());
+        $prefix = $build->getBasePrefixUrl(S3::getAppEnv());
         $expected = "testing/jobs/build_scriptureappbuilder_22/11";
         $this->assertEquals($expected, $prefix, " ***Prefix doesn't match");
     }
@@ -89,8 +89,8 @@ class S3Test extends UnitTestBase
         $s3 = new S3();
         $build = Build::findOne(['id' => 11]);
         $artifactsBucket = S3::getArtifactsBucket();
-        $sourcePrefix = S3::getBasePrefixUrl($build, 'codebuild-output') . "/";
-        $destPrefix = S3::getBasePrefixUrl($build, S3::getAppEnv()) . "/";
+        $sourcePrefix = $build->getBasePrefixUrl('codebuild-output') . "/";
+        $destPrefix = $build->getBasePrefixUrl(S3::getAppEnv()) . "/";
         $filename = 'codebuild-output/jobs/build_scriptureappbuilder_22/11/package_name.txt';
         $file = [
             'Key' => $filename,
@@ -119,14 +119,14 @@ class S3Test extends UnitTestBase
         $this->assertEquals('sil-appbuilder-artifacts/' . $filename, $copy['CopySource'], " *** Bad source file name");
         $this->assertEquals('42', $build->version_code, " *** Bad version code");
     }
-    public function testS3CopyFolder()
+    public function testCopyS3BuildFolder()
     {
         $this->setContainerObjects();
         MockS3Client::clearGlobals();
         $s3 = new S3();
         $build = Build::findOne(['id' => 11]);
         $s3->copyS3Folder($build);
-        $this->assertEquals(14, count(MockS3Client::$copies), " *** Wrong number of copies to S3");
+        $this->assertEquals(15, count(MockS3Client::$copies), " *** Wrong number of copies to S3");
         $this->assertEquals(1, count(MockS3Client::$lists), " *** Wrong number of lists to S3");
         $copy = MockS3Client::$copies[0];
         $expectedKey = 'testing/jobs/build_scriptureappbuilder_22/11/about.txt';

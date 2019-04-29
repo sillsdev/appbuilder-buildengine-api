@@ -11,8 +11,10 @@ use yii\web\Linkable;
 use yii\helpers\Url;
 
 use common\helpers\Utils;
+use common\interfaces\ArtifactsProvider;
+use common\components\S3;
 
-class Build extends BuildBase implements Linkable
+class Build extends BuildBase implements Linkable, ArtifactsProvider
 {
     
     const STATUS_INITIALIZED = 'initialized';
@@ -478,4 +480,17 @@ class Build extends BuildBase implements Linkable
                     . "Result=$build->result, ArtifactUrlBase=$build->artifact_url_base, ArtifactFiles=$build->artifact_files". PHP_EOL;
         return $log;
     }
+    /**
+     * Gets the base prefix for the s3 within the bucket
+     *
+     * @param string $productStage - stg or prd
+     * @return string prefix
+     */
+    public function getBasePrefixUrl($productStage) {
+        $artifactPath = S3::getArtifactPath($this->job, $productStage);
+        $buildNumber = (string)$this->id;
+        $repoUrl =  $artifactPath . "/" . $buildNumber;
+        return $repoUrl;
+    }
+
 }

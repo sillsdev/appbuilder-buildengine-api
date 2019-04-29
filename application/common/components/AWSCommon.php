@@ -50,26 +50,16 @@ class AWSCommon
         return $s3path;
 
     }
-    public static function getArtifactPath($build, $productionStage)
+    public static function getArtifactPath($job, $productionStage, $isPublish = false)
     {
-        $job = $build->job;
         $buildProcess = $job->nameForBuildProcess();
+        if ($isPublish == true)
+        {
+            $buildProcess = $job->nameForPublishProcess();
+        }
         $jobNumber = (string)$job->id;
         $artifactPath = $productionStage . '/jobs/' . $buildProcess . '_' . $jobNumber;
         return $artifactPath;
-    }
-    /**
-     * Gets the base prefix for the s3 within the bucket
-     *
-     * @param Build $build Current build object
-     * @param string $productStage - stg or prd
-     * @return string prefix
-     */
-    public static function getBasePrefixUrl($build, $productStage) {
-        $artifactPath = self::getArtifactPath($build, $productStage);
-        $buildNumber = (string)$build->id;
-        $repoUrl =  $artifactPath . "/" . $buildNumber;
-        return $repoUrl;
     }
     /**
      *  Get the project name which is the prd or stg plus build_app or publish_app

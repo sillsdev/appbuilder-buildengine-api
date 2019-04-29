@@ -5,6 +5,7 @@ namespace console\components;
 use console\components\OperationInterface;
 use common\models\Job;
 use common\models\Build;
+use common\models\Release;
 use common\components\S3;
 use common\components\Appbuilder_logger;
 
@@ -19,27 +20,42 @@ class CopyToS3Operation implements OperationInterface
     private $alertAfter = 5;
     private $fileUtil;
     private $s3;
+    private $parms;
 
-    public function __construct($id)
+    public function __construct($id, $parms)
     {
         $this->build_id = $id;
+        $this->parms = $parms;
         $this->fileUtil = \Yii::$container->get('fileUtils');
     }
     public function performOperation()
     {
         $prefix = Utils::getPrefix();
         echo "[$prefix] CopyToS3Operation ID: " .$this->build_id . PHP_EOL;
-        $build = Build::findOneByBuildId($this->build_id);
-        if ($build) {
-            $job = $build->job;
-            if ($job){
-                $this->saveBuild($build);
-                $build->status = Build::STATUS_COMPLETED;
-                $build->result = Build::RESULT_SUCCESS;
-                if (!$build->save()){
-                    throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
+        if ($this->parms == "release") {
+            $release = Release::findOneByBuildId($this->build_id);
+            if ($release) {
+                $s3 = new S3();
+                $s3->copyS3Folder($release);
+                $release->status = Release::STATUS_COMPLETED;
+                $release->save();
+                $s3->removeCodeBuildFolder($release);
+             }
+        }
+        else
+        {
+            $build = Build::findOneByBuildId($this->build_id);
+            if ($build) {
+                $job = $build->job;
+                if ($job){
+                    $this->saveBuild($build);
+                    $build->status = Build::STATUS_COMPLETED;
+                    $build->result = Build::RESULT_SUCCESS;
+                    if (!$build->save()){
+                        throw new \Exception("Unable to update Build entry, model errors: ".print_r($build->getFirstErrors(),true), 1450216434);
+                    }
+                    $this->s3->removeCodeBuildFolder($build);
                 }
-                $this->s3->removeCodeBuildFolder($build);
             }
         }
     }
@@ -126,7 +142,6 @@ class CopyToS3Operation implements OperationInterface
      * @return string
      */
     private function saveBuild($build) {
-        echo "SaveBuild" . PHP_EOL;
         $logger = new Appbuilder_logger("CopyToS3Operation");
         $this->s3 = new S3();
 

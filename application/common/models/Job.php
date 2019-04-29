@@ -185,6 +185,15 @@ class Job extends JobBase implements Linkable
         return "build_".$this->app_id;
     }
     /**
+     * Returns the name of the code build process to run
+     * @return String
+     */
+    public function nameForPublishProcess()
+    {
+        return "publish_".$this->app_id;
+    }
+
+    /**
      * Convenience method to find the job by Id
      * @param integer $id
      * @return Job Job

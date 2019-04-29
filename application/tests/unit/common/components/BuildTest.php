@@ -33,6 +33,7 @@ class BuildTest extends UnitTestBase
      */
     public function testDummy()
     {
+        //codecept_debug("Starting Test");
         $this->assertEquals(1,1);
     }
     public function testArtifactTypeTest()

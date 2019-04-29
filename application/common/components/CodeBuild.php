@@ -69,7 +69,7 @@ class CodeBuild extends AWSCommon {
         $secretsBucket = self::getSecretsBucket();
         $buildApp = self::getCodeBuildProjectName('build_app');
         $buildPath = $this->getBuildPath($job);
-        $artifactPath = $this->getArtifactPath($build, 'codebuild-output');
+        $artifactPath = $this->getArtifactPath($job, 'codebuild-output');
         echo "Artifacts path: " . $artifactPath . PHP_EOL;
         // Leaving all this code together to make it easier to remove when git is no longer supported
         if ($codeCommit) {
@@ -279,6 +279,8 @@ class CodeBuild extends AWSCommon {
         $build = $release->build;
         $job = $build->job;
         $artifactUrl = $build->apk();
+        $artifacts_bucket = self::getArtifactsBucket();
+        $artifactPath = $this->getArtifactPath($job, 'codebuild-output', true);
         $secretsBucket = self::getSecretsBucket();
         $publishApp = self::getCodeBuildProjectName('publish_app');
         $promoteFrom = $release->promote_from;
@@ -331,6 +333,14 @@ class CodeBuild extends AWSCommon {
         $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $release->environment);
         $promise = $this->codeBuildClient->startBuildAsync([
             'projectName' => $publishApp,
+            'artifactsOverride' => [
+                'location' => $artifacts_bucket, // output bucket
+                'name' => '/',                   // name of output artifact object
+                'namespaceType' => 'NONE',
+                'packaging' => 'NONE',
+                'path' => $artifactPath,         // path to output artifacts
+                'type' => 'S3',                  // REQUIRED
+            ],
             'buildspecOverride' => $releaseSpec,
             'environmentVariablesOverride' => $adjustedEnvironmentArray,
             'sourceLocationOverride' => $sourceLocation,
@@ -368,7 +378,7 @@ class CodeBuild extends AWSCommon {
     private function getArtifactsLocation($build)
     {
         $artifactsBucket = self::getArtifactsBucket();
-        $artifactFolder = self::getBasePrefixUrl($build, self::getAppEnv());
+        $artifactFolder = $build->getBasePrefixUrl(self::getAppEnv());
         $artifactsLocation = 's3://' . $artifactsBucket . '/' . $artifactFolder;
         return($artifactsLocation);
     }

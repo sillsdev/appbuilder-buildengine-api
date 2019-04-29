@@ -37,55 +37,58 @@ class MockS3Client
     }
     public function listObjectsV2($params) {
         self::$lists[] = $params;
+        $prefix = $params['Prefix'];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/manifest.txt',
+            'Key' => $prefix . 'manifest.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/about.txt',
+            'Key' => $prefix .'about.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/Kuna_Gospels-1.0.apk',
+            'Key' => $prefix . 'Kuna_Gospels-1.0.apk',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/package_name.txt',
+            'Key' => $prefix . 'package_name.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/default-language.txt',
+            'Key' => $prefix . 'play-listing/default-language.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/full_description.txt',
+            'Key' => $prefix . 'play-listing/es-419/full_description.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/images/featureGraphic.png',
+            'Key' => $prefix . 'play-listing/es-419/images/featureGraphic.png',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/images/icon.png',
+            'Key' => $prefix . 'play-listing/es-419/images/icon.png',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/images/phoneScreenshots/screen-0.png',
+            'Key' => $prefix . 'play-listing/es-419/images/phoneScreenshots/screen-0.png',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/images/phoneScreenshots/screen-1.png',
+            'Key' => $prefix . 'play-listing/es-419/images/phoneScreenshots/screen-1.png',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/images/phoneScreenshots/screen-2.png',
+            'Key' => $prefix . 'play-listing/es-419/images/phoneScreenshots/screen-2.png',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/images/phoneScreenshots/screen with bad @+% chars.png',
+            'Key' => $prefix . 'play-listing/es-419/images/phoneScreenshots/screen with bad @+% chars.png',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/short_description.txt',
+            'Key' => $prefix . 'play-listing/es-419/short_description.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/title.txt',
+            'Key' => $prefix . 'play-listing/es-419/title.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/es-419/whats_new.txt',
+            'Key' => $prefix . 'play-listing/es-419/whats_new.txt',
         ];
         $keys[] = [
-            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/version_code.txt',
+            'Key' => $prefix . 'version_code.txt',
         ];
-
+        $keys[] = [
+            'Key' => $prefix . 'console.log',
+        ];
         $retVal = [
             'KeyCount' => 16,
             'Contents' => $keys,
@@ -149,6 +152,8 @@ class MockS3Client
         $object['Key'] = "testing/jobs/build_scriptureappbuilder_22/11/version_code.txt";
         $keyList[] = $object;
         $object['Key'] = "testing/jobs/build_scriptureappbuilder_22/11/play-listing/index.html";
+        $keyList[] = $object;
+        $object['Key'] = "testing/jobs/build_scriptureappbuilder_22/11/console.log";
         $keyList[] = $object;
 
         $contents['Contents'] = $keyList;

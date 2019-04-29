@@ -23,6 +23,8 @@ use Yii;
  * @property string $codebuild_url
  * @property string $targets
  * @property string $environment
+ * @property string $artifact_url_base
+ * @property string $artifact_files
  *
  * @property Build $build
  */
@@ -45,7 +47,7 @@ class ReleaseBase extends \yii\db\ActiveRecord
             [['build_id', 'channel'], 'required'],
             [['build_id'], 'integer'],
             [['created', 'updated'], 'safe'],
-            [['status', 'result', 'channel', 'defaultLanguage', 'promote_from', 'build_guid', 'console_text_url', 'codebuild_url', 'targets', 'environment'], 'string', 'max' => 255],
+            [['status', 'result', 'channel', 'defaultLanguage', 'promote_from', 'build_guid', 'console_text_url', 'codebuild_url', 'targets', 'environment', 'artifact_url_base', 'artifact_files'], 'string', 'max' => 255],
             [['error'], 'string', 'max' => 2083],
             [['title'], 'string', 'max' => 30],
             [['build_id'], 'exist', 'skipOnError' => true, 'targetClass' => Build::className(), 'targetAttribute' => ['build_id' => 'id']],
@@ -74,6 +76,8 @@ class ReleaseBase extends \yii\db\ActiveRecord
             'codebuild_url' => Yii::t('app', 'Codebuild Url'),
             'targets' => Yii::t('app', 'Targets'),
             'environment' => Yii::t('app', 'Environment'),
+            'artifact_url_base' => Yii::t('app', 'Artifact Url Base'),
+            'artifact_files' => Yii::t('app', 'Artifact Files'),
         ];
     }
 

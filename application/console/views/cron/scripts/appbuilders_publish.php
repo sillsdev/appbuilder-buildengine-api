@@ -18,16 +18,19 @@ env:
     "SCRIPT_DIR"  : "/script"
     "SCRIPT_S3" : "s3://s3url/default"
     "TARGETS" : ""
+    "RELEASE_NUMBER" : "0"
 
 phases:
   install:
     commands:
   pre_build:
     commands:
+      - OUTPUT_DIR="/${RELEASE_NUMBER}"
       - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/publish/google_play_store/${PUBLISHER}"
       - mkdir "${SECRETS_DIR}"
       - mkdir "${ARTIFACTS_DIR}"
       - mkdir "${SCRIPT_DIR}"
+      - mkdir "${OUTPUT_DIR}"
       - echo "${SCRIPT_S3}"
       - /root/.local/bin/aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
       - /root/.local/bin/aws s3 sync "${ARTIFACTS_S3_DIR}" "${ARTIFACTS_DIR}"
@@ -39,8 +42,9 @@ phases:
   #post_build:
     #commands:
 
-#artifacts:
-#  files:
+artifacts:
+  files:
+    - $OUTPUT_DIR/**/*
     # - location
   #discard-paths: yes
   #base-directory: location

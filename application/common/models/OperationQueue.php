@@ -4,6 +4,7 @@ namespace common\models;
 use common\models\EmailQueue;
 use common\components\EmailUtils;
 use console\components\CopyToS3Operation;
+use console\components\CopyErrorToS3Operation;
 use console\components\ProjectUpdateOperation;
 use console\components\MaxRetriesExceededException;
 
@@ -17,6 +18,7 @@ use yii\helpers\ArrayHelper;
 class OperationQueue extends OperationQueueBase
 {
     const SAVETOS3 = 'SAVETOS3';
+    const SAVEERRORTOS3 = 'SAVEERRORTOS3';
     const UPDATEPROJECT = 'UPDATEPROJECT';
 
     public function rules()
@@ -70,11 +72,13 @@ class OperationQueue extends OperationQueueBase
         $operationObject = null;
         switch($operation){
             case OperationQueue::SAVETOS3:
-                $operationObject = new CopyToS3Operation($id);
+                $operationObject = new CopyToS3Operation($id, $operation_parms);
                 break;
             case OperationQueue::UPDATEPROJECT:
                 $operationObject = new ProjectUpdateOperation($id, $operation_parms);
                 break;
+            case OperationQueue::SAVEERRORTOS3:
+                $operationObject = new CopyErrorToS3Operation($id, $operation_parms);
         }
         return $operationObject;
     }
