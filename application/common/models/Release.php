@@ -11,10 +11,10 @@ use yii\web\Linkable;
 use yii\helpers\Url;
 
 use common\helpers\Utils;
-use common\interfaces\UsesArtifacts;
+use common\interfaces\ArtifactsProvider;
 use common\components\S3;
 
-class Release extends ReleaseBase implements Linkable, UsesArtifacts
+class Release extends ReleaseBase implements Linkable, ArtifactsProvider
 {
     
     const STATUS_INITIALIZED = 'initialized';
@@ -261,15 +261,11 @@ class Release extends ReleaseBase implements Linkable, UsesArtifacts
     }
     public static function findOneByBuildId($build_id)
     {
-        echo "Got here" . PHP_EOL;
         $build = Release::findOne(['id' => $build_id]);
         if ($build) {
-            echo "Found it " . PHP_EOL;
             if ($build->status == Release::STATUS_EXPIRED) {
                 $build = null;
             }
-       } else {
-           echo "didn't find it" . PHP_EOL;
        }
        return $build;
     }

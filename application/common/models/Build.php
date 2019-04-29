@@ -11,10 +11,10 @@ use yii\web\Linkable;
 use yii\helpers\Url;
 
 use common\helpers\Utils;
-use common\interfaces\UsesArtifacts;
+use common\interfaces\ArtifactsProvider;
 use common\components\S3;
 
-class Build extends BuildBase implements Linkable, UsesArtifacts
+class Build extends BuildBase implements Linkable, ArtifactsProvider
 {
     
     const STATUS_INITIALIZED = 'initialized';

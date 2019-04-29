@@ -2,9 +2,10 @@
 
 namespace common\interfaces;
 
-interface UsesArtifacts
+interface ArtifactsProvider
 {
   public function beginArtifacts($publicBaseUrl);
   public function handleArtifact($destinationFile, $fileContents);
   public function getBasePrefixUrl($productStage);
+  public function artifactType($key);
 }

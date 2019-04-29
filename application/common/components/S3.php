@@ -88,10 +88,10 @@ class S3 extends AWSCommon{
      * @param string $fileName Name of the file without path
      * @return string Contains the contents of the file
      */
-    public function readS3File($uses_artifacts, $fileName){
+    public function readS3File($artifacts_provider, $fileName){
         $fileContents = "";
         try {
-            $filePath =  $uses_artifacts->getBasePrefixUrl('codebuild-output') . "/" . $fileName;
+            $filePath =  $artifacts_provider->getBasePrefixUrl('codebuild-output') . "/" . $fileName;
             $result = $this->s3Client->getObject([
                 'Bucket' => self::getArtifactsBucket(),
                 'Key' => $filePath,
@@ -111,17 +111,18 @@ class S3 extends AWSCommon{
      * NOTE: This move is required because the initial codebuild version encrypts the files
      * with a key and there is no option to build them without encryption.
      * 
-     * @param Build or Release $uses_artifacts - The build or release
+     * @param Build or Release $artifacts_provider - The build or release
      */
-    public function copyS3Folder($uses_artifacts){
+    public function copyS3Folder($artifacts_provider){
         $artifactsBucket = self::getArtifactsBucket();
-        $sourcePrefix = $uses_artifacts->getBasePrefixUrl('codebuild-output') . "/";
-        $destPrefix = $uses_artifacts->getBasePrefixUrl(self::getAppEnv()) . "/";
+        $sourcePrefix = $artifacts_provider->getBasePrefixUrl('codebuild-output') . "/";
+        $destPrefix = $artifacts_provider->getBasePrefixUrl(self::getAppEnv()) . "/";
         $publicBaseUrl = $this->s3Client->getObjectUrl($artifactsBucket, $destPrefix);
-        $uses_artifacts->beginArtifacts($publicBaseUrl);
-        $destFolderPrefix = $uses_artifacts->getBasePrefixUrl(self::getAppEnv());
+        $artifacts_provider->beginArtifacts($publicBaseUrl);
+        $destFolderPrefix = $artifacts_provider->getBasePrefixUrl(self::getAppEnv());
         try
         {
+            // If destination folder already exists from some previous build, delete it
             $this->s3Client->deleteMatchingObjects($artifactsBucket, $destFolderPrefix);
         } catch (DeleteMultipleObjectsException $e) {
             $prefix = Utils::getPrefix();
@@ -136,7 +137,7 @@ class S3 extends AWSCommon{
         if (!is_null($files))
         {
             foreach ($files as $file) {
-                $this->copyS3File($file, $sourcePrefix, $destPrefix, $uses_artifacts);
+                $this->copyS3File($file, $sourcePrefix, $destPrefix, $artifacts_provider);
             }
         }
     }
@@ -148,9 +149,9 @@ class S3 extends AWSCommon{
      * @param AWS/File $file - AWS object for source file
      * @param string $sourcePrefix - The AWS path to the source folder
      * @param string $destPrefix - The AWS path to the destination folder
-     * @param UsesArtifacts $uses_artifacts - Successful build associated with the copy
+     * @param ArtifactsProvider $artifacts_provider - Successful build associated with the copy
      */
-    public function copyS3File($file, $sourcePrefix, $destPrefix, $uses_artifacts) {
+    public function copyS3File($file, $sourcePrefix, $destPrefix, $artifacts_provider) {
         $artifactsBucket = self::getArtifactsBucket();
         $fileContents="";
         $fileNameWithPrefix = $file['Key'];
@@ -162,7 +163,7 @@ class S3 extends AWSCommon{
                 return;
             //case: 'version.json': FUTURE: get versionCode from version.json
             case 'version_code.txt':
-                $fileContents = (string)$this->readS3File($uses_artifacts, $fileName);
+                $fileContents = (string)$this->readS3File($artifacts_provider, $fileName);
                 break;
             default:
                 echo $fileName . PHP_EOL;
@@ -179,15 +180,15 @@ class S3 extends AWSCommon{
                 'ContentType' => $this->getFileType($fileName),
                 'MetadataDirective' => 'REPLACE',
                 ]);
-            $uses_artifacts->handleArtifact($destinationFile, $fileContents);
+            $artifacts_provider->handleArtifact($destinationFile, $fileContents);
         } catch (\Exception $e) {
             echo "File was not renamed " . $sourceFile . PHP_EOL; 
         }
     }
 
-    public function writeFileToS3($fileContents, $fileName, $uses_artifacts) {
+    public function writeFileToS3($fileContents, $fileName, $artifacts_provider) {
         $fileS3Bucket = self::getArtifactsBucket();
-        $destPrefix = $uses_artifacts->getBasePrefixUrl(self::getAppEnv());
+        $destPrefix = $artifacts_provider->getBasePrefixUrl(self::getAppEnv());
         $fileS3Key = $destPrefix . "/" . $fileName;
 
         $this->s3Client->putObject([
@@ -198,10 +199,10 @@ class S3 extends AWSCommon{
             'ContentType' => $this->getFileType($fileName)
         ]);
 
-        $uses_artifacts->handleArtifact($fileS3Key, $fileContents);
+        $artifacts_provider->handleArtifact($fileS3Key, $fileContents);
     }
-    public function removeCodeBuildFolder($uses_artifacts) {
-        $s3Folder = $uses_artifacts->getBasePrefixUrl('codebuild-output') . "/";
+    public function removeCodeBuildFolder($artifacts_provider) {
+        $s3Folder = $artifacts_provider->getBasePrefixUrl('codebuild-output') . "/";
         $s3Bucket = S3::getArtifactsBucket();
         echo ("Deleting S3 bucket: $s3Bucket key: $s3Folder").PHP_EOL;
         $this->s3Client->deleteMatchingObjects($s3Bucket, $s3Folder);
