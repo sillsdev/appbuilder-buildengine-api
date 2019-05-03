@@ -15,19 +15,19 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Job</h2>
 
-                <p>View, edit or remove entries from the job table.  Each entry in the table corresponds to
-                    a application build and an application publish job in Jenkins instances attached to this database. 
+                <p>View, edit or remove entries from the job table.  
+                    Jobs point to the AWS S3 repository that contains the source for 
+                    the builds and publishes associated with this job.
                     Deleting job entries also deletes any associated
-                builds and releases associated with the job.  The corresponding jobs in Jenkins will also be deleted
-                shortly after the entry is removed from the database. </p>
+                builds and releases associated with the job. </p>
 
                 <p><a class="btn btn-default" href="/job-admin">Job Administration &raquo;</a></p>
             </div>
             <div class="col-lg-2">
                 <h2>Build</h2>
 
-                <p>View, edit or remove entries from the build table.  Each entry in this table corresponds to a build
-                    of the application job in Jenkins instances attached to this database.  Deleting the build also
+                <p>View, edit or remove entries from the build table.  Each entry in this table contains a url link 
+                    to the instance of the associated AWS Codebuild build attempt.  Deleting the build also
                 deletes any releases associated with this build.</p>
 
                 <p><a class="btn btn-default" href="/build-admin">Build Administration &raquo;</a></p>
@@ -35,15 +35,16 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Release</h2>
 
-                <p>View, edit or remove entries from the release table.  Entries in this table relates to attempts to
-                    publish builds to the Google Play Store and corresponds to a build of the Jenkins publish job.</p>
+                <p>View, edit or remove entries from the release table.  Entries in this table relate to attempts to publish 
+                    builds in Google Play store or other customized locations.  Each entry in this table contains a url link 
+                    to the instance of the associated AWS Codebuild publish attempt.</p>
 
                 <p><a class="btn btn-default" href="/release-admin">Release Administration &raquo;</a></p>
             </div>
             <div class="col-lg-2">
                 <h2>Client</h2>
 
-                <p>View edit or remove entries from the client table.  Used if multiple Doorman sites are sending requests to 
+                <p>View edit or remove entries from the client table.  Used if multiple Scriptoria sites are sending requests to 
                     the build engine.  Access tokens, which are used for the Authentication: Bearer fields of requests are entered
                     along with a prefix that is used in naming jobs associated with this client.
 
@@ -61,8 +62,8 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Project</h2>
 
-                <p>View edit or remove entries from the project table.  Entries in this table are created via the REST client project
-                    API.  The table is used to create a source repository in the Amazon CodeCommit archives.
+                <p>View edit or remove entries from the project table.
+                     Each entry contains a link to be used by Scripture App Builder to create or update a source repository in AWS S3.
 
                 <p><a class="btn btn-default" href="/project-admin">Project Administration &raquo;</a></p>
             </div>
