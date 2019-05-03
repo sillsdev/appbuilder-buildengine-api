@@ -15,7 +15,7 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Job</h2>
 
-                <p>View, edit or remove entries from the job table.  
+                <p>View, edit, or remove entries from the job table.
                     Jobs point to the AWS S3 repository that contains the source for 
                     the builds and publishes associated with this job.
                     Deleting job entries also deletes any associated
@@ -26,7 +26,7 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Build</h2>
 
-                <p>View, edit or remove entries from the build table.  Each entry in this table contains a url link 
+                <p>View, edit, or remove entries from the build table.  Each entry in this table contains a url link
                     to the instance of the associated AWS Codebuild build attempt.  Deleting the build also
                 deletes any releases associated with this build.</p>
 
@@ -35,7 +35,7 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Release</h2>
 
-                <p>View, edit or remove entries from the release table.  Entries in this table relate to attempts to publish 
+                <p>View, edit, or remove entries from the release table.  Entries in this table relate to attempts to publish
                     builds in Google Play store or other customized locations.  Each entry in this table contains a url link 
                     to the instance of the associated AWS Codebuild publish attempt.</p>
 
@@ -44,7 +44,7 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Client</h2>
 
-                <p>View edit or remove entries from the client table.  Used if multiple Scriptoria sites are sending requests to 
+                <p>View, edit, or remove entries from the client table.  Used if multiple Scriptoria sites are sending requests to
                     the build engine.  Access tokens, which are used for the Authentication: Bearer fields of requests are entered
                     along with a prefix that is used in naming jobs associated with this client.
 
@@ -53,7 +53,7 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Operation Queue</h2>
 
-                <p>View, edit or remove entries from the operation queue table.  Entries in this table relate to internal operations
+                <p>View, edit, or remove entries from the operation queue table.  Entries in this table relate to internal operations
                     that are either queued to be performed, waiting to be retried, or have failed the maximum number of times and 
                     are present for reporting purposes only.
 
@@ -62,7 +62,7 @@ $this->title = 'SIL App Builder Administration';
             <div class="col-lg-2">
                 <h2>Project</h2>
 
-                <p>View edit or remove entries from the project table.
+                <p>View, edit, or remove entries from the project table.
                      Each entry contains a link to be used by Scripture App Builder to create or update a source repository in AWS S3.
 
                 <p><a class="btn btn-default" href="/project-admin">Project Administration &raquo;</a></p>
