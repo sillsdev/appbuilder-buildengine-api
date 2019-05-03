@@ -52,8 +52,9 @@ class STS extends AWSCommon
             'Name' => $name,
             'Policy' => $policy
         ]);
-
-        return $result['Credentials'];
+        $credentials = $result['Credentials'];
+        $credentials['Region'] = self::getArtifactsBucketRegion(); 
+        return $credentials;
     }
 
     public function getProjectAccessToken($project, $name)
