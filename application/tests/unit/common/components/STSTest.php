@@ -42,5 +42,7 @@ class STSTest extends UnitTestBase
         $this->assertArrayHasKey('SecretAccessKey', $result, " *** SecretAccessKey is missing");
         $this->assertArrayHasKey('SessionToken', $result, " *** SessionToken is missing");
         $this->assertArrayHasKey('Expiration', $result, " *** Expiration is missing");
+        $this->assertArrayHasKey('Region', $result, " *** Region key is missing");
+        $this->assertEquals('us-west-2', $result['Region'], " *** Region key is incorrect");
     }
 }
