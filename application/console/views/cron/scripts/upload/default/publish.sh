@@ -6,10 +6,18 @@ google_play() {
   cd "$ARTIFACTS_DIR" || exit 1
   set +x
   set -o pipefail
-  if [ -z "$PROMOTE_FROM" ]; then
-    fastlane supply -j "$PAJ" -b ./*.apk -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
+
+  if [[ -z "${PUBLISH_NO_APK}" ]]; then
+    echo "Publishing APK"
+    APK_OPT = "-b ./*.apk "
   else
-    fastlane supply -j "$PAJ" -b ./*.apk -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
+    echo "Not publishing APK"
+    APK_OPT = "--skip_upload_apk true "
+  fi
+  if [ -z "$PROMOTE_FROM" ]; then
+    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
+  else
+    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
   fi
   exit_code=$?
   set +o pipefail
