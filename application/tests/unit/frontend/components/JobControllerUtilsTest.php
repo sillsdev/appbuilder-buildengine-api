@@ -90,12 +90,6 @@ class JobControllerUtilsTest extends UnitTestBase
         $jobControllerUtils = new JobControllerUtils();
         $release = $jobControllerUtils->publishBuild('87', '21', 'alpha', 'test', 'en', 'google-play', '');
     }
-    public function testPublishBuildExceptionBadUrl()
-    {
-        $this->setExpectedException('yii\\web\\ServerErrorHttpException');
-        $jobControllerUtils = new JobControllerUtils();
-        $release = $jobControllerUtils->publishBuild('22', '11', 'alpha', 'test', 'en', 'google-play', '');
-    }
     public function testVerifyChannel()
     {
         $jobControllerUtils = new JobControllerUtils();
