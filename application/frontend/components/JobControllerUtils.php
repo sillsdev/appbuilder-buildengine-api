@@ -40,10 +40,6 @@ class JobControllerUtils
         if (!$build){
             throw new NotFoundHttpException("Job $id Build $build_id not found");
         }
-        $artifactUrl = $build->apk();
-        if (is_null($artifactUrl) || ($artifactUrl=="")) {
-            throw new ServerErrorHttpException("Artifact URL empty for Job $id Build $build_id");
-        }
         $version_code = $build->version_code;
 
         $verify_result = $this->verifyChannel($id, $channel, $version_code);

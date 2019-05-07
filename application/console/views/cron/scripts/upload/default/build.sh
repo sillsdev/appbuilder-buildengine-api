@@ -33,6 +33,7 @@ build_play_listing() {
   echo "APPDEF_VERSION=${APPDEF_VERSION}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   cd "$PROJECT_DIR" || exit 1
+  VERSION_NAME=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
   PROJNAME=$(basename -- *.appDef .appDef)
   if [ -f "${PROJNAME}.appDef" ]; then
     echo "Moving ${PROJNAME}.appDef and ${PROJNAME}_data"
