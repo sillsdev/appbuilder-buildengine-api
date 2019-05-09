@@ -6,6 +6,10 @@ build_apk() {
   if [[ -n "${BUILD_MANAGE_VERSION_CODE}" ]]; then
     VERSION_CODE=$((VERSION_CODE + 1))
   fi
+  SCRIPT_OPT=""
+  if [[ -n "${BUILD_SHARE_APP_LINK}" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
+  fi
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
   echo "VERSION_NAME=${VERSION_NAME}"
   echo "VERSION_CODE=${VERSION_CODE}"
@@ -13,7 +17,7 @@ build_apk() {
   KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   cd "$PROJECT_DIR" || exit 1
   set -o pipefail
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" -ft share-app-link=true | tee ${OUTPUT_DIR}/console.log
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} | tee ${OUTPUT_DIR}/console.log
   exit_code=$?
   set +o pipefail
   echo "ls -l ${OUTPUT_DIR}"
