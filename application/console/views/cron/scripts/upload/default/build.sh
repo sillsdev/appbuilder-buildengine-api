@@ -3,20 +3,15 @@
 build_apk() {
   echo "Build APK"
   cd "$PROJECT_DIR" || exit 1
-  PROJNAME=$(basename -- *.appDef .appDef)
-  mv "${PROJNAME}.appDef" build.appDef
-  mv "${PROJNAME}_data" build_data
-  APPDEF_VERSION=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
-  echo "APPDEF_VERSION=${APPDEF_VERSION}"
-  if [ "$APPDEF_VERSION" -gt "$VERSION_CODE" ]; then VERSION_CODE=$((APPDEF_VERSION)); fi
-  VERSION_CODE=$((VERSION_CODE + 1))
+  if [[ -n "${BUILD_MANAGE_VERSION_CODE}" ]]; then
+    VERSION_CODE=$((VERSION_CODE + 1))
+  fi
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
+  echo "VERSION_NAME=${VERSION_NAME}"
   echo "VERSION_CODE=${VERSION_CODE}"
-  echo "APPDEF_VERSION=${APPDEF_VERSION}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   cd "$PROJECT_DIR" || exit 1
-  VERSION_NAME=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
   set -o pipefail
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" -ft share-app-link=true | tee ${OUTPUT_DIR}/console.log
   exit_code=$?
@@ -29,17 +24,10 @@ build_apk() {
 build_play_listing() {
   echo "Build play listing"
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
+  echo "VERSION_NAME=${VERSION_NAME}"
   echo "VERSION_CODE=${VERSION_CODE}"
-  echo "APPDEF_VERSION=${APPDEF_VERSION}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   cd "$PROJECT_DIR" || exit 1
-  VERSION_NAME=$(dpkg -s scripture-app-builder | grep 'Version' | awk -F '[ +]' '{print $2}')
-  PROJNAME=$(basename -- *.appDef .appDef)
-  if [ -f "${PROJNAME}.appDef" ]; then
-    echo "Moving ${PROJNAME}.appDef and ${PROJNAME}_data"
-    mv "${PROJNAME}.appDef" build.appDef
-    mv "${PROJNAME}_data" build_data
-  fi
   awk -F '[<>]' '/package/{print $3}' build.appDef > "$OUTPUT_DIR"/package_name.txt
   echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
   echo "{ \"version\" : \"${VERSION_NAME}.${VERSION_CODE}\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
@@ -83,6 +71,42 @@ build_gradle() {
     popd || exit 1
   fi
 }
+
+prepare_appbuilder_project() {
+  # In the past, we have had problems with multiple .appDef files being checked in and confusing error.
+  # Fail quickly in this situation
+  PROJ_COUNT=$(ls -l *.appDef | wc -l)
+  if [[ "$PROJ_COUNT" -ne "1" ]]; then
+    echo "ERROR: Wrong number of projects"
+    exit 2
+  fi
+
+  PROJ_NAME=$(basename -- *.appDef .appDef)
+  if [[ -f "${PROJ_NAME}.appDef" && -d "${PROJ_NAME}_data" ]]; then
+    echo "Moving ${PROJ_NAME}.appDef and ${PROJ_NAME}_data"
+    mv "${PROJ_NAME}.appDef" build.appDef
+    mv "${PROJ_NAME}_data" build_data
+  else
+    echo "ERROR: Project appDef or project data not found"
+    exit 3
+  fi
+
+  APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
+  echo "APPDEF_VERSION_NAME=${APPDEF_VERSION_NAME}"
+  VERSION_NAME=${APPDEF_VERSION_NAME}
+  if [[ -n "${BUILD_MANAGE_VERSION_NAME}" ]]; then
+      VERSION_NAME=$(dpkg -s ${APP_BUILDER_SCRIPT_PATH} | grep 'Version' | awk -F '[ +]' '{print $2}')
+  fi
+
+  APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
+  echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
+  VERSION_CODE=$((APPDEF_VERSION_CODE))
+  if [[ -n "${BUILD_MANAGE_VERSION_CODE}" ]]; then
+    if [[ "$APPDEF_VERSION_CODE" -gt "$VERSION_CODE" ]]; then VERSION_CODE=$((APPDEF_VERSION_CODE)); fi
+  fi
+}
+
+prepare_appbuilder_project
 
 echo "TARGETS: $TARGETS"
 env
