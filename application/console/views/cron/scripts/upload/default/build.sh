@@ -79,6 +79,7 @@ build_gradle() {
 prepare_appbuilder_project() {
   # In the past, we have had problems with multiple .appDef files being checked in and confusing error.
   # Fail quickly in this situation
+  cd "$PROJECT_DIR" || exit 1
   PROJ_COUNT=$(ls -l *.appDef | wc -l)
   if [[ "$PROJ_COUNT" -ne "1" ]]; then
     echo "ERROR: Wrong number of projects"
@@ -104,16 +105,15 @@ prepare_appbuilder_project() {
 
   APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
   echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
-  VERSION_CODE=$((APPDEF_VERSION_CODE))
   if [[ -n "${BUILD_MANAGE_VERSION_CODE}" ]]; then
     if [[ "$APPDEF_VERSION_CODE" -gt "$VERSION_CODE" ]]; then VERSION_CODE=$((APPDEF_VERSION_CODE)); fi
   fi
 }
 
+env
 prepare_appbuilder_project
 
 echo "TARGETS: $TARGETS"
-env
 for target in $TARGETS
 do
   case "$target" in
