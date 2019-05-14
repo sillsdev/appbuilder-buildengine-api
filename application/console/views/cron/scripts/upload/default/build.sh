@@ -15,6 +15,7 @@ build_apk() {
   echo "VERSION_NAME=${VERSION_NAME}"
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
+  echo "SCRIPT_OPT=${SCRIPT_OPT}"
   KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   cd "$PROJECT_DIR" || exit 1
   set -o pipefail
@@ -100,7 +101,7 @@ prepare_appbuilder_project() {
   APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
   echo "APPDEF_VERSION_NAME=${APPDEF_VERSION_NAME}"
   echo "BUILD_MANAGE_VERSION_NAME=${BUILD_MANAGE_VERSION_NAME}"
-  if [[ "${BUILD_MANAGE_VERSION_NAME}" -eq "0" ]]; then
+  if [[ "${BUILD_MANAGE_VERSION_NAME}" == "0" ]]; then
       VERSION_NAME=${APPDEF_VERSION_NAME}
   else
       VERSION_NAME=$(dpkg -s "${APP_BUILDER_SCRIPT_PATH}" | grep 'Version' | awk -F '[ +]' '{print $2}')
@@ -109,7 +110,7 @@ prepare_appbuilder_project() {
   APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
   echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
   echo "BUILD_MANAGE_VERSION_CODE=${BUILD_MANAGE_VERSION_CODE}"
-  if [[ "${BUILD_MANAGE_VERSION_CODE}" -eq "0" ]]; then
+  if [[ "${BUILD_MANAGE_VERSION_CODE}" == "0" ]]; then
     VERSION_CODE=$((APPDEF_VERSION_CODE))
   else
     if [[ "$APPDEF_VERSION_CODE" -gt "$VERSION_CODE" ]]; then VERSION_CODE=$((APPDEF_VERSION_CODE)); fi
