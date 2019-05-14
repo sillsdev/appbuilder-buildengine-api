@@ -7,7 +7,7 @@ build_apk() {
     VERSION_CODE=$((VERSION_CODE + 1))
   fi
   SCRIPT_OPT=""
-  echo "BUILD_SHARE_APP_LINK-${BUILD_SHARE_APP_LINK}"
+  echo "BUILD_SHARE_APP_LINK=${BUILD_SHARE_APP_LINK}"
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
