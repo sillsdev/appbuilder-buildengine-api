@@ -3,25 +3,27 @@
 build_apk() {
   echo "Build APK"
   cd "$PROJECT_DIR" || exit 1
-  if [[ -n "${BUILD_MANAGE_VERSION_CODE}" ]]; then
+  if [[ "${BUILD_MANAGE_VERSION_CODE}" != "0" ]]; then
     VERSION_CODE=$((VERSION_CODE + 1))
   fi
   SCRIPT_OPT=""
-  if [[ -n "${BUILD_SHARE_APP_LINK}" ]]; then
+  echo "BUILD_SHARE_APP_LINK=${BUILD_SHARE_APP_LINK}"
+  if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
   echo "VERSION_NAME=${VERSION_NAME}"
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
+  echo "SCRIPT_OPT=${SCRIPT_OPT}"
   KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   cd "$PROJECT_DIR" || exit 1
   set -o pipefail
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} | tee ${OUTPUT_DIR}/console.log
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" "${SCRIPT_OPT}" | tee "${OUTPUT_DIR}"/console.log
   exit_code=$?
   set +o pipefail
   echo "ls -l ${OUTPUT_DIR}"
-  ls -l ${OUTPUT_DIR}
+  ls -l "${OUTPUT_DIR}"
   return ${exit_code}
 }
 
@@ -47,14 +49,14 @@ build_play_listing() {
   fi
   FILE_LIST=$(find $PLAY_LISTING_DIR -type f -print)
   for f in $FILE_LIST
-  do 
+  do
     fn=${f#*"$PLAY_LISTING_DIR/"}
     echo "$fn" >> "$OUTPUT_DIR"/$MANIFEST_FILE
   done
   if [ -d "$PLAY_LISTING_DIR" ]; then
     cp -r "$PLAY_LISTING_DIR" "$OUTPUT_DIR"
     find "$OUTPUT_DIR" -name whats_new.txt | while read -r filename
-    do 
+    do
       DIR=$(dirname "${filename}")
       cp "$filename" "$OUTPUT_DIR"
       mkdir "${DIR}/changelogs"
@@ -80,7 +82,7 @@ prepare_appbuilder_project() {
   # In the past, we have had problems with multiple .appDef files being checked in and confusing error.
   # Fail quickly in this situation
   cd "$PROJECT_DIR" || exit 1
-  PROJ_COUNT=$(ls -l *.appDef | wc -l)
+  PROJ_COUNT=$(find . -name "*.appDef" | wc -l)
   if [[ "$PROJ_COUNT" -ne "1" ]]; then
     echo "ERROR: Wrong number of projects"
     exit 2
@@ -98,14 +100,19 @@ prepare_appbuilder_project() {
 
   APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
   echo "APPDEF_VERSION_NAME=${APPDEF_VERSION_NAME}"
-  VERSION_NAME=${APPDEF_VERSION_NAME}
-  if [[ -n "${BUILD_MANAGE_VERSION_NAME}" ]]; then
-      VERSION_NAME=$(dpkg -s ${APP_BUILDER_SCRIPT_PATH} | grep 'Version' | awk -F '[ +]' '{print $2}')
+  echo "BUILD_MANAGE_VERSION_NAME=${BUILD_MANAGE_VERSION_NAME}"
+  if [[ "${BUILD_MANAGE_VERSION_NAME}" == "0" ]]; then
+      VERSION_NAME=${APPDEF_VERSION_NAME}
+  else
+      VERSION_NAME=$(dpkg -s "${APP_BUILDER_SCRIPT_PATH}" | grep 'Version' | awk -F '[ +]' '{print $2}')
   fi
 
   APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
   echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
-  if [[ -n "${BUILD_MANAGE_VERSION_CODE}" ]]; then
+  echo "BUILD_MANAGE_VERSION_CODE=${BUILD_MANAGE_VERSION_CODE}"
+  if [[ "${BUILD_MANAGE_VERSION_CODE}" == "0" ]]; then
+    VERSION_CODE=$((APPDEF_VERSION_CODE))
+  else
     if [[ "$APPDEF_VERSION_CODE" -gt "$VERSION_CODE" ]]; then VERSION_CODE=$((APPDEF_VERSION_CODE)); fi
   fi
 }
