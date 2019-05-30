@@ -128,6 +128,7 @@ do
     "play-listing") build_play_listing ;;
     *) build_gradle "$target" ;;
   esac
+  # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
     echo "Target ${target} failed"
     exit 1

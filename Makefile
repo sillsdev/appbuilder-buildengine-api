@@ -1,7 +1,10 @@
 start: app
 
-test: composer rmTestDb upTestDb yiimigratetestDb rmTestDb
+test: testSh composer rmTestDb upTestDb yiimigratetestDb rmTestDb
 	docker-compose run --rm cli bash -c 'MYSQL_HOST=testDb MYSQL_DATABASE=test ./vendor/bin/codecept --debug run unit'
+
+testSh:
+	shellcheck application/console/views/cron/scripts/upload/default/*.sh
 
 app: upDb composer yiimigrate 
 	docker-compose up -d cron web

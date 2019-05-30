@@ -43,6 +43,11 @@ RUN chown -R www-data:www-data \
 RUN composer global require "fxp/composer-asset-plugin:^1.4.3" \
     && composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
+# Install shellcheck for validating shell scripts
+RUN apt-get update && apt-get install -y \
+    shellcheck \
+&& rm -rf /var/lib/apt/lists/*
+
 EXPOSE 80
 ENTRYPOINT ["s3-expand"]
 CMD ["/data/run.sh"]
