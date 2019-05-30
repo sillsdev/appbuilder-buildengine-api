@@ -13,15 +13,16 @@ google_play() {
     echo "Not publishing APK"
     APK_OPT="--skip_upload_apk true "
   fi
+  echo "APK_OPT=${APK_OPT}"
   if [ -z "$PROMOTE_FROM" ]; then
-    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
+    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee "${OUTPUT_DIR}"/console.log
   else
-    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
+    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing | tee "${OUTPUT_DIR}"/console.log
   fi
   exit_code=$?
   set +o pipefail
   echo "ls -l ${OUTPUT_DIR}"
-  ls -l ${OUTPUT_DIR}
+  ls -l "${OUTPUT_DIR}"
   return ${exit_code}
 }
 publish_gradle() {
@@ -45,6 +46,7 @@ do
     "google-play") google_play ;;
     *) publish_gradle "$target" ;;
   esac
+  # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
     echo "Target ${target} failed"
     exit 1
