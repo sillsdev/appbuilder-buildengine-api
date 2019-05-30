@@ -6,13 +6,12 @@ google_play() {
   cd "$ARTIFACTS_DIR" || exit 1
   set +x
   set -o pipefail
-
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     echo "Publishing APK"
-    APK_OPT = "-b ./*.apk "
+    APK_OPT="-b ./*.apk "
   else
     echo "Not publishing APK"
-    APK_OPT = "--skip_upload_apk true "
+    APK_OPT="--skip_upload_apk true "
   fi
   if [ -z "$PROMOTE_FROM" ]; then
     fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee ${OUTPUT_DIR}/console.log
