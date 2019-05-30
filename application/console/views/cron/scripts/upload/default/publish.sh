@@ -15,9 +15,9 @@ google_play() {
   fi
   echo "APK_OPT=${APK_OPT}"
   if [ -z "$PROMOTE_FROM" ]; then
-    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing | tee "${OUTPUT_DIR}"/console.log
+    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   else
-    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing | tee "${OUTPUT_DIR}"/console.log
+    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   fi
   exit_code=$?
   set +o pipefail
