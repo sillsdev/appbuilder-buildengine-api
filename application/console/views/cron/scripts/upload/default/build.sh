@@ -19,7 +19,7 @@ build_apk() {
   KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   cd "$PROJECT_DIR" || exit 1
   set -o pipefail
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" "${SCRIPT_OPT}" | tee "${OUTPUT_DIR}"/console.log
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" "${SCRIPT_OPT}" |& tee "${OUTPUT_DIR}"/console.log
   exit_code=$?
   set +o pipefail
   echo "ls -l ${OUTPUT_DIR}"
