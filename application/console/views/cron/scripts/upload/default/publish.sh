@@ -8,16 +8,23 @@ google_play() {
   set -o pipefail
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     echo "Publishing APK"
-    APK_OPT="-b ./*.apk "
+    APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )
+    if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
+      echo "Too many APK files: ${#APK_FILES[@]}"
+      exit 2
+    fi
+    APK_OPT="-b ${APK_FILES[0]} "
   else
     echo "Not publishing APK"
     APK_OPT="--skip_upload_apk true "
   fi
   echo "APK_OPT=${APK_OPT}"
   if [ -z "$PROMOTE_FROM" ]; then
-    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
+    # shellcheck disable=SC2086
+    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   else
-    fastlane supply -j "$PAJ" "${APK_OPT}" -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
+    # shellcheck disable=SC2086
+    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   fi
   exit_code=$?
   set +o pipefail
