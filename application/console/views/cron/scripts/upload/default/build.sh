@@ -34,7 +34,7 @@ build_play_listing() {
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   cd "$PROJECT_DIR" || exit 1
-  awk -F '[<>]' '/package/{print $3}' build.appDef > "$OUTPUT_DIR"/package_name.txt
+  awk -F '[<>]' '/<package>/{print $3}' build.appDef > "$OUTPUT_DIR"/package_name.txt
   echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
   echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
   if [ -f "build_data/about/about.txt" ]; then
