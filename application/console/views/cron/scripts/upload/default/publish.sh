@@ -1,14 +1,13 @@
 #!/bin/bash
 
-google_play() {
+publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
-  PAJ="${SECRETS_DIR}/playstore_api.json"
+  PAJ="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
   set +x
   set -o pipefail
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     echo "Publishing APK"
-    APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
       echo "Too many APK files: ${#APK_FILES[@]}"
       exit 2
@@ -32,6 +31,19 @@ google_play() {
   ls -l "${OUTPUT_DIR}"
   return ${exit_code}
 }
+
+publish_s3_bucket() {
+  # shellcheck disable=SC2034
+  AWS_SHARED_CREDENTIALS_FILE="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
+  # shellcheck disable=SC2034
+  AWS_CONFIG_FILE="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
+  DEST_BUCKET=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
+  for apk in $APK_FILES
+  do
+    aws s3 cp "$apk" "${DEST_BUCKET}"
+  done
+}
+
 publish_gradle() {
   echo "Gradle $1"
   if [ -f "${PROJECT_DIR}/publish.gradle" ]; then
@@ -45,12 +57,15 @@ publish_gradle() {
   fi
 }
 
+APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )
+
 echo "TARGETS: $TARGETS"
 env
 for target in $TARGETS
 do
   case "$target" in
-    "google-play") google_play ;;
+    "google-play") publish_google_play ;;
+    "s3-bucket") publish_s3_bucket ;;
     *) publish_gradle "$target" ;;
   esac
   # shellcheck disable=SC2181

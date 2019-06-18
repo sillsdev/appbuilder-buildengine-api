@@ -26,7 +26,7 @@ phases:
   pre_build:
     commands:
       - OUTPUT_DIR="/${RELEASE_NUMBER}"
-      - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/publish/google_play_store/${PUBLISHER}"
+      - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/publish"
       - mkdir "${SECRETS_DIR}"
       - mkdir "${ARTIFACTS_DIR}"
       - mkdir "${SCRIPT_DIR}"
