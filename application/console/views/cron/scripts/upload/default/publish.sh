@@ -33,14 +33,15 @@ publish_google_play() {
 }
 
 publish_s3_bucket() {
-  # shellcheck disable=SC2034
-  AWS_SHARED_CREDENTIALS_FILE="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
-  # shellcheck disable=SC2034
-  AWS_CONFIG_FILE="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
+  CREDENTIALS="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
+  CONFIG="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
   DEST_BUCKET=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
+  echo "CREDENTIALS=${CREDENTIALS}"
+  echo "CONFIG=${CONFIG}"
+  echo "DEST_BUCKET=${DEST_BUCKET}"
   for apk in $APK_FILES
   do
-    aws s3 cp "$apk" "${DEST_BUCKET}"
+    AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "$apk" "${DEST_BUCKET}" |& tee -a "${OUTPUT_DIR}"/console.log
   done
 }
 
