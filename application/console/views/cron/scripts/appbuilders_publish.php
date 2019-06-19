@@ -32,9 +32,9 @@ phases:
       - mkdir "${SCRIPT_DIR}"
       - mkdir "${OUTPUT_DIR}"
       - echo "${SCRIPT_S3}"
-      - /root/.local/bin/aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
-      - /root/.local/bin/aws s3 sync "${ARTIFACTS_S3_DIR}" "${ARTIFACTS_DIR}"
-      - /root/.local/bin/aws s3 sync "${SCRIPT_S3}" "${SCRIPT_DIR}"
+      - aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
+      - aws s3 sync "${ARTIFACTS_S3_DIR}" "${ARTIFACTS_DIR}"
+      - aws s3 sync "${SCRIPT_S3}" "${SCRIPT_DIR}"
       - ls -l "${ARTIFACTS_DIR}"
   build:
     commands:

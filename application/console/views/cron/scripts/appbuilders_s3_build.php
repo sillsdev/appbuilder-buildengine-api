@@ -32,9 +32,9 @@ phases:
       - mkdir "${PROJECT_DIR}"
       - mkdir "${SCRIPT_DIR}"
       - echo "PROJECT_S3=${PROJECT_S3}"
-      - /root/.local/bin/aws s3 sync "${PROJECT_S3}" "${PROJECT_DIR}"
-      - /root/.local/bin/aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
-      - /root/.local/bin/aws s3 sync "${SCRIPT_S3}" "${SCRIPT_DIR}"
+      - aws s3 sync "${PROJECT_S3}" "${PROJECT_DIR}"
+      - aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
+      - aws s3 sync "${SCRIPT_S3}" "${SCRIPT_DIR}"
       - export KSP=$(cat "${SECRETS_DIR}/ksp.txt")
       - export KA=$(cat "${SECRETS_DIR}/ka.txt")
       - export KAP=$(cat "${SECRETS_DIR}/kap.txt")
