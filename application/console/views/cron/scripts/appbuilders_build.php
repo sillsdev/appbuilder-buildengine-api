@@ -24,7 +24,7 @@ phases:
       - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/build/google_play_store/${PUBLISHER}"
       - mkdir "${SECRETS_DIR}"
       - mkdir "${OUTPUT_DIR}"
-      - /root/.local/bin/aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
+      - aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
       - export KSP=$(cat "${SECRETS_DIR}/ksp.txt")
       - export KA=$(cat "${SECRETS_DIR}/ka.txt")
       - export KAP=$(cat "${SECRETS_DIR}/kap.txt")
