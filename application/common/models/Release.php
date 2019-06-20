@@ -26,6 +26,7 @@ class Release extends ReleaseBase implements Linkable, ArtifactsProvider
 
     const ARTIFACT_CLOUD_WATCH = "cloudWatch";
     const ARTIFACT_CONSOLE_TEXT = "consoleText";
+    const ARTIFACT_PUBLISH_URL = "publishUrl";
 
     /**
      * Array of valid status transitions. The key is the starting
@@ -117,7 +118,8 @@ class Release extends ReleaseBase implements Linkable, ArtifactsProvider
             'artifacts' => function() {
                 return [
                     self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
-                    self::ARTIFACT_CONSOLE_TEXT => $this->consoleText()];
+                    self::ARTIFACT_CONSOLE_TEXT => $this->consoleText(),
+                    self::ARTIFACT_PUBLISH_URL => $this->publishUrl()];
             },
             'consoleText' => function(){
                 return $this->consoleText();
@@ -217,6 +219,10 @@ class Release extends ReleaseBase implements Linkable, ArtifactsProvider
     public function consoleText() {
         return $this->getArtifactUrl("/\.log$/");
     }
+
+    public function publishUrl() {
+        return $this->getArtifactUrl("/publish_url\.txt$/");
+    }
     /**
      * Gets the base prefix for the s3 within the bucket for publish
      *
@@ -241,6 +247,8 @@ class Release extends ReleaseBase implements Linkable, ArtifactsProvider
             $type = self::ARTIFACT_CLOUD_WATCH;
         } else if ($path_parts['extension'] === "log") {
             $type = self::ARTIFACT_CONSOLE_TEXT;
+        } else if ($file === "publish_url.txt") {
+            $type = self::ARTIFACT_PUBLISH_URL;
         }
 
         return array($type, $file);
@@ -251,6 +259,7 @@ class Release extends ReleaseBase implements Linkable, ArtifactsProvider
         switch ($type) {
             case self::ARTIFACT_CLOUD_WATCH:
             case self::ARTIFACT_CONSOLE_TEXT:
+            case self::ARTIFACT_PUBLISH_URL:
                 break;
 
             default:

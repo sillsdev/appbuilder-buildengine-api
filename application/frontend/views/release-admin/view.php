@@ -43,7 +43,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'artifacts',
                 'format'=>'html',
                 'value'=> Html::a("cloudWatch", $model->cloudWatch()) . ", " .
-                          Html::a("consoleText", $model->consoleText())
+                          Html::a("consoleText", $model->consoleText()) . ", " .
+                          Html::a("publishUrl", $model->publishUrl())
             ],
            'channel',
             'title',
