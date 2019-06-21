@@ -17,7 +17,7 @@ build_apk() {
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
-  KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}${PUBLISHER}.keystore"
+  KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
   KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ksp.txt")"
   KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ka.txt")"
   KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
