@@ -16,7 +16,11 @@ build_apk() {
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
-  KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
+  KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}${PUBLISHER}.keystore"
+  KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ksp.txt")"
+  KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ka.txt")"
+  KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
+
   cd "$PROJECT_DIR" || exit 1
   set -o pipefail
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" "${SCRIPT_OPT}" |& tee "${OUTPUT_DIR}"/console.log

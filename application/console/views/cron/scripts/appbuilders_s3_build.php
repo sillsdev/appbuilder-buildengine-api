@@ -26,7 +26,7 @@ phases:
   pre_build:
     commands:
       - OUTPUT_DIR="/${BUILD_NUMBER}"
-      - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/build/google_play_store/${PUBLISHER}"
+      - SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/build"
       - mkdir "${SECRETS_DIR}"
       - mkdir "${OUTPUT_DIR}"
       - mkdir "${PROJECT_DIR}"
@@ -35,9 +35,6 @@ phases:
       - aws s3 sync "${PROJECT_S3}" "${PROJECT_DIR}"
       - aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
       - aws s3 sync "${SCRIPT_S3}" "${SCRIPT_DIR}"
-      - export KSP=$(cat "${SECRETS_DIR}/ksp.txt")
-      - export KA=$(cat "${SECRETS_DIR}/ka.txt")
-      - export KAP=$(cat "${SECRETS_DIR}/kap.txt")
       - export GRADLE_OPTS="-Dorg.gradle.daemon=false"
   build:
     commands:
