@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e -o pipefail
 
 publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   PAJ="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
-  set +x
-  set -o pipefail
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     echo "Publishing APK"
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
@@ -18,30 +17,43 @@ publish_google_play() {
     APK_OPT="--skip_upload_apk true "
   fi
   echo "APK_OPT=${APK_OPT}"
+  PACKAGE_NAME=$(cat package_name.txt)
   if [ -z "$PROMOTE_FROM" ]; then
     # shellcheck disable=SC2086
-    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
+    fastlane supply -j "$PAJ" ${APK_OPT} -p "$PACKAGE_NAME" --track "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   else
     # shellcheck disable=SC2086
-    fastlane supply -j "$PAJ" ${APK_OPT} -p "$(cat package_name.txt)" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
+    fastlane supply -j "$PAJ" ${APK_OPT} -p "$PACKAGE_NAME" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   fi
-  exit_code=$?
-  set +o pipefail
+  echo "https://play.google.com/store/apps/details?id=${PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
-  return ${exit_code}
 }
 
 publish_s3_bucket() {
-  # shellcheck disable=SC2034
-  AWS_SHARED_CREDENTIALS_FILE="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
-  # shellcheck disable=SC2034
-  AWS_CONFIG_FILE="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
-  DEST_BUCKET=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
-  for apk in $APK_FILES
-  do
-    aws s3 cp "$apk" "${DEST_BUCKET}"
-  done
+  CREDENTIALS="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
+  CONFIG="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
+  SRC_FILE="${APK_FILES[0]}"
+  DEST_BUCKET_PATH=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
+  DEST_FILE="$(basename "${SRC_FILE}")"
+
+  IFS=/ read -r DEST_BUCKET DEST_PATH <<< "${DEST_BUCKET_PATH}"
+  if [[ "${DEST_PATH}" == "" ]]; then
+    PUBLISH_URL="https:${DEST_BUCKET}.s3.amazonaws.com/${DEST_FILE}"
+  else
+    PUBLISH_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_PATH}/${DEST_FILE}"
+  fi
+
+  echo "CREDENTIALS=${CREDENTIALS}"
+  echo "CONFIG=${CONFIG}"
+  echo "SRC_FILE=${SRC_FILE}"
+  echo "DEST_BUCKET_PATH=${DEST_BUCKET_PATH}"
+  echo "DEST_FILE=${DEST_FILE}"
+  echo "PUBLISH_URL=${PUBLISH_URL}"
+
+  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${SRC_FILE}" "s3://${DEST_BUCKET_PATH}/${DEST_FILE}" |& tee -a "${OUTPUT_DIR}"/console.log
+
+  echo "${PUBLISH_URL}" > "${OUTPUT_DIR}"/publish_url.txt
 }
 
 publish_gradle() {
@@ -68,9 +80,4 @@ do
     "s3-bucket") publish_s3_bucket ;;
     *) publish_gradle "$target" ;;
   esac
-  # shellcheck disable=SC2181
-  if [ $? -ne 0 ]; then
-    echo "Target ${target} failed"
-    exit 1
-  fi
 done
