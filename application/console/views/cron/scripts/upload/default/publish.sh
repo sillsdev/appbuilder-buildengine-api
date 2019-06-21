@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
+set -eu -o pipefail
 
 publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   PAJ="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
-  set +x
-  set -o pipefail
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     echo "Publishing APK"
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
@@ -26,12 +25,9 @@ publish_google_play() {
     # shellcheck disable=SC2086
     fastlane supply -j "$PAJ" ${APK_OPT} -p "$PACKAGE_NAME" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
   fi
-  exit_code=$?
-  set +o pipefail
   echo "https://play.google.com/store/apps/details?id=${PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
-  return ${exit_code}
 }
 
 publish_s3_bucket() {
@@ -152,9 +148,4 @@ do
     "s3-bucket") publish_s3_bucket ;;
     *) publish_gradle "$target" ;;
   esac
-  # shellcheck disable=SC2181
-  if [ $? -ne 0 ]; then
-    echo "Target ${target} failed"
-    exit 1
-  fi
 done

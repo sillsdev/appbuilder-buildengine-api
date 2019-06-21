@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -eu -o pipefail
 
 build_apk() {
   echo "Build APK"
@@ -22,13 +23,10 @@ build_apk() {
   KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
 
   cd "$PROJECT_DIR" || exit 1
-  set -o pipefail
+
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" "${SCRIPT_OPT}" |& tee "${OUTPUT_DIR}"/console.log
-  exit_code=$?
-  set +o pipefail
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
-  return ${exit_code}
 }
 
 build_play_listing() {
@@ -132,9 +130,4 @@ do
     "play-listing") build_play_listing ;;
     *) build_gradle "$target" ;;
   esac
-  # shellcheck disable=SC2181
-  if [ $? -ne 0 ]; then
-    echo "Target ${target} failed"
-    exit 1
-  fi
 done
