@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu -o pipefail
+set -e -o pipefail
 
 publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
