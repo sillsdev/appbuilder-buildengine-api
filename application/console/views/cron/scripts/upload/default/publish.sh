@@ -51,7 +51,7 @@ publish_s3_bucket() {
   echo "DEST_FILE=${DEST_FILE}"
   echo "PUBLISH_URL=${PUBLISH_URL}"
 
-  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${SRC_FILE}" "s3://${DEST_BUCKET_PATH}/${DEST_FILE}" |& tee -a "${OUTPUT_DIR}"/console.log
+  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp --acl public-read "${SRC_FILE}" "s3://${DEST_BUCKET_PATH}/${DEST_FILE}" |& tee -a "${OUTPUT_DIR}"/console.log
 
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}"/publish_url.txt
 }
