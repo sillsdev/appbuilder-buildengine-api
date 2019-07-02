@@ -39,7 +39,7 @@ publish_s3_bucket() {
 
   IFS=/ read -r DEST_BUCKET DEST_PATH <<< "${DEST_BUCKET_PATH}"
   if [[ "${DEST_PATH}" == "" ]]; then
-    PUBLISH_URL="https:${DEST_BUCKET}.s3.amazonaws.com/${DEST_FILE}"
+    PUBLISH_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_FILE}"
   else
     PUBLISH_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_PATH}/${DEST_FILE}"
   fi
