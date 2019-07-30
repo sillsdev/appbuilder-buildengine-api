@@ -109,7 +109,7 @@ prepare_appbuilder_project() {
   if [[ "${BUILD_MANAGE_VERSION_NAME}" == "0" ]]; then
       VERSION_NAME=${APPDEF_VERSION_NAME}
   else
-      VERSION_NAME=$(dpkg -s "${APP_BUILDER_SCRIPT_PATH}" | grep 'Version' | awk -F '[ +]' '{print $2}')
+      VERSION_NAME=$("${APP_BUILDER_SCRIPT_PATH}" -? | grep 'Version' | awk -F '[ +]' '{print $2}')
   fi
 
   APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
