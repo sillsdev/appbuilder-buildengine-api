@@ -94,10 +94,11 @@ prepare_appbuilder_project() {
   fi
 
   PROJ_NAME=$(basename -- *.appDef .appDef)
-  if [[ -f "${PROJ_NAME}.appDef" && -d "${PROJ_NAME}_data" ]]; then
-    echo "Moving ${PROJ_NAME}.appDef and ${PROJ_NAME}_data"
+  PROJ_DIR=$(find . | grep -i "${PROJ_NAME}_data$" | head -n1)
+  if [[ -f "${PROJ_NAME}.appDef" && -d "${PROJ_DIR}" ]]; then
+    echo "Moving ${PROJ_NAME}.appDef and ${PROJ_DIR}"
     mv "${PROJ_NAME}.appDef" build.appDef
-    mv "${PROJ_NAME}_data" build_data
+    mv "${PROJ_DIR}" build_data
   else
     echo "ERROR: Project appDef or project data not found"
     exit 3
