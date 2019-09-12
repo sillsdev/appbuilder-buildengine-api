@@ -18,7 +18,9 @@ build_apk() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
 
-  KEYSTORE=$(basename "$(xmllint --xpath "//keystore/text()" "${PROJECT_DIR}/build.appDef")")
+  KEYSTORE_PATH="$(xmllint --xpath "//keystore/text()" "${PROJECT_DIR}/build.appDef")"
+  KEYSTORE_UNIX_PATH=${KEYSTORE_PATH//\\//}
+  KEYSTORE=${KEYSTORE_UNIX_PATH##*/}
   KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${KEYSTORE}"
   if [[ -f "${KS}" ]]; then
     KS_OPT="-ks ${KS}"
