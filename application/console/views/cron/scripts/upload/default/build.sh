@@ -17,14 +17,23 @@ build_apk() {
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
-  KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
-  KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ksp.txt")"
-  KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ka.txt")"
-  KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
+
+  KEYSTORE=$(basename "$(xmllint --xpath "//keystore/text()" "${PROJECT_DIR}/build.appDef")")
+  KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${KEYSTORE}"
+  if [[ -f "${KS}" ]]; then
+    KS_OPT="-ks ${KS}"
+  else
+    KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
+    KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ksp.txt")"
+    KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ka.txt")"
+    KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
+    KS_OPT="-ks ${KS} -ksp ${KSP} -ka ${KA} -kap ${KAP}"
+  fi
 
   cd "$PROJECT_DIR" || exit 1
 
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -ks "$KS" -ksp "$KSP" -ka "$KA" -kap "$KAP" -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" "${SCRIPT_OPT}" |& tee "${OUTPUT_DIR}"/console.log
+  # shellcheck disable=SC2086
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} |& tee "${OUTPUT_DIR}"/console.log
 
   awk -F '[<>]' '/<package>/{print $3}' build.appDef > "$OUTPUT_DIR"/package_name.txt
   echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
@@ -104,7 +113,8 @@ prepare_appbuilder_project() {
     exit 3
   fi
 
-  APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
+  #APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
+  APPDEF_VERSION_NAME=$(xmllint --xpath "string(//version/@code)" build.appDef)
   echo "APPDEF_VERSION_NAME=${APPDEF_VERSION_NAME}"
   echo "BUILD_MANAGE_VERSION_NAME=${BUILD_MANAGE_VERSION_NAME}"
   if [[ "${BUILD_MANAGE_VERSION_NAME}" == "0" ]]; then
