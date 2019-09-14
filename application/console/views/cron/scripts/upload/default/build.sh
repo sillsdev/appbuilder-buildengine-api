@@ -12,14 +12,18 @@ build_apk() {
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
-  if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
-    SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}"
+  if [[ "${BUILD_AUDIO_DOWNLOAD}" == "1" ]]; then
+    if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}"
+    fi
+    if [[ "${AUDIO_DOWNLOAD_BITERATE}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITERATE}"
+    fi
   fi
-  if [[ "${AUDIO_DOWNLOAD_BITERATE}" != "" ]]; then
-    SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITERATE}"
-  fi
-  if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
-    SCRIPT_OPT="${SCRIPT_OPT} -audio-update-source ${AUDIO_UPDATE_SOURCE}"
+  if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
+    if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-update-source ${AUDIO_UPDATE_SOURCE}"
+    fi
   fi
 
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
