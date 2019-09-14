@@ -12,6 +12,16 @@ build_apk() {
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
+  if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}"
+  fi
+  if [[ "${AUDIO_DOWNLOAD_BITERATE}" != "" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITERATE}"
+  fi
+  if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -audio-update-source ${AUDIO_UPDATE_SOURCE}"
+  fi
+
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
   echo "VERSION_NAME=${VERSION_NAME}"
   echo "VERSION_CODE=${VERSION_CODE}"
@@ -113,6 +123,14 @@ prepare_appbuilder_project() {
   else
     echo "ERROR: Project appDef or project data not found"
     exit 3
+  fi
+
+  PUBLISH_PROPERTIES="build_data/publish/properties.json"
+  if [[ -f "${PUBLISH_PROPERTIES}" ]]; then
+      for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" "${PUBLISH_PROPERTIES}"); do
+        # shellcheck disable=SC2086 disable=SC2163
+        export $s
+      done
   fi
 
   #APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
