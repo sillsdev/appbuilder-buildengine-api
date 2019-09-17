@@ -138,7 +138,7 @@ prepare_appbuilder_project() {
   fi
 
   #APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
-  APPDEF_VERSION_NAME=$(xmllint --xpath "string(//version/@code)" build.appDef)
+  APPDEF_VERSION_NAME=$(xmllint --xpath "string(//version/@name)" build.appDef)
   echo "APPDEF_VERSION_NAME=${APPDEF_VERSION_NAME}"
   echo "BUILD_MANAGE_VERSION_NAME=${BUILD_MANAGE_VERSION_NAME}"
   if [[ "${BUILD_MANAGE_VERSION_NAME}" == "0" ]]; then
@@ -147,7 +147,8 @@ prepare_appbuilder_project() {
       VERSION_NAME=$("${APP_BUILDER_SCRIPT_PATH}" -? | grep 'Version' | awk -F '[ +]' '{print $2}')
   fi
 
-  APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
+  #APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
+  APPDEF_VERSION_CODE=$(xmllint --xpath "string(//version/@code)" build.appDef)
   echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
   echo "BUILD_MANAGE_VERSION_CODE=${BUILD_MANAGE_VERSION_CODE}"
   if [[ "${BUILD_MANAGE_VERSION_CODE}" == "0" ]]; then
