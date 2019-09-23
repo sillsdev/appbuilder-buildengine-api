@@ -32,7 +32,7 @@ build_apk() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
 
-  KEYSTORE_PATH="$(xmllint --xpath "//keystore/text()" "${PROJECT_DIR}/build.appDef")"
+  KEYSTORE_PATH="$(xmllint --xpath "/app-definition/signing/keystore/text()" "${PROJECT_DIR}/build.appDef")"
   KEYSTORE_UNIX_PATH=${KEYSTORE_PATH//\\//}
   KEYSTORE=${KEYSTORE_UNIX_PATH##*/}
   KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${KEYSTORE}"
@@ -51,7 +51,7 @@ build_apk() {
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} |& tee "${OUTPUT_DIR}"/console.log
 
-  awk -F '[<>]' '/<package>/{print $3}' build.appDef > "$OUTPUT_DIR"/package_name.txt
+  xmllint --xpath "/app-definition/package/text()" build.appDef > "$OUTPUT_DIR"/package_name.txt
   echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
   echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
 
@@ -137,8 +137,7 @@ prepare_appbuilder_project() {
       done
   fi
 
-  #APPDEF_VERSION_NAME=$(grep "version code=" build.appDef|awk -F"\"" '{print $4}')
-  APPDEF_VERSION_NAME=$(xmllint --xpath "string(//version/@name)" build.appDef)
+  APPDEF_VERSION_NAME=$(xmllint --xpath "string(/app-definition/version/@name)" build.appDef)
   echo "APPDEF_VERSION_NAME=${APPDEF_VERSION_NAME}"
   echo "BUILD_MANAGE_VERSION_NAME=${BUILD_MANAGE_VERSION_NAME}"
   if [[ "${BUILD_MANAGE_VERSION_NAME}" == "0" ]]; then
@@ -147,8 +146,7 @@ prepare_appbuilder_project() {
       VERSION_NAME=$("${APP_BUILDER_SCRIPT_PATH}" -? | grep 'Version' | awk -F '[ +]' '{print $2}')
   fi
 
-  #APPDEF_VERSION_CODE=$(grep "version code=" build.appDef|awk -F"\"" '{print $2}')
-  APPDEF_VERSION_CODE=$(xmllint --xpath "string(//version/@code)" build.appDef)
+  APPDEF_VERSION_CODE=$(xmllint --xpath "string(/app-definition/version/@code)" build.appDef)
   echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
   echo "BUILD_MANAGE_VERSION_CODE=${BUILD_MANAGE_VERSION_CODE}"
   if [[ "${BUILD_MANAGE_VERSION_CODE}" == "0" ]]; then
