@@ -50,13 +50,6 @@ build_apk() {
 
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} |& tee "${OUTPUT_DIR}"/console.log
-
-  xmllint --xpath "/app-definition/package/text()" build.appDef > "$OUTPUT_DIR"/package_name.txt
-  echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
-  echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
-
-  echo "ls -l ${OUTPUT_DIR}"
-  ls -l "${OUTPUT_DIR}"
 }
 
 build_play_listing() {
@@ -156,6 +149,15 @@ prepare_appbuilder_project() {
   fi
 }
 
+complete_successful_build() {
+  xmllint --xpath "/app-definition/package/text()" build.appDef > "$OUTPUT_DIR"/package_name.txt
+  echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
+  echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
+
+  echo "ls -l ${OUTPUT_DIR}"
+  ls -l "${OUTPUT_DIR}"
+}
+
 env
 prepare_appbuilder_project
 
@@ -168,3 +170,5 @@ do
     *) build_gradle "$target" ;;
   esac
 done
+
+complete_successful_build
