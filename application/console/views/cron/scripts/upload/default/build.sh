@@ -36,7 +36,13 @@ build_apk() {
   KEYSTORE_UNIX_PATH=${KEYSTORE_PATH//\\//}
   KEYSTORE=${KEYSTORE_UNIX_PATH##*/}
   KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${KEYSTORE}"
-  if [[ -f "${KS}" ]]; then
+  if [[ "${BUILD_KEYSTORE}" != "" ]]; then
+    KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/${BUILD_KEYSTORE}.keystore"
+    KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/ksp.txt")"
+    KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/ka.txt")"
+    KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/kap.txt")"
+    KS_OPT="-ks ${KS} -ksp ${KSP} -ka ${KA} -kap ${KAP}"
+  elif [[ -f "${KS}" ]]; then
     KS_OPT="-ks ${KS}"
   else
     KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
@@ -45,6 +51,7 @@ build_apk() {
     KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
     KS_OPT="-ks ${KS} -ksp ${KSP} -ka ${KA} -kap ${KAP}"
   fi
+  echo "KEYSTORE=${KS}"
 
   cd "$PROJECT_DIR" || exit 1
 
