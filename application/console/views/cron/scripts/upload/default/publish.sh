@@ -17,6 +17,10 @@ publish_google_play() {
     APK_OPT="--skip_upload_apk true "
   fi
   echo "APK_OPT=${APK_OPT}"
+  if [[ -n "${PUBLISH_DRAFT}" ]]; then
+    echo "Publishing Draft"
+    export SUPPLY_RELEASE_STATUS=draft
+  fi
   PACKAGE_NAME=$(cat package_name.txt)
   if [ -z "$PROMOTE_FROM" ]; then
     # shellcheck disable=SC2086
