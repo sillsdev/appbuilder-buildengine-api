@@ -26,7 +26,7 @@ publish_google_play() {
   fi
   if [ -n "$PROMOTE_FROM" ]; then
     export SUPPLY_TRACK="${PROMOTE_FROM}"
-    export SUPPLY_TRACK_PROMOTE_TO=$"{CHANNEL}"
+    export SUPPLY_TRACK_PROMOTE_TO="${CHANNEL}"
   else
     export SUPPLY_TRACK="${CHANNEL}"
   fi
