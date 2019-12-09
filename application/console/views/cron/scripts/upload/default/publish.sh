@@ -3,32 +3,35 @@ set -e -o pipefail
 
 publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
-  PAJ="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
+  export SUPPLY_JSON_KEY="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
+  SUPPLY_PACKAGE_NAME="$(cat package_name.txt)"
+  export SUPPLY_PACKAGE_NAME
+  export SUPPLY_METADATA_PATH="play-listing"
+
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     echo "Publishing APK"
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
       echo "Too many APK files: ${#APK_FILES[@]}"
       exit 2
     fi
-    APK_OPT="-b ${APK_FILES[0]} "
+    export SUPPLY_APK="${APK_FILES[0]}"
   else
     echo "Not publishing APK"
-    APK_OPT="--skip_upload_apk true "
+    export SUPPLY_SKIP_UPLOAD_APK=true
   fi
-  echo "APK_OPT=${APK_OPT}"
   if [[ -n "${PUBLISH_DRAFT}" ]]; then
     echo "Publishing Draft"
     export SUPPLY_RELEASE_STATUS=draft
   fi
-  PACKAGE_NAME=$(cat package_name.txt)
-  if [ -z "$PROMOTE_FROM" ]; then
-    # shellcheck disable=SC2086
-    fastlane supply -j "$PAJ" ${APK_OPT} -p "$PACKAGE_NAME" --track "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
+  if [ -n "$PROMOTE_FROM" ]; then
+    export SUPPLY_TRACK="${PROMOTE_FROM}"
+    export SUPPLY_TRACK_PROMOTE_TO=$"{CHANNEL}"
   else
-    # shellcheck disable=SC2086
-    fastlane supply -j "$PAJ" ${APK_OPT} -p "$PACKAGE_NAME" --track "$PROMOTE_FROM" --track_promote_to "$CHANNEL" -m play-listing |& tee "${OUTPUT_DIR}"/console.log
+    export SUPPLY_TRACK="${CHANNEL}"
   fi
+  env | grep "SUPPLY_"
+  fastlane supply |& tee "${OUTPUT_DIR}"/console.log
   echo "https://play.google.com/store/apps/details?id=${PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
