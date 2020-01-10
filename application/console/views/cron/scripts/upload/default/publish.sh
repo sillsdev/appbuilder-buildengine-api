@@ -32,7 +32,7 @@ publish_google_play() {
   fi
   env | grep "SUPPLY_"
   fastlane supply |& tee "${OUTPUT_DIR}"/console.log
-  echo "https://play.google.com/store/apps/details?id=${PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
+  echo "https://play.google.com/store/apps/details?id=${SUPPLY_PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
 }
