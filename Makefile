@@ -6,7 +6,7 @@ test: testSh composer rmTestDb upTestDb yiimigratetestDb rmTestDb
 testSh:
 	shellcheck application/console/views/cron/scripts/upload/default/*.sh
 
-app: upDb composer yiimigrate 
+app: upDb composer yiimigrate adminer
 	docker-compose up -d cron web
 
 composer:
@@ -47,3 +47,6 @@ clean:
 
 cleanVolumes:
 	docker volume rm `docker volume ls -qf dangling=true`
+
+adminer:
+	docker-compose up -d adminer
