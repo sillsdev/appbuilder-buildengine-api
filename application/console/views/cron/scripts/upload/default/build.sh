@@ -1,6 +1,48 @@
 #!/usr/bin/env bash
 set -e -o pipefail
 
+check_audio_sources() {
+  if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
+    if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
+      ADD_AUDIO_UPDATE_SOURCE=1
+      SOURCES="$(xmllint --xpath "/app-definition/audio-sources/audio-source/name" "${PROJECT_DIR}/build.appDef")"
+      IFS='=' read -ra UPDATE_SOURCES <<< "$AUDIO_UPDATE_SOURCE"
+      for i in "${UPDATE_SOURCES[@]}"; do
+        if [[ "$SOURCES" != *"<name>${i}</name>"* ]]; then
+          ADD_AUDIO_UPDATE_SOURCE=0
+        fi
+      done
+    fi
+  fi
+}
+
+replace_audio_sources() {
+  SRC_UPDATE_SOURCE="${UPDATE_SOURCES[0]}"
+  DST_UPDATE_SOURCE="${UPDATE_SOURCES[1]}"
+  xmlstarlet ed -u "/app-definition/audio-sources/audio-source/name[text() = '${SRC_UPDATE_SOURCE}']" -v "SCRIPTORIA_SRC_SOURCE" "${PROJECT_DIR}/build.appDef" > "${PROJECT_DIR}/tmp.appDef"
+  xmlstarlet ed -u "/app-definition/audio-sources/audio-source/name[text() = '${DST_UPDATE_SOURCE}']" -v "SCRIPTORIA_DST_SOURCE" "${PROJECT_DIR}/tmp.appDef" > "${PROJECT_DIR}/build.appDef"
+  rm "${PROJECT_DIR}/tmp.appDef"
+}
+
+process_audio_sources() {
+  check_audio_sources
+  if [[ "${ADD_AUDIO_UPDATE_SOURCE}" == "1" ]]; then
+    replace_audio_sources
+    SCRIPT_OPT="${SCRIPT_OPT} -audio-update-source SCRIPTORIA_SRC_SOURCE=SCRIPTORIA_DST_SOURCE"
+  fi
+}
+
+process_audio_download() {
+  if [[ "${BUILD_AUDIO_DOWNLOAD}" == "1" ]]; then
+    if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY} -audio-download-url https://dev.v4.dbt.io"
+    fi
+    if [[ "${AUDIO_DOWNLOAD_BITRATE}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITRATE}"
+    fi
+  fi
+}
+
 build_apk() {
   echo "Build APK"
   cd "$PROJECT_DIR" || exit 1
@@ -12,19 +54,8 @@ build_apk() {
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
-  if [[ "${BUILD_AUDIO_DOWNLOAD}" == "1" ]]; then
-    if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
-      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}"
-    fi
-    if [[ "${AUDIO_DOWNLOAD_BITERATE}" != "" ]]; then
-      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITERATE}"
-    fi
-  fi
-  if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
-    if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
-      SCRIPT_OPT="${SCRIPT_OPT} -audio-update-source ${AUDIO_UPDATE_SOURCE}"
-    fi
-  fi
+  process_audio_download
+  process_audio_sources
 
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
   echo "VERSION_NAME=${VERSION_NAME}"
@@ -36,20 +67,33 @@ build_apk() {
   KEYSTORE_UNIX_PATH=${KEYSTORE_PATH//\\//}
   KEYSTORE=${KEYSTORE_UNIX_PATH##*/}
   KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${KEYSTORE}"
-  if [[ "${BUILD_KEYSTORE}" != "" ]]; then
+  if [[ "${PRODUCT_KEYSTORE}" != "" ]]; then
+    echo "Using product keystore=${PRODUCT_KEYSTORE}"
+    KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/${PRODUCT_KEYSTORE}.keystore"
+    KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/ksp.txt")"
+    KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/ka.txt")"
+    KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/kap.txt")"
+    { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
+    KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
+  elif [[ "${BUILD_KEYSTORE}" != "" ]]; then
+    echo "Using build keystore=${BUILD_KEYSTORE}"
     KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/${BUILD_KEYSTORE}.keystore"
     KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/ksp.txt")"
     KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/ka.txt")"
     KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/kap.txt")"
-    KS_OPT="-ks ${KS} -ksp ${KSP} -ka ${KA} -kap ${KAP}"
+    { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
+    KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
   elif [[ -f "${KS}" ]]; then
+    echo "Using project keystore=${KEYSTORE}"
     KS_OPT="-ks ${KS}"
   else
+    echo "Using publisher keystore=${PUBLISHER}"
     KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
     KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ksp.txt")"
     KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ka.txt")"
     KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
-    KS_OPT="-ks ${KS} -ksp ${KSP} -ka ${KA} -kap ${KAP}"
+    { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
+    KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
   fi
   echo "KEYSTORE=${KS}"
 
