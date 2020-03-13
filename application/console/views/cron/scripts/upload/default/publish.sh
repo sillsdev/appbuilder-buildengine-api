@@ -7,6 +7,8 @@ publish_google_play() {
   cd "$ARTIFACTS_DIR" || exit 1
   SUPPLY_PACKAGE_NAME="$(cat package_name.txt)"
   export SUPPLY_PACKAGE_NAME
+  SUPPLY_VERSION_CODE="$(cat version_code.txt)"
+  export SUPPLY_VERSION_CODE
   export SUPPLY_METADATA_PATH="play-listing"
 
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
