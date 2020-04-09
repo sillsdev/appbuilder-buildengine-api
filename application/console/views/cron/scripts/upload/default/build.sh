@@ -152,6 +152,14 @@ build_gradle() {
   fi
 }
 
+prepare_appbuilder_dir() {
+  if [[ "${BUILD_KEYS_FILE}" != "" ]]; then
+    KEY_DEST_DIR="${HOME}/App Builder/Scripture Apps"
+    mkdir -p "${KEY_DEST_DIR}"
+    cp "${PROJECT_DIR}/build_data/${BUILD_KEYS_FILE}" "${KEY_DEST_DIR}/keys.txt"
+  fi
+}
+
 prepare_appbuilder_project() {
   # In the past, we have had problems with multiple .appDef files being checked in and confusing error.
   # Fail quickly in this situation
@@ -211,6 +219,7 @@ complete_successful_build() {
 
 env
 prepare_appbuilder_project
+prepare_appbuilder_dir
 
 echo "TARGETS: $TARGETS"
 for target in $TARGETS
