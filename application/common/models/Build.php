@@ -44,6 +44,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const ARTIFACT_CLOUD_WATCH = "cloudWatch";
     const ARTIFACT_CONSOLE_TEXT = "consoleText";
     const ARTIFACT_WHATS_NEW = "whats_new";
+    const ARTIFACT_HTML = "html";
+    const ARTIFACT_PWA = "pwa";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -171,6 +173,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             'artifacts' => function() {
                 return [
                     self::ARTIFACT_APK => $this->apk(),
+                    self::ARTIFACT_HTML => $this->html(),
+                    self::ARTIFACT_PWA => $this->pwa(),
                     self::ARTIFACT_ABOUT => $this->about(),
                     self::ARTIFACT_PLAY_LISTING => $this->playListing(),
                     self::ARTIFACT_PLAY_LISTING_MANIFEST => $this->playListingManifest(),
@@ -346,6 +350,10 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $type = self::ARTIFACT_ABOUT;
         } else if ($file === "whats_new.txt") {
             $type = self::ARTIFACT_WHATS_NEW;
+        } else if ($file === "html.zip") {
+            $type = self::ARTIFACT_HTML;
+        } else if ($file === "pwa.zip") {
+            $type = self::ARTIFACT_PWA;
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING;
             $file = "play-listing/index.html";
@@ -385,6 +393,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
 
             case self::ARTIFACT_ABOUT:
             case self::ARTIFACT_APK:
+            case self::ARTIFACT_HTML:
+            case self::ARTIFACT_PWA:
             case self::ARTIFACT_PLAY_LISTING:
             case self::ARTIFACT_PLAY_LISTING_MANIFEST:
             case self::ARTIFACT_PACKAGE_NAME:
@@ -445,6 +455,12 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function whatsNew() {
         return $this->getArtifactUrl("/whats_new\.txt$/");
+    }
+    public function html() {
+        return $this->getArtifactUrl("/html\.zip$/");
+    }
+    public function pwa() {
+        return $this->getArtifactUrl("/pwa\.zip$/");
     }
     public function cloudWatch() {
         return $this->console_text_url;

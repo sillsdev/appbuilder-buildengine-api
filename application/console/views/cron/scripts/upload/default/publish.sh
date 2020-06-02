@@ -65,6 +65,11 @@ publish_s3_bucket() {
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}"/publish_url.txt
 }
 
+public_rclone() {
+  CONFIG="${SECRETS_DIR}/rclone/${PUBLISHER}/rclone.conf"
+
+}
+
 publish_gradle() {
   echo "Gradle $1"
   if [ -f "${PROJECT_DIR}/publish.gradle" ]; then

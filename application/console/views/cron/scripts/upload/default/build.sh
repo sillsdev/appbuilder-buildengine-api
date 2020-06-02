@@ -103,6 +103,36 @@ build_apk() {
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} |& tee "${OUTPUT_DIR}"/console.log
 }
 
+build_html() {
+  echo "Build html"
+  echo "OUTPUT_DIR=${OUTPUT_DIR}"
+  cd "$PROJECT_DIR" || exit 1
+
+  HTML_OUTPUT_DIR=/tmp/output/html
+  mkdir -p "${HTML_OUTPUT_DIR}"
+  #mkdir -p "${OUTPUT_DIR}/html"
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html ${BUILD_HTML_COLLECTION_ID} -fp html.output="${HTML_OUTPUT_DIR}"
+  pushd "${HTML_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
+  #tar cvf - . | (cd "${OUTPUT_DIR}/html" && tar xvfBp - )
+  zip -r "${OUTPUT_DIR}/html.zip" .
+  popd
+}
+
+build_pwa() {
+  echo "Build pwa"
+  echo "OUTPUT_DIR=${OUTPUT_DIR}"
+  cd "$PROJECT_DIR" || exit 1
+
+  PWA_OUTPUT_DIR=/tmp/output/pwa
+  mkdir -p "${PWA_OUTPUT_DIR}"
+  #mkdir -p "${OUTPUT_DIR}/pwa"
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa ${BUILD_PWA_COLLECTION_ID} -fp html.output="${PWA_OUTPUT_DIR}"
+  pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
+  #tar cvf - . | (cd "${OUTPUT_DIR}/pwa" && tar xvfBp - )
+  zip -r "${OUTPUT_DIR}/pwa.zip" .
+  popd
+}
+
 build_play_listing() {
   echo "Build play listing"
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
@@ -198,6 +228,9 @@ prepare_appbuilder_project() {
       VERSION_NAME=$("${APP_BUILDER_SCRIPT_PATH}" -? | grep 'Version' | awk -F '[ +]' '{print $2}')
   fi
 
+  APPDEF_PACKAGE_NAME=$(xmllint --xpath "/app-definition/package/text()" build.appDef)
+  echo "APPDEF_PACKAGE_NAME=${APPDEF_PACKAGE_NAME}"
+
   APPDEF_VERSION_CODE=$(xmllint --xpath "string(/app-definition/version/@code)" build.appDef)
   echo "APPDEF_VERSION_CODE=${APPDEF_VERSION_CODE}"
   echo "BUILD_MANAGE_VERSION_CODE=${BUILD_MANAGE_VERSION_CODE}"
@@ -209,12 +242,12 @@ prepare_appbuilder_project() {
 }
 
 complete_successful_build() {
-  xmllint --xpath "/app-definition/package/text()" build.appDef > "$OUTPUT_DIR"/package_name.txt
+  echo $APPDEF_PACKAGE_NAME > "$OUTPUT_DIR"/package_name.txt
   echo $VERSION_CODE > "$OUTPUT_DIR"/version_code.txt
   echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
 
-  echo "ls -l ${OUTPUT_DIR}"
-  ls -l "${OUTPUT_DIR}"
+  echo "ls -lR ${OUTPUT_DIR}"
+  ls -lR "${OUTPUT_DIR}"
 }
 
 env
@@ -227,6 +260,8 @@ do
   case "$target" in
     "apk") build_apk ;;
     "play-listing") build_play_listing ;;
+    "html") build_html ;;
+    "pwa") build_pwa ;;
     *) build_gradle "$target" ;;
   esac
 done
