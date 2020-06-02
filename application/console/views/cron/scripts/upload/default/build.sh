@@ -181,6 +181,12 @@ prepare_appbuilder_project() {
     exit 3
   fi
 
+  MULTIPLE_APKS=$(xmllint --xpath "string(/app-definition/multiple-apks/@value)" build.appDef)
+  if [[ "${MULTIPLE_APKS}" == "true" ]]; then
+      echo "ERROR: multiple-apks not supported yet"
+      exit 4
+  fi
+  
   PUBLISH_PROPERTIES="build_data/publish/properties.json"
   if [[ -f "${PUBLISH_PROPERTIES}" ]]; then
       for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" "${PUBLISH_PROPERTIES}"); do
