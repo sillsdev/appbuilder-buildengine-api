@@ -41,6 +41,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const ARTIFACT_PLAY_LISTING = "play-listing";
     const ARTIFACT_PLAY_LISTING_MANIFEST = "play-listing-manifest";
     const ARTIFACT_PACKAGE_NAME = "package_name";
+    const ARTIFACT_PUBLISH_PROPERTIES = "publish_properties";
     const ARTIFACT_CLOUD_WATCH = "cloudWatch";
     const ARTIFACT_CONSOLE_TEXT = "consoleText";
     const ARTIFACT_WHATS_NEW = "whats_new";
@@ -181,6 +182,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
                     self::ARTIFACT_VERSION_CODE => $this->versionCode(),
                     self::ARTIFACT_VERSION => $this->version(),
                     self::ARTIFACT_PACKAGE_NAME => $this->packageName(),
+                    self::ARTIFACT_PUBLISH_PROPERTIES => $this->publishProperties(),
                     self::ARTIFACT_WHATS_NEW => $this->whatsNew(),
                     self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
                     self::ARTIFACT_CONSOLE_TEXT => $this->consoleText()];
@@ -346,6 +348,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $type = self::ARTIFACT_VERSION;
         } else if ($file === "package_name.txt") {
             $type = self::ARTIFACT_PACKAGE_NAME;
+        } else if ($file === "publish-properties.json") {
+            $type = self::ARTIFACT_PUBLISH_PROPERTIES;
         } else if ($file === "about.txt") {
             $type = self::ARTIFACT_ABOUT;
         } else if ($file === "whats_new.txt") {
@@ -398,6 +402,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             case self::ARTIFACT_PLAY_LISTING:
             case self::ARTIFACT_PLAY_LISTING_MANIFEST:
             case self::ARTIFACT_PACKAGE_NAME:
+            case self::ARTIFACT_PUBLISH_PROPERTIES:
             case self::ARTIFACT_WHATS_NEW:
             case self::ARTIFACT_CLOUD_WATCH:
             case self::ARTIFACT_CONSOLE_TEXT:
@@ -452,6 +457,9 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function packageName() {
         return $this->getArtifactUrl("/package_name\.txt$/");
+    }
+    public function publishProperties() {
+        return $this->getArtifactUrl("/publish-properties\.json$/");
     }
     public function whatsNew() {
         return $this->getArtifactUrl("/whats_new\.txt$/");

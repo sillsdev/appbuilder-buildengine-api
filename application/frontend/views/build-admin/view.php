@@ -39,6 +39,12 @@ $value = $value .
     Html::a("cloudWatch", $model->cloudWatch()) . ", " .
     Html::a("consoleText", $model->consoleText());
 
+$publishProperties = $model->publishProperties();
+if (!empty($publishProperties)) {
+    $value = $value . ", " .
+    Html::a("publishProperties", $publishProperties);
+}
+
 ?>
 <div class="build-view">
 
