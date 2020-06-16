@@ -106,7 +106,7 @@ publish_rclone() {
   fi
 
   if [[ "${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}" == "" ]]; then
-    PUBLISH_CLOUD_BACKUP_REMOTE_PATH="Backups"
+    PUBLISH_CLOUD_BACKUP_REMOTE_PATH="backups"
   fi
 
   echo "PUBLISH_CLOUD_SOURCE_PATH=${PUBLISH_CLOUD_SOURCE_PATH}"
