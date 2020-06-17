@@ -13,12 +13,13 @@ publish_google_play() {
   export SUPPLY_METADATA_PATH="play-listing"
 
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
-    echo "Publishing APK"
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
-      echo "Too many APK files: ${#APK_FILES[@]}"
-      exit 2
+      echo "Publishing APKs"
+      export SUPPLY_APK_PATHS="${APK_FILES[*]}"
+    else
+      echo "Publishing APK"
+      export SUPPLY_APK="${APK_FILES[0]}"
     fi
-    export SUPPLY_APK="${APK_FILES[0]}"
   else
     echo "Not publishing APK"
     export SUPPLY_SKIP_UPLOAD_APK=true

@@ -216,12 +216,6 @@ prepare_appbuilder_project() {
     echo "ERROR: Project appDef or project data not found"
     exit 3
   fi
-
-  MULTIPLE_APKS=$(xmllint --xpath "string(/app-definition/multiple-apks/@value)" build.appDef)
-  if [[ "${MULTIPLE_APKS}" == "true" ]]; then
-      echo "ERROR: multiple-apks not supported yet"
-      exit 4
-  fi
   
   PUBLISH_PROPERTIES="build_data/publish/properties.json"
   if [[ -f "${PUBLISH_PROPERTIES}" ]]; then

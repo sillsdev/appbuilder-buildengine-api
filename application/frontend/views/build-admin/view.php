@@ -10,40 +10,12 @@ $this->title = $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Builds', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-$value = "";
-if (strpos($model->targets, "apk") !== false) {
-    $value = $value .
-        Html::a("apk", $model->apk()) . ", " .
-        Html::a("about", $model->about()) . ", " . $value;
+$artifacts = $model->artifacts();
+$entries = array();
+foreach ($artifacts as $key => $artifact) {
+    array_push($entries, Html::a($key, $artifact));
 }
-
-if (strpos($model->targets, "play-listing") !== false) {
-    $value = $value .
-        Html::a("play-listing", $model->playListing()) . ", " .
-        Html::a("play-listing-manifest", $model->playListingManifest()) . ", " .
-        Html::a("version_code", $model->versionCode()) . ", " .
-        Html::a("version", $model->version()) . ", " .
-        Html::a("package_name", $model->packageName()) . ", " .
-        Html::a("whats_new", $model->whatsNew()) . ", ";
-}
-
-if (strpos($model->targets, "html") !== false) {
-    $value = $value . $value = Htm::a("html", $model->html()) . ", ";
-}
-
-if (strpos($model->targets, "pwa") !== false) {
-    $value = $value = Html::a("pwa", $model->pwa()) . ", ";
-}
-
-$value = $value .
-    Html::a("cloudWatch", $model->cloudWatch()) . ", " .
-    Html::a("consoleText", $model->consoleText());
-
-$publishProperties = $model->publishProperties();
-if (!empty($publishProperties)) {
-    $value = $value . ", " .
-    Html::a("publishProperties", $publishProperties);
-}
+$artifacts_value = join(", ", $entries);
 
 ?>
 <div class="build-view">
@@ -85,7 +57,7 @@ if (!empty($publishProperties)) {
             [
                 'attribute' => 'artifacts',
                 'format'=>'html',
-                'value'=> $value
+                'value'=> $artifacts_value
             ],
             'created',
             'updated',
