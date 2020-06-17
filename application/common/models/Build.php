@@ -171,21 +171,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             'status',
             'result',
             'error',
-            'artifacts' => function() {
-                return [
-                    self::ARTIFACT_APK => $this->apk(),
-                    self::ARTIFACT_HTML => $this->html(),
-                    self::ARTIFACT_PWA => $this->pwa(),
-                    self::ARTIFACT_ABOUT => $this->about(),
-                    self::ARTIFACT_PLAY_LISTING => $this->playListing(),
-                    self::ARTIFACT_PLAY_LISTING_MANIFEST => $this->playListingManifest(),
-                    self::ARTIFACT_VERSION_CODE => $this->versionCode(),
-                    self::ARTIFACT_VERSION => $this->version(),
-                    self::ARTIFACT_PACKAGE_NAME => $this->packageName(),
-                    self::ARTIFACT_PUBLISH_PROPERTIES => $this->publishProperties(),
-                    self::ARTIFACT_WHATS_NEW => $this->whatsNew(),
-                    self::ARTIFACT_CLOUD_WATCH => $this->cloudWatch(),
-                    self::ARTIFACT_CONSOLE_TEXT => $this->consoleText()];
+            'artifacts' => function(){
+                return $this->artifacts();
             },
             'targets',
             'environment',
@@ -196,6 +183,48 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
                 return Utils::getIso8601($this->updated);
             },
         ];
+    }
+
+    public function artifacts() {
+        $artifacts = array();
+        if (strpos($this->targets, "apk") !== false) {
+            $count = $this->apkCount();
+            if ($count > 1) {
+                $apks = $this->apks();
+                foreach ($apks as $apk) {
+                    preg_match('/-([^.]+)\.apk$/', $apk, $matches);
+                    $artifacts[$matches[1] . "-" . self::ARTIFACT_APK] = $apk;
+                }
+            }
+            else {
+                $artifacts[self::ARTIFACT_APK] = $this->apk();
+            }
+            $artifacts[self::ARTIFACT_ABOUT] = $this->about();
+        }
+
+        if (strpos($this->targets, "play-listing") !== false) {
+            $artifacts[self::ARTIFACT_PLAY_LISTING] = $this->playListing();
+            $artifacts[self::ARTIFACT_PLAY_LISTING] = $this->playListing();
+            $artifacts[self::ARTIFACT_PLAY_LISTING_MANIFEST] = $this->playListingManifest();
+            $artifacts[self::ARTIFACT_VERSION_CODE] = $this->versionCode();
+            $artifacts[self::ARTIFACT_VERSION] = $this->version();
+            $artifacts[self::ARTIFACT_PACKAGE_NAME] = $this->packageName();
+            $artifacts[self::ARTIFACT_PUBLISH_PROPERTIES] = $this->publishProperties();
+            $artifacts[self::ARTIFACT_WHATS_NEW] = $this->whatsNew();
+        }
+
+        if (strpos($this->targets, "html") !== false) {
+            $artifacts[self::ARTIFACT_HTML] = $this->html();
+        }
+
+        if (strpos($this->targets, "pwa") !== false) {
+            $artifacts[self::ARTIFACT_PWA] = $this->pwa();
+        }
+
+        $artifacts[self::ARTIFACT_CLOUD_WATCH] = $this->cloudWatch();
+        $artifacts[self::ARTIFACT_CONSOLE_TEXT] = $this->consoleText();
+
+        return $artifacts;
     }
 
     public function getLinks()
@@ -434,11 +463,55 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         }
         return null;
     }
+    private function getArtfactFilenameCount($pattern) {
+        if (!empty($this->artifact_files)) {
+            $files = explode(",", $this->artifact_files);
+            $count = 0;
+            foreach ($files as $file) {
+                if (preg_match($pattern, $file)) {
+                    $count = $count + 1;
+                }
+            }
+            return $count;
+        }
+        return 0;
+    }
+    private function getArtifactUrls($pattern) {
+        $filenames = $this->getArtifactFilenames($pattern);
+        if (!empty($filenames))
+        {
+            $urls = array();
+            foreach ($filenames as $filename) {
+                array_push($urls, $this->artifact_url_base . $filename);
+            }
+            return $urls;
+        }
+        return null;
+    }
+    private function getArtifactFilenames($pattern) {
+        if (!empty($this->artifact_files)) {
+            $files = explode(",", $this->artifact_files);
+            $filenames = array();
+            foreach ($files as $file) {
+                if (preg_match($pattern, $file)) {
+                    array_push($filenames, $file);
+                }
+            }
+            return $filenames;
+        }
+        return null;
+    }
     public function apkFilename() {
         return $this->getArtifactFilename("/\.apk$/");
     }
     public function apk() {
         return $this->getArtifactUrl("/\.apk$/");
+    }
+    public function apkCount() {
+        return $this->getArtfactFilenameCount("/\.apk$/");
+    }
+    public function apks() {
+        return $this->getArtifactUrls("/\.apk$/");
     }
     public function about() {
         return $this->getArtifactUrl("/about\.txt$/");
