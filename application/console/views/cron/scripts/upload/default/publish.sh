@@ -15,7 +15,9 @@ publish_google_play() {
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
       echo "Publishing APKs"
-      export SUPPLY_APK_PATHS="${APK_FILES[*]}"
+      # Build a comma-separated list of files
+      SUPPLY_APK_PATHS=$(find . -name "*.apk" | tr '\n' ',')
+      export SUPPLY_APK_PATHS
     else
       echo "Publishing APK"
       export SUPPLY_APK="${APK_FILES[0]}"

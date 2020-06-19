@@ -147,6 +147,9 @@ build_play_listing() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   cd "$PROJECT_DIR" || exit 1
 
+  APK_FILES=("${OUTPUT_DIR}"/*.apk)
+  AAPT="$(find /opt/android-sdk/build-tools -name aapt | head -n 1)"
+
   if [ -f "build_data/about/about.txt" ]; then
     cp build_data/about/about.txt "$OUTPUT_DIR"/
   fi
@@ -170,7 +173,15 @@ build_play_listing() {
       DIR=$(dirname "${filename}")
       cp "$filename" "$OUTPUT_DIR"
       mkdir "${DIR}/changelogs"
-      mv "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"
+      if [ "${#APK_FILES[@]}" -gt 1 ]; then
+        for apk in "${APK_FILES[@]}"
+        do
+          APK_VERSION_CODE=$($AAPT dump badging "${apk}" | grep "^package" | sed -n "s/.*versionCode='\([0-9]*\).*/\1/p")
+          cp "$filename" "${DIR}/changelogs/${APK_VERSION_CODE}.txt"
+        done
+      else
+        cp "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"
+      fi
     done
   fi
 }
