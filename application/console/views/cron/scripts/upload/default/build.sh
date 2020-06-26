@@ -33,9 +33,13 @@ process_audio_sources() {
 }
 
 process_audio_download() {
+  if [[ "${BUILD_AUDIO_DOWNLOAD_URL}" == "" ]]; then
+    BUILD_AUDIO_DOWNLOAD_URL="https://4.dbt.io"
+  fi
+
   if [[ "${BUILD_AUDIO_DOWNLOAD}" == "1" ]]; then
     if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
-      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY} -audio-download-url https://dev.v4.dbt.io"
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY} -audio-download-url ${BUILD_AUDIO_DOWNLOAD_URL}"
     fi
     if [[ "${AUDIO_DOWNLOAD_BITRATE}" != "" ]]; then
       SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITRATE}"
