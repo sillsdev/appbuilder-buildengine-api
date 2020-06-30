@@ -204,6 +204,9 @@ build_gradle() {
 }
 
 prepare_appbuilder_dir() {
+  # Ensure 'App Projects' directory
+  mkdir -p "${HOME}/App Builder/Scripture Apps/App Projects"
+
   if [[ "${BUILD_KEYS_FILE}" != "" ]]; then
     KEY_DEST_DIR="${HOME}/App Builder/Scripture Apps"
     mkdir -p "${KEY_DEST_DIR}"
