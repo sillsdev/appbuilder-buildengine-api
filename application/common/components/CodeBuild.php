@@ -262,6 +262,9 @@ class CodeBuild extends AWSCommon {
             case Job::APP_TYPE_DICTIONARYAPP:
                 $retVal = 'dictionary-app-builder';
                 break;
+	    case Job::APP_TYPE_KEYBOARDAPP:
+                $retVal = 'keyboard-app-builder';
+                break;
             default:
                 $retVal = 'unknown';
                 break;

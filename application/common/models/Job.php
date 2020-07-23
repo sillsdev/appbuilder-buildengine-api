@@ -17,6 +17,7 @@ class Job extends JobBase implements Linkable
     const APP_TYPE_SCRIPTUREAPP = 'scriptureappbuilder';
     const APP_TYPE_READINGAPP = 'readingappbuilder';
     const APP_TYPE_DICTIONARYAPP = 'dictionaryappbuilder';
+    const APP_TYPE_KEYBOARDAPP = 'keyboardappbuilder';
 
     public function __construct($config = array()) {
         parent::__construct($config);
@@ -48,7 +49,7 @@ class Job extends JobBase implements Linkable
                 // This should come from another model
                 // 'app_id', 'exist', 'targetClass' => 'common\models\App', 'targetAttribute' => 'id',
                 // message => \Yii::t('app', 'Invalid App ID'),
-                'app_id', 'in', 'range' => ['scriptureappbuilder', 'readingappbuilder', 'dictionaryappbuilder'],
+                'app_id', 'in', 'range' => [Job::APP_TYPE_SCRIPTUREAPP, Job::APP_TYPE_READINGAPP, Job::APP_TYPE_DICTIONARYAPP, Job::APP_TYPE_KEYBOARDAPP],
             ],
             // The currently supported Git Urls are for AWS Codecommit
             //[

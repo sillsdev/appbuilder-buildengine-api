@@ -84,7 +84,7 @@ class Project extends ProjectBase implements Linkable
                 // This should come from another model
                 // 'app_id', 'exist', 'targetClass' => 'common\models\App', 'targetAttribute' => 'id',
                 // message => \Yii::t('app', 'Invalid App ID'),
-                'app_id', 'in', 'range' => ['scriptureappbuilder', 'readingappbuilder', 'dictionaryappbuilder'],
+                'app_id', 'in', 'range' => [Job::APP_TYPE_SCRIPTUREAPP, Job::APP_TYPE_READINGAPP, Job::APP_TYPE_DICTIONARYAPP, Job::APP_TYPE_KEYBOARDAPP],
             ],                    
             [
                 ['client_id'],'default', 'value' => function() {
