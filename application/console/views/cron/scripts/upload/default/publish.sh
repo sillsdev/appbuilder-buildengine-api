@@ -153,11 +153,17 @@ publish_rclone() {
   ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
   ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" |& tee -a "${OUTPUT_DIR}"/console.log
 
-  RCLONE_URL=$(${RCLONE} config dump | jq -r ".[\"${PUBLISH_CLOUD_REMOTE}\"].public_url")
-  if [[ "${RCLONE_URL}" == "" ]]; then
-    RCLONE_URL=$(${RCLONE} config dump | jq -r ".[\"${PUBLISH_CLOUD_REMOTE}\"].url")
+  PUBLISH_BASE_URL=$(${RCLONE} config dump | jq -r ".[\"${PUBLISH_CLOUD_REMOTE}\"].public_url")
+  if [[ "${PUBLISH_BASE_URL}" == "null" ]]; then
+      echo "ERROR: No public_url for rclone config ${PUBLISH_CLOUD_REMOTE}"
+      exit 2
   fi
-  PUBLISH_URL="${RCLONE_URL}/${PUBLISH_CLOUD_REMOTE_PATH}/${PUBLISH_FILE}"
+  PUBLISH_SERVER_PATH_ROOT=$(${RCLONE} config dump | jq -r ".[\"${PUBLISH_CLOUD_REMOTE}\"].server_root")
+  PUBLISH_REMOTE_PATH="${PUBLISH_CLOUD_REMOTE_PATH}"
+  if [[ "${PUBLISH_SERVER_PATH_ROOT}" != "null" ]]; then
+    PUBLISH_REMOTE_PATH=${PUBLISH_REMOTE_PATH//$PUBLISH_SERVER_PATH_ROOT\//}
+  fi
+  PUBLISH_URL="${PUBLISH_BASE_URL}/${PUBLISH_REMOTE_PATH}/${PUBLISH_FILE}"
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
 }
 
