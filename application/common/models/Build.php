@@ -207,7 +207,6 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $artifacts[self::ARTIFACT_PLAY_LISTING] = $this->playListing();
             $artifacts[self::ARTIFACT_PLAY_LISTING_MANIFEST] = $this->playListingManifest();
             $artifacts[self::ARTIFACT_VERSION_CODE] = $this->versionCode();
-            $artifacts[self::ARTIFACT_VERSION] = $this->version();
             $artifacts[self::ARTIFACT_PACKAGE_NAME] = $this->packageName();
             $artifacts[self::ARTIFACT_PUBLISH_PROPERTIES] = $this->publishProperties();
             $artifacts[self::ARTIFACT_WHATS_NEW] = $this->whatsNew();
@@ -221,6 +220,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $artifacts[self::ARTIFACT_PWA] = $this->pwa();
         }
 
+        $artifacts[self::ARTIFACT_VERSION] = $this->version();
         $artifacts[self::ARTIFACT_CLOUD_WATCH] = $this->cloudWatch();
         $artifacts[self::ARTIFACT_CONSOLE_TEXT] = $this->consoleText();
 
