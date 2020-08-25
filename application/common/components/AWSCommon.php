@@ -38,9 +38,9 @@ class AWSCommon
     {
         return \Yii::$app->params['codeBuildImageTag'];
     }
-    public static function getCodeBuildImage()
+    public static function getCodeBuildImageRepo()
     {
-        return \Yii::$app->params['codeBuildImage'];
+        return \Yii::$app->params['codeBuildImageRepo'];
     }
 
     public static function getBuildScriptPath()

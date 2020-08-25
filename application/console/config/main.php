@@ -12,7 +12,7 @@ $BUILD_ENGINE_ARTIFACTS_BUCKET = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET')  ?: "un
 $BUILD_ENGINE_PROJECTS_BUCKET = getenv('BUILD_ENGINE_PROJECTS_BUCKET')  ?: "unset";
 $BUILD_ENGINE_SECRETS_BUCKET = getenv('BUILD_ENGINE_SECRETS_BUCKET') ?: "unset";
 $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-east-1";
-$CODE_BUILD_IMAGE = getenv('CODE_BUILD_IMAGE') ?: "sillsdev/appbuilder-agent";
+$CODE_BUILD_IMAGE_REPO = getenv('CODE_BUILD_IMAGE_REPO') ?: "sillsdev/appbuilder-agent";
 $CODE_BUILD_IMAGE_TAG = getenv('CODE_BUILD_IMAGE_TAG') ?: "production";
 $PUBLISH_JENKINS_MASTER_URL = getenv('PUBLISH_JENKINS_MASTER_URL');
 
@@ -58,7 +58,7 @@ return [
         'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
         'buildEngineProjectsBucket' => $BUILD_ENGINE_PROJECTS_BUCKET,
         'buildEngineSecretsBucket' => $BUILD_ENGINE_SECRETS_BUCKET,
-        'codeBuildImage' => $CODE_BUILD_IMAGE,
+        'codeBuildImageRepo' => $CODE_BUILD_IMAGE_REPO,
         'codeBuildImageTag' => $CODE_BUILD_IMAGE_TAG,
         'publishJenkinsMasterUrl' => $PUBLISH_JENKINS_MASTER_URL,
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,

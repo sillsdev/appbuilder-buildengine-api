@@ -411,7 +411,7 @@ class CodeBuild extends AWSCommon {
             'cache' => $cache,
             'environment' => [ // REQUIRED
                 'computeType' => 'BUILD_GENERAL1_SMALL', // REQUIRED
-                'image' => self::getCodeBuildImage() . ":" . self::getCodeBuildImageTag(), // REQUIRED
+                'image' => self::getCodeBuildImageRepo() . ":" . self::getCodeBuildImageTag(), // REQUIRED
                 'privilegedMode' => false,
                 'type' => 'LINUX_CONTAINER', // REQUIRED
             ],
