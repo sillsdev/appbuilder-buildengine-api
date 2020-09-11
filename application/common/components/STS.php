@@ -57,10 +57,24 @@ class STS extends AWSCommon
         return $credentials;
     }
 
-    public function getProjectAccessToken($project, $name)
+    public function getProjectAccessToken($project, $externalId)
     {
+        // https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sts-2011-06-15.html#getfederationtoken
+        // AWS limits the name:
+        //   The regex used to validate this parameter is a string of characters consisting of
+        //   upper- and lower-case alphanumeric characters with no spaces. You can also include
+        //   underscores or any of the following characters: =,.@-
+        // https://docs.aws.amazon.com/STS/latest/APIReference/API_GetFederationToken.html
+        // Max of 32 characters
+        $externalIdParts = explode('|', $externalId);
+        // Make sure valid characters are used
+        $idPart = preg_replace('/[^a-zA-Z0-9_=,.@-]/', '_',end($externalIdParts));
+        // Pad out name with randomness
+        $random = bin2hex(openssl_random_pseudo_bytes(16));
+        // Use max 32 characters
+        $tokenName = substr($idPart . "." . $random,0,32);
         $policy = self::getPolicy($project);
-        return $this->getFederationToken($name, $policy);
+        return $this->getFederationToken($tokenName, $policy);
     }
 
     public static function getPolicy($project)
