@@ -162,12 +162,12 @@ class Project extends ProjectBase implements Linkable
     {
         return str_replace('"', "", S3::getProjectsBucket());
     }
-    public function getS3BaseFolder()
+    private function getS3BaseFolder()
     {
         $s3folder = $this->language_code.'-'.$this->id.'-'.$this->project_name;
         return $s3folder;
     }
-    public function getS3Folder()
+    private function getS3Folder()
     {
         $client = $this->getLinkedClient();
         $s3client = (is_null($client)) ? "" :  $client->prefix . '/';
@@ -176,7 +176,7 @@ class Project extends ProjectBase implements Linkable
         return $s3client . $s3app . Utils::lettersNumbersHyphensOnly($s3folder);
 
     }
-    public function getS3Path()
+    private function getS3Path()
     {
         $s3path = "s3://". $this->getS3Bucket() .'/' . $this->getS3Folder();
 
@@ -190,6 +190,10 @@ class Project extends ProjectBase implements Linkable
 
     public function isS3Project() {
         return (substr($this->url, 0, 5) === "s3://");
+    }
+
+    public function getS3ProjectPath() {
+        return (substr($this->url, 5));
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace common\components;
 
-use common\models\Build;
+use common\models\Project;
 use yii\web\ServerErrorHttpException;
 use common\components\AWSCommon;
 use Aws\Exception\AwsException;
@@ -77,8 +77,13 @@ class STS extends AWSCommon
         return $this->getFederationToken($tokenName, $policy);
     }
 
+    /**
+     * @param Project $project
+     * @return string
+     */
     public static function getPolicy($project)
     {
+        // Note: s3 arns cannot contain region or account id
         $policy = '{
     "Version": "2012-10-17",
     "Statement": [
@@ -115,9 +120,10 @@ class STS extends AWSCommon
         }
     ]
 }';
-
-        $policy = str_replace("BUCKET", $project->getS3Bucket(), $policy);
-        $policy = str_replace("FOLDER", $project->getS3Folder(), $policy);
+        $path = $project->getS3ProjectPath();
+        $pathParts = explode('/', $path, 2);
+        $policy = str_replace("BUCKET", $pathParts[0], $policy);
+        $policy = str_replace("FOLDER", $pathParts[1], $policy);
         return $policy;
     }
 }

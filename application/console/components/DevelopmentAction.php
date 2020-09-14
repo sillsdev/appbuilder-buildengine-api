@@ -300,12 +300,11 @@ class DevelopmentAction {
         echo "Getting token for project $this->projectId".PHP_EOL;
         $project = Project::findById($this->projectId);
         if ($project->isS3Project()) {
-            echo "Bucket: ". $project->getS3Bucket().PHP_EOL;
-            echo "Folder: ". $project->getS3Folder().PHP_EOL;
+            echo "Path: ". $project->getS3ProjectPath().PHP_EOL;
             echo "Policy:".PHP_EOL.STS::getPolicy($project).PHP_EOL;
             $sts = new STS();
             $token = $sts->getProjectAccessToken($project, "TEST");
-            echo "Path: ". $project->getS3Path().PHP_EOL;
+            echo "URL: ". $project->url.PHP_EOL;
             echo "export AWS_ACCESS_KEY_ID=".$token['AccessKeyId'].PHP_EOL;
             echo "export AWS_SECRET_ACCESS_KEY=".$token['SecretAccessKey'].PHP_EOL;
             echo "export AWS_SESSION_TOKEN=".$token['SessionToken'].PHP_EOL;
