@@ -105,7 +105,8 @@ publish_rclone() {
   fi
 
   if [[ "${PUBLISH_CLOUD_REMOTE_PATH}" == "" ]]; then
-    PUBLISH_CLOUD_REMOTE_PATH="."
+    echo "ERROR: PUBLISH_CLOUD_REMOTE_PATH is not set"
+    exit 2
   fi
 
   if [[ "${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}" == "" ]]; then
