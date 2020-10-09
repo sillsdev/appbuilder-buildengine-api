@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -e -o pipefail
+LOG_FILE="${OUTPUT_DIR}"/console.log
+exec > >(tee "${LOG_FILE}") 2>&1
 
 check_audio_sources() {
   if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
@@ -104,7 +106,7 @@ build_apk() {
   cd "$PROJECT_DIR" || exit 1
 
   # shellcheck disable=SC2086
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT} |& tee "${OUTPUT_DIR}"/console.log
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
 }
 
 build_html() {
@@ -115,7 +117,7 @@ build_html() {
   HTML_OUTPUT_DIR=/tmp/output/html
   mkdir -p "${HTML_OUTPUT_DIR}"
   #mkdir -p "${OUTPUT_DIR}/html"
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${BUILD_HTML_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}" |& tee "${OUTPUT_DIR}"/console.log
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${BUILD_HTML_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}"
   pushd "${HTML_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
   #tar cvf - . | (cd "${OUTPUT_DIR}/html" && tar xvfBp - )
   zip -r "${OUTPUT_DIR}/html.zip" .
@@ -133,7 +135,7 @@ build_pwa() {
   PWA_OUTPUT_DIR=/tmp/output/pwa
   mkdir -p "${PWA_OUTPUT_DIR}"
   #mkdir -p "${OUTPUT_DIR}/pwa"
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${PWA_OUTPUT_DIR}" |& tee "${OUTPUT_DIR}"/console.log
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${PWA_OUTPUT_DIR}"
   pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
   #tar cvf - . | (cd "${OUTPUT_DIR}/pwa" && tar xvfBp - )
   zip -r "${OUTPUT_DIR}/pwa.zip" .
