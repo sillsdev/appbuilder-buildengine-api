@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e -o pipefail
 set -x
+LOG_FILE="${OUTPUT_DIR}"/console.log
+exec > >(tee "${LOG_FILE}") 2>&1
 
 publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
@@ -37,7 +39,7 @@ publish_google_play() {
     export SUPPLY_TRACK="${CHANNEL}"
   fi
   env | grep "SUPPLY_"
-  fastlane supply |& tee "${OUTPUT_DIR}"/console.log
+  fastlane supply
   echo "https://play.google.com/store/apps/details?id=${SUPPLY_PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
@@ -64,7 +66,7 @@ publish_s3_bucket() {
   echo "DEST_FILE=${DEST_FILE}"
   echo "PUBLISH_URL=${PUBLISH_URL}"
 
-  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp --acl public-read "${SRC_FILE}" "s3://${DEST_BUCKET_PATH}/${DEST_FILE}" |& tee -a "${OUTPUT_DIR}"/console.log
+  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp --acl public-read "${SRC_FILE}" "s3://${DEST_BUCKET_PATH}/${DEST_FILE}"
 
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
 }
@@ -145,25 +147,25 @@ publish_rclone() {
         mkdir -p "${ARTIFACTS_DIR}/Backup"
         cp -r "${PUBLISH_CLOUD_SOURCE_PATH}" "${ARTIFACTS_DIR}/Backup"
         # 2. Sync the current files to the backup directory
-        ${RCLONE} sync "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" "${ARTIFACTS_DIR}/Backup" |& tee -a "${OUTPUT_DIR}"/console.log
+        ${RCLONE} sync "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" "${ARTIFACTS_DIR}/Backup"
         # 3. Zip the files
         BACKUP_FILENAME="$(basename "${PUBLISH_CLOUD_REMOTE_PATH}")-${DATE}.zip"
         pushd "${ARTIFACTS_DIR}/Backup"
         zip -qr ../"${BACKUP_FILENAME}" -- *
         popd
         # 4. Sync the new files to the remote
-        ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" |& tee -a "${OUTPUT_DIR}"/console.log
+        ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
         # 5. Copy the backup to the Backup path
-        ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}" |& tee -a "${OUTPUT_DIR}"/console.log
-        ${RCLONE} copy "${ARTIFACTS_DIR}/${BACKUP_FILENAME}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}" |& tee -a "${OUTPUT_DIR}"/console.log
+        ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}"
+        ${RCLONE} copy "${ARTIFACTS_DIR}/${BACKUP_FILENAME}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}"
     else
-        ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}/${DATE}" |& tee -a "${OUTPUT_DIR}"/console.log
-        ${RCLONE} copy "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}/${DATE}" |& tee -a "${OUTPUT_DIR}"/console.log
+        ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}/${DATE}"
+        ${RCLONE} copy "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}/${DATE}" 
     fi
   fi
 
   ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
-  ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" |& tee -a "${OUTPUT_DIR}"/console.log
+  ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
 
   PUBLISH_BASE_URL=$(${RCLONE} config dump | jq -r ".[\"${PUBLISH_CLOUD_REMOTE}\"].public_url")
   if [[ "${PUBLISH_BASE_URL}" == "null" ]]; then
