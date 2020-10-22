@@ -14,6 +14,21 @@ publish_google_play() {
   export SUPPLY_VERSION_CODE
   export SUPPLY_METADATA_PATH="play-listing"
 
+  if [[ -n "${PUBLISH_DRAFT}" ]]; then
+    echo "Publishing Draft"
+    export SUPPLY_RELEASE_STATUS=draft
+    # On the initial publish, an org admin has to create the app store entry and upload the APK
+    # to associate the entry with the package name and keystore
+    # Google Play APIs have changed so that you can't re-upload the APK. It gives a duplicate
+    # version code error.
+    if [[ "${SUPPLY_VERSION_CODE}" == "${PUBLISH_GOOGLE_PLAY_UPLOADED_VERSION_CODE}" ]]; then
+      if [[ "${BUILD_NUMBER}" != "${PUBLISH_GOOGLE_PLAY_UPLOADED_BUILD_ID}" ]]; then
+        echo "ERROR: Duplicate version code used on different builds during initial publish"
+        exit 1
+      fi
+      PUBLISH_NO_APK=1
+    fi
+  fi
   if [[ -z "${PUBLISH_NO_APK}" ]]; then
     if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
       echo "Publishing APKs"
@@ -27,10 +42,6 @@ publish_google_play() {
   else
     echo "Not publishing APK"
     export SUPPLY_SKIP_UPLOAD_APK=true
-  fi
-  if [[ -n "${PUBLISH_DRAFT}" ]]; then
-    echo "Publishing Draft"
-    export SUPPLY_RELEASE_STATUS=draft
   fi
   if [ -n "$PROMOTE_FROM" ]; then
     export SUPPLY_TRACK="${PROMOTE_FROM}"

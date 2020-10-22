@@ -223,6 +223,9 @@ class CodeBuildTest extends UnitTestBase
         foreach ($environmentVariables as $environmentVariable) {
             switch ($environmentVariable['name']) {
                 case 'RELEASE_NUMBER':
+                    $releaseNumber = $environmentVariable['value'];
+                    break;
+                case 'BUILD_NUMBER':
                     $buildNumber = $environmentVariable['value'];
                     break;
                 case 'PUBLISHER':
@@ -257,6 +260,7 @@ class CodeBuildTest extends UnitTestBase
             }
         }
 
+        $this->assertEquals("12", $releaseNumber, " *** Wrong release number");
         $this->assertEquals("12", $buildNumber, " *** Wrong build number");
         $this->assertEquals("wycliffeusa", $publisher, " *** Wrong publisher");
         $this->assertEquals("sil-prd-aps-secrets", $secretsBucket, " *** Wrong secrets bucket");

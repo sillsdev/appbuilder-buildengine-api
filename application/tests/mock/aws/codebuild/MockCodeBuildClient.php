@@ -18,10 +18,10 @@ class MockCodeBuildClient
         $overrides = $parms['environmentVariablesOverride'];
         $buildOverride = $overrides[0];
         $promise = new MockPromise();
-        if ($buildOverride['name'] === 'BUILD_NUMBER') {
-            $promise->build = true;
-        } else {
+        if ($buildOverride['name'] === 'RELEASE_NUMBER') {
             $promise->build = false;
+        } else {
+            $promise->build = true;
         }
         $promise->buildNumber = $buildOverride['value'];
         return($promise);

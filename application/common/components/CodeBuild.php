@@ -125,6 +125,7 @@ class CodeBuild extends AWSCommon {
                 $targets = 'apk play-listing';
             }
             $environmentArray = [
+                // BUILD_NUMBER Must be first for tests
                 [
                     'name' => 'BUILD_NUMBER',
                     'value' => $buildNumber,
@@ -271,8 +272,12 @@ class CodeBuild extends AWSCommon {
         }
         return $retVal;
     }
+
     /**
      * Starts a publish action
+     * @param Release $release
+     * @param string $releaseSpec
+     * @return false|string
      */
     public function startRelease($release, $releaseSpec)
     {
@@ -280,6 +285,7 @@ class CodeBuild extends AWSCommon {
         $prefix = Utils::getPrefix();
         $releaseNumber = (string)$release->id;
         $build = $release->build;
+        $buildNumber = (string)$build->id;
         $job = $build->job;
         $artifactUrl = $build->apk();
         $artifacts_bucket = self::getArtifactsBucket();
@@ -300,9 +306,14 @@ class CodeBuild extends AWSCommon {
         }
 
         $environmentArray = [
+            // RELEASE_NUMBER Must be first for tests
             [
                 'name' => 'RELEASE_NUMBER',
                 'value' => $releaseNumber,
+            ],
+            [
+                'name' => 'BUILD_NUMBER',
+                'value' => $buildNumber,
             ],
             [
                 'name' => 'CHANNEL',
