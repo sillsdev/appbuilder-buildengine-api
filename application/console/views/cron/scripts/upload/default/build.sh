@@ -220,7 +220,7 @@ prepare_appbuilder_project() {
   # In the past, we have had problems with multiple .appDef files being checked in and confusing error.
   # Fail quickly in this situation
   cd "$PROJECT_DIR" || exit 1
-  PROJ_COUNT=$(find . -depth 1 -name "*.appDef" | wc -l)
+  PROJ_COUNT=$(find . -maxdepth 1 -name "*.appDef" | wc -l)
   if [[ "$PROJ_COUNT" -ne "1" ]]; then
     echo "ERROR: Wrong number of projects: ${PROJ_COUNT}"
     exit 2
