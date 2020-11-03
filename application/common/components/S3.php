@@ -96,7 +96,7 @@ class S3 extends AWSCommon{
                 'Bucket' => self::getArtifactsBucket(),
                 'Key' => $filePath,
             ]);
-            $fileContents = $result['Body'];
+            $fileContents = (string) $result['Body'];
         } catch (AwsException $e) {
             // There is not a good way to check for file exists.  If file doesn't exist,
             // it will be caught here and an empty string returned.
