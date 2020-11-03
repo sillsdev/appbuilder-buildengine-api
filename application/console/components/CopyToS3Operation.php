@@ -83,12 +83,13 @@ class CopyToS3Operation implements OperationInterface
                 $indexContents = $this->fileUtil->file_get_contents($file);
                 $this->s3->writeFileToS3($indexContents, "play-listing/index.html", $build);
             }
-            $defaultLanguage = "";
-            foreach ($manifestFiles as $playListingFile) {
-                if (empty($defaultLanguage) && preg_match("/([^\/]*)\images\/icon.png$/", $playListingFile, $matches)) {
-                    $parts = explode("/", $playListingFile);
-                    $defaultLanguage = $parts[0];
-                    break;
+            if (empty($defaultLanguage)) {
+                // If defaultLanguage was not found, use first entry with icon
+                foreach ($manifestFiles as $playListingFile) {
+                    if (preg_match("/([^\/]*)\/images\/icon.png$/", $playListingFile, $matches)) {
+                        $defaultLanguage = $matches[1];
+                        break;
+                    }
                 }
             }
 
