@@ -154,9 +154,8 @@ publish_rclone() {
     if [[ "${PUBLISH_CLOUD_BACKUP_ZIP}" == "1" && "${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}" != "" ]]; then
         # When performing a zip backup, we have to do download the current files to zip them and then re-upload them
         # It is likely that the new files are similar to the old ones.  So we will:
-        # 1. Copy the new files to the backup directory
-        mkdir -p "${ARTIFACTS_DIR}/Backup"
-        cp -r "${PUBLISH_CLOUD_SOURCE_PATH}" "${ARTIFACTS_DIR}/Backup"
+        # 1. Sync the new files to the backup directory (seed the directory so only reverse diffs are copied)
+        ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${ARTIFACTS_DIR}/Backup"
         # 2. Sync the current files to the backup directory
         ${RCLONE} sync "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}" "${ARTIFACTS_DIR}/Backup"
         # 3. Zip the files
