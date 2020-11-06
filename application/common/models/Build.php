@@ -223,6 +223,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         $artifacts[self::ARTIFACT_VERSION] = $this->version();
         $artifacts[self::ARTIFACT_CLOUD_WATCH] = $this->cloudWatch();
         $artifacts[self::ARTIFACT_CONSOLE_TEXT] = $this->consoleText();
+        $artifacts[self::ARTIFACT_PUBLISH_PROPERTIES] = $this->publishProperties();
 
         return $artifacts;
     }
