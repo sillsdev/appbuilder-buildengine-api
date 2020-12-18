@@ -3,6 +3,9 @@ set -e -o pipefail
 LOG_FILE="${OUTPUT_DIR}"/console.log
 exec > >(tee "${LOG_FILE}") 2>&1
 
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+
 check_audio_sources() {
   if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
     if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
@@ -283,7 +286,7 @@ complete_successful_build() {
   ls -lR "${OUTPUT_DIR}"
 }
 
-env
+env | sort
 prepare_appbuilder_project
 prepare_appbuilder_dir
 

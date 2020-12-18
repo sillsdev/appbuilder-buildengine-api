@@ -4,6 +4,9 @@ set -x
 LOG_FILE="${OUTPUT_DIR}"/console.log
 exec > >(tee "${LOG_FILE}") 2>&1
 
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+
 publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   export SUPPLY_JSON_KEY="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
@@ -217,9 +220,8 @@ prepare_publish() {
 APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )
 
 prepare_publish
-
+env | sort
 echo "TARGETS: $TARGETS"
-env
 for target in $TARGETS
 do
   case "$target" in
