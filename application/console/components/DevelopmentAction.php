@@ -301,7 +301,7 @@ class DevelopmentAction {
         $project = Project::findById($this->projectId);
         if ($project->isS3Project()) {
             echo "Path: ". $project->getS3ProjectPath().PHP_EOL;
-            echo "Policy:".PHP_EOL.STS::getPolicy($project).PHP_EOL;
+            echo "Policy:".PHP_EOL.STS::getReadWritePolicy($project).PHP_EOL;
             $sts = new STS();
             $token = $sts->getProjectAccessToken($project, "TEST");
             echo "URL: ". $project->url.PHP_EOL;

@@ -96,13 +96,14 @@ class ProjectController extends ActiveController
     }
     public function actionCreateToken($id) {
         $name = \Yii::$app->request->getBodyParam('name', null);
+        $readOnly = \Yii::$app->request->getBodyParam('read_only', false);
 
         $project = Project::findByIdFiltered($id);
         if (!$project->isS3Project()) {
             throw new BadRequestHttpException("Attempting to get token for wrong project type");
         }
 
-        return $this->sts->getProjectAccessToken($project, $name);
+        return $this->sts->getProjectAccessToken($project, $name, $readOnly);
     }
     public function behaviors()
     {

@@ -44,20 +44,22 @@ class STS extends AWSCommon
     /**
      * @param string $name - name of federated user
      * @param string $policy - IAM policy in json format
+     * @param bool $readOnly - is it readonly
      * @return array - array of credentials needed for using AWS resources
      */
-    public function getFederationToken($name, $policy)
+    public function getFederationToken($name, $policy, $readOnly)
     {
         $result = $this->stsClient->GetFederationToken([
             'Name' => $name,
             'Policy' => $policy
         ]);
         $credentials = $result['Credentials'];
-        $credentials['Region'] = self::getArtifactsBucketRegion(); 
+        $credentials['Region'] = self::getArtifactsBucketRegion();
+        $credentials['ReadOnly'] = $readOnly;
         return $credentials;
     }
 
-    public function getProjectAccessToken($project, $externalId)
+    public function getProjectAccessToken($project, $externalId, $readOnly)
     {
         // https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sts-2011-06-15.html#getfederationtoken
         // AWS limits the name:
@@ -73,15 +75,15 @@ class STS extends AWSCommon
         $random = bin2hex(openssl_random_pseudo_bytes(16));
         // Use max 32 characters
         $tokenName = substr($idPart . "." . $random,0,32);
-        $policy = self::getPolicy($project);
-        return $this->getFederationToken($tokenName, $policy);
+        $policy = $readOnly ? self::getReadOnlyPolicy($project) : self::getReadWritePolicy($project);
+        return $this->getFederationToken($tokenName, $policy, $readOnly);
     }
 
     /**
      * @param Project $project
      * @return string
      */
-    public static function getPolicy($project)
+    public static function getReadWritePolicy($project)
     {
         // Note: s3 arns cannot contain region or account id
         $policy = '{
@@ -120,6 +122,51 @@ class STS extends AWSCommon
         }
     ]
 }';
+        return self::getPolicy($project, $policy);
+    }
+    /**
+     * @param Project $project
+     * @return string
+     */
+    public static function getReadOnlyPolicy($project) {
+        $policy = '{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::BUCKET",
+            "Condition": {
+                "StringLike": {
+                    "s3:prefix": [
+                        "FOLDER/",
+                        "FOLDER/*"
+                    ]
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectAcl",
+                "s3:GetObjectTagging"
+            ],
+            "Resource": [
+                "arn:aws:s3:::BUCKET/FOLDER",
+                "arn:aws:s3:::BUCKET/FOLDER/*"
+            ]
+        }
+    ]
+}';        return self::getPolicy($project, $policy);
+    }
+
+    /**
+     * @param Project $project
+     * @return string
+     */
+    public static function getPolicy($project, $policy) {
+
         $path = $project->getS3ProjectPath();
         $pathParts = explode('/', $path, 2);
         $policy = str_replace("BUCKET", $pathParts[0], $policy);
