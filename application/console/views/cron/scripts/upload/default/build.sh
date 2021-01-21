@@ -169,8 +169,7 @@ build_play_listing() {
   if [ -f $LIST_DIR$MANIFEST_FILE ]; then
     rm $LIST_DIR$MANIFEST_FILE
   fi
-  FILE_LIST=$(find $PLAY_LISTING_DIR -type f -print)
-  for f in $FILE_LIST
+  find $PLAY_LISTING_DIR -type f | while read f
   do
     fn=${f#*"$PLAY_LISTING_DIR/"}
     echo "$fn" >> "$OUTPUT_DIR"/$MANIFEST_FILE
