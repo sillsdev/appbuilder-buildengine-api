@@ -119,10 +119,17 @@ build_html() {
 
   HTML_OUTPUT_DIR=/tmp/output/html
   mkdir -p "${HTML_OUTPUT_DIR}"
-  #mkdir -p "${OUTPUT_DIR}/html"
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${BUILD_HTML_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}"
-  pushd "${HTML_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
-  #tar cvf - . | (cd "${OUTPUT_DIR}/html" && tar xvfBp - )
+  if [[ "${BUILD_HTML_COLLECTION_ID}" == *","* ]]; then
+    IFS=',' read -ra COLLECTIONS <<< "${BUILD_HTML_COLLECTION_ID}"
+    for i in "${COLLECTIONS[@]}"; do
+      IFS='=' read -ra PARAMS <<< "${i}"
+      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${PARAMS[0]}" -p "${PARAMS[1]}" -fp html.output="${HTML_OUTPUT_DIR}"
+    done
+    pushd "${HTML_OUTPUT_DIR}"
+  else
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${BUILD_HTML_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}"
+    pushd "${HTML_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
+  fi
   zip -r "${OUTPUT_DIR}/html.zip" .
   popd
   # Not exported so clear it
@@ -137,10 +144,17 @@ build_pwa() {
 
   PWA_OUTPUT_DIR=/tmp/output/pwa
   mkdir -p "${PWA_OUTPUT_DIR}"
-  #mkdir -p "${OUTPUT_DIR}/pwa"
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${PWA_OUTPUT_DIR}"
-  pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
-  #tar cvf - . | (cd "${OUTPUT_DIR}/pwa" && tar xvfBp - )
+  if [[ "${BUILD_PWA_COLLECTION_ID}" == *","* ]]; then
+    IFS=',' read -ra COLLECTIONS <<< "${BUILD_PWA_COLLECTION_ID}"
+    for i in "${COLLECTIONS[@]}"; do
+      IFS='=' read -ra PARAMS <<< "${i}"
+      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${PARAMS[0]}" -p "${PARAMS[1]}"-fp html.output="${HTML_OUTPUT_DIR}"
+    done
+    pushd "${HTML_OUTPUT_DIR}"
+  else
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}"
+    pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
+  fi
   zip -r "${OUTPUT_DIR}/pwa.zip" .
   popd
   # Not exported so clear it
@@ -169,7 +183,7 @@ build_play_listing() {
   if [ -f $LIST_DIR$MANIFEST_FILE ]; then
     rm $LIST_DIR$MANIFEST_FILE
   fi
-  find $PLAY_LISTING_DIR -type f | while read f
+  find $PLAY_LISTING_DIR -type f | while read -r f
   do
     fn=${f#*"$PLAY_LISTING_DIR/"}
     echo "$fn" >> "$OUTPUT_DIR"/$MANIFEST_FILE
