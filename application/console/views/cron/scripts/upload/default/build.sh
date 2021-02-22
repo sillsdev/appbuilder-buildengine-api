@@ -148,11 +148,11 @@ build_pwa() {
     IFS=',' read -ra COLLECTIONS <<< "${BUILD_PWA_COLLECTION_ID}"
     for i in "${COLLECTIONS[@]}"; do
       IFS='=' read -ra PARAMS <<< "${i}"
-      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${PARAMS[0]}" -p "${PARAMS[1]}"-fp html.output="${HTML_OUTPUT_DIR}"
+      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${PARAMS[0]}" -p "${PARAMS[1]}"-fp html.output="${PWA_OUTPUT_DIR}"
     done
-    pushd "${HTML_OUTPUT_DIR}"
+    pushd "${PWA_OUTPUT_DIR}"
   else
-    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}"
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${PWA_OUTPUT_DIR}"
     pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
   fi
   zip -r "${OUTPUT_DIR}/pwa.zip" .
