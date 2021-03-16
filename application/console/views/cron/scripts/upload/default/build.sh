@@ -255,10 +255,14 @@ prepare_appbuilder_project() {
   
   PUBLISH_PROPERTIES="build_data/publish/properties.json"
   if [[ -f "${PUBLISH_PROPERTIES}" ]]; then
-      for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" "${PUBLISH_PROPERTIES}"); do
-        # shellcheck disable=SC2086 disable=SC2163
-        export $s
-      done
+      # Handle spaces in properties values
+      # https://stackoverflow.com/a/48513046/35577
+      values=$(cat "${PUBLISH_PROPERTIES}")
+      while read -rd $'' line
+      do
+          echo "exporting ${line}"
+          export "${line?}"
+      done < <(jq -r <<<"$values" 'to_entries|map("\(.key)=\(.value)\u0000")[]')
       cp "${PUBLISH_PROPERTIES}" "${OUTPUT_DIR}/publish-properties.json"
   fi
 
