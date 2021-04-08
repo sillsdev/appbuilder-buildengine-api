@@ -49,6 +49,9 @@ process_audio_download() {
     if [[ "${AUDIO_DOWNLOAD_BITRATE}" != "" ]]; then
       SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITRATE}"
     fi
+    if [[ "${AUDIO_DOWNLOAD_CODEC}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-codec ${AUDIO_DOWNLOAD_CODEC}"
+    fi
   fi
 }
 
