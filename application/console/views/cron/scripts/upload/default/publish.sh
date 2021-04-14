@@ -120,6 +120,10 @@ publish_rclone() {
     PUBLISH_CLOUD_BACKUP=0
   fi
 
+  if [[ "${PUBLISH_CLOUD_COMMAND}" == "" ]]; then
+    PUBLISH_CLOUD_COMMAND=sync
+  fi
+
   if [[ "${PUBLISH_CLOUD_REMOTE_PATH}" == "" ]]; then
     echo "ERROR: PUBLISH_CLOUD_REMOTE_PATH is not set"
     exit 2
@@ -166,9 +170,7 @@ publish_rclone() {
         pushd "${ARTIFACTS_DIR}/Backup"
         zip -qr ../"${BACKUP_FILENAME}" -- *
         popd
-        # 4. Sync the new files to the remote
-        ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
-        # 5. Copy the backup to the Backup path
+        # 4. Copy the backup to the Backup path
         ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}"
         ${RCLONE} copy "${ARTIFACTS_DIR}/${BACKUP_FILENAME}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}/${PUBLISH_CLOUD_REMOTE_PATH}"
     else
@@ -178,7 +180,7 @@ publish_rclone() {
   fi
 
   ${RCLONE} mkdir "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
-  ${RCLONE} sync "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
+  ${RCLONE} ${PUBLISH_CLOUD_COMMAND} "${PUBLISH_CLOUD_SOURCE_PATH}" "${PUBLISH_CLOUD_REMOTE}:${PUBLISH_CLOUD_REMOTE_PATH}"
 
   PUBLISH_BASE_URL=$(${RCLONE} config dump | jq -r ".[\"${PUBLISH_CLOUD_REMOTE}\"].public_url")
   if [[ "${PUBLISH_BASE_URL}" == "null" ]]; then
