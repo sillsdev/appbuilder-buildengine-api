@@ -199,11 +199,11 @@ build_play_listing() {
       cp "$filename" "$OUTPUT_DIR"
       mkdir "${DIR}/changelogs"
       if [ "${#APK_FILES[@]}" -gt 1 ]; then
-        for apk in "${APK_FILES[@]}"
-        do
-          APK_VERSION_CODE=$($AAPT dump badging "${apk}" | grep "^package" | sed -n "s/.*versionCode='\([0-9]*\).*/\1/p")
-          cp "$filename" "${DIR}/changelogs/${APK_VERSION_CODE}.txt"
-        done
+        # If there are multiple APK files, we only need to provide 1 changelog,
+        # but it has to match one of the version codes.
+        apk=${APK_FILES[0]}
+        APK_VERSION_CODE=$($AAPT dump badging "${apk}" | grep "^package" | sed -n "s/.*versionCode='\([0-9]*\).*/\1/p")
+        cp "$filename" "${DIR}/changelogs/${APK_VERSION_CODE}.txt"
       else
         cp "$filename" "${DIR}/changelogs/${VERSION_CODE}.txt"
       fi

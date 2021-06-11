@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+shopt -s nullglob
 set -e -o pipefail
 set -x
 LOG_FILE="${OUTPUT_DIR}"/console.log
@@ -11,11 +12,20 @@ publish_google_play() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   export SUPPLY_JSON_KEY="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
-  SUPPLY_PACKAGE_NAME="$(cat package_name.txt)"
-  export SUPPLY_PACKAGE_NAME
-  SUPPLY_VERSION_CODE="$(cat version_code.txt)"
-  export SUPPLY_VERSION_CODE
+  PACKAGE_NAME="$(cat package_name.txt)"
+  export SUPPLY_PACKAGE_NAME="${PACKAGE_NAME}"
+  VERSION_CODE="$(cat version_code.txt)"
   export SUPPLY_METADATA_PATH="play-listing"
+
+  if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
+    # Build a comma-separated list of files
+    SUPPLY_APK_PATHS=$(find . -name "*.apk" | tr '\n' ',')
+    export SUPPLY_APK_PATHS
+    echo "Publishing APKs: ${SUPPLY_APK_PATHS}"
+  else
+    export SUPPLY_APK="${APK_FILES[0]}"
+    echo "Publishing APK: ${SUPPLY_APK}"
+  fi
 
   if [[ -n "${PUBLISH_DRAFT}" ]]; then
     echo "Publishing Draft"
@@ -24,28 +34,29 @@ publish_google_play() {
     # to associate the entry with the package name and keystore
     # Google Play APIs have changed so that you can't re-upload the APK. It gives a duplicate
     # version code error.
-    if [[ "${SUPPLY_VERSION_CODE}" == "${PUBLISH_GOOGLE_PLAY_UPLOADED_VERSION_CODE}" ]]; then
+    if [[ "${VERSION_CODE}" == "${PUBLISH_GOOGLE_PLAY_UPLOADED_VERSION_CODE}" ]]; then
       if [[ "${BUILD_NUMBER}" != "${PUBLISH_GOOGLE_PLAY_UPLOADED_BUILD_ID}" ]]; then
         echo "ERROR: Duplicate version code used on different builds during initial publish"
         exit 1
       fi
-      PUBLISH_NO_APK=1
+      echo "Not publishing APK(s)"
+      export SUPPLY_SKIP_UPLOAD_APK=true
     fi
   fi
-  if [[ -z "${PUBLISH_NO_APK}" ]]; then
-    if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
-      echo "Publishing APKs"
-      # Build a comma-separated list of files
-      SUPPLY_APK_PATHS=$(find . -name "*.apk" | tr '\n' ',')
-      export SUPPLY_APK_PATHS
-    else
-      echo "Publishing APK"
-      export SUPPLY_APK="${APK_FILES[0]}"
-    fi
+
+  # https://stackoverflow.com/a/23357277/35577
+  CHANGELOGS=()
+  while IFS=  read -r -d $'\0'; do
+    CHANGELOGS+=("$REPLY")
+  done < <(find "${ARTIFACTS_DIR}"/play-listing -name "[0-9]*.txt" -print0 | grep -FzZ 'changelogs')
+
+  if [[ "${#CHANGELOGS[@]}" -gt 0 ]]; then
+    APK_VERSION_CODE="$(basename "${CHANGELOGS[0]%.txt}")"
+    export SUPPLY_VERSION_CODE="${APK_VERSION_CODE}"
   else
-    echo "Not publishing APK"
-    export SUPPLY_SKIP_UPLOAD_APK=true
+    export SUPPLY_SKIP_UPLOAD_CHANGELOGS=true
   fi
+
   if [ -n "$PROMOTE_FROM" ]; then
     export SUPPLY_TRACK="${PROMOTE_FROM}"
     export SUPPLY_TRACK_PROMOTE_TO="${CHANNEL}"
@@ -54,7 +65,7 @@ publish_google_play() {
   fi
   env | grep "SUPPLY_"
   fastlane supply
-  echo "https://play.google.com/store/apps/details?id=${SUPPLY_PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
+  echo "https://play.google.com/store/apps/details?id=${PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
 }
