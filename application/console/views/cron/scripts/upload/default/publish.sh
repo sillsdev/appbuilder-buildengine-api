@@ -21,27 +21,30 @@ publish_google_play() {
     # Build a comma-separated list of files
     SUPPLY_APK_PATHS=$(find . -name "*.apk" | tr '\n' ',')
     export SUPPLY_APK_PATHS
-    echo "Publishing APKs: ${SUPPLY_APK_PATHS}"
+    echo "APKs: ${SUPPLY_APK_PATHS}"
   else
     export SUPPLY_APK="${APK_FILES[0]}"
-    echo "Publishing APK: ${SUPPLY_APK}"
+    echo "APK: ${SUPPLY_APK}"
   fi
 
-  if [[ -n "${PUBLISH_DRAFT}" ]]; then
+  if [[ -n "${PUBLISH_GOOGLE_PLAY_DRAFT}" ]]; then
     echo "Publishing Draft"
     export SUPPLY_RELEASE_STATUS=draft
-    # On the initial publish, an org admin has to create the app store entry and upload the APK
+    # On the initial publish, a user has to create the app store entry and upload the APK
     # to associate the entry with the package name and keystore
-    # Google Play APIs have changed so that you can't re-upload the APK. It gives a duplicate
-    # version code error.
+    # Google Play APIs have changed so that we can't re-upload the APK. It gives a duplicate
+    # version code error. So we need to skip uploading APK that was uploaded by the user
     if [[ "${VERSION_CODE}" == "${PUBLISH_GOOGLE_PLAY_UPLOADED_VERSION_CODE}" ]]; then
       if [[ "${BUILD_NUMBER}" != "${PUBLISH_GOOGLE_PLAY_UPLOADED_BUILD_ID}" ]]; then
         echo "ERROR: Duplicate version code used on different builds during initial publish"
         exit 1
       fi
-      echo "Not publishing APK(s)"
+      echo "Not publishing APK(s) ... uploaded by user"
       export SUPPLY_SKIP_UPLOAD_APK=true
+    else
+      echo "Publishing APK(s) ... rebuilt after first uploaded by user"
     fi
+
   fi
 
   # https://stackoverflow.com/a/23357277/35577
