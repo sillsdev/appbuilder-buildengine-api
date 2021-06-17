@@ -34,6 +34,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const CHANNEL_PRODUCTION = 'production';
 
     const ARTIFACT_UNKNOWN = "unknown";
+    const ARTIFACT_AAB = "aab";
     const ARTIFACT_APK = "apk";
     const ARTIFACT_VERSION_CODE = "version_code";
     const ARTIFACT_VERSION = "version";
@@ -185,6 +186,11 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         ];
     }
 
+    private function addIfSet(&$array, $key, $value) {
+        if (strlen($value)>0) {
+            $array[$key] = $value;
+        }
+    }
     public function artifacts() {
         $artifacts = array();
         if (strpos($this->targets, "apk") !== false) {
@@ -197,33 +203,38 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
                 }
             }
             else {
-                $artifacts[self::ARTIFACT_APK] = $this->apk();
+                $this->addIfSet($artifacts, self::ARTIFACT_APK, $this->apk());
+                $this->addIfSet($artifacts, self::ARTIFACT_AAB, $this->aab());
             }
-            $artifacts[self::ARTIFACT_ABOUT] = $this->about();
+            $this->addIfSet($artifacts, self::ARTIFACT_ABOUT, $this->about());
         }
 
         if (strpos($this->targets, "play-listing") !== false) {
-            $artifacts[self::ARTIFACT_PLAY_LISTING] = $this->playListing();
-            $artifacts[self::ARTIFACT_PLAY_LISTING] = $this->playListing();
-            $artifacts[self::ARTIFACT_PLAY_LISTING_MANIFEST] = $this->playListingManifest();
-            $artifacts[self::ARTIFACT_VERSION_CODE] = $this->versionCode();
-            $artifacts[self::ARTIFACT_PACKAGE_NAME] = $this->packageName();
-            $artifacts[self::ARTIFACT_PUBLISH_PROPERTIES] = $this->publishProperties();
-            $artifacts[self::ARTIFACT_WHATS_NEW] = $this->whatsNew();
+            $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING,$this->playListing());
+            $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING, $this->playListing());
+            $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING_MANIFEST, $this->playListingManifest());
+            $this->addIfSet($artifacts, self::ARTIFACT_VERSION_CODE, $this->versionCode());
+            $this->addIfSet($artifacts, self::ARTIFACT_PACKAGE_NAME, $this->packageName());
+            $this->addIfSet($artifacts, self::ARTIFACT_PUBLISH_PROPERTIES, $this->publishProperties());
+            $this->addIfSet($artifacts, self::ARTIFACT_WHATS_NEW, $this->whatsNew());
         }
 
         if (strpos($this->targets, "html") !== false) {
-            $artifacts[self::ARTIFACT_HTML] = $this->html();
+            $this->addIfSet($artifacts, self::ARTIFACT_HTML, $this->html());
         }
 
         if (strpos($this->targets, "pwa") !== false) {
-            $artifacts[self::ARTIFACT_PWA] = $this->pwa();
+            $this->addIfSet($artifacts, self::ARTIFACT_PWA, $this->pwa());
         }
 
-        $artifacts[self::ARTIFACT_VERSION] = $this->version();
+        $this->addIfSet($artifacts, self::ARTIFACT_VERSION, $this->version());
+        $this->addIfSet($artifacts, self::ARTIFACT_CLOUD_WATCH, $this->cloudWatch());
+        $this->addIfSet($artifacts, self::ARTIFACT_CONSOLE_TEXT, $this->consoleText());
+        $this->addIfSet($artifacts, self::ARTIFACT_PUBLISH_PROPERTIES, $this->publishProperties());
+
+        // We need to at least have one artifact or the current Portal will fail to parse the JSON.
+        // TODO: Treat these like the others once Poral is fixed.
         $artifacts[self::ARTIFACT_CLOUD_WATCH] = $this->cloudWatch();
-        $artifacts[self::ARTIFACT_CONSOLE_TEXT] = $this->consoleText();
-        $artifacts[self::ARTIFACT_PUBLISH_PROPERTIES] = $this->publishProperties();
 
         return $artifacts;
     }
@@ -370,6 +381,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $type = self::ARTIFACT_CLOUD_WATCH;
         } else if ($path_parts['extension'] === "log") {
             $type = self::ARTIFACT_CONSOLE_TEXT;
+        } else if ($path_parts['extension'] === "aab") {
+            $type = self::ARTIFACT_AAB;
         } else if ($path_parts['extension'] === "apk") {
             $type = self::ARTIFACT_APK;
         } else if ($file === "version_code.txt") {
@@ -426,6 +439,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
 //                break;
 
             case self::ARTIFACT_ABOUT:
+            case self::ARTIFACT_AAB:
             case self::ARTIFACT_APK:
             case self::ARTIFACT_HTML:
             case self::ARTIFACT_PWA:
@@ -513,6 +527,9 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function apks() {
         return $this->getArtifactUrls("/\.apk$/");
+    }
+    public function aab() {
+        return $this->getArtifactUrl("/\.aab$/");
     }
     public function about() {
         return $this->getArtifactUrl("/about\.txt$/");
