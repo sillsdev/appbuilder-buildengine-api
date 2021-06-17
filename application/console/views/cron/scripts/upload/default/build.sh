@@ -109,9 +109,10 @@ build_apk() {
   fi
   echo "KEYSTORE=${KS}"
 
-  if [[ -n "${BUILD_ANDROID_AAB}" ]]; then
+  if [[ "${BUILD_ANDROID_AAB}" == "1" ]]; then
     BUILD_OPT="-app-bundle"
   fi
+  echo "BUILD_OPT=${BUILD_OPT}"
 
   cd "$PROJECT_DIR" || exit 1
 
