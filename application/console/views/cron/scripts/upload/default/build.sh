@@ -109,15 +109,14 @@ build_apk() {
   fi
   echo "KEYSTORE=${KS}"
 
-  if [[ "${BUILD_ANDROID_AAB}" == "1" ]]; then
-    BUILD_OPT="-app-bundle"
-  fi
-  echo "BUILD_OPT=${BUILD_OPT}"
-
   cd "$PROJECT_DIR" || exit 1
 
   # shellcheck disable=SC2086
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${BUILD_OPT} ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
+  if [[ "${BUILD_ANDROID_AAB}" == "1" ]]; then
+    # shellcheck disable=SC2086
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -app-bundle ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
+  fi
 }
 
 build_html() {
