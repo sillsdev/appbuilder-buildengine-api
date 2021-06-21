@@ -194,6 +194,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     public function artifacts() {
         $artifacts = array();
         if (strpos($this->targets, "apk") !== false) {
+            $this->addIfSet($artifacts, self::ARTIFACT_AAB, $this->aab());
             $count = $this->apkCount();
             if ($count > 1) {
                 $apks = $this->apks();
@@ -204,7 +205,6 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             }
             else {
                 $this->addIfSet($artifacts, self::ARTIFACT_APK, $this->apk());
-                $this->addIfSet($artifacts, self::ARTIFACT_AAB, $this->aab());
             }
             $this->addIfSet($artifacts, self::ARTIFACT_ABOUT, $this->about());
         }
