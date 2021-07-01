@@ -17,7 +17,11 @@ publish_google_play() {
   VERSION_CODE="$(cat version_code.txt)"
   export SUPPLY_METADATA_PATH="play-listing"
 
-  if [[ "${#APK_FILES[@]}" -gt 1 ]]; then
+  if [[ "${#AAB_FILES[@]}" -gt 0 ]]; then
+    export SUPPLY_AAB="${AAB_FILES[0]}"
+    export SUPPLY_SKIP_UPLOAD_APK=true
+    echo "AAB: ${SUPPLY_AAB}"
+  elif [[ "${#APK_FILES[@]}" -gt 1 ]]; then
     # Build a comma-separated list of files
     SUPPLY_APK_PATHS=$(find . -name "*.apk" | tr '\n' ',')
     export SUPPLY_APK_PATHS
@@ -238,6 +242,7 @@ prepare_publish() {
 }
 
 APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )
+AAB_FILES=( "${ARTIFACTS_DIR}"/*.aab )
 
 prepare_publish
 env | sort
