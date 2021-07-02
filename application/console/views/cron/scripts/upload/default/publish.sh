@@ -43,8 +43,9 @@ publish_google_play() {
         echo "ERROR: Duplicate version code used on different builds during initial publish"
         exit 1
       fi
-      echo "Not publishing APK(s) ... uploaded by user"
+      echo "Not publishing APK(s) or AAB ... uploaded by user"
       export SUPPLY_SKIP_UPLOAD_APK=true
+      export SUPPLY_SKIP_UPLOAD_AAB=true
     else
       echo "Publishing APK(s) ... rebuilt after first uploaded by user"
     fi
