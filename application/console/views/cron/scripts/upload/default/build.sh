@@ -117,6 +117,13 @@ build_apk() {
     # shellcheck disable=SC2086
     $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -app-bundle ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
   fi
+
+  if [[ "${BUILD_EXPORT_ENCRYPTED_KEY}" == "1" ]]; then
+    echo "Export Encrypted Key"
+    ENCRYPTED_KEY="private_key.pepk"
+    # shellcheck disable=SC2086
+    java -jar /root/pepk.jar --keystore="${KS}" --alias=${KA} --output="${OUTPUT_DIR}/${ENCRYPTED_KEY}" --keystore-pass=${KSP} --key-pass=${KAP} --encryptionkey=eb10fe8f7c7c9df715022017b00c6471f8ba8170b13049a11e6c09ffe3056a104a3bbe4ac5a955f4ba4fe93fc8cef27558a3eb9d2a529a2092761fb833b656cd48b9de6a
+  fi
 }
 
 build_html() {

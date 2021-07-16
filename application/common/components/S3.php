@@ -182,7 +182,7 @@ class S3 extends AWSCommon{
                 ]);
             $artifacts_provider->handleArtifact($destinationFile, $fileContents);
         } catch (\Exception $e) {
-            echo "File was not renamed " . $sourceFile . PHP_EOL; 
+            echo "File was not renamed " . $sourceFile . PHP_EOL . "exception: " . $e->getTraceAsString();
         }
     }
 
@@ -210,6 +210,10 @@ class S3 extends AWSCommon{
 
     private function getFileType($fileName) {
         $info = pathinfo($fileName);
+        if (!array_key_exists('extension', $info)) {
+            return "application/octet-stream";
+        }
+
         switch ($info['extension']) {
             case "html":
                 $contentType = "text/html";
