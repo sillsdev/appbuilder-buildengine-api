@@ -75,10 +75,6 @@ build_apk() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
 
-  KEYSTORE_PATH="$(xmllint --xpath "/app-definition/signing/keystore/text()" "${PROJECT_DIR}/build.appDef")"
-  KEYSTORE_UNIX_PATH=${KEYSTORE_PATH//\\//}
-  KEYSTORE=${KEYSTORE_UNIX_PATH##*/}
-  KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${KEYSTORE}"
   if [[ "${PRODUCT_KEYSTORE}" != "" ]]; then
     echo "Using product keystore=${PRODUCT_KEYSTORE}"
     KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/${PRODUCT_KEYSTORE}.keystore"
@@ -95,9 +91,6 @@ build_apk() {
     KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/kap.txt")"
     { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
     KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
-  elif [[ -f "${KS}" ]]; then
-    echo "Using project keystore=${KEYSTORE}"
-    KS_OPT="-ks ${KS}"
   else
     echo "Using publisher keystore=${PUBLISHER}"
     KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
@@ -121,8 +114,7 @@ build_apk() {
   if [[ "${BUILD_EXPORT_ENCRYPTED_KEY}" == "1" ]]; then
     echo "Export Encrypted Key"
     ENCRYPTED_KEY="private_key.pepk"
-    # shellcheck disable=SC2086
-    java -jar /root/pepk.jar --keystore="${KS}" --alias=${KA} --output="${OUTPUT_DIR}/${ENCRYPTED_KEY}" --keystore-pass=${KSP} --key-pass=${KAP} --encryptionkey=eb10fe8f7c7c9df715022017b00c6471f8ba8170b13049a11e6c09ffe3056a104a3bbe4ac5a955f4ba4fe93fc8cef27558a3eb9d2a529a2092761fb833b656cd48b9de6a
+    java -jar /root/pepk.jar --keystore="${KS}" --alias="${KA}" --encryptionkey="eb10fe8f7c7c9df715022017b00c6471f8ba8170b13049a11e6c09ffe3056a104a3bbe4ac5a955f4ba4fe93fc8cef27558a3eb9d2a529a2092761fb833b656cd48b9de6a" --output="${OUTPUT_DIR}/${ENCRYPTED_KEY}" --key-pass="${KAP}" --keystore-pass="${KSP}"
   fi
 }
 
