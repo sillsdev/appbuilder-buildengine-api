@@ -17,7 +17,11 @@ publish_google_play() {
   VERSION_CODE="$(cat version_code.txt)"
   export SUPPLY_METADATA_PATH="play-listing"
 
-  if [[ "${#AAB_FILES[@]}" -gt 0 ]]; then
+  if [[ -n "${PUBLISH_NO_APK}" ]]; then
+    export SUPPLY_SKIP_UPLOAD_APK=true
+    export SUPPLY_SKIP_UPLOAD_AAB=true
+    echo "APK: None (PUBLISH_NO_APK=1), just republish"
+  elif [[ "${#AAB_FILES[@]}" -gt 0 ]]; then
     export SUPPLY_AAB="${AAB_FILES[0]}"
     export SUPPLY_SKIP_UPLOAD_APK=true
     echo "AAB: ${SUPPLY_AAB}"
@@ -26,9 +30,12 @@ publish_google_play() {
     SUPPLY_APK_PATHS=$(find . -name "*.apk" | tr '\n' ',')
     export SUPPLY_APK_PATHS
     echo "APKs: ${SUPPLY_APK_PATHS}"
-  else
+  elif [[ "${#APK_FILES[@]}" -gt 0 ]]; then
     export SUPPLY_APK="${APK_FILES[0]}"
     echo "APK: ${SUPPLY_APK}"
+  else
+    echo "APK: Missing AAB or APK!"
+    exit 1
   fi
 
   if [[ -n "${PUBLISH_GOOGLE_PLAY_DRAFT}" ]]; then
@@ -54,9 +61,11 @@ publish_google_play() {
 
   # https://stackoverflow.com/a/23357277/35577
   CHANGELOGS=()
-  while IFS=  read -r -d $'\0'; do
-    CHANGELOGS+=("$REPLY")
-  done < <(find "${ARTIFACTS_DIR}"/play-listing -name "[0-9]*.txt" -print0 | grep -FzZ 'changelogs')
+  if [[ -z "${PUBLISH_NO_APK}" ]]; then
+    while IFS=  read -r -d $'\0'; do
+      CHANGELOGS+=("$REPLY")
+    done < <(find "${ARTIFACTS_DIR}"/play-listing -name "[0-9]*.txt" -print0 | grep -FzZ 'changelogs')
+  fi
 
   if [[ "${#CHANGELOGS[@]}" -gt 0 ]]; then
     APK_VERSION_CODE="$(basename "${CHANGELOGS[0]%.txt}")"
