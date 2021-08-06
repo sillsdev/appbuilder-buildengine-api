@@ -49,6 +49,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const ARTIFACT_HTML = "html";
     const ARTIFACT_PWA = "pwa";
     const ARTIFACT_ENCRYPTED_KEY="encrypted_key";
+    const ARTIFACT_ASSET_PACKAGE="asset-package";
+    const ARTIFACT_ASSET_PREVIEW="asset-preview";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -229,6 +231,12 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $this->addIfSet($artifacts, self::ARTIFACT_PWA, $this->pwa());
         }
 
+        if (strpos($this->targets, "asset-package") !== false) {
+            $this->addIfSet($artifacts, self::ARTIFACT_ASSET_PACKAGE, $this->assetPackage());
+            $this->addIfSet($artifacts, self::ARTIFACT_ASSET_PREVIEW, $this->assetPreview());
+        }
+
+
         $this->addIfSet($artifacts, self::ARTIFACT_VERSION, $this->version());
         $this->addIfSet($artifacts, self::ARTIFACT_CLOUD_WATCH, $this->cloudWatch());
         $this->addIfSet($artifacts, self::ARTIFACT_CONSOLE_TEXT, $this->consoleText());
@@ -407,6 +415,12 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $type = self::ARTIFACT_PWA;
         } else if ($file === "private_key.pepk") {
             $type = self::ARTIFACT_ENCRYPTED_KEY;
+        } else if (preg_match("/asset-package\/.*\.zip$/", $key)) {
+            $type = self::ARTIFACT_ASSET_PACKAGE;
+            $file = "asset-package/" . $file;
+        } else if (preg_match("/asset-package\/preview\.html$/", $key)) {
+            $type = self::ARTIFACT_ASSET_PREVIEW;
+            $file = "asset-package/preview.html";
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING;
             $file = "play-listing/index.html";
@@ -457,6 +471,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             case self::ARTIFACT_CLOUD_WATCH:
             case self::ARTIFACT_CONSOLE_TEXT:
             case self::ARTIFACT_ENCRYPTED_KEY:
+            case self::ARTIFACT_ASSET_PREVIEW:
+            case self::ARTIFACT_ASSET_PACKAGE:
                 break;
 
             default:
@@ -578,6 +594,12 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function encryptedKey() {
         return $this->getArtifactUrl("/private_key\.pepk$/");
+    }
+    public function assetPackage() {
+        return $this->getArtifactUrl("/asset-package\/.*\.zip$/");
+    }
+    public function assetPreview() {
+        return $this->getArtifactUrl("/asset-package\/preview\.html$/");
     }
 
     /**

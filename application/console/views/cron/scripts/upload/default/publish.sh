@@ -88,13 +88,37 @@ publish_google_play() {
 }
 
 publish_s3_bucket() {
+  ZIP_FILES=( "${ARTIFACTS_DIR}"/asset-package/*.zip )
+
   CREDENTIALS="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
   CONFIG="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
-  SRC_FILE="${APK_FILES[0]}"
   DEST_BUCKET_PATH=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
-  DEST_FILE="$(basename "${SRC_FILE}")"
+  if [[ "${DEST_BUCKET_PATH}" == "" ]]; then
+    echo "${PUBLISHER}/bucket empty!"
+    exit 1
+  fi
+
+  # add the proudct id to make it unique
+  if [[ "${PRODUCT_ID}" != "" ]]; then
+      DEST_BUCKET_PATH="${DEST_BUCKET_PATH}/${PRODUCT_ID}"
+  fi
 
   IFS=/ read -r DEST_BUCKET DEST_PATH <<< "${DEST_BUCKET_PATH}"
+
+  # Detect tye type of publish: apk or asset-package
+  if [[ "${#APK_FILES[@]}" -gt 0 ]]; then
+    # apk: publish all the apks
+    PUBLISH_S3_INCLUDE="*.apk"
+    PUBLISH_S3_SOURCH_PATH="${ARTIFACTS_DIR}"
+    SRC_FILE="${APK_FILES[0]}"
+  elif [[ "${#ZIP_FILES[@]}" -gt 0 ]]; then
+    # asset-package: publish all the zip files
+    PUBLISH_S3_INCLUDE="*.zip"
+    PUBLISH_S3_SOURCH_PATH="${ARTIFACTS_DIR}/asset-package"
+    SRC_FILE="${ZIP_FILES[0]}"
+  fi
+  DEST_FILE="$(basename "${SRC_FILE}")"
+
   if [[ "${DEST_PATH}" == "" ]]; then
     PUBLISH_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_FILE}"
   else
@@ -104,11 +128,13 @@ publish_s3_bucket() {
   echo "CREDENTIALS=${CREDENTIALS}"
   echo "CONFIG=${CONFIG}"
   echo "SRC_FILE=${SRC_FILE}"
+  echo "PUBLISH_S3_SOURCH_PATH=${PUBLISH_S3_SOURCH_PATH}"
+  echo "PUBLISH_S3_INCLUDE=${PUBLISH_S3_INCLUDE}"
   echo "DEST_BUCKET_PATH=${DEST_BUCKET_PATH}"
   echo "DEST_FILE=${DEST_FILE}"
   echo "PUBLISH_URL=${PUBLISH_URL}"
 
-  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp --acl public-read "${SRC_FILE}" "s3://${DEST_BUCKET_PATH}/${DEST_FILE}"
+  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${PUBLISH_S3_SOURCH_PATH}" "s3://${DEST_BUCKET_PATH}" --acl public-read --recursive --exclude "*" --include "${PUBLISH_S3_INCLUDE}"
 
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
 }

@@ -168,6 +168,46 @@ build_pwa() {
   APPDEF_PACKAGE_NAME=""
 }
 
+build_asset_package() {
+  echo "Build asset-package"
+  echo "OUTPUT_DIR=${OUTPUT_DIR}"
+  cd "$PROJECT_DIR" || exit 1
+
+  ASSET_OUTPUT_DIR="${OUTPUT_DIR}/asset-package"
+  mkdir -p "${ASSET_OUTPUT_DIR}"
+
+
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}"
+  echo "exit=$?"
+
+  ASSET_FILENAME="$(xmllint --xpath "//app-definition/ipa-asset-filename/text()" "${PROJECT_DIR}/build.appDef")"
+  APP_NAME="$(xmllint --xpath "//app-definition/app-name/text()" "${PROJECT_DIR}/build.appDef")"
+  echo "ASSET_FILENAME=${ASSET_FILENAME}"
+  echo "APP_NAME=${APP_NAME}"
+
+  cat >"${ASSET_OUTPUT_DIR}/preview.html" <<EOL
+<html><head><style>
+.container {
+  display: flex;
+  justify-content: center;
+  font-size: 40px;
+}
+.center {
+  width: 800px;
+}
+</style></head>
+<body>
+<p id="top" class="container">Preview</p>
+<div class="container">
+<p><a href="${ASSET_FILENAME}">${APP_NAME}</a></p>
+</div>
+</body>
+</html>
+EOL
+
+  cat "${ASSET_OUTPUT_DIR}/preview.html"
+}
+
 build_play_listing() {
   echo "Build play listing"
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
@@ -318,6 +358,7 @@ for target in $TARGETS
 do
   case "$target" in
     "apk") build_apk ;;
+    "asset-package") build_asset_package ;;
     "play-listing") build_play_listing ;;
     "html") build_html ;;
     "pwa") build_pwa ;;
