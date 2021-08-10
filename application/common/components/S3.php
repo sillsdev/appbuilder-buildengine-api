@@ -174,7 +174,7 @@ class S3 extends AWSCommon{
         try {
             $return = $this->s3Client->copyObject([
                 'Bucket' => $artifactsBucket,
-                'CopySource' => $sourceFile,
+                'CopySource' => urlencode($sourceFile),
                 'Key' => $destinationFile,
                 'ACL' => 'public-read',
                 'ContentType' => $this->getFileType($fileName),
