@@ -169,12 +169,14 @@ class S3 extends AWSCommon{
                 echo $fileName . PHP_EOL;
                 break;
         }
-        $sourceFile = $artifactsBucket . '/' . $fileNameWithPrefix;
+        $sourceDir = dirname($fileNameWithPrefix);
+        $sourceBasename = basename($fileNameWithPrefix);
+        $sourceFile = $artifactsBucket . '/' . $sourceDir . '/' . urlencode($sourceBasename);
         $destinationFile = $destPrefix . $fileName;
         try {
             $return = $this->s3Client->copyObject([
                 'Bucket' => $artifactsBucket,
-                'CopySource' => urlencode($sourceFile),
+                'CopySource' => $sourceFile,
                 'Key' => $destinationFile,
                 'ACL' => 'public-read',
                 'ContentType' => $this->getFileType($fileName),

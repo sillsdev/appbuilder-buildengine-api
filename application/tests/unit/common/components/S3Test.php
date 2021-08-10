@@ -104,12 +104,16 @@ class S3Test extends UnitTestBase
             'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/default-language.txt',
         ];
         $s3->copyS3File($file3, $sourcePrefix, $destPrefix, $build);
-        $file3 = [
+        $file4 = [
             'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/version_code.txt',
         ];
-        $s3->copyS3File($file3, $sourcePrefix, $destPrefix, $build);
+        $s3->copyS3File($file4, $sourcePrefix, $destPrefix, $build);
+        $file5 = [
+            'Key' => 'codebuild-output/jobs/build_scriptureappbuilder_22/11/play-listing/en-US/images/phoneScreenshots/Tést.png',
+        ];
+        $s3->copyS3File($file5, $sourcePrefix, $destPrefix, $build);
         // Should only be two since manifest.txt file and default_language.txt are ignored
-        $this->assertEquals(2, count(MockS3Client::$copies), " *** Wrong number of copies to S3");
+        $this->assertEquals(3, count(MockS3Client::$copies), " *** Wrong number of copies to S3");
         $this->assertEquals('package_name.txt,version_code.txt', $build->artifact_files, " *** Wrong artifact files value");
         $copy = MockS3Client::$copies[0];
         $expectedKey = 'testing/jobs/build_scriptureappbuilder_22/11/package_name.txt';
@@ -118,6 +122,11 @@ class S3Test extends UnitTestBase
         $this->assertEquals('sil-appbuilder-artifacts', $copy['Bucket'], " *** Wrong S3 artifacts bucket");
         $this->assertEquals('sil-appbuilder-artifacts/' . $filename, $copy['CopySource'], " *** Bad source file name");
         $this->assertEquals('42', $build->version_code, " *** Bad version code");
+        $copy = MockS3Client::$copies[2];
+        $expectedKey = 'testing/jobs/build_scriptureappbuilder_22/11/play-listing/en-US/images/phoneScreenshots/Tést.png';
+        $this->assertEquals($expectedKey, $copy['Key'], " *** Wrong key detected");
+        $this->assertEquals('image/png', $copy['ContentType'], " *** Wrong content type");
+
     }
     public function testCopyS3BuildFolder()
     {
