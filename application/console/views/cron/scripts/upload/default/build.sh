@@ -168,6 +168,15 @@ build_pwa() {
   APPDEF_PACKAGE_NAME=""
 }
 
+set_default_asset_package() {
+    ASSET_FILENAME="${APPDEF_PACKAGE_NAME}.zip"
+    echo "Updating ipa-app-type=assets"
+    echo "Updating ipa-asset-filename=${ASSET_FILENAME}"
+    echo "Project=${PROJECT_DIR}/build.appDef"
+    xmlstarlet ed --inplace -s "/app-definition" -t elem -n "ipa-app-type" -v "assets" "${PROJECT_DIR}/build.appDef"
+    xmlstarlet ed --inplace -s "/app-definition" -t elem -n "ipa-asset-filename" -v "${ASSET_FILENAME}" "${PROJECT_DIR}/build.appDef"
+}
+
 build_asset_package() {
   echo "Build asset-package"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
@@ -176,14 +185,29 @@ build_asset_package() {
   ASSET_OUTPUT_DIR="${OUTPUT_DIR}/asset-package"
   mkdir -p "${ASSET_OUTPUT_DIR}"
 
+  APP_TYPE_COUNT=$(xmlstarlet sel -t -v "count(/app-definition/ipa-app-type)" "${PROJECT_DIR}/build.appDef")
+  ASSET_FILENAME_COUNT=$(xmlstarlet sel -t -v "count(/app-definition/ipa-asset-filename)" "${PROJECT_DIR}/build.appDef")
+  if [[ "$APP_TYPE_COUNT" == 0 || "$ASSET_FILENAME_COUNT" == 0 ]]; then
+    # Older project; provide default
+    set_default_asset_package
+  else
+    ASSET_TYPE=$(xmlstarlet sel -t -v "/app-definition/ipa-asset-type" "${PROJECT_DIR}/build.appDef")
+    if [[ "$ASSET_TYPE" != "assets" ]]; then
+      set_default_asset_package
+    fi
+  fi
 
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}"
-  echo "exit=$?"
-
-  ASSET_FILENAME="$(xmllint --xpath "//app-definition/ipa-asset-filename/text()" "${PROJECT_DIR}/build.appDef")"
-  APP_NAME="$(xmllint --xpath "//app-definition/app-name/text()" "${PROJECT_DIR}/build.appDef")"
+  APP_TYPE=$(xmlstarlet sel -t -v "/app-definition/ipa-app-type" "${PROJECT_DIR}/build.appDef")
+  ASSET_FILENAME="$(xmlstarlet sel -t -v "//app-definition/ipa-asset-filename" "${PROJECT_DIR}/build.appDef")"
+  if [[ "$ASSET_FILENAME" == "" ]]; then
+    set_default_asset_package
+  fi
+  APP_NAME="$(xmlstarlet sel -t -v "/app-definition/app-name" "${PROJECT_DIR}/build.appDef")"
+  echo "APP_TYPE=${APP_TYPE}"
   echo "ASSET_FILENAME=${ASSET_FILENAME}"
   echo "APP_NAME=${APP_NAME}"
+
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}"
 
   cat >"${ASSET_OUTPUT_DIR}/preview.html" <<EOL
 <html><head><style>
