@@ -191,8 +191,8 @@ build_asset_package() {
     # Older project; provide default
     set_default_asset_package
   else
-    ASSET_TYPE=$(xmlstarlet sel -t -v "/app-definition/ipa-asset-type" "${PROJECT_DIR}/build.appDef")
-    if [[ "$ASSET_TYPE" != "assets" ]]; then
+    APP_TYPE=$(xmlstarlet sel -t -v "/app-definition/ipa-app-type" "${PROJECT_DIR}/build.appDef")
+    if [[ "$APP_TYPE" != "assets" ]]; then
       set_default_asset_package
     fi
   fi
