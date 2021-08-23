@@ -210,7 +210,7 @@ build_asset_package() {
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}"
 
   cat >"${ASSET_OUTPUT_DIR}/preview.html" <<EOL
-<html><head><style>
+<html><head><meta charset="UTF-8"><style>
 .container {
   display: flex;
   justify-content: center;
