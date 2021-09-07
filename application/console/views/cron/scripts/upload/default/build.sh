@@ -207,7 +207,7 @@ build_asset_package() {
   echo "ASSET_FILENAME=${ASSET_FILENAME}"
   echo "APP_NAME=${APP_NAME}"
 
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}"
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}" -vn "$VERSION_NAME"
 
   cat >"${ASSET_OUTPUT_DIR}/preview.html" <<EOL
 <html><head><meta charset="UTF-8"><style>
@@ -230,6 +230,9 @@ build_asset_package() {
 EOL
 
   cat "${ASSET_OUTPUT_DIR}/preview.html"
+
+  # Not exported so clear it
+  VERSION_CODE=""
 }
 
 build_play_listing() {
