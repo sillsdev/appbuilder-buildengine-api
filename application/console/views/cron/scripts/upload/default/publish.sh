@@ -202,8 +202,6 @@ publish_rclone() {
   if [[ "${PUBLISH_CLOUD_REMOTE_ROOT}" == "null" ]]; then
     # should be blank or end with slash so that it can be safely inserted below
     PUBLISH_CLOUD_REMOTE_ROOT=""
-    #PUBLISH_CLOUD_REMOTE_PATH="${PUBLISH_CLOUD_REMOTE_ROOT}/${PUBLISH_CLOUD_REMOTE_PATH}"
-    #PUBLISH_CLOUD_BACKUP_REMOTE_PATH="${PUBLISH_CLOUD_REMOTE_ROOT}/${PUBLISH_CLOUD_BACKUP_REMOTE_PATH}"
   else
     #ensure that it ends with a slash
     PUBLISH_CLOUD_REMOTE_ROOT="${PUBLISH_CLOUD_REMOTE_ROOT%/}/"
