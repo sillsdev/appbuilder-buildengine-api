@@ -66,6 +66,10 @@ build_apk() {
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
+  echo "BUILD_SHARE_DOWNLOAD_APP_LINK=${BUILD_SHARE_DOWNLOAD_APP_LINK}"
+  if [[ "${BUILD_SHARE_DOWNLOAD_APP_LINK}" != "" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/api/products/${PRODUCT_ID}/files/published/apk"
+  fi
   process_audio_download
   process_audio_sources
 
