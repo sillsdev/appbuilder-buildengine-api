@@ -66,9 +66,13 @@ build_apk() {
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
   fi
+  echo "BUILD_SHARE_APP_INSTALLER=${BUILD_SHARE_APP_INSTALLER}"
+  if [[ "${BUILD_SHARE_APP_INSTALLER}" == "1" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -ft share-apk-file=true"
+  fi
   echo "BUILD_SHARE_DOWNLOAD_APP_LINK=${BUILD_SHARE_DOWNLOAD_APP_LINK}"
-  if [[ "${BUILD_SHARE_DOWNLOAD_APP_LINK}" != "" ]]; then
-    SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/api/products/${PRODUCT_ID}/files/published/apk"
+  if [[ "${BUILD_SHARE_DOWNLOAD_APP_LINK}" == "1" ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/downloads/apk/${APPDEF_PACKAGE_NAME}"
   fi
   process_audio_download
   process_audio_sources
