@@ -71,6 +71,11 @@ class CopyToS3Operation implements OperationInterface
     {
         return $this->alertAfter;
     }
+
+    /**
+     * @param Build $build
+     * @param string $defaultLanguage
+     */
     private function getExtraContent($build, $defaultLanguage) {
         echo 'getExtraContent defaultLanguage: ' . $defaultLanguage . PHP_EOL;
         $manifestFileContent = (string)$this->s3->readS3File($build, 'manifest.txt');
@@ -97,19 +102,39 @@ class CopyToS3Operation implements OperationInterface
             // serialization from an array to a hash where the indexes were the old
             // positions in the array.
             $playEncodedRelativePaths = array();
+            $languages = array();
             $publishIndex = "<html><body><ul>" . PHP_EOL;
+            $ignoreFiles = [ "default-language.txt", "primary-color.txt", "download-apk-strings.json" ];
             foreach ($manifestFiles as $path) {
-                if ((!empty($path)) && ($path != 'default-language.txt')) {
+                if (in_array($path, $ignoreFiles)) {
+                    continue;
+                }
+                if (!empty($path)) {
+                    // collect files
                     $encodedPath = self::encodePath('play-listing/' . $path);
                     $publishIndex .= "<li><a href=\"$encodedPath\">play-listing/$path</a></p></li>" . PHP_EOL;
                     array_push($playEncodedRelativePaths, self::encodePath($path));
+
+                    // collect languages
+                    if (preg_match("/([^\/]*)\//", $path, $langMatches)) {
+                        $lang = $langMatches[1];
+                        if (!in_array($lang, $languages)) {
+                            array_push($languages, $lang);
+                        }
+                    }
                 }
             }
             $publishIndex .= "</ul></body></html>" . PHP_EOL;
             $this->s3->writeFileToS3($publishIndex, 'play-listing.html', $build);
-            $manifest = [ "files" => $playEncodedRelativePaths ];
+            $manifest = [ "files" => $playEncodedRelativePaths,
+                          "languages" => $languages,
+                          "color" => $this->getPrimaryColor($build),
+                          "package" => $this->getPackageName($build),
+                          "download-apk-strings" => $this->getDownloadApkStrings($build, $languages, $defaultLanguage),
+                          "url" => $build->getArtifactUrlBase() . "play-listing/" ];
             if (!empty($defaultLanguage)) {
                 $manifest["default-language"] = $defaultLanguage;
+                $manifest["icon"] = "$defaultLanguage/images/icon.png";
             }
             $json = json_encode($manifest, JSON_UNESCAPED_SLASHES);
             $jsonFileName = 'play-listing/manifest.json';
@@ -135,6 +160,56 @@ class CopyToS3Operation implements OperationInterface
     private function  getDefaultLanguage($build) {
         $defaultLanguage = $this->s3->readS3File($build, 'play-listing/default-language.txt');
         return $defaultLanguage;
+    }
+
+    /**
+     * getPrimaryColor read the primary color from primary-color.txt
+     *
+     * @param Build $build - Current build object
+     * @return string Contents of primary-color.txt or default value is file doesn't exist
+     */
+    private function getPrimaryColor($build) {
+        $primaryColor = trim($this->s3->readS3File($build, 'play-listing/primary-color.txt'));
+        if (strlen($primaryColor) == 0) {
+            $primaryColor = "#cce2ff";
+        }
+        return $primaryColor;
+    }
+
+    /**
+     * getDownloadApkStrings read the localization strings in download-apk-strings.json
+     *
+     * @param Build $build - Current build object
+     * @param array $languages - languages to include
+     * @param string $defaultLanguage - the default language
+     * @return mixed Contents of download-apk-strings.json or default as array
+     */
+    private function getDownloadApkStrings($build, $languages, $defaultLanguage) {
+
+        $strings = trim($this->s3->readS3File($build, 'play-listing/download-apk-strings.json'));
+        if (strlen($strings) === 0) {
+            $strings = '{ "en" : "Download APK" }';
+        }
+        $downloadApkStrings = array();
+        $languageNoVariant = function($lang) {
+          return substr($lang, 0, 2);
+        };
+        $languagesNoVariant = array_map($languageNoVariant, $languages);
+        foreach(json_decode($strings) as $lang => $downloadApkString)
+        {
+            if (in_array($lang, $languagesNoVariant)) {
+                $downloadApkStrings[$lang] = $downloadApkString;
+            }
+        }
+        if (count($downloadApkStrings) === 0) {
+            return [$defaultLanguage => "APK"];
+        }
+        return $downloadApkStrings;
+    }
+
+    private function getPackageName($build) {
+        $packageName = trim($this->s3->readS3File($build, 'package_name.txt'));
+        return $packageName;
     }
 
     /**

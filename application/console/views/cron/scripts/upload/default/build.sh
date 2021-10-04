@@ -72,7 +72,7 @@ build_apk() {
   fi
   echo "BUILD_SHARE_DOWNLOAD_APP_LINK=${BUILD_SHARE_DOWNLOAD_APP_LINK}"
   if [[ "${BUILD_SHARE_DOWNLOAD_APP_LINK}" == "1" ]]; then
-    SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/downloads/apk/${APPDEF_PACKAGE_NAME}"
+    SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/downloads/apk/${APPDEF_PACKAGE_NAME}/published"
   fi
   process_audio_download
   process_audio_sources
@@ -124,6 +124,20 @@ build_apk() {
     ENCRYPTED_KEY="private_key.pepk"
     java -jar /root/pepk.jar --keystore="${KS}" --alias="${KA}" --encryptionkey="eb10fe8f7c7c9df715022017b00c6471f8ba8170b13049a11e6c09ffe3056a104a3bbe4ac5a955f4ba4fe93fc8cef27558a3eb9d2a529a2092761fb833b656cd48b9de6a" --output="${OUTPUT_DIR}/${ENCRYPTED_KEY}" --key-pass="${KAP}" --keystore-pass="${KSP}"
   fi
+
+  ###
+  # For the download page, we need the primary color and localized string for "Download APK"
+  #
+  # Add primary-color.txt
+  PRIMARY_COLOR=$(xmlstarlet sel -t -v '/app-definition/colors/color[@name = "PrimaryColor"]/color-mapping/@value' "${PROJECT_DIR}/build.appDef" ) || echo "Color not set in appDef"
+  if [[ "${PRIMARY_COLOR}" == "" ]]; then
+    # This is a little ugly getting the color after a build
+    PRIMARY_COLOR=$(xmlstarlet sel -t -v '/resources/color[@name = "colorPrimary"]' "/tmp/App Builder/build/${APP_BUILDER_TLA}.000/a/res/values/colors.xml")
+  fi
+  echo "$PRIMARY_COLOR" > "${PROJECT_DIR}/build_data/publish/play-listing/primary-color.txt"
+
+  # Add download-apk-strings.json
+  xmlstarlet sel -t -c '/app-definition/translation-mappings/translation-mapping[@id = "Download_APK"]/translation' "${PROJECT_DIR}/build.appDef" | sed  's/<translation lang=//g; s/<\/translation>/" ,/g; s/>/ : "/g' | sed 's/^/{/; s/,$/}/' > "${PROJECT_DIR}/build_data/publish/play-listing/download-apk-strings.json"
 }
 
 build_html() {
@@ -304,10 +318,24 @@ build_gradle() {
 
 prepare_appbuilder_dir() {
   # Ensure 'App Projects' directory
-  mkdir -p "${HOME}/App Builder/Scripture Apps/App Projects"
+  if [[ "${APP_BUILDER_SCRIPT_PATH}" == "scripture-app-builder" ]]; then
+    APP_BUILDER_TLA=SAB
+    APP_BUILDER_FOLDER="Scripture Apps"
+  elif [[ "${APP_BUILDER_SCRIPT_PATH}" == "reading-app-builder" ]]; then
+    APP_BUILDER_TLA=RAB
+    APP_BUILDER_FOLDER="Reading Apps"
+  elif [[ "${APP_BUILDER_SCRIPT_PATH}" == "dictionary-app-builder" ]]; then
+    APP_BUILDER_TLA=DAB
+    APP_BUILDER_FOLDER="Dictionary Apps"
+  elif [[ "${APP_BUILDER_SCRIPT_PATH}" == "keyboard-app-builder" ]]; then
+    APP_BUILDER_TLA=KAB
+    APP_BUILDER_FOLDER="Keyboard Apps"
+  fi
+
+  mkdir -p "${HOME}/App Builder/${APP_BUILDER_FOLDER}/App Projects"
 
   if [[ "${BUILD_KEYS_FILE}" != "" ]]; then
-    KEY_DEST_DIR="${HOME}/App Builder/Scripture Apps"
+    KEY_DEST_DIR="${HOME}/App Builder/${APP_BUILDER_FOLDER}"
     mkdir -p "${KEY_DEST_DIR}"
     cp "${PROJECT_DIR}/build_data/${BUILD_KEYS_FILE}" "${KEY_DEST_DIR}/keys.txt"
   fi

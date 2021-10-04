@@ -482,6 +482,10 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         $this->appendArtifact($file);
     }
 
+    public function getArtifactUrlBase() {
+        return $this->artifact_url_base;
+    }
+
     private function getArtifactUrl($pattern) {
         $filename = $this->getArtifactFilename($pattern);
         if (!empty($filename))

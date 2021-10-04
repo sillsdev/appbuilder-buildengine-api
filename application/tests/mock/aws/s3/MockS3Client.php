@@ -19,11 +19,14 @@ class MockS3Client
         $key = $parms['Key'];
         $bucket = $parms['Bucket'];
         self::$gets[] = $parms;
-        $pieces = explode("/", $key);
+        $pieces = explode("/", $key,5);
         $filename = $pieces[4];
         switch ($filename) {
             case 'version_code.txt':
                 $body = "42";
+                break;
+            case 'play-listing/download-apk-strings.json':
+                $body = '{ "en" : "Download APK" }';
                 break;
             default:
                 $body = "Test body";
