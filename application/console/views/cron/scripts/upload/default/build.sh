@@ -26,6 +26,9 @@ replace_audio_sources() {
   DST_UPDATE_SOURCE="${UPDATE_SOURCES[1]}"
   xmlstarlet ed -u "/app-definition/audio-sources/audio-source/name[text() = '${SRC_UPDATE_SOURCE}']" -v "SCRIPTORIA_SRC_SOURCE" "${PROJECT_DIR}/build.appDef" > "${PROJECT_DIR}/tmp.appDef"
   xmlstarlet ed -u "/app-definition/audio-sources/audio-source/name[text() = '${DST_UPDATE_SOURCE}']" -v "SCRIPTORIA_DST_SOURCE" "${PROJECT_DIR}/tmp.appDef" > "${PROJECT_DIR}/build.appDef"
+  if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_SOURCE}" == "${SRC_UPDATE_SOURCE}" ]]; then
+    export AUDIO_DOWNLOAD_MISSING_ASSETS_SOURCE="SCRIPTORIA_SRC_SOURCE"
+  fi
   rm "${PROJECT_DIR}/tmp.appDef"
 }
 
@@ -38,16 +41,17 @@ process_audio_sources() {
 }
 
 process_audio_download() {
-  if [[ "${BUILD_AUDIO_DOWNLOAD_URL}" == "" ]]; then
-    BUILD_AUDIO_DOWNLOAD_URL="https://4.dbt.io"
-  fi
-
   if [[ "${BUILD_AUDIO_DOWNLOAD}" == "1" ]]; then
     if [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY}" != "" ]]; then
+      if [[ "${BUILD_AUDIO_DOWNLOAD_URL}" == "" ]]; then
+        BUILD_AUDIO_DOWNLOAD_URL="https://4.dbt.io"
+      fi
       SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-key ${AUDIO_DOWNLOAD_MISSING_ASSETS_KEY} -audio-download-url ${BUILD_AUDIO_DOWNLOAD_URL}"
-    fi
-    if [[ "${AUDIO_DOWNLOAD_BITRATE}" != "" ]]; then
-      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITRATE}"
+      if [[ "${AUDIO_DOWNLOAD_BITRATE}" != "" ]]; then
+        SCRIPT_OPT="${SCRIPT_OPT} -audio-download-bitrate ${AUDIO_DOWNLOAD_BITRATE}"
+      fi
+    elif [[ "${AUDIO_DOWNLOAD_MISSING_ASSETS_SOURCE}" != "" ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -audio-download-missing-assets-source ${AUDIO_DOWNLOAD_MISSING_ASSETS_SOURCE}"
     fi
     if [[ "${AUDIO_DOWNLOAD_CODEC}" != "" ]]; then
       SCRIPT_OPT="${SCRIPT_OPT} -audio-download-codec ${AUDIO_DOWNLOAD_CODEC}"
@@ -74,8 +78,8 @@ build_apk() {
   if [[ "${BUILD_SHARE_DOWNLOAD_APP_LINK}" == "1" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/downloads/apk/${APPDEF_PACKAGE_NAME}/published"
   fi
-  process_audio_download
   process_audio_sources
+  process_audio_download
 
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
   echo "VERSION_NAME=${VERSION_NAME}"
@@ -128,7 +132,8 @@ build_apk() {
   ###
   # For the download page, we need the primary color and localized string for "Download APK"
   #
-  # Add primary-color.txt
+  # Add primary-color. Look for an overriden value (will return error if not found). If not found, then look in build values (yuck).
+  set +e
   PRIMARY_COLOR=$(xmlstarlet sel -t -v '/app-definition/colors/color[@name = "PrimaryColor"]/color-mapping/@value' "${PROJECT_DIR}/build.appDef" ) || echo "Color not set in appDef"
   if [[ "${PRIMARY_COLOR}" == "" ]]; then
     # This is a little ugly getting the color after a build
@@ -137,7 +142,12 @@ build_apk() {
   echo "$PRIMARY_COLOR" > "${PROJECT_DIR}/build_data/publish/play-listing/primary-color.txt"
 
   # Add download-apk-strings.json
-  xmlstarlet sel -t -c '/app-definition/translation-mappings/translation-mapping[@id = "Download_APK"]/translation' "${PROJECT_DIR}/build.appDef" | sed  's/<translation lang=//g; s/<\/translation>/" ,/g; s/>/ : "/g' | sed 's/^/{/; s/,$/}/' > "${PROJECT_DIR}/build_data/publish/play-listing/download-apk-strings.json"
+  DOWNLOAD_STRINGS=$(xmlstarlet sel -t -c '/app-definition/translation-mappings/translation-mapping[@id = "Download_APK"]/translation' "${PROJECT_DIR}/build.appDef" | sed  's/<translation lang=//g; s/<\/translation>/" ,/g; s/>/ : "/g' | sed 's/^/{/; s/,$/}/')
+  if [[ "${DOWNLOAD_STRINGS}" == "" ]]; then
+    DOWNLOAD_STRINGS='{"en" : "Download APK"}'
+  fi
+  echo "$DOWNLOAD_STRINGS" > "${PROJECT_DIR}/build_data/publish/play-listing/download-apk-strings.json"
+  set -e
 }
 
 build_html() {
