@@ -1,9 +1,10 @@
-data:
+services:
+  data:
     image: silintl/data-volume:latest
     container_name: data
     volumes:
         - ./application:/data
-db:
+  db:
     image: silintl/mariadb:latest
     container_name: db
     ports:
@@ -14,7 +15,7 @@ db:
         MYSQL_USER: appbuilder
         MYSQL_PASSWORD: appbuilder
 
-adminer:
+  adminer:
     image: adminer
     container_name: db-adminer
     restart: always
@@ -23,7 +24,7 @@ adminer:
     links:
       - db:db.docker
 
-testDb:
+  testDb:
     image: silintl/mariadb:latest
     container_name: testDb
     ports:
@@ -33,7 +34,7 @@ testDb:
         MYSQL_DATABASE: test
         MYSQL_USER: appbuilder
         MYSQL_PASSWORD: appbuilder
-web:
+  web:
     build: .
     container_name: web
     volumes_from:
@@ -45,7 +46,7 @@ web:
     env_file:
         - ./common.env
         - ./local.env
-cron:
+  cron:
     build: .
     container_name: cron
     volumes_from:
@@ -57,14 +58,14 @@ cron:
         - ./common.env
         - ./local.env
     command: /data/run-cron.sh
-composer:
+  composer:
     image: silintl/php-cli:latest
     container_name: composer
     volumes_from:
         - data
     working_dir: /data
     command: composer install --prefer-dist
-cli:
+  cli:
     image: silintl/php-cli:latest
     container_name: cli
     volumes_from:
@@ -80,7 +81,7 @@ cli:
         - ./common.env
         - ./local.env
     command: ["true"]
-yiimigrate:
+  yiimigrate:
     image: silintl/php-cli:latest
     container_name: yiimigrate
     user: "${DOCKER_UIDGID}"
@@ -93,7 +94,7 @@ yiimigrate:
         - ./local.env
     working_dir: /data
     command: bash -c "whenavail db 3306 100 ./yii migrate --interactive=0 && ./rebuildbasemodels.sh"
-yiimigratetestDb:
+  yiimigratetestDb:
     image: silintl/php-cli:latest
     container_name: yiimigratetestDb
     volumes_from:
@@ -108,7 +109,7 @@ yiimigratetestDb:
     environment:
       MYSQL_HOST: testDb
       MYSQL_DATABASE: test
-codecept:
+  codecept:
    image: silintl/php-cli:latest
    container_name: codecept
    volumes_from:
