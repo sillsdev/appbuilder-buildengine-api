@@ -1,7 +1,7 @@
-FROM silintl/php-web:latest
+FROM silintl/php7:7.2
 MAINTAINER Phillip Shipley <phillip_shipley@sil.org>
 
-ENV REFRESHED_AT 2015-05-26
+ENV REFRESHED_AT 2022-03-11
 
 COPY build/appbuilder.conf /etc/apache2/sites-enabled/
 

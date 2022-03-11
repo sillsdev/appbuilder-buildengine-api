@@ -59,14 +59,14 @@ services:
         - ./local.env
     command: /data/run-cron.sh
   composer:
-    image: silintl/php-cli:latest
+    image: silintl/php7:7.2
     container_name: composer
     volumes_from:
         - data
     working_dir: /data
     command: composer install --prefer-dist
   cli:
-    image: silintl/php-cli:latest
+    image: silintl/php7:7.2
     container_name: cli
     volumes_from:
         - data
