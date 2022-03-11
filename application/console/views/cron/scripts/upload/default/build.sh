@@ -382,7 +382,40 @@ prepare_appbuilder_project() {
           echo "exporting ${line}"
           export "${line?}"
       done < <(jq -r <<<"$values" 'to_entries|map("\(.key)=\(.value)\u0000")[]')
-      cp "${PUBLISH_PROPERTIES}" "${OUTPUT_DIR}/publish-properties.json"
+
+      OUTPUT_PUBLISH_PROPERTIES="${OUTPUT_DIR}/publish-properties.json"
+      # Add addition properties
+      PUBLISH_SE_RECORD="build_data/publish/se-record.json"
+      if [[ -f "${PUBLISH_SE_RECORD}" && "$(jq -r '. | length' "${PUBLISH_SE_RECORD}")" == "1" ]]; then
+        # if there is at least one Scripture Earth record
+        PUBLISH_NOTIFY_SCRIPTURE_EARTH=$(xmllint --xpath "string(/app-definition/publishing/scripture-earth/@notify)" build.appDef)
+        PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID=$(jq -r '.["0"].relationships.idx' "${PUBLISH_SE_RECORD}")
+        if [[ "${PUBLISH_NOTIFY_SCRIPTURE_EARTH}" != "" ]]; then
+          # If the "Notify Scripture Earth" property is enabled in the AppDef
+          PUBLISH_TMP=$(mktemp)
+          PUBLISH_NOTIFY_TYPE=$(jq -r '.PUBLISH_NOTIFY | type' "${PUBLISH_PROPERTIES}")
+          # We are currently only supporting notifying Scripture Earth of product updates.
+          # However, Kalaam has expressed interested in being notified as well. This would
+          # allow Kalaam to add a PUBLISH_NOTIFY publishing property. We would also have to
+          # implement something in publish.sh to notify their server correctly.
+          if [[ "${PUBLISH_NOTIFY_TYPE}" == "null" ]]; then
+            # There is no property so set it (as an array) to Scripture Earth entry
+            jq -cM '.PUBLISH_NOTIFY += ["SCRIPTURE_EARTH"]' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+          elif [ "${PUBLISH_NOTIFY_TYPE}" == "string" ]; then
+            # There is an existing property so convert to an array and add to Scripture Earth entry.
+            # We are only going to deal with one item being there. If there will be multiple, then we
+            # will have to split the string and create an array of the results
+            PUBLISH_NOTIFY_CURRENT=$(jq -r '.PUBLISH_NOTIFY' "${PUBLISH_PROPERTIES}")
+            jq -cM --arg cur "${PUBLISH_NOTIFY_CURRENT}" '.PUBLISH_NOTIFY = [$cur, "SCRIPTURE_EARTH"]' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+          fi
+          cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
+          jq -cM --arg idx "${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}" '.SCRIPTURE_EARTH_ID = $idx' "${OUTPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+          cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
+        fi
+      else
+        # if no Scripture Earth record, then copy straight as normal
+        cp "${PUBLISH_PROPERTIES}" "${OUTPUT_PUBLISH_PROPERTIES}"
+      fi
   fi
 
   APPDEF_VERSION_NAME=$(xmllint --xpath "string(/app-definition/version/@name)" build.appDef)

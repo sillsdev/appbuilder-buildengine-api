@@ -31,6 +31,7 @@ $APP_ENV = "testing";
 $AWS_USER_ID = "12342412342";
 $AWS_ACCESS_KEY_ID = "sasfdafafdsa";
 $AWS_SECRET_ACCESS_KEY = "afdsafsdfdsadfafsadafsd";
+$SCRIPTURE_EARTH_KEY='0123456789abcdef';
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
 /*        'buildEngineGitUserEmail' => $BUILD_ENGINE_GIT_USER_EMAIL,
@@ -101,6 +102,7 @@ return [
         'awsKeyId' => $AWS_ACCESS_KEY_ID,
         'awsSecretKey' => $AWS_SECRET_ACCESS_KEY,
         'awsRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
+        'scriptureEarthKey' => $SCRIPTURE_EARTH_KEY,
         'max_email_attempts' => 5,
         'max_emails_per_try' => 20,
     ],

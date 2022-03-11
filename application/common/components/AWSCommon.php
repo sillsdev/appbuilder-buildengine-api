@@ -42,6 +42,10 @@ class AWSCommon
     {
         return \Yii::$app->params['codeBuildImageRepo'];
     }
+    public static function getScriptureEarthKey()
+    {
+        return \Yii::$app->params['scriptureEarthKey'];
+    }
 
     public static function getBuildScriptPath()
     {

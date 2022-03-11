@@ -23,6 +23,9 @@ $AWS_SECRET_ACCESS_KEY = getenv('AWS_SECRET_ACCESS_KEY');
 $AWS_REGION = getenv('AWS_REGION') ?: "us-east-1";
 $AWS_USER_ID = getenv('AWS_USER_ID');
 
+$SCRIPTURE_EARTH_KEY = getenv('SCRIPTURE_EARTH_KEY') ?: 'notset';
+
+
 return [
     'id' => 'app-console',
     'basePath' => dirname(__DIR__),
@@ -66,6 +69,7 @@ return [
         'awsSecretKey' => $AWS_SECRET_ACCESS_KEY,
         'awsRegion' => $AWS_REGION,
         'awsUserId' => $AWS_USER_ID,
+        'scriptureEarthKey' => $SCRIPTURE_EARTH_KEY,
     ],
     'controllerMap' => [
         'fixture' => [

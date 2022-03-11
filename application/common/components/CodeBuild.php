@@ -291,6 +291,7 @@ class CodeBuild extends AWSCommon {
         $artifacts_bucket = self::getArtifactsBucket();
         $artifactPath = $this->getArtifactPath($job, 'codebuild-output', true);
         $secretsBucket = self::getSecretsBucket();
+        $scriptureEarthKey = self::getScriptureEarthKey();
         $publishApp = self::getCodeBuildProjectName('publish_app');
         $promoteFrom = $release->promote_from;
         if (is_null($promoteFrom)) {
@@ -342,6 +343,10 @@ class CodeBuild extends AWSCommon {
             [
                 'name' => 'SCRIPT_S3',
                 'value' => S3::getBuildScriptPath(),
+            ],
+            [
+                'name' => 'SCRIPTURE_EARTH_KEY',
+                'value' => $scriptureEarthKey,
             ]
         ];
         $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $release->environment);
