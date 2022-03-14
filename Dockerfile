@@ -36,11 +36,6 @@ RUN chown -R www-data:www-data \
 # Install/cleanup composer dependencies
 RUN composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
-# Install shellcheck for validating shell scripts
-RUN apt-get update && apt-get install -y \
-    shellcheck \
-&& rm -rf /var/lib/apt/lists/*
-
 EXPOSE 80
 ENTRYPOINT ["s3-expand"]
 CMD ["/data/run.sh"]
