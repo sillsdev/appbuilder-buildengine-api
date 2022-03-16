@@ -15,6 +15,9 @@ composer:
 composerupdate:
 	docker-compose run --rm --user="0:0" cli composer update
 
+cli:
+	docker-compose run --rm --user="0:0" cli bash
+
 rmDb:
 	docker-compose kill db
 	docker-compose rm -f db
