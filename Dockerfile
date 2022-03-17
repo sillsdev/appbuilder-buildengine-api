@@ -37,8 +37,11 @@ RUN chown -R www-data:www-data \
     frontend/runtime/ \
     frontend/web/assets/
 
+# Install composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
 # Install/cleanup composer dependencies
-RUN composer global require "fxp/composer-asset-plugin:^1.4.3" \
+RUN composer global remove "fxp/composer-asset-plugin" \
     && composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
 # Install shellcheck for validating shell scripts
