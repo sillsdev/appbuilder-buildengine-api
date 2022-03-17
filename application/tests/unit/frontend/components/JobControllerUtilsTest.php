@@ -36,7 +36,7 @@ class JobControllerUtilsTest extends UnitTestBase
     }
     public function testViewJobException()
     {
-        $this->setExpectedException('yii\\web\\NotFoundHttpException');
+        $this->expectException('yii\\web\\NotFoundHttpException');
         $jobControllerUtils = new JobControllerUtils();
         $job = $jobControllerUtils->viewJob("87");        
     }
@@ -66,7 +66,7 @@ class JobControllerUtilsTest extends UnitTestBase
     }
     public function testPublishBuildBetaToAlpha()
     {
-        $this->setExpectedException('yii\\web\\ServerErrorHttpException');
+        $this->expectException('yii\\web\\ServerErrorHttpException');
         $jobControllerUtils = new JobControllerUtils();
         $release = $jobControllerUtils->publishBuild('24', '25', 'alpha', 'test', 'en', "google-play", "");
     }
@@ -86,7 +86,7 @@ class JobControllerUtilsTest extends UnitTestBase
     }
     public function testPublishBuildExceptionJobDoesntExist()
     {
-        $this->setExpectedException('yii\\web\\NotFoundHttpException');
+        $this->expectException('yii\\web\\NotFoundHttpException');
         $jobControllerUtils = new JobControllerUtils();
         $release = $jobControllerUtils->publishBuild('87', '21', 'alpha', 'test', 'en', 'google-play', '');
     }
@@ -105,7 +105,7 @@ class JobControllerUtilsTest extends UnitTestBase
     }
     public function testVerifyChannelException()
     {
-        $this->setExpectedException('yii\\web\\ServerErrorHttpException');
+        $this->expectException('yii\\web\\ServerErrorHttpException');
         $jobControllerUtils = new JobControllerUtils();
         $status = $jobControllerUtils->verifyChannel('24', 'alpha', '6');
    }
