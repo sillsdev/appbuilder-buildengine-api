@@ -18,10 +18,6 @@ RUN chmod a+x /usr/local/bin/s3-expand
 RUN rm -f /etc/rsyslog.d/*
 COPY build/rsyslog.conf /etc/rsyslog.conf
 
-# Copy in updated php.ini
-COPY build/php.ini /etc/php5/apache2/
-COPY build/php.ini /etc/php5/cli/
-
 # Copy logrotate file to manage logs
 COPY build/sab /etc/logrotate.d
 RUN chmod 0644 /etc/logrotate.d/sab
