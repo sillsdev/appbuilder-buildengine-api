@@ -63,6 +63,8 @@ services:
     container_name: composer
     volumes_from:
         - data
+    env_file:
+      - ./local.env
     working_dir: /data
     command: composer install --prefer-dist
   cli:

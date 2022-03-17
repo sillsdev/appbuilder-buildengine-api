@@ -11,6 +11,10 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
+    'aliases' => [
+        "@bower" => "@vendor/bower-asset",
+        "@npm" => "@vendor/npm-asset"
+    ],
     'components' => [
         'user' => [
             'identityClass' => 'common\models\User',
