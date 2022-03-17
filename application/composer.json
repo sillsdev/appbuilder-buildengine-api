@@ -1,7 +1,7 @@
 {
     "minimum-stability": "stable",
     "require": {
-        "php": ">=5.5.0",
+        "php": ">=5.4.0",
         "yiisoft/yii2": "^2.0.15",
         "yiisoft/yii2-gii": "*",
         "yiisoft/yii2-bootstrap": "*",
@@ -12,7 +12,7 @@
         "silinternational/yii2-jsonsyslog": "*"
     },
     "require-dev": {
-        "silinternational/yii2-codeception": "dev-master",
+        "yiisoft/yii2-codeception": "*",
         "yiisoft/yii2-debug": "*",
         "yiisoft/yii2-faker": "*",
         "fillup/phpmyadmin-minimal": "4.2.2",
