@@ -77,7 +77,7 @@ class IAmWrapperTest extends UnitTestBase
     }
     public function testAddPublishSshKeyDuplicateKeyNoMatch()
     {
-        $this->setExpectedException('yii\web\ServerErrorHttpException');
+        $this->expectException('yii\web\ServerErrorHttpException');
         $this->setContainerObjects();
         $iamWrapper = new IAmWrapper();
         $user_name = 'throwKey';
@@ -86,7 +86,7 @@ class IAmWrapperTest extends UnitTestBase
     }
     public function testAddPublishSshKeyDuplicateKeyCantSave()
     {
-        $this->setExpectedException('yii\web\ServerErrorHttpException');
+        $this->expectException('yii\web\ServerErrorHttpException');
         $this->setContainerObjects();
         $iamWrapper = new IAmWrapper();
         $user_name = 'throwKeyTwice';
