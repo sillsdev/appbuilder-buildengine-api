@@ -5,7 +5,7 @@ services:
     volumes:
         - ./application:/data
   db:
-    image: silintl/mariadb:latest
+    image: mariadb:10
     container_name: db
     ports:
         - "3306:3306"
@@ -25,7 +25,7 @@ services:
       - db:db.docker
 
   testDb:
-    image: silintl/mariadb:latest
+    image: mariadb:10
     container_name: testDb
     ports:
         - "3306"
@@ -82,7 +82,7 @@ services:
         - ./local.env
     command: ["true"]
   yiimigrate:
-    image: silintl/php-cli:latest
+    image: silintl/php7:7.2
     container_name: yiimigrate
     user: "${DOCKER_UIDGID}"
     volumes_from:
@@ -95,7 +95,7 @@ services:
     working_dir: /data
     command: bash -c "whenavail db 3306 100 ./yii migrate --interactive=0 && ./rebuildbasemodels.sh"
   yiimigratetestDb:
-    image: silintl/php-cli:latest
+    image: silintl/php7:7.2
     container_name: yiimigratetestDb
     volumes_from:
         - data
@@ -110,7 +110,7 @@ services:
       MYSQL_HOST: testDb
       MYSQL_DATABASE: test
   codecept:
-   image: silintl/php-cli:latest
+   image: silintl/php7:7.2
    container_name: codecept
    volumes_from:
        - data
