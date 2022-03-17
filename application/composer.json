@@ -16,7 +16,7 @@
         "yiisoft/yii2-debug": "*",
         "yiisoft/yii2-faker": "*",
         "fillup/phpmyadmin-minimal": "4.2.2",
-        "codeception/codeception": "2.0.*",
+        "codeception/codeception": "^2.0",
         "codeception/specify": "0.*",
         "codeception/verify": "0.*"
     },
