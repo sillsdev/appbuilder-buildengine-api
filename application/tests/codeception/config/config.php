@@ -33,7 +33,6 @@ $AWS_ACCESS_KEY_ID = "sasfdafafdsa";
 $AWS_SECRET_ACCESS_KEY = "afdsafsdfdsadfafsadafsd";
 
 $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
-        \Yii::$app->params['buildEngineGitUserName'] = $BUILD_ENGINE_GIT_USER_NAME;
 /*        'buildEngineGitUserEmail' => $BUILD_ENGINE_GIT_USER_EMAIL,
         'buildEngineGitSshUser' => $BUILD_ENGINE_GIT_SSH_USER,
         'buildEngineRepoUrl' => $BUILD_ENGINE_REPO_URL,
@@ -48,8 +47,7 @@ $APPBUILDER_GIT_SSH_USER = getenv('APPBUILDER_GIT_SSH_USER');
         'appBuilderGitSshUser' => $APPBUILDER_GIT_SSH_USER,
         'adminEmail' => $ADMIN_EMAIL,
         'appEnv' => $APP_ENV,*/
-        \Yii::$app->params['max_email_attempts'] = 5;
-        \Yii::$app->params['max_emails_per_try'] = 20;
+
 return [
     'id' => 'app-backend',
     'basePath' => dirname(__DIR__),

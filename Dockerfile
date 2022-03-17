@@ -1,7 +1,7 @@
-FROM silintl/php7:7.2
-MAINTAINER Phillip Shipley <phillip_shipley@sil.org>
+FROM silintl/php7:7.4
+LABEL maintainer="Chris Hubbard <chris_hubbard@sil.org>"
 
-ENV REFRESHED_AT 2022-03-11
+ENV REFRESHED_AT 2022-03-17
 
 COPY build/appbuilder.conf /etc/apache2/sites-enabled/
 
@@ -37,12 +37,8 @@ RUN chown -R www-data:www-data \
     frontend/runtime/ \
     frontend/web/assets/
 
-# Install composer
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-
 # Install/cleanup composer dependencies
-RUN composer global remove "fxp/composer-asset-plugin" \
-    && composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
+RUN composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
 # Install shellcheck for validating shell scripts
 RUN apt-get update && apt-get install -y \

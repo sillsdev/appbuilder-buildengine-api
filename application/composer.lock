@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1f6dd8aca8abdabddd7a0258639e07c8",
+    "content-hash": "c7206badad291c7f87d72c2830161abd",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -351,35 +351,36 @@
         },
         {
             "name": "cpliakas/git-wrapper",
-            "version": "v3.0.3",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cpliakas/git-wrapper.git",
-                "reference": "da6bb720a2041ee82aa990f1b11b3106c06598f0"
+                "reference": "c2c874237039200659f28d589a8d92a9b0867003"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cpliakas/git-wrapper/zipball/da6bb720a2041ee82aa990f1b11b3106c06598f0",
-                "reference": "da6bb720a2041ee82aa990f1b11b3106c06598f0",
+                "url": "https://api.github.com/repos/cpliakas/git-wrapper/zipball/c2c874237039200659f28d589a8d92a9b0867003",
+                "reference": "c2c874237039200659f28d589a8d92a9b0867003",
                 "shasum": ""
             },
             "require": {
                 "nette/utils": "^3.0",
-                "php": ">=7.2",
-                "symfony/event-dispatcher": "^4.4|^5.0",
-                "symfony/process": "^4.4|^5.0"
+                "php": ">=7.3",
+                "symfony/event-dispatcher": "^4.4|^5.1",
+                "symfony/process": "^4.4|^5.1"
             },
             "require-dev": {
-                "migrify/config-transformer": "^0.3.48",
-                "phpstan/phpstan": "^0.12.18",
+                "ondram/ci-detector": "^3.5",
+                "phpstan/phpstan": "^0.12.64",
                 "phpstan/phpstan-phpunit": "^0.12",
-                "phpunit/phpunit": "^8.5|^9.4",
+                "phpunit/phpunit": "^9.5",
                 "psr/log": "^1.1",
-                "rector/rector": "^0.8.10",
-                "symfony/filesystem": "^4.4|^5.0",
-                "symplify/changelog-linker": "^8.3",
-                "symplify/easy-coding-standard": "^8.3",
-                "symplify/phpstan-extensions": "^8.3",
+                "rector/rector": "^0.9",
+                "symfony/filesystem": "^4.4|^5.1",
+                "symplify/changelog-linker": "^9.0",
+                "symplify/easy-coding-standard": "^9.0",
+                "symplify/phpstan-extensions": "^9.0",
+                "symplify/phpstan-rules": "^9.0",
                 "tracy/tracy": "^2.7"
             },
             "suggest": {
@@ -413,10 +414,10 @@
             ],
             "support": {
                 "issues": "https://github.com/cpliakas/git-wrapper/issues",
-                "source": "https://github.com/cpliakas/git-wrapper/tree/v3.0.3"
+                "source": "https://github.com/cpliakas/git-wrapper/tree/3.1.0"
             },
             "abandoned": "symplify/git-wrapper",
-            "time": "2020-10-04T20:38:52+00:00"
+            "time": "2021-01-03T12:20:31+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -3926,20 +3927,20 @@
         },
         {
             "name": "psr/container",
-            "version": "2.0.1",
+            "version": "2.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/container.git",
-                "reference": "2ae37329ee82f91efadc282cc2d527fd6065a5ef"
+                "reference": "c71ecc56dfe541dbd90c5360474fbc405f8d5963"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/container/zipball/2ae37329ee82f91efadc282cc2d527fd6065a5ef",
-                "reference": "2ae37329ee82f91efadc282cc2d527fd6065a5ef",
+                "url": "https://api.github.com/repos/php-fig/container/zipball/c71ecc56dfe541dbd90c5360474fbc405f8d5963",
+                "reference": "c71ecc56dfe541dbd90c5360474fbc405f8d5963",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.2.0"
+                "php": ">=7.4.0"
             },
             "type": "library",
             "extra": {
@@ -3973,9 +3974,9 @@
             ],
             "support": {
                 "issues": "https://github.com/php-fig/container/issues",
-                "source": "https://github.com/php-fig/container/tree/2.0.1"
+                "source": "https://github.com/php-fig/container/tree/2.0.2"
             },
-            "time": "2021-03-24T13:40:57+00:00"
+            "time": "2021-11-05T16:47:00+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
@@ -5705,7 +5706,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=5.4.0"
+        "php": ">=7.4.0"
     },
     "platform-dev": [],
     "plugin-api-version": "2.2.0"
