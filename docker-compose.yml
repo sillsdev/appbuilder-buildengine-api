@@ -59,14 +59,14 @@ services:
         - ./local.env
     command: /data/run-cron.sh
   composer:
-    image: silintl/php7:7.2
+    build: .
     container_name: composer
     volumes_from:
         - data
     working_dir: /data
     command: composer install --prefer-dist
   cli:
-    image: silintl/php7:7.2
+    build: .
     container_name: cli
     volumes_from:
         - data
@@ -82,7 +82,7 @@ services:
         - ./local.env
     command: ["true"]
   yiimigrate:
-    image: silintl/php7:7.2
+    build: .
     container_name: yiimigrate
     user: "${DOCKER_UIDGID}"
     volumes_from:
@@ -94,8 +94,8 @@ services:
         - ./local.env
     working_dir: /data
     command: bash -c "whenavail db 3306 100 ./yii migrate --interactive=0 && ./rebuildbasemodels.sh"
-  yiimigratetestDb:
-    image: silintl/php7:7.2
+  yiimigratetestdb:
+    build: .
     container_name: yiimigratetestDb
     volumes_from:
         - data
@@ -110,13 +110,13 @@ services:
       MYSQL_HOST: testDb
       MYSQL_DATABASE: test
   codecept:
-   image: silintl/php7:7.2
+   build: .
    container_name: codecept
    volumes_from:
        - data
    links:
        - testDb
-       - yiimigratetestDb
+       - yiimigratetestdb
    env_file:
        - ./common.env
        - ./local.env
