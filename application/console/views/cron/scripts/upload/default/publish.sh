@@ -290,7 +290,7 @@ prepare_publish() {
   fi
 }
 
-notify_update_json() {
+notify_scripture_earth_update_json() {
   local i_json="$1"
   local i_type="$2"
   local i_url="$3"
@@ -320,40 +320,44 @@ notify_scripture_earth() {
 }
 
 post_publish() {
+  # The WORKFLOW_PRODUCT_NAME is a user generated name and we are expecting the name to
+  # contain the keywords: ios, android, google (play), and pwa.  So the system admin
+  # should be aware when adding new products.
   WORKFLOW_PRODUCT_NAME_LOWER=$(echo "${WORKFLOW_PRODUCT_NAME}" | awk '{print tolower($0)}')
   if [[ "${WORKFLOW_TYPE}" == "Startup" && "${PUBLISH_NOTIFY}" != "" ]]; then
-    # See WorkflowProductService::AddWorkflowProperties for the list of properties
+    # See BuildEngineServiceBase::AddProductProperitiesToEnvironment for the list of properties
     # that are added.
 
     # Notify Scripture Earth
-    if [[ "${PUBLISH_NOTIFY})" == *"SCRIPTURE_EARTH"* ]]; then
-      NOTIFY_JSON="[]"
+    if [[ "${PUBLISH_NOTIFY})" == *"SCRIPTURE_EARTH"* && "${SCRIPTURE_EARTH_KEY}" != "" ]]; then
+      EMPTY_NOTIFY_JSON="[]"
+      NOTIFY_JSON=$EMPTY_NOTIFY_JSON
       if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"ios"* ]]; then
         # Send Notification for iOS Asset Package
         NOTIFY_TYPE="ios"
         # change protocol to "asset://" so that container app will recognize as asset-package
         # shellcheck disable=SC2001
         NOTIFY_URL="$(sed -e 's/https*:/asset:/' <<< "$UI_URL")/api/products/${PRODUCT_ID}/files/published/asset-package"
-        NOTIFY_JSON="$(notify_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
       elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"android"* ]]; then
         # Send Notification for Android app to Google Play
         NOTIFY_TYPE="apk"
         NOTIFY_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
-        NOTIFY_JSON="$(notify_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
         if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"google"* ]]; then
           # Send additional notification for Android app to Google Play
           NOTIFY_TYPE="google_play"
           NOTIFY_URL="${PUBLISH_URL}"
-          NOTIFY_JSON="$(notify_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+          NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
         fi
       elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"pwa"* ]]; then
         # Send Notification for PWA
         NOTIFY_TYPE="sab_html"
         NOTIFY_URL="${PUBLISH_URL}"
-        NOTIFY_JSON="$(notify_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
       fi
 
-      if [[ "${NOTIFY_JSON}" != "{}" ]]; then
+      if [[ "${NOTIFY_JSON}" != "{$EMPTY_NOTIFY_JSON}" ]]; then
         notify_scripture_earth "${NOTIFY_JSON}"
       fi
     fi
