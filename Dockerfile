@@ -3,6 +3,11 @@ LABEL maintainer="Chris Hubbard <chris_hubbard@sil.org>"
 
 ENV REFRESHED_AT 2022-03-17
 
+# Install require packages
+RUN apt-get update && apt-get install -y \
+    cron \
+&& apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
 COPY build/appbuilder.conf /etc/apache2/sites-enabled/
 
 # Copy in cron configuration
