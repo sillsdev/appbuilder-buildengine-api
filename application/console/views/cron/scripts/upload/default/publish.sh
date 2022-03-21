@@ -9,6 +9,7 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
 publish_google_play() {
+  fastlane env
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   export SUPPLY_JSON_KEY="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
