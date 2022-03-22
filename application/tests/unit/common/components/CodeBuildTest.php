@@ -255,6 +255,9 @@ class CodeBuildTest extends UnitTestBase
                 case 'VAR2' :
                     $var2 = $environmentVariable['value'];
                     break;
+                case 'SCRIPTURE_EARTH_KEY';
+                    $scriptureEarthKey = $environmentVariable['value'];
+                    break;
                 default:
                     $this->assertEquals("Unknown", $environmentVariable['name'], " *** Unexpected variable definition");     
             }
@@ -271,6 +274,7 @@ class CodeBuildTest extends UnitTestBase
         $this->assertEquals("s3://sil-prd-aps-projects/default", $scriptS3, " *** Wrong S3 Script");
         $this->assertEquals("VALUE1", $var1, " *** Wrong test var1 value");
         $this->assertEquals("VALUE2", $var2, " *** Wrong test var2 value");
+        $this->assertEquals("0123456789abcdef", $scriptureEarthKey, " *** Wrong ScriptureEarthKey");
     }
     public function testAddEnvironmentVariables()
     {

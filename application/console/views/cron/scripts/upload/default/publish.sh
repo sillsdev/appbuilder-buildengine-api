@@ -83,7 +83,8 @@ publish_google_play() {
   fi
   env | grep "SUPPLY_"
   fastlane supply
-  echo "https://play.google.com/store/apps/details?id=${PACKAGE_NAME}" > "${OUTPUT_DIR}"/publish_url.txt
+  PUBLISH_URL="https://play.google.com/store/apps/details?id=${PACKAGE_NAME}"
+  echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
   echo "ls -l ${OUTPUT_DIR}"
   ls -l "${OUTPUT_DIR}"
 }
@@ -289,6 +290,80 @@ prepare_publish() {
   fi
 }
 
+notify_scripture_earth_update_json() {
+  local i_json="$1"
+  local i_type="$2"
+  local i_url="$3"
+
+  echo "${i_json}" | jq \
+    --arg type "${i_type}" \
+    --arg idx "${SCRIPTURE_EARTH_ID}" \
+    --arg url "${i_url}" \
+    --arg email "${PROJECT_OWNER_EMAIL}" \
+    --arg projectName "${PROJECT_NAME}" \
+    --arg projectDescription "${PROJECT_DESCRIPTION}" \
+    --arg username "${PROJECT_OWNER_NAME}" \
+    --arg organization "${PROJECT_ORGANIZATION}" \
+    --arg project "${PROJECT_URL}" \
+    '. + [ { type: $type, idx: $idx, url: $url, email: $email, projectName: $projectName, projectDescription: $projectDescription, username: $username, organization: $organization}]'
+}
+
+notify_scripture_earth() {
+  local notify_json="$1"
+  # curl does not work! SE.org returns 406 Not Acceptable and can't figure out why.
+  wget \
+     --header "Content-Type: application/json" \
+     --header "Accept: application/json" \
+     --post-data "${notify_json}" \
+     "https://scriptureearth.org/api/add_resource.php?v=1&key=${SCRIPTURE_EARTH_KEY}"
+
+}
+
+post_publish() {
+  # The WORKFLOW_PRODUCT_NAME is a user generated name and we are expecting the name to
+  # contain the keywords: ios, android, google (play), and pwa.  So the system admin
+  # should be aware when adding new products.
+  WORKFLOW_PRODUCT_NAME_LOWER=$(echo "${WORKFLOW_PRODUCT_NAME}" | awk '{print tolower($0)}')
+  if [[ "${WORKFLOW_TYPE}" == "Startup" && "${PUBLISH_NOTIFY}" != "" ]]; then
+    # See BuildEngineServiceBase::AddProductProperitiesToEnvironment for the list of properties
+    # that are added.
+
+    # Notify Scripture Earth
+    if [[ "${PUBLISH_NOTIFY})" == *"SCRIPTURE_EARTH"* && "${SCRIPTURE_EARTH_KEY}" != "" ]]; then
+      EMPTY_NOTIFY_JSON="[]"
+      NOTIFY_JSON=$EMPTY_NOTIFY_JSON
+      if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"ios"* ]]; then
+        # Send Notification for iOS Asset Package
+        NOTIFY_TYPE="ios"
+        # change protocol to "asset://" so that container app will recognize as asset-package
+        # shellcheck disable=SC2001
+        NOTIFY_URL="$(sed -e 's/https*:/asset:/' <<< "$UI_URL")/api/products/${PRODUCT_ID}/files/published/asset-package"
+        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+      elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"android"* ]]; then
+        # Send Notification for Android app to Google Play
+        NOTIFY_TYPE="apk"
+        NOTIFY_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+        if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"google"* ]]; then
+          # Send additional notification for Android app to Google Play
+          NOTIFY_TYPE="google_play"
+          NOTIFY_URL="${PUBLISH_URL}"
+          NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+        fi
+      elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"pwa"* ]]; then
+        # Send Notification for PWA
+        NOTIFY_TYPE="sab_html"
+        NOTIFY_URL="${PUBLISH_URL}"
+        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+      fi
+
+      if [[ "${NOTIFY_JSON}" != "{$EMPTY_NOTIFY_JSON}" ]]; then
+        notify_scripture_earth "${NOTIFY_JSON}"
+      fi
+    fi
+  fi
+}
+
 APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )
 AAB_FILES=( "${ARTIFACTS_DIR}"/*.aab )
 
@@ -304,3 +379,5 @@ do
     *) publish_gradle "$target" ;;
   esac
 done
+
+post_publish
