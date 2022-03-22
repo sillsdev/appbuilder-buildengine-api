@@ -17,6 +17,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      COMPOSER_AUTH_KEY: ${{ secrets.DEPLOY__COMPOSER_AUTH_KEY }}
 
     steps:
       - uses: actions/checkout@v2
@@ -38,6 +40,10 @@ jobs:
           echo
           echo Env
           env
+
+      - name: Setup local.env
+        run: |
+          echo "COMPOSER_AUTH={\"github-oauth\":{\"github.com\":\""${COMPOSER_AUTH_KEY}\""}}" > local.env
 
       - name: Tests
         run: |
