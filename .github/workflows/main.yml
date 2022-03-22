@@ -1,0 +1,50 @@
+name: BuildEngine CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Log Level"
+        required: true
+        default: "warning"
+      tags:
+        description: "Tags"
+  schedule:
+    - cron: "0 0 * * 0" # weekly
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get environment info
+        run: |
+          echo Python version
+          python --version
+          pip --version
+          echo
+          echo Node version
+          node --version
+          yarn --version
+          npm --version
+          echo
+          echo Docker version
+          docker --version
+          docker-compose --version
+          echo
+          echo Env
+          env
+
+      - uses: docker/build-push-action@v2
+        with:
+          tags: cli:latest
+          push: false
+
+      - uses: addnab/docker-run-action@v3
+        with:
+          image: cli:latest
+          run: /data/run-tests.sh
