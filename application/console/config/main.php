@@ -23,7 +23,7 @@ $AWS_SECRET_ACCESS_KEY = getenv('AWS_SECRET_ACCESS_KEY');
 $AWS_REGION = getenv('AWS_REGION') ?: "us-east-1";
 $AWS_USER_ID = getenv('AWS_USER_ID');
 
-$SCRIPTURE_EARTH_KEY = getenv('SCRIPTURE_EARTH_KEY') ?: 'notset';
+$SCRIPTURE_EARTH_KEY = getenv('SCRIPTURE_EARTH_KEY') ?: '';
 
 
 return [
