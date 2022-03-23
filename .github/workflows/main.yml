@@ -39,12 +39,6 @@ jobs:
         run: |
           make test
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
@@ -64,6 +58,5 @@ jobs:
         with:
           push: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch') && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/github-builds') }}
           tags: |
-            sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
             ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
           context: .
