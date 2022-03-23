@@ -25,15 +25,6 @@ jobs:
 
       - name: Get environment info
         run: |
-          echo Python version
-          python --version
-          pip --version
-          echo
-          echo Node version
-          node --version
-          yarn --version
-          npm --version
-          echo
           echo Docker version
           docker --version
           docker-compose --version
@@ -64,3 +55,5 @@ jobs:
           docker images
           docker tag build-buildengine "sillsdev/appbuilder-buildengine-api:${DOCKER_TAG}"
           docker push "sillsdev/appbuilder-buildengine-api:${DOCKER_TAG}"
+          docker tag build-buildengine "ghcr.io/sillsdev/appbuilder-buildengine-api:${DOCKER_TAG}"
+          docker push "ghcr.io/sillsdev/appbuilder-buildengine-api:${DOCKER_TAG}"
