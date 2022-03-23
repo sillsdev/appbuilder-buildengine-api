@@ -2,6 +2,7 @@ name: BuildEngine CI
 
 on:
   push:
+    branches: [master, develop, github-builds]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -61,10 +62,9 @@ jobs:
           echo "::set-output name=DockerTag::${DOCKER_TAG}"
 
       - name: Build and push Docker images
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch') && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/github-builds')
         uses: docker/build-push-action@v2
         with:
-          push: true
+          push: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch') && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/github-builds') }}
           tags: |
             sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
             ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
