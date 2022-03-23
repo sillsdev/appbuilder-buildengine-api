@@ -76,7 +76,7 @@ jobs:
         with:
           push: true
           tags: |
-            sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DockerTag }}
-            ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DockerTag }}
+            sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
+            ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
 
           context: .
