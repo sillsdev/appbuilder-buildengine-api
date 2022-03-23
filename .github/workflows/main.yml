@@ -58,7 +58,7 @@ jobs:
         run: |
           BRANCH=${GITHUB_REF/refs\/heads\//}
           case $BRANCH in develop) DOCKER_TAG="staging" ;; master) DOCKER_TAG="production" ;; *) DOCKER_TAG=$BRANCH ;; esac
-          echo "DOCKER_TAG=$DOCKER_TAG"
+          echo "::set-output name=DockerTag::${DOCKER_TAG}"
 
       # - name: Build and push to DockerHub
       #   if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch') && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/github-builds')
@@ -67,8 +67,8 @@ jobs:
       #     case $BRANCH in develop) DOCKER_TAG="staging" ;; master) DOCKER_TAG="production" ;; *) DOCKER_TAG=$BRANCH ;; esac
       #     docker build -t build-buildengine .
       #     docker images
-      #     docker tag build-buildengine sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DOCKER_TAG }}
-      #     docker push sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DOCKER_TAG }}
+      #     docker tag build-buildengine sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DockerTag }}
+      #     docker push sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DockerTag }}
 
       - name: Build and push to GHCR
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch') && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/github-builds')
@@ -76,7 +76,7 @@ jobs:
         with:
           push: true
           tags: |
-            sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DOCKER_TAG }}
-            ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DOCKER_TAG }}
+            sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DockerTag }}
+            ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.output.DockerTag }}
 
           context: .
