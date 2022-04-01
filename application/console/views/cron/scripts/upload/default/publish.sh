@@ -136,7 +136,7 @@ publish_s3_bucket() {
   echo "DEST_FILE=${DEST_FILE}"
   echo "PUBLISH_URL=${PUBLISH_URL}"
 
-  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${PUBLISH_S3_SOURCH_PATH}" "s3://${DEST_BUCKET_PATH}" --acl public-read --recursive --exclude "*" --include "${PUBLISH_S3_INCLUDE}"
+  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${PUBLISH_S3_SOURCH_PATH}" "s3://${DEST_BUCKET_PATH}" --acl public-read --acl bucket-owner-full-control --recursive --exclude "*" --include "${PUBLISH_S3_INCLUDE}"
 
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
 }
