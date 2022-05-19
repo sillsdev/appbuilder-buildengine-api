@@ -83,6 +83,8 @@ publish_google_play() {
   fi
   env | grep "SUPPLY_"
   fastlane supply
+  PUBLISH_SIZE="$(stat --format="%s" "${APK_FILES[0]}")"
+  PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
   PUBLISH_URL="https://play.google.com/store/apps/details?id=${PACKAGE_NAME}"
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
   echo "ls -l ${OUTPUT_DIR}"
@@ -96,12 +98,12 @@ publish_s3_bucket() {
   CONFIG="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
   DEST_BUCKET_PATH=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
   if [[ "${DEST_BUCKET_PATH}" == "" ]]; then
-    echo "${PUBLISHER}/bucket empty!"
+    echo "bucket file for S3 ${PUBLISHER} is empty!"
     exit 1
   fi
 
-  # add the proudct id to make it unique
-  if [[ "${PRODUCT_ID}" != "" ]]; then
+  # add the product id to make it unique
+  if [[ "${PRODUCT_ID}" != "" && "${PUBLISH_S3_ROOT}" == "" ]]; then
       DEST_BUCKET_PATH="${DEST_BUCKET_PATH}/${PRODUCT_ID}"
   fi
 
@@ -112,13 +114,16 @@ publish_s3_bucket() {
     # apk: publish all the apks
     PUBLISH_S3_INCLUDE="*.apk"
     PUBLISH_S3_SOURCH_PATH="${ARTIFACTS_DIR}"
+    PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
     SRC_FILE="${APK_FILES[0]}"
   elif [[ "${#ZIP_FILES[@]}" -gt 0 ]]; then
     # asset-package: publish all the zip files
     PUBLISH_S3_INCLUDE="*.zip"
     PUBLISH_S3_SOURCH_PATH="${ARTIFACTS_DIR}/asset-package"
+    PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/asset-package"
     SRC_FILE="${ZIP_FILES[0]}"
   fi
+  PUBLISH_SIZE="$(stat --format="%s" "${SRC_FILE}")}"
   DEST_FILE="$(basename "${SRC_FILE}")"
 
   if [[ "${DEST_PATH}" == "" ]]; then
@@ -288,6 +293,8 @@ prepare_publish() {
           export "${line?}"
       done < <(jq -r <<<"$values" 'to_entries|map("\(.key)=\(.value)\u0000")[]')
   fi
+
+  PUBLISH_JSON="{}"
 }
 
 notify_scripture_earth_update_json() {
@@ -319,7 +326,26 @@ notify_scripture_earth() {
 
 }
 
+publish_base_update_json() {
+  local i_json="$1"
+  local version
+  version="$(${APP_BUILDER_SCRIPT_PATH} "-?" | grep Version | cut -d\  -f2)"
+
+  echo "${i_json}" | jq \
+    --arg project_url "${PROJECT_URL}" \
+    --arg project_name "${PROJECT_NAME}" \
+    --arg project_repo "${PROJECT_S3}" \
+    --arg publish_url "${PUBLISH_URL}" \
+    --arg permalink_url "${PERMALINK_URL}" \
+    --arg size "${PUBLISH_SIZE}" \
+    --arg app_builder "${APP_BUILDER_SCRIPT_PATH}" \
+    --arg app_builder_version "${version}" \
+    '. + { project_url: $project_url, project_name: $project_name, project_repo: $project_repo, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version }'
+}
+
 post_publish() {
+  PUBLISH_JSON="$(publish_base_update_json "${PUBLISH_JSON}")"
+
   # The WORKFLOW_PRODUCT_NAME is a user generated name and we are expecting the name to
   # contain the keywords: ios, android, google (play), and pwa.  So the system admin
   # should be aware when adding new products.
@@ -362,6 +388,8 @@ post_publish() {
       fi
     fi
   fi
+
+  echo "${PUBLISH_JSON}" > "${OUTPUT_DIR}/publish.json"
 }
 
 APK_FILES=( "${ARTIFACTS_DIR}"/*.apk )

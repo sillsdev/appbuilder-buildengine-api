@@ -288,6 +288,7 @@ class CodeBuild extends AWSCommon {
         $buildNumber = (string)$build->id;
         $job = $build->job;
         $artifactUrl = $build->apk();
+        $buildPath = $this->getBuildPath($job);
         $artifacts_bucket = self::getArtifactsBucket();
         $artifactPath = $this->getArtifactPath($job, 'codebuild-output', true);
         $secretsBucket = self::getSecretsBucket();
@@ -313,6 +314,10 @@ class CodeBuild extends AWSCommon {
                 'value' => $releaseNumber,
             ],
             [
+                'name' => 'APP_BUILDER_SCRIPT_PATH',
+                'value' => $buildPath,
+            ],
+            [
                 'name' => 'BUILD_NUMBER',
                 'value' => $buildNumber,
             ],
@@ -323,6 +328,10 @@ class CodeBuild extends AWSCommon {
             [
                 'name' => 'PUBLISHER',
                 'value' => $job->publisher_id,
+            ],
+            [
+                'name' => 'PROJECT_S3',
+                'value' => $job->git_url,
             ],
             [
                 'name' => 'SECRETS_BUCKET',
