@@ -362,7 +362,7 @@ prepare_appbuilder_project() {
   fi
 
   PROJ_NAME=$(basename -- *.appDef .appDef)
-  PROJ_DIR=$(find . | grep -i -F "${PROJ_NAME}_data" | head -n1)
+  PROJ_DIR=$(find . -maxdepth 1 -type d | grep -i -F "${PROJ_NAME}_data")
   if [[ -f "${PROJ_NAME}.appDef" && -d "${PROJ_DIR}" ]]; then
     echo "Moving ${PROJ_NAME}.appDef and ${PROJ_DIR}"
     mv "${PROJ_NAME}.appDef" build.appDef
