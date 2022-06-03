@@ -83,8 +83,13 @@ publish_google_play() {
   fi
   env | grep "SUPPLY_"
   fastlane supply
-  PUBLISH_SIZE="$(stat --format="%s" "${APK_FILES[0]}")"
-  PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+  if [[ -n "${PUBLISH_NO_APK}" ]]; then
+    PUBLISH_SIZE=0
+    PERMALINK_URL=""
+  else
+    PUBLISH_SIZE="$(stat --format="%s" "${APK_FILES[0]}")"
+    PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+  fi
   PUBLISH_URL="https://play.google.com/store/apps/details?id=${PACKAGE_NAME}"
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
   echo "ls -l ${OUTPUT_DIR}"
