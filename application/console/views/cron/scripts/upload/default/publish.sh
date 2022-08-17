@@ -313,11 +313,10 @@ notify_scripture_earth_update_json() {
     --arg url "${i_url}" \
     --arg email "${PROJECT_OWNER_EMAIL}" \
     --arg projectName "${PROJECT_NAME}" \
-    --arg projectDescription "${PROJECT_DESCRIPTION}" \
     --arg username "${PROJECT_OWNER_NAME}" \
     --arg organization "${PROJECT_ORGANIZATION}" \
     --arg project "${PROJECT_URL}" \
-    '. + [ { type: $type, idx: $idx, url: $url, email: $email, projectName: $projectName, projectDescription: $projectDescription, username: $username, organization: $organization}]'
+    '. + [ { type: $type, idx: $idx, url: $url, email: $email, projectName: $projectName, username: $username, organization: $organization}]'
 }
 
 notify_scripture_earth() {
