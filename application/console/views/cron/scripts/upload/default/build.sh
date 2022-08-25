@@ -175,11 +175,20 @@ build_html() {
   APPDEF_PACKAGE_NAME=""
 }
 
+make_pwa_audio_url_relative() {
+    AUDIO_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'export-html-audio-path']/@value" "${PROJECT_DIR}/build.appDef")
+    AUDIO_RELATIVE_URL=$(echo "${AUDIO_URL}" | sed -E 's/^https?://')
+    xmlstarlet ed --inplace -u "/app-definition/features/feature[@name = 'export-html-audio-path']/@value" -v "${AUDIO_RELATIVE_URL}" "${PROJECT_DIR}/build.appDef"
+}
+
 build_pwa() {
   echo "Build pwa"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   cd "$PROJECT_DIR" || exit 1
 
+  if [[ "${BUILD_PWA_AUDIO_RELATIVE_URL}" == "1" ]]; then
+    make_pwa_audio_url_relative
+  fi
   PWA_OUTPUT_DIR=/tmp/output/pwa
   mkdir -p "${PWA_OUTPUT_DIR}"
   if [[ "${BUILD_PWA_COLLECTION_ID}" == *","* ]]; then
