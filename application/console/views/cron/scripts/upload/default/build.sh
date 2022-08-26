@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e -o pipefail
+
 LOG_FILE="${OUTPUT_DIR}"/console.log
 exec > >(tee "${LOG_FILE}") 2>&1
 
@@ -382,7 +383,7 @@ prepare_appbuilder_project() {
   fi
   
   PUBLISH_PROPERTIES="build_data/publish/properties.json"
-  if [[ -f "${PUBLISH_PROPERTIES}" ]]; then
+  if [ -f "${PUBLISH_PROPERTIES}" ]; then
       # Handle spaces in properties values
       # https://stackoverflow.com/a/48513046/35577
       values=$(cat "${PUBLISH_PROPERTIES}")
@@ -397,9 +398,10 @@ prepare_appbuilder_project() {
       PUBLISH_SE_RECORD="build_data/publish/se-record.json"
       if [[ -f "${PUBLISH_SE_RECORD}" && "$(jq -r '. | length' "${PUBLISH_SE_RECORD}")" == "1" ]]; then
         # if there is at least one Scripture Earth record
-        PUBLISH_NOTIFY_SCRIPTURE_EARTH=$(xmllint --xpath "string(/app-definition/publishing/scripture-earth/@notify)" build.appDef)
+        PUBLISH_NOTIFY_SCRIPTURE_EARTH=$(xmlstarlet sel -t -v "/app-definition/publishing/scripture-earth/@notify" build.appDef)
         PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID=$(jq -r '.["0"].relationships.idx' "${PUBLISH_SE_RECORD}")
-        if [[ "${PUBLISH_NOTIFY_SCRIPTURE_EARTH}" != "" ]]; then
+        if [[ "${PUBLISH_NOTIFY_SCRIPTURE_EARTH}" == "true" ]]; then
+          echo "Notify Scripture Earth: id=${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}"
           # If the "Notify Scripture Earth" property is enabled in the AppDef
           PUBLISH_TMP=$(mktemp)
           PUBLISH_NOTIFY_TYPE=$(jq -r '.PUBLISH_NOTIFY | type' "${PUBLISH_PROPERTIES}")
@@ -421,7 +423,9 @@ prepare_appbuilder_project() {
           jq -cM --arg idx "${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}" '.SCRIPTURE_EARTH_ID = $idx' "${OUTPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
           cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
         fi
-      else
+      fi
+
+      if [ ! -f "${OUTPUT_PUBLISH_PROPERTIES}" ]; then
         # if no Scripture Earth record, then copy straight as normal
         cp "${PUBLISH_PROPERTIES}" "${OUTPUT_PUBLISH_PROPERTIES}"
       fi
