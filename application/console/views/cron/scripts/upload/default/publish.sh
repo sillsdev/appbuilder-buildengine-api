@@ -338,6 +338,7 @@ publish_base_update_json() {
   echo "${i_json}" | jq \
     --arg project_url "${PROJECT_URL}" \
     --arg project_name "${PROJECT_NAME}" \
+    --arg product_name "${WORKFLOW_PRODUCT_NAME}" \
     --arg project_language "${PROJECT_LANGUAGE}" \
     --arg project_repo "${PROJECT_S3}" \
     --arg publish_url "${PUBLISH_URL}" \
@@ -345,7 +346,7 @@ publish_base_update_json() {
     --arg size "${PUBLISH_SIZE}" \
     --arg app_builder "${APP_BUILDER_SCRIPT_PATH}" \
     --arg app_builder_version "${version}" \
-    '. + { project_url: $project_url, project_name: $project_name, project_language: $project_language, project_repo: $project_repo, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version }'
+    '. + { project_url: $project_url, project_name: $project_name, product_name: $product_name, project_language: $project_language, project_repo: $project_repo, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version }'
 }
 
 post_publish() {
