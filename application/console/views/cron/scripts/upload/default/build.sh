@@ -398,7 +398,8 @@ prepare_appbuilder_project() {
       PUBLISH_SE_RECORD="build_data/publish/se-record.json"
       if [[ -f "${PUBLISH_SE_RECORD}" && "$(jq -r '. | length' "${PUBLISH_SE_RECORD}")" == "1" ]]; then
         # if there is at least one Scripture Earth record
-        PUBLISH_NOTIFY_SCRIPTURE_EARTH=$(xmlstarlet sel -t -v "/app-definition/publishing/scripture-earth/@notify" build.appDef)
+        # Note: it is possible to have the record, but not the notify property -- "|| true" eats the error and still returns blank
+        PUBLISH_NOTIFY_SCRIPTURE_EARTH=$(xmlstarlet sel -t -v "/app-definition/publishing/scripture-earth/@notify" build.appDef || true)
         PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID=$(jq -r '.["0"].relationships.idx' "${PUBLISH_SE_RECORD}")
         if [[ "${PUBLISH_NOTIFY_SCRIPTURE_EARTH}" == "true" ]]; then
           echo "Notify Scripture Earth: id=${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}"
