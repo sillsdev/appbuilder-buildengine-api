@@ -7,6 +7,10 @@ exec > >(tee "${LOG_FILE}") 2>&1
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
+BUILD_DIR=/tmp/build
+mkdir -p "$BUILD_DIR"
+SCRIPT_OPT="-fp build=${BUILD_DIR}"
+
 check_audio_sources() {
   if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
     if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
@@ -66,7 +70,7 @@ build_apk() {
   if [[ "${BUILD_MANAGE_VERSION_CODE}" != "0" ]]; then
     VERSION_CODE=$((VERSION_CODE + 1))
   fi
-  SCRIPT_OPT=""
+
   echo "BUILD_SHARE_APP_LINK=${BUILD_SHARE_APP_LINK}"
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
@@ -162,11 +166,13 @@ build_html() {
     IFS=',' read -ra COLLECTIONS <<< "${BUILD_HTML_COLLECTION_ID}"
     for i in "${COLLECTIONS[@]}"; do
       IFS='=' read -ra PARAMS <<< "${i}"
-      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${PARAMS[0]}" -p "${PARAMS[1]}" -fp html.output="${HTML_OUTPUT_DIR}"
+      # shellcheck disable=SC2086
+      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${PARAMS[0]}" -p "${PARAMS[1]}" -fp html.output="${HTML_OUTPUT_DIR}" ${SCRIPT_OPT}
     done
     pushd "${HTML_OUTPUT_DIR}"
   else
-    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${BUILD_HTML_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}"
+    # shellcheck disable=SC2086
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -html "${BUILD_HTML_COLLECTION_ID}" -fp html.output="${HTML_OUTPUT_DIR}" ${SCRIPT_OPT}
     pushd "${HTML_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
   fi
   zip -r "${OUTPUT_DIR}/html.zip" .
@@ -196,11 +202,13 @@ build_pwa() {
     IFS=',' read -ra COLLECTIONS <<< "${BUILD_PWA_COLLECTION_ID}"
     for i in "${COLLECTIONS[@]}"; do
       IFS='=' read -ra PARAMS <<< "${i}"
-      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${PARAMS[0]}" -p "${PARAMS[1]}" -fp html.output="${PWA_OUTPUT_DIR}"
+      # shellcheck disable=SC2086
+      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${PARAMS[0]}" -p "${PARAMS[1]}" -fp html.output="${PWA_OUTPUT_DIR}" ${SCRIPT_OPT}
     done
     pushd "${PWA_OUTPUT_DIR}"
   else
-    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${PWA_OUTPUT_DIR}"
+    # shellcheck disable=SC2086
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -pwa "${BUILD_PWA_COLLECTION_ID}" -fp html.output="${PWA_OUTPUT_DIR}" ${SCRIPT_OPT}
     pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
   fi
   zip -r "${OUTPUT_DIR}/pwa.zip" .
@@ -249,7 +257,8 @@ build_asset_package() {
   echo "ASSET_FILENAME=${ASSET_FILENAME}"
   echo "APP_NAME=${APP_NAME}"
 
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}" -vn "$VERSION_NAME"
+  # shellcheck disable=SC2086
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}" -vn "$VERSION_NAME" ${SCRIPT_OPT}
 
   cat >"${ASSET_OUTPUT_DIR}/preview.html" <<EOL
 <html><head><meta charset="UTF-8"><style>
