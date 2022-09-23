@@ -11,6 +11,14 @@ BUILD_DIR=/tmp/build
 mkdir -p "$BUILD_DIR"
 SCRIPT_OPT="-fp build=${BUILD_DIR}"
 
+sync_secrets() {
+  SECRETS_SUBDIR=$1
+  SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/build"
+  echo "sync secrets"
+  echo "SECRETS_SUBDIR = ${SECRETS_SUBDIR}"
+  aws s3 sync "${SECRETS_S3}/${SECRETS_SUBDIR}" "${SECRETS_DIR}"
+}
+
 check_audio_sources() {
   if [[ "${BUILD_AUDIO_UPDATE}" == "1" ]]; then
     if [[ "${AUDIO_UPDATE_SOURCE}" != "" ]]; then
@@ -94,29 +102,26 @@ build_apk() {
 
   if [[ "${PRODUCT_KEYSTORE}" != "" ]]; then
     echo "Using product keystore=${PRODUCT_KEYSTORE}"
-    KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/${PRODUCT_KEYSTORE}.keystore"
-    KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/ksp.txt")"
-    KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/ka.txt")"
-    KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}/kap.txt")"
-    { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
-    KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
+    SECRETS_SUBDIR="google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}"
+    sync_secrets ${SECRETS_SUBDIR}
+    KS="${SECRETS_DIR}/${PRODUCT_KEYSTORE}.keystore"
   elif [[ "${BUILD_KEYSTORE}" != "" ]]; then
     echo "Using build keystore=${BUILD_KEYSTORE}"
-    KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/${BUILD_KEYSTORE}.keystore"
-    KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/ksp.txt")"
-    KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/ka.txt")"
-    KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}/kap.txt")"
-    { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
-    KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
+    SECRETS_SUBDIR="google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}"
+    sync_secrets ${SECRETS_SUBDIR}
+    KS="${SECRETS_DIR}/${BUILD_KEYSTORE}.keystore"
   else
     echo "Using publisher keystore=${PUBLISHER}"
-    KS="${SECRETS_DIR}/google_play_store/${PUBLISHER}/${PUBLISHER}.keystore"
-    KSP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ksp.txt")"
-    KA="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/ka.txt")"
-    KAP="$(cat "${SECRETS_DIR}/google_play_store/${PUBLISHER}/kap.txt")"
-    { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
-    KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
+    SECRETS_SUBDIR="google_play_store/${PUBLISHER}"
+    sync_secrets ${SECRETS_SUBDIR}
+    KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   fi
+  KSP="$(cat "${SECRETS_DIR}/ksp.txt")"
+  KA="$(cat "${SECRETS_DIR}/ka.txt")"
+  KAP="$(cat "${SECRETS_DIR}/kap.txt")"
+  { echo "-ksp \"${KSP}\"" ; echo "-ka \"${KA}\""; echo "-kap \"${KAP}\""; } >> "${SECRETS_DIR}/keys.txt"
+  KS_OPT="-ks ${KS} -i ${SECRETS_DIR}/keys.txt"
+
   echo "KEYSTORE=${KS}"
 
   cd "$PROJECT_DIR" || exit 1
