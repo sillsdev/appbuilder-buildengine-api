@@ -19,7 +19,7 @@ publish_google_play() {
   fastlane env
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   SECRETS_SUBDIR="google_play_store/${PUBLISHER}"
-  sync_secrets ${SECRETS_SUBDIR}
+  sync_secrets "${SECRETS_SUBDIR}"
   export SUPPLY_JSON_KEY="${SECRETS_DIR}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
   PACKAGE_NAME="$(cat package_name.txt)"
@@ -109,7 +109,7 @@ publish_s3_bucket() {
   ZIP_FILES=( "${ARTIFACTS_DIR}"/asset-package/*.zip )
 
   SECRETS_SUBDIR="s3_bucket/${PUBLISHER}"
-  sync_secrets ${SECRETS_SUBDIR}
+  sync_secrets "${SECRETS_SUBDIR}"
   CREDENTIALS="${SECRETS_DIR}/credentials"
   CONFIG="${SECRETS_DIR}/config"
   DEST_BUCKET_PATH=$(cat "${SECRETS_DIR}/bucket")
@@ -164,7 +164,7 @@ publish_s3_bucket() {
 
 publish_rclone() {
   SECRETS_SUBDIR="rclone/${PUBLISHER}"
-  sync_secrets ${SECRETS_SUBDIR}
+  sync_secrets "${SECRETS_SUBDIR}"
   CONFIG="${SECRETS_DIR}/rclone.conf"
   RCLONE="rclone -v --config ${CONFIG}"
   if [[ "${PUBLISH_CLOUD_REMOTE}" == "" ]]; then

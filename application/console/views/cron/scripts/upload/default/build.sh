@@ -103,12 +103,12 @@ build_apk() {
   if [[ "${BUILD_KEYSTORE}" != "" ]]; then
     echo "Using build keystore=${BUILD_KEYSTORE}"
     SECRETS_SUBDIR="google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}"
-    sync_secrets ${SECRETS_SUBDIR}
+    sync_secrets "${SECRETS_SUBDIR}"
     KS="${SECRETS_DIR}/${BUILD_KEYSTORE}.keystore"
   else
     echo "Using publisher keystore=${PUBLISHER}"
     SECRETS_SUBDIR="google_play_store/${PUBLISHER}"
-    sync_secrets ${SECRETS_SUBDIR}
+    sync_secrets "${SECRETS_SUBDIR}"
     KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   fi
   KSP="$(cat "${SECRETS_DIR}/ksp.txt")"
