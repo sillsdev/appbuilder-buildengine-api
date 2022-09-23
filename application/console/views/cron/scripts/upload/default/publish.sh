@@ -7,11 +7,20 @@ exec > >(tee "${LOG_FILE}") 2>&1
 
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
+sync_secrets() {
+  SECRETS_SUBDIR=$1
+  SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/publish"
+  echo "sync secrets"
+  echo "SECRETS_SUBDIR = ${SECRETS_SUBDIR}"
+  aws s3 sync "${SECRETS_S3}/${SECRETS_SUBDIR}" "${SECRETS_DIR}"
+}
 
 publish_google_play() {
   fastlane env
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
-  export SUPPLY_JSON_KEY="${SECRETS_DIR}/google_play_store/${PUBLISHER}/playstore_api.json"
+  SECRETS_SUBDIR="google_play_store/${PUBLISHER}"
+  sync_secrets "${SECRETS_SUBDIR}"
+  export SUPPLY_JSON_KEY="${SECRETS_DIR}/playstore_api.json"
   cd "$ARTIFACTS_DIR" || exit 1
   PACKAGE_NAME="$(cat package_name.txt)"
   export SUPPLY_PACKAGE_NAME="${PACKAGE_NAME}"
@@ -99,9 +108,11 @@ publish_google_play() {
 publish_s3_bucket() {
   ZIP_FILES=( "${ARTIFACTS_DIR}"/asset-package/*.zip )
 
-  CREDENTIALS="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/credentials"
-  CONFIG="${SECRETS_DIR}/s3_bucket/${PUBLISHER}/config"
-  DEST_BUCKET_PATH=$(cat "${SECRETS_DIR}/s3_bucket/${PUBLISHER}/bucket")
+  SECRETS_SUBDIR="s3_bucket/${PUBLISHER}"
+  sync_secrets "${SECRETS_SUBDIR}"
+  CREDENTIALS="${SECRETS_DIR}/credentials"
+  CONFIG="${SECRETS_DIR}/config"
+  DEST_BUCKET_PATH=$(cat "${SECRETS_DIR}/bucket")
   if [[ "${DEST_BUCKET_PATH}" == "" ]]; then
     echo "bucket file for S3 ${PUBLISHER} is empty!"
     exit 1
@@ -152,7 +163,9 @@ publish_s3_bucket() {
 }
 
 publish_rclone() {
-  CONFIG="${SECRETS_DIR}/rclone/${PUBLISHER}/rclone.conf"
+  SECRETS_SUBDIR="rclone/${PUBLISHER}"
+  sync_secrets "${SECRETS_SUBDIR}"
+  CONFIG="${SECRETS_DIR}/rclone.conf"
   RCLONE="rclone -v --config ${CONFIG}"
   if [[ "${PUBLISH_CLOUD_REMOTE}" == "" ]]; then
     PUBLISH_CLOUD_REMOTE=$(${RCLONE} config dump | jq -r 'keys_unsorted|.[0]')

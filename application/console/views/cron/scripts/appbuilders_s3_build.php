@@ -33,7 +33,6 @@ phases:
       - mkdir "${SCRIPT_DIR}"
       - echo "PROJECT_S3=${PROJECT_S3}"
       - aws s3 sync "${PROJECT_S3}" "${PROJECT_DIR}"
-      - aws s3 sync "${SECRETS_S3}" "${SECRETS_DIR}"
       - aws s3 sync "${SCRIPT_S3}" "${SCRIPT_DIR}"
       - export GRADLE_OPTS="-Dorg.gradle.daemon=false"
   build:
