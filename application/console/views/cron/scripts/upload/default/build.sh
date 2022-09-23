@@ -100,12 +100,7 @@ build_apk() {
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   echo "SCRIPT_OPT=${SCRIPT_OPT}"
 
-  if [[ "${PRODUCT_KEYSTORE}" != "" ]]; then
-    echo "Using product keystore=${PRODUCT_KEYSTORE}"
-    SECRETS_SUBDIR="google_play_store/${PUBLISHER}/${PRODUCT_KEYSTORE}"
-    sync_secrets ${SECRETS_SUBDIR}
-    KS="${SECRETS_DIR}/${PRODUCT_KEYSTORE}.keystore"
-  elif [[ "${BUILD_KEYSTORE}" != "" ]]; then
+  if [[ "${BUILD_KEYSTORE}" != "" ]]; then
     echo "Using build keystore=${BUILD_KEYSTORE}"
     SECRETS_SUBDIR="google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}"
     sync_secrets ${SECRETS_SUBDIR}
