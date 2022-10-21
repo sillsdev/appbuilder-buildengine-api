@@ -79,6 +79,10 @@ build_apk() {
     VERSION_CODE=$((VERSION_CODE + 1))
   fi
 
+  if [[ "${BUILD_JAVA_MAX_HEAP_SIZE}" == "1" ]]; then
+    export _JAVA_OPTIONS="-Xmx2048M"
+  fi
+
   echo "BUILD_SHARE_APP_LINK=${BUILD_SHARE_APP_LINK}"
   if [[ "${BUILD_SHARE_APP_LINK}" != "0" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-app-link=true"
