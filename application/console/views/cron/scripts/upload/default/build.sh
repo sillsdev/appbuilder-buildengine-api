@@ -132,6 +132,16 @@ build_apk() {
     $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -app-bundle ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
   fi
 
+  # verify output -- AAPT2 is failing during appbuilder build but error is not getting back to script
+  pushd "$OUTPUT_DIR"
+  shopt -s nullglob
+  for f in *.{apk,aab}; do
+    echo "JARSIGNER: Checking ${OUTPUT_DIR}/$f"
+    jarsigner -verify "$f"
+  done
+  shopt -u nullglob
+  popd
+
   if [[ "${BUILD_EXPORT_ENCRYPTED_KEY}" == "1" ]]; then
     echo "Export Encrypted Key"
     ENCRYPTED_KEY="private_key.pepk"
