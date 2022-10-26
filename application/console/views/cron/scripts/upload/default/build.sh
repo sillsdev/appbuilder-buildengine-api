@@ -187,9 +187,13 @@ build_html() {
 }
 
 make_pwa_audio_url_relative() {
-    AUDIO_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'export-html-audio-path']/@value" "${PROJECT_DIR}/build.appDef")
-    AUDIO_RELATIVE_URL=$(echo "${AUDIO_URL}" | sed -E 's/^https?://')
-    xmlstarlet ed --inplace -u "/app-definition/features/feature[@name = 'export-html-audio-path']/@value" -v "${AUDIO_RELATIVE_URL}" "${PROJECT_DIR}/build.appDef"
+  AUDIO_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'export-html-audio-path']/@value" "${PROJECT_DIR}/build.appDef" || true)
+  if [[ "${AUDIO_URL}" == "" ]]; then
+    echo "Export HTML Audio Path not set"
+    exit 1
+  fi
+  AUDIO_RELATIVE_URL=$(echo "${AUDIO_URL}" | sed -E 's/^https?://')
+  xmlstarlet ed --inplace -u "/app-definition/features/feature[@name = 'export-html-audio-path']/@value" -v "${AUDIO_RELATIVE_URL}" "${PROJECT_DIR}/build.appDef"
 }
 
 build_pwa() {
