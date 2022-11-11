@@ -51,6 +51,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const ARTIFACT_ENCRYPTED_KEY="encrypted_key";
     const ARTIFACT_ASSET_PACKAGE="asset-package";
     const ARTIFACT_ASSET_PREVIEW="asset-preview";
+    const ARTIFACT_ASSET_NOTIFY="asset-notify";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -234,6 +235,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         if (strpos($this->targets, "asset-package") !== false) {
             $this->addIfSet($artifacts, self::ARTIFACT_ASSET_PACKAGE, $this->assetPackage());
             $this->addIfSet($artifacts, self::ARTIFACT_ASSET_PREVIEW, $this->assetPreview());
+            $this->addIfSet( $artifacts, self::ARTIFACT_ASSET_NOTIFY, $this->assetNotify());
         }
 
 
@@ -421,6 +423,9 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         } else if (preg_match("/asset-package\/preview\.html$/", $key)) {
             $type = self::ARTIFACT_ASSET_PREVIEW;
             $file = "asset-package/preview.html";
+        } else if (preg_match("/asset-package\/notify\.json$/", $key)) {
+            $type = self::ARTIFACT_ASSET_NOTIFY;
+            $file = "asset-package/preview.html";
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING;
             $file = "play-listing/index.html";
@@ -473,6 +478,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             case self::ARTIFACT_ENCRYPTED_KEY:
             case self::ARTIFACT_ASSET_PREVIEW:
             case self::ARTIFACT_ASSET_PACKAGE:
+            case self::ARTIFACT_ASSET_NOTIFY:
                 break;
 
             default:
@@ -604,6 +610,9 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function assetPreview() {
         return $this->getArtifactUrl("/asset-package\/preview\.html$/");
+    }
+    public function assetNotify() {
+        return $this->getArtifactUrl("/asset-package\/notify\.json$/");
     }
 
     /**

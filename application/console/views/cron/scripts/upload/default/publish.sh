@@ -343,6 +343,16 @@ notify_scripture_earth() {
 
 }
 
+notify_Language_update_json() {
+  local i_json="$1"
+  local i_language="$2"
+}
+
+notify_listing_update_json() {
+  local i_json="$1"
+  local i_language="$2"
+}
+
 publish_base_update_json() {
   local i_json="$1"
   local version
@@ -373,39 +383,49 @@ post_publish() {
     # See BuildEngineServiceBase::AddProductProperitiesToEnvironment for the list of properties
     # that are added.
 
-    # Notify Scripture Earth
-    if [[ "${PUBLISH_NOTIFY})" == *"SCRIPTURE_EARTH"* && "${SCRIPTURE_EARTH_KEY}" != "" ]]; then
-      EMPTY_NOTIFY_JSON="[]"
-      NOTIFY_JSON=$EMPTY_NOTIFY_JSON
-      if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"ios"* ]]; then
-        # Send Notification for iOS Asset Package
-        NOTIFY_TYPE="ios"
-        # change protocol to "asset://" so that container app will recognize as asset-package
-        # shellcheck disable=SC2001
-        NOTIFY_URL="$(sed -e 's/https*:/asset:/' <<< "$UI_URL")/api/products/${PRODUCT_ID}/files/published/asset-package"
-        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
-      elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"android"* ]]; then
-        # Send Notification for Android app to Google Play
-        NOTIFY_TYPE="apk"
-        NOTIFY_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
-        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
-        if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"google"* ]]; then
-          # Send additional notification for Android app to Google Play
-          NOTIFY_TYPE="google_play"
+    for NOTIFY_SERVER in ${PUBLISH_NOTIFY/,/ }
+    do
+      # Notify Scripture Earth
+      if [[ "${NOTIFY_SERVER})" == *"SCRIPTURE_EARTH"* && "${SCRIPTURE_EARTH_KEY}" != "" ]]; then
+        EMPTY_NOTIFY_JSON="[]"
+        NOTIFY_JSON=$EMPTY_NOTIFY_JSON
+        if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"ios"* ]]; then
+          # Send Notification for iOS Asset Package
+          NOTIFY_TYPE="ios"
+          # change protocol to "asset://" so that container app will recognize as asset-package
+          # shellcheck disable=SC2001
+          NOTIFY_URL="$(sed -e 's/https*:/asset:/' <<< "$UI_URL")/api/products/${PRODUCT_ID}/files/published/asset-package"
+          NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+        elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"android"* ]]; then
+          # Send Notification for Android app to Google Play
+          NOTIFY_TYPE="apk"
+          NOTIFY_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+          NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+          if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"google"* ]]; then
+            # Send additional notification for Android app to Google Play
+            NOTIFY_TYPE="google_play"
+            NOTIFY_URL="${PUBLISH_URL}"
+            NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
+          fi
+        elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"pwa"* ]]; then
+          # Send Notification for PWA
+          NOTIFY_TYPE="sab_html"
           NOTIFY_URL="${PUBLISH_URL}"
           NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
         fi
-      elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"pwa"* ]]; then
-        # Send Notification for PWA
-        NOTIFY_TYPE="sab_html"
-        NOTIFY_URL="${PUBLISH_URL}"
-        NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
-      fi
 
-      if [[ "${NOTIFY_JSON}" != "{$EMPTY_NOTIFY_JSON}" ]]; then
-        notify_scripture_earth "${NOTIFY_JSON}"
+        if [[ "${NOTIFY_JSON}" != "{$EMPTY_NOTIFY_JSON}" ]]; then
+          notify_scripture_earth "${NOTIFY_JSON}"
+        fi
+      else
+        SECRETS_SUBDIR="notify/${NOTIFY_SERVER}"
+        sync_secrets "${SECRETS_SUBDIR}"
+        if [[ -f "${SECRETS_DIR}/${SECRETS_SUBDIR/${NOTIFY_SERVER}/credentials}" ]]; then
+          EMPTY_NOTIFY_JSON="[]"
+          NOTIFY_JSON=$EMPTY_NOTIFY_JSON
+        fi
       fi
-    fi
+    done
   fi
 
   echo "${PUBLISH_JSON}" > "${OUTPUT_DIR}/publish.json"
