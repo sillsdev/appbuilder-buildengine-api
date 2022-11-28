@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e -o pipefail
+#set -x
 
 LOG_FILE="${OUTPUT_DIR}"/console.log
 exec > >(tee "${LOG_FILE}") 2>&1
@@ -278,6 +279,7 @@ build_asset_package() {
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}" -vn "$VERSION_NAME" ${SCRIPT_OPT}
 
+  # Build preview
   cat >"${ASSET_OUTPUT_DIR}/preview.html" <<EOL
 <html><head><meta charset="UTF-8"><style>
 .container {
@@ -298,7 +300,75 @@ build_asset_package() {
 </html>
 EOL
 
-  cat "${ASSET_OUTPUT_DIR}/preview.html"
+  ### Build notification
+
+  # query langtags
+  NOTIFY_LANG_TMP=$(mktemp)
+  jq -cM "{app_lang: .[] | select(.tag==\"${PROJECT_LANGUAGE}\") }" /root/langtags.json > "${NOTIFY_LANG_TMP}"
+  if [ ! -s "${NOTIFY_LANG_TMP}" ]; then
+    # The language was not found; provide default
+    echo '{}' | jq -cM --arg lang "${PROJECT_LANGUAGE}" '. + { app_lang: { tag: $lang } }' > "$NOTIFY_LANG_TMP"
+  fi
+
+  # build listing
+  NOTIFY_LISTING_TMP=$(mktemp)
+  NOTIFY_BASE_TMP=$(mktemp)
+  PLAY_LISTING_DIR="build_data/publish/play-listing"
+  echo '{}' | jq -cM '. + { listing: [] }' > "$NOTIFY_BASE_TMP"
+  pushd "${PLAY_LISTING_DIR}"
+  NOTIFY_LANGS=$(find . -mindepth 1 -maxdepth 1 -type d | cut -d/ -f2)
+  for lang in $NOTIFY_LANGS
+  do
+    sd="$(cat "$lang/short_description.txt")"
+    fd="$(cat "$lang/full_description.txt")"
+    title="$(cat "$lang/title.txt")"
+    jq -cM --arg lang "$lang" --arg sd "$sd" --arg fd "$fd" --arg title "$title" \
+    '.listing += [ { lang: $lang, title: $title, short_description: $sd, full_description: $fd } ]' \
+    "$NOTIFY_BASE_TMP" > "$NOTIFY_LISTING_TMP"
+    cp "$NOTIFY_LISTING_TMP" "$NOTIFY_BASE_TMP"
+  done
+  popd
+
+  # extract image
+  pushd "build_data/images"
+  # look for ios images
+  NOTIFY_IMAGES_TMP=$(mktemp)
+  echo '{}' | jq -cM '. + { image: { files: [] } }' > "$NOTIFY_BASE_TMP"
+  if [ -d "ios/drawer" ]; then
+    # copy predefined images
+    pushd "ios/drawer"
+    NOTIFY_IMAGES=$(find . -mindepth 1 -maxdepth 1 -type f | cut -d/ -f2)
+    for image in $NOTIFY_IMAGES
+    do
+      size=1x
+      if [[ "$image" == *"@2x"* ]]; then
+        size=2x
+      elif [[ "$image" == *"@3x"* ]]; then
+        size=3x
+      fi
+      jq -cM --arg size "$size" --arg image "$image" '.image.files += [ {size: $size, src: $image} ]' "$NOTIFY_BASE_TMP" > "$NOTIFY_IMAGES_TMP"
+      cp "$image" "${ASSET_OUTPUT_DIR}/${image}"
+      cp "$NOTIFY_IMAGES_TMP" "$NOTIFY_BASE_TMP"
+    done
+    popd
+  else
+    # resize largest image to desired sizes
+    for size in "xxxhdpi" "xxhdpi" "xhdpi" "hdpi"
+    do
+      image_file="drawable-${size}/nav_drawer.png"
+      if [ -f "${image_file}" ]; then
+        convert "${image_file}" -resize 750x422 "${ASSET_OUTPUT_DIR}/nav_drawer@3x.png"
+        convert "${image_file}" -resize 500x282 "${ASSET_OUTPUT_DIR}/nav_drawer@2x.png"
+        convert "${image_file}" -resize 250x141 "${ASSET_OUTPUT_DIR}/nav_drawer.png"
+        jq -cM '.image.files += [ { size: "1x", src: "nav_drawer.png" }, { size: "2x", src: "nav_drawer@2x.png" }, {size: "3x", src: "nav_drawer@3x.png" } ]' "$NOTIFY_BASE_TMP" > "$NOTIFY_IMAGES_TMP"
+        break
+      fi
+    done
+  fi
+  popd
+
+  # combine json objects
+  jq -cM -s '.[0] * .[1] * .[2]' "$NOTIFY_LANG_TMP" "$NOTIFY_IMAGES_TMP" "$NOTIFY_LISTING_TMP" > "${ASSET_OUTPUT_DIR}/notify.json"
 
   # Not exported so clear it
   VERSION_CODE=""
@@ -439,13 +509,13 @@ prepare_appbuilder_project() {
           # implement something in publish.sh to notify their server correctly.
           if [[ "${PUBLISH_NOTIFY_TYPE}" == "null" ]]; then
             # There is no property so set it (as an array) to Scripture Earth entry
-            jq -cM '.PUBLISH_NOTIFY += ["SCRIPTURE_EARTH"]' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+            jq -cM '.PUBLISH_NOTIFY += "SCRIPTURE_EARTH"' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
           elif [ "${PUBLISH_NOTIFY_TYPE}" == "string" ]; then
             # There is an existing property so convert to an array and add to Scripture Earth entry.
             # We are only going to deal with one item being there. If there will be multiple, then we
             # will have to split the string and create an array of the results
             PUBLISH_NOTIFY_CURRENT=$(jq -r '.PUBLISH_NOTIFY' "${PUBLISH_PROPERTIES}")
-            jq -cM --arg cur "${PUBLISH_NOTIFY_CURRENT}" '.PUBLISH_NOTIFY = [$cur, "SCRIPTURE_EARTH"]' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+            jq -cM --arg cur "${PUBLISH_NOTIFY_CURRENT}" '.PUBLISH_NOTIFY += ",SCRIPTURE_EARTH"' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
           fi
           cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
           jq -cM --arg idx "${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}" '.SCRIPTURE_EARTH_ID = $idx' "${OUTPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
@@ -457,6 +527,8 @@ prepare_appbuilder_project() {
         # if no Scripture Earth record, then copy straight as normal
         cp "${PUBLISH_PROPERTIES}" "${OUTPUT_PUBLISH_PROPERTIES}"
       fi
+
+      cat "${OUTPUT_PUBLISH_PROPERTIES}"
   fi
 
   APPDEF_VERSION_NAME=$(xmllint --xpath "string(/app-definition/version/@name)" build.appDef)
