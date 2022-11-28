@@ -139,14 +139,15 @@ publish_s3_bucket() {
     PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/asset-package"
     SRC_FILE="${ZIP_FILES[0]}"
   fi
-  PUBLISH_SIZE="$(stat --format="%s" "${SRC_FILE}")}"
+  PUBLISH_SIZE="$(stat --format="%s" "${SRC_FILE}")"
   DEST_FILE="$(basename "${SRC_FILE}")"
 
   if [[ "${DEST_PATH}" == "" ]]; then
-    PUBLISH_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_FILE}"
+    PUBLISH_BASE_URL="https://${DEST_BUCKET}.s3.amazonaws.com"
   else
-    PUBLISH_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_PATH}/${DEST_FILE}"
+    PUBLISH_BASE_URL="https://${DEST_BUCKET}.s3.amazonaws.com/${DEST_PATH}"
   fi
+  PUBLISH_URL="${PUBLISH_BASE_URL}/${DEST_FILE}"
 
   echo "CREDENTIALS=${CREDENTIALS}"
   echo "CONFIG=${CONFIG}"
@@ -157,7 +158,26 @@ publish_s3_bucket() {
   echo "DEST_FILE=${DEST_FILE}"
   echo "PUBLISH_URL=${PUBLISH_URL}"
 
-  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${PUBLISH_S3_SOURCH_PATH}" "s3://${DEST_BUCKET_PATH}" --acl public-read --acl bucket-owner-full-control --recursive --exclude "*" --include "${PUBLISH_S3_INCLUDE}"
+  NOTIFY_ASSET_BASE_JSON="${ARTIFACTS_DIR}/asset-package/notify.json"
+  if [ -f "${NOTIFY_ASSET_BASE_JSON}" ]; then
+    NOTIFY_ASSET_JSON_TMP=$(mktemp)
+    # set the baseurl for the images
+    jq -cM --arg baseurl "${PUBLISH_BASE_URL}" '.image += { baseurl: $baseurl }' "${NOTIFY_ASSET_BASE_JSON}" > "${NOTIFY_ASSET_JSON_TMP}"
+    jq \
+      --arg project_url "${PROJECT_URL}" \
+      --arg project_name "${PROJECT_NAME}" \
+      --arg publish_url "${PUBLISH_URL}" \
+      --arg permalink_url "${PERMALINK_URL}" \
+      --arg size "${PUBLISH_SIZE}" \
+      --arg app_builder "${APP_BUILDER_SCRIPT_PATH}" \
+      --arg app_builder_version "${APP_BUILDER_VERSION}" \
+     '. + { project_url: $project_url, project_name: $project_name, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version}' "${NOTIFY_ASSET_JSON_TMP}" > "${OUTPUT_DIR}/asset-notify.json"
+  fi
+
+  # TEMP: Update artifacts so that it gets copied to S3 for testing
+  cp "${OUTPUT_DIR}/asset-notify.json" "${NOTIFY_ASSET_BASE_JSON}"
+
+  AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${PUBLISH_S3_SOURCH_PATH}" "s3://${DEST_BUCKET_PATH}" --acl public-read --acl bucket-owner-full-control --recursive --exclude "*" --include "${PUBLISH_S3_INCLUDE}" --include "*.png" --include "*.json"
 
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
 }
@@ -313,6 +333,7 @@ prepare_publish() {
   fi
 
   PUBLISH_JSON="{}"
+  APP_BUILDER_VERSION="$(${APP_BUILDER_SCRIPT_PATH} "-?" | grep Version | cut -d\  -f2)"
 }
 
 notify_scripture_earth_update_json() {
@@ -355,8 +376,6 @@ notify_listing_update_json() {
 
 publish_base_update_json() {
   local i_json="$1"
-  local version
-  version="$(${APP_BUILDER_SCRIPT_PATH} "-?" | grep Version | cut -d\  -f2)"
 
   echo "${i_json}" | jq \
     --arg project_url "${PROJECT_URL}" \
@@ -368,7 +387,7 @@ publish_base_update_json() {
     --arg permalink_url "${PERMALINK_URL}" \
     --arg size "${PUBLISH_SIZE}" \
     --arg app_builder "${APP_BUILDER_SCRIPT_PATH}" \
-    --arg app_builder_version "${version}" \
+    --arg app_builder_version "${APP_BUILDER_VERSION}" \
     '. + { project_url: $project_url, project_name: $project_name, product_name: $product_name, project_language: $project_language, project_repo: $project_repo, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version }'
 }
 
@@ -418,11 +437,29 @@ post_publish() {
           notify_scripture_earth "${NOTIFY_JSON}"
         fi
       else
-        SECRETS_SUBDIR="notify/${NOTIFY_SERVER}"
-        sync_secrets "${SECRETS_SUBDIR}"
-        if [[ -f "${SECRETS_DIR}/${SECRETS_SUBDIR/${NOTIFY_SERVER}/credentials}" ]]; then
-          EMPTY_NOTIFY_JSON="[]"
-          NOTIFY_JSON=$EMPTY_NOTIFY_JSON
+        if [[ -f "${OUTPUT_DIR}/asset-notify.json" ]]; then
+          echo "NOTIFY: ${NOTIFY_SERVER}"
+          SECRETS_SUBDIR="notify/${NOTIFY_SERVER}"
+          sync_secrets "${SECRETS_SUBDIR}"
+          ENDPOINT="${SECRETS_DIR}/endpoint.json"
+          echo "ENDPOINT: ${ENDPOINT}"
+          find "${SECRETS_DIR}"
+          if [[ -f "${ENDPOINT}" ]]; then
+            cat "${ENDPOINT}"
+            NOTIFY_URL=$(jq -r '.url' "${ENDPOINT}")
+            NOTIFY_ARGS_FILE=$(mktemp)
+            # How to loop json array in bash
+            # https://www.starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
+            NOTIFY_HEADERS=$(jq -r '.headers[] | @base64' "${ENDPOINT}")
+            for header in $NOTIFY_HEADERS
+            do
+              echo "header = \"$(echo "$header" | base64 --decode)\"" >> "${NOTIFY_ARGS_FILE}"
+            done
+            echo "header = \"Accept: application/json\"" >> "${NOTIFY_ARGS_FILE}"
+            echo "header = \"Content-Type: application/json\"" >> "${NOTIFY_ARGS_FILE}"
+            NOTIFY_JSON=$(cat "${OUTPUT_DIR}/asset-notify.json")
+            curl -X POST --config "${NOTIFY_ARGS_FILE}" --data "${NOTIFY_JSON}" "${NOTIFY_URL}"
+          fi
         fi
       fi
     done

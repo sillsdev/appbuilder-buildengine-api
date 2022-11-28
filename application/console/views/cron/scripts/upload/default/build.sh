@@ -333,7 +333,7 @@ EOL
   pushd "build_data/images"
   # look for ios images
   NOTIFY_IMAGES_TMP=$(mktemp)
-  echo '{}' | jq -cM --arg baseurl "${UI_URL}/api/products/${PRODUCT_ID}/files/published" '. + { image: { baseurl: $baseurl, files: [] } }' > "$NOTIFY_BASE_TMP"
+  echo '{}' | jq -cM '. + { image: { files: [] } }' > "$NOTIFY_BASE_TMP"
   if [ -d "ios/drawer" ]; then
     # copy predefined images
     pushd "ios/drawer"
@@ -368,7 +368,7 @@ EOL
   popd
 
   # combine json objects
-  jq -s '.[0] * .[1] * .[2]' "$NOTIFY_LANG_TMP" "$NOTIFY_IMAGES_TMP" "$NOTIFY_LISTING_TMP" > "${ASSET_OUTPUT_DIR}/notify.json"
+  jq -cM -s '.[0] * .[1] * .[2]' "$NOTIFY_LANG_TMP" "$NOTIFY_IMAGES_TMP" "$NOTIFY_LISTING_TMP" > "${ASSET_OUTPUT_DIR}/notify.json"
 
   # Not exported so clear it
   VERSION_CODE=""
