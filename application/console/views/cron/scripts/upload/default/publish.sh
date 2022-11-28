@@ -364,16 +364,6 @@ notify_scripture_earth() {
 
 }
 
-notify_Language_update_json() {
-  local i_json="$1"
-  local i_language="$2"
-}
-
-notify_listing_update_json() {
-  local i_json="$1"
-  local i_language="$2"
-}
-
 publish_base_update_json() {
   local i_json="$1"
 
