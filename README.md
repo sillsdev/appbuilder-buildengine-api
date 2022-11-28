@@ -2,9 +2,9 @@
 This is the Web Service interface for the SIL App Publishing Service.
 
 ## Build Status ##
-Develop: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=develop)](https://codeship.com/projects/155333)
+Develop: ![GitHub Status for sillsdev/appbuilder-buildengine-api](https://github.com/sillsdev/appbuilder-buildengine-api/actions/workflows/main.yml/badge.svg?branch=develop)
 
-Master: [ ![Codeship Status for sillsdev/appbuilder-buildengine-api](https://codeship.com/projects/4fe24ee0-0999-0134-1439-2adbeb910e90/status?branch=master)](https://codeship.com/projects/155333)
+Master: ![GitHub Status for sillsdev/appbuilder-buildengine-api](https://github.com/sillsdev/appbuilder-buildengine-api/actions/workflows/main.yml/badge.svg?branch=master)
 
 
 ## API Specs ##
