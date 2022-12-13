@@ -160,6 +160,8 @@ class CodeBuild extends AWSCommon {
                 ]
             ];
             $adjustedEnvironmentArray = $this->addEnvironmentToArray($environmentArray, $build->environment);
+            $computeType = $this->getComputeType($adjustedEnvironmentArray);
+            $imageTag = $this->getImageTag($adjustedEnvironmentArray);
             $promise = $this->codeBuildClient->startBuildAsync([
                 'projectName' => $buildApp,
                 'artifactsOverride' => [
@@ -172,7 +174,10 @@ class CodeBuild extends AWSCommon {
                 ],
                 'buildspecOverride' => $buildSpec,
                 'environmentVariablesOverride' => $adjustedEnvironmentArray,
-                'sourceTypeOverride' => 'NO_SOURCE'
+                'sourceTypeOverride' => 'NO_SOURCE',
+                'computeTypeOverride' => $computeType,
+                'imageOverride' => self::getCodeBuildImageRepo() . ":" . $imageTag,
+
             ]);
             $state = $promise->getState();
             echo "state: " . $state . PHP_EOL;
@@ -507,5 +512,33 @@ class CodeBuild extends AWSCommon {
             }
         }
         return $environmentVariables;
+    }
+
+    private function getImageTag($environmentVariables) {
+        $imageTag =  self::getCodeBuildImageTag();
+        foreach ($environmentVariables as $entry) {
+            if ($entry['name'] === "BUILD_IMAGE_TAG") {
+                $imageTag = $entry['value'];
+                break;
+            }
+        }
+        return $imageTag;
+    }
+
+    private function getComputeType($environmentVariables) {
+        $computeType = "BUILD_GENERAL1_SMALL";
+        foreach ($environmentVariables as $entry) {
+            if ($entry['name'] === "BUILD_COMPUTE_TYPE") {
+                $value = $entry['value'];
+                switch ($value) {
+                    case "small": $computeType = "BUILD_GENERAL1_SMALL"; break;
+                    case "medium": $computeType = "BUILD_GENERAL1_MEDIUM"; break;
+                    case "large": $computeType = "BUILD_GENERAL1_LARGE"; break;
+                    case "2xlarge": $computeType = "BUILD_GENERAL1_2XLARGE"; break;
+                }
+                break;
+            }
+        }
+        return $computeType;
     }
 }

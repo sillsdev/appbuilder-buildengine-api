@@ -80,6 +80,11 @@ build_apk() {
     VERSION_CODE=$((VERSION_CODE + 1))
   fi
 
+  if [[ "${BUILD_COMPUTE_TYPE}" != "" ]]; then
+    if [[ "${BUILD_COMPUTER_TYPE}" != "BUILD_GENERAL1_SMALL" ]]; then
+        export _JAVA_OPTIONS="-Xmx3072M"
+    fi
+  fi
   if [[ "${BUILD_JAVA_MAX_HEAP_SIZE}" == "1" ]]; then
     export _JAVA_OPTIONS="-Xmx2048M"
   fi
