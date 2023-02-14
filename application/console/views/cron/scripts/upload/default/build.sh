@@ -373,7 +373,11 @@ EOL
   popd
 
   # combine json objects
-  jq -cM -s '.[0] * .[1] * .[2]' "$NOTIFY_LANG_TMP" "$NOTIFY_IMAGES_TMP" "$NOTIFY_LISTING_TMP" > "${ASSET_OUTPUT_DIR}/notify.json"
+  if [ -s "${NOTIFY_IMAGES_TMP}" ]; then
+    jq -cM -s '.[0] * .[1] * .[2]' "$NOTIFY_LANG_TMP" "$NOTIFY_IMAGES_TMP" "$NOTIFY_LISTING_TMP" > "${ASSET_OUTPUT_DIR}/notify.json"
+  else
+    jq -cM -s '.[0] * .[1]' "$NOTIFY_LANG_TMP" "$NOTIFY_LISTING_TMP" > "${ASSET_OUTPUT_DIR}/notify.json"
+  fi
 
   # Not exported so clear it
   VERSION_CODE=""
