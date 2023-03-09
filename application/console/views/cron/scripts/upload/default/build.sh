@@ -81,7 +81,7 @@ build_apk() {
   fi
 
   if [[ "${BUILD_COMPUTE_TYPE}" != "" ]]; then
-    if [[ "${BUILD_COMPUTER_TYPE}" != "BUILD_GENERAL1_SMALL" ]]; then
+    if [[ "${BUILD_COMPUTE_TYPE}" != "small" ]]; then
         export _JAVA_OPTIONS="-Xmx3072M"
     fi
   fi
