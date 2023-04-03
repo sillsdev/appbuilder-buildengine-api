@@ -101,6 +101,15 @@ build_apk() {
   if [[ "${BUILD_SHARE_DOWNLOAD_APP_LINK}" == "1" ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -ft share-download-app-link=true -ft share-download-app-link-url=https://app.scriptoria.io/downloads/apk/${APPDEF_PACKAGE_NAME}/published"
   fi
+
+  # if building APK for Google Play, then include data safety CSV in output
+  echo "APPBUILDER_SCRIPT_VERSION=${APPBUILDER_SCRIPT_VERSION}"
+  if dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" ge "10.3"; then
+    if [[ "${TARGETS}" == *"play-listing"* ]]; then
+      SCRIPT_OPT="${SCRIPT_OPT} -data-safety-csv"
+    fi
+  fi
+
   process_audio_sources
   process_audio_download
 
@@ -476,6 +485,8 @@ prepare_appbuilder_project() {
     echo "ERROR: Wrong number of projects: ${PROJ_COUNT}"
     exit 2
   fi
+
+  APPBUILDER_SCRIPT_VERSION=$($APP_BUILDER_SCRIPT_PATH -? | grep "Version" | cut -d\  -f2)
 
   PROJ_NAME=$(basename -- *.appDef .appDef)
   PROJ_DIR=$(find . -maxdepth 1 -type d | grep -i -F "${PROJ_NAME}_data")

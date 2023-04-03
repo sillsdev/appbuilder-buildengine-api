@@ -52,6 +52,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const ARTIFACT_ASSET_PACKAGE="asset-package";
     const ARTIFACT_ASSET_PREVIEW="asset-preview";
     const ARTIFACT_ASSET_NOTIFY="asset-notify";
+    const ARTIFACT_DATA_SAFETY_CSV="data-safety-csv";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -212,6 +213,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             }
             $this->addIfSet($artifacts, self::ARTIFACT_ENCRYPTED_KEY, $this->encryptedKey());
             $this->addIfSet($artifacts, self::ARTIFACT_ABOUT, $this->about());
+            $this->addIfSet( $artifacts, self::ARTIFACT_DATA_SAFETY_CSV, $this->dataSafetyCsv());
         }
 
         if (strpos($this->targets, "play-listing") !== false) {
@@ -432,6 +434,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         } else if (preg_match("/play-listing\/manifest.json$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING_MANIFEST;
             $file = "play-listing/manifest.json";
+        } else if (preg_match("/data_safety\.csv$/", $key)) {
+            $type = self::ARTIFACT_DATA_SAFETY_CSV;
         }
 
         return array($type, $file);
@@ -479,6 +483,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             case self::ARTIFACT_ASSET_PREVIEW:
             case self::ARTIFACT_ASSET_PACKAGE:
             case self::ARTIFACT_ASSET_NOTIFY:
+            case self::ARTIFACT_DATA_SAFETY_CSV:
                 break;
 
             default:
@@ -613,6 +618,9 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function assetNotify() {
         return $this->getArtifactUrl("/asset-package\/notify\.json$/");
+    }
+    public function dataSafetyCsv() {
+        return $this->getArtifactUrl( "/data_safety\.csv$/");
     }
 
     /**
