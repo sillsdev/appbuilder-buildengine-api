@@ -174,9 +174,6 @@ publish_s3_bucket() {
      '. + { project_url: $project_url, project_name: $project_name, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version}' "${NOTIFY_ASSET_JSON_TMP}" > "${OUTPUT_DIR}/asset-notify.json"
   fi
 
-  # TEMP: Update artifacts so that it gets copied to S3 for testing
-  cp "${OUTPUT_DIR}/asset-notify.json" "${NOTIFY_ASSET_BASE_JSON}"
-
   AWS_SHARED_CREDENTIALS_FILE="${CREDENTIALS}" AWS_CONFIG_FILE="${CONFIG}" aws s3 cp "${PUBLISH_S3_SOURCH_PATH}" "s3://${DEST_BUCKET_PATH}" --acl public-read --acl bucket-owner-full-control --recursive --exclude "*" --include "${PUBLISH_S3_INCLUDE}" --include "*.png" --include "*.json"
 
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
