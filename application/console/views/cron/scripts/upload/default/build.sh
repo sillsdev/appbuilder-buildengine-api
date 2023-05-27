@@ -176,7 +176,10 @@ build_apk() {
   echo "$PRIMARY_COLOR" > "${PROJECT_DIR}/build_data/publish/play-listing/primary-color.txt"
 
   # Add download-apk-strings.json
-  DOWNLOAD_STRINGS=$(xmlstarlet sel -t -c '/app-definition/translation-mappings/translation-mapping[@id = "Download_APK"]/translation' "${PROJECT_DIR}/build.appDef" | sed  's/<translation lang=//g; s/<\/translation>/" ,/g; s/>/ : "/g' | sed 's/^/{/; s/,$/}/')
+  # Extract the entries from appDef as XML and then convert to JSON.
+  # It is possible to have empty entries (e.g. <translation language="hu"></tranlsation>) which xmlstarlet returns as <translation lang="hu"/>.
+  # This requires the first regex to remove these or it will cause problems with the converstion to JSON
+  DOWNLOAD_STRINGS=$(xmlstarlet sel -t -c '/app-definition/translation-mappings/translation-mapping[@id = "Download_APK"]/translation' "${PROJECT_DIR}/build.appDef" | sed  -r 's/<translation lang="[^"]+"\/>//g; s/<translation lang=//g; s/<\/translation>/" ,/g; s/>/ : "/g' | sed 's/^/{/; s/,$/}/')
   if [[ "${DOWNLOAD_STRINGS}" == "" ]]; then
     DOWNLOAD_STRINGS='{"en" : "Download APK"}'
   fi
