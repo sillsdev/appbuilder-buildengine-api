@@ -259,8 +259,16 @@ set_default_asset_package() {
     echo "Updating ipa-app-type=assets"
     echo "Updating ipa-asset-filename=${ASSET_FILENAME}"
     echo "Project=${PROJECT_DIR}/build.appDef"
-    xmlstarlet ed --inplace -s "/app-definition" -t elem -n "ipa-app-type" -v "assets" "${PROJECT_DIR}/build.appDef"
-    xmlstarlet ed --inplace -s "/app-definition" -t elem -n "ipa-asset-filename" -v "${ASSET_FILENAME}" "${PROJECT_DIR}/build.appDef"
+    if grep -q "<ipa-app-type>" "${PROJECT_DIR}/build.appDef"; then
+      xmlstarlet ed --inplace -u "/app-definition/ipa-app-type" -v "assets" "${PROJECT_DIR}/build.appDef"
+    else
+      xmlstarlet ed --inplace -s "/app-definition" -t elem -n "ipa-app-type" -v "assets" "${PROJECT_DIR}/build.appDef"
+    fi
+    if grep -q "<ipa-asset-filename>" "${PROJECT_DIR}/build.appDef"; then
+      xmlstarlet ed --inplace -u "/app-definition/ipa-asset-filename" -v "${ASSET_FILENAME}" "${PROJECT_DIR}/build.appDef"
+    else
+      xmlstarlet ed --inplace -s "/app-definition" -t elem -n "ipa-asset-filename" -v "${ASSET_FILENAME}" "${PROJECT_DIR}/build.appDef"
+    fi
 }
 
 build_asset_package() {
