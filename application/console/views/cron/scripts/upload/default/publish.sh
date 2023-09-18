@@ -90,6 +90,14 @@ publish_google_play() {
   else
     export SUPPLY_TRACK="${CHANNEL}"
   fi
+
+  # https://github.com/fastlane/fastlane/issues/21507
+  # Google Api Error: Unathorized - REquest is missing required authentication credential
+  # Retry to work-around
+  if [ -z "${SUPPLY_UPLOAD_MAX_RETRIES}" ]; then
+    export SUPPLY_UPLOAD_MAX_RETRIES=5
+  fi
+
   env | grep "SUPPLY_"
   fastlane supply
   if [[ -n "${PUBLISH_NO_APK}" ]]; then
