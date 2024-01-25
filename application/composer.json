@@ -6,8 +6,6 @@
         "yiisoft/yii2-gii": "*",
         "yiisoft/yii2-bootstrap": "*",
         "yiisoft/yii2-swiftmailer": "*",
-        "cpliakas/git-wrapper": "*",
-        "chbiel/jenkins-php-api": "*",
         "aws/aws-sdk-php": "^3.56",
         "silinternational/yii2-jsonsyslog": "*"
     },

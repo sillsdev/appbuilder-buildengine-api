@@ -9,9 +9,6 @@ else
     rsyslogd
 fi
 
-# fix script permissions
-chmod a+x /data/vendor/cpliakas/git-wrapper/bin/git-ssh-wrapper.sh
-
 # fix folder permissions
 chown -R www-data:www-data \
   /data/console/runtime/ \
