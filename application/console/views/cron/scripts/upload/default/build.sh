@@ -254,6 +254,23 @@ build_pwa() {
   APPDEF_PACKAGE_NAME=""
 }
 
+build_modern_pwa() {
+  echo "Build Modern PWA"
+  echo "OUTPUT_DIR=${OUTPUT_DIR}"
+  cd "$PROJECT_DIR" || exit 1
+
+  PWA_OUTPUT_DIR=/tmp/output/pwa
+  mkdir -p "${PWA_OUTPUT_DIR}"
+
+  # shellcheck disable=SC2086
+  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-modern-pwa -fp pwa.output="${PWA_OUTPUT_DIR}" ${SCRIPT_OPT}
+  pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}/build"
+  zip -r "${OUTPUT_DIR}/pwa.zip" .
+  popd
+  VERSION_CODE=""
+  APPDEF_PACKAGE_NAME=""
+}
+
 set_default_asset_package() {
     ASSET_FILENAME="${APPDEF_PACKAGE_NAME}.zip"
     echo "Updating ipa-app-type=assets"
@@ -554,6 +571,25 @@ prepare_appbuilder_project() {
         fi
       fi
 
+      # If modern-pwa, then use the subdirectory configuration for the rclone publish path if not defined
+      for target in $TARGETS; do
+        if [ "$target" = "modern-pwa" ]; then
+          PUBLISH_TMP=$(mktemp)
+          INPUT_PUBLISH_PROPERTIES=$PUBLISH_PROPERTIES
+          if [ -f "${OUTPUT_PUBLISH_PROPERTIES}" ]; then
+            INPUT_PUBLISH_PROPERTIES=$OUTPUT_PUBLISH_PROPERTIES
+          fi
+          if jq -e '.PUBLISH_CLOUD_REMOTE_PATH' "${INPUT_PUBLISH_PROPERTIES}" >/dev/null; then
+            echo "PUBLISH_CLOUD_REMOTE_PATH exists."
+          else
+            echo "PUBLISH_CLOUD_REMOTE_PATH set to PWA SUBDIR."
+            PWA_SUBDIR=$(xmllint --xpath "/app-definition/pwa-manifest/pwa-sub-directory/text()" build.appDef)
+            jq -cM ".PUBLISH_CLOUD_REMOTE_PATH += \"${PWA_SUBDIR}\"" "${INPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+            cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
+          fi
+        fi
+      done
+
       if [ ! -f "${OUTPUT_PUBLISH_PROPERTIES}" ]; then
         # if no Scripture Earth record, then copy straight as normal
         cp "${PUBLISH_PROPERTIES}" "${OUTPUT_PUBLISH_PROPERTIES}"
@@ -612,6 +648,7 @@ do
     "play-listing") build_play_listing ;;
     "html") build_html ;;
     "pwa") build_pwa ;;
+    "modern-pwa") build_modern_pwa ;;
     *) build_gradle "$target" ;;
   esac
 done

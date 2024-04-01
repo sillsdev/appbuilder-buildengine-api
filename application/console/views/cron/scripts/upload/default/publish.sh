@@ -211,7 +211,7 @@ publish_rclone() {
     mkdir "${ARTIFACTS_DIR}/pwa"
     unzip "${ARTIFACTS_DIR}/pwa.zip" -d "${ARTIFACTS_DIR}/pwa"
     PUBLISH_CLOUD_SOURCE_PATH="${ARTIFACTS_DIR}/pwa"
-    PUBLISH_FILE="index.html"
+    PUBLISH_FILE=""
   elif [[ -f "${ARTIFACTS_DIR}/html.zip" ]]; then
     # html: unzip the files to a directory and push the directory
     mkdir "${ARTIFACTS_DIR}/html"
@@ -306,6 +306,10 @@ publish_rclone() {
   PUBLISH_REMOTE_PATH="${PUBLISH_CLOUD_REMOTE_PATH}"
   if [[ "${PUBLISH_SERVER_PATH_ROOT}" != "null" ]]; then
     PUBLISH_REMOTE_PATH=${PUBLISH_REMOTE_PATH//$PUBLISH_SERVER_PATH_ROOT\//}
+  fi
+  if [[ "${PUBLISH_REMOTE_PATH}" == /* ]]; then
+    # If PUBLISH_REMOTE_PATH starts with a slash, remove it to avoid double slashes in the URL
+    PUBLISH_REMOTE_PATH="${PUBLISH_REMOTE_PATH:1}"
   fi
   PUBLISH_URL="${PUBLISH_BASE_URL}/${PUBLISH_REMOTE_PATH}/${PUBLISH_FILE}"
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
