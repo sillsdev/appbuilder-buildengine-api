@@ -313,6 +313,18 @@ publish_rclone() {
   fi
   PUBLISH_URL="${PUBLISH_BASE_URL}/${PUBLISH_REMOTE_PATH}/${PUBLISH_FILE}"
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
+
+  CLOUDFLARE_PURGE_CONFIG="${SECRETS_DIR}/cloudflare_purge.json"
+  if [ -f "${CLOUDFLARE_PURGE_CONFIG}" ]; then
+    CLOUDFLARE_ZONE=$(jq -r '.zone' "${CLOUDFLARE_PURGE_CONFIG}")
+    CLOUDFLARE_API_KEY=$(jq -r '.key' "${CLOUDFLARE_PURGE_CONFIG}")
+
+    curl --request POST \
+      --url "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE}/purge_cache" \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_KEY}" \
+      --data "{ \"files\" : [ \"${PUBLISH_URL}\" ]}"
+  fi
 }
 
 publish_gradle() {
