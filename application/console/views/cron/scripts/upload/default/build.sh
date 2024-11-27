@@ -157,12 +157,6 @@ build_apk() {
   shopt -u nullglob
   popd
 
-  if [[ "${BUILD_EXPORT_ENCRYPTED_KEY}" == "1" ]]; then
-    echo "Export Encrypted Key"
-    ENCRYPTED_KEY="private_key.pepk"
-    java -jar /root/pepk.jar --keystore="${KS}" --alias="${KA}" --encryptionkey="eb10fe8f7c7c9df715022017b00c6471f8ba8170b13049a11e6c09ffe3056a104a3bbe4ac5a955f4ba4fe93fc8cef27558a3eb9d2a529a2092761fb833b656cd48b9de6a" --output="${OUTPUT_DIR}/${ENCRYPTED_KEY}" --key-pass="${KAP}" --keystore-pass="${KSP}"
-  fi
-
   ###
   # For the download page, we need the primary color and localized string for "Download APK"
   #
