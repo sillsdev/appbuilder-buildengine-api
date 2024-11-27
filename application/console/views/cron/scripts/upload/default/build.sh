@@ -571,21 +571,30 @@ prepare_appbuilder_project() {
         fi
       fi
 
-      # If modern-pwa, then use the subdirectory configuration for the rclone publish path if not defined
+      # If modern-pwa, then update the subdirectory configuration from the rclone publish path if not defined
       for target in $TARGETS; do
         if [ "$target" = "modern-pwa" ]; then
-          PUBLISH_TMP=$(mktemp)
           INPUT_PUBLISH_PROPERTIES=$PUBLISH_PROPERTIES
           if [ -f "${OUTPUT_PUBLISH_PROPERTIES}" ]; then
             INPUT_PUBLISH_PROPERTIES=$OUTPUT_PUBLISH_PROPERTIES
           fi
           if jq -e '.PUBLISH_CLOUD_REMOTE_PATH' "${INPUT_PUBLISH_PROPERTIES}" >/dev/null; then
-            echo "PUBLISH_CLOUD_REMOTE_PATH exists."
+            if ! xmlstarlet sel -t -v "/app-definition/pwa-manifest/pwa-sub-directory" build.appDef 2>/dev/null; then
+                echo "PUBLISH_CLOUD_REMOTE_PATH exists, but PWA Sub Directory is missing."
+                echo "PUBLISH_CLOUD_REMOTE_PATH=${PUBLISH_CLOUD_REMOTE_PATH} so update PWA Sub Directory=/${PUBLISH_CLOUD_REMOTE_PATH}"
+                APPDEF_TMP=$(mktemp)
+                xmlstarlet ed -s "/app-definition/pwa-manifest" -t elem -n "pwa-sub-directory" -v "/${PUBLISH_CLOUD_REMOTE_PATH}" build.appDef > "${APPDEF_TMP}"
+                cp "${APPDEF_TMP}" build.appDef
+            fi
           else
-            echo "PUBLISH_CLOUD_REMOTE_PATH set to PWA SUBDIR."
-            PWA_SUBDIR=$(xmllint --xpath "/app-definition/pwa-manifest/pwa-sub-directory/text()" build.appDef)
-            jq -cM ".PUBLISH_CLOUD_REMOTE_PATH += \"${PWA_SUBDIR}\"" "${INPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
-            cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
+            PWA_SUBDIR=$(xmllint --xpath "/app-definition/pwa-manifest/pwa-sub-directory/text()" build.appDef 2>/dev/null || echo "")
+            if [ "$PWA_SUBDIR" != "" ]; then
+              echo "PUBLISH_CLOUD_REMOTE_PATH does not exist, but PWA Sub Directory is set."
+              echo "PWA Sub Directory=${PWA_SUBDIR} so update PUBLISH_CLOUD_REMOTE_PATH=${PWA_SUBDIR#/}"
+              PUBLISH_TMP=$(mktemp)
+              jq -cM ".PUBLISH_CLOUD_REMOTE_PATH += \"${PWA_SUBDIR#/}\"" "${INPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+              cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
+            fi
           fi
         fi
       done
