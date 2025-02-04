@@ -92,11 +92,11 @@ publish_google_play() {
   fi
 
   # https://github.com/fastlane/fastlane/issues/21507
-  # Google Api Error: Unathorized - REquest is missing required authentication credential
+  # Google Api Error: Unathorized - Request is missing required authentication credential
   # Retry to work-around
-  if [ -z "${SUPPLY_UPLOAD_MAX_RETRIES}" ]; then
-    export SUPPLY_UPLOAD_MAX_RETRIES=5
-  fi
+  #  if [ -z "${SUPPLY_UPLOAD_MAX_RETRIES}" ]; then
+  #    export SUPPLY_UPLOAD_MAX_RETRIES=5
+  #  fi
 
   env | grep "SUPPLY_"
   fastlane supply
