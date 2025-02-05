@@ -574,10 +574,16 @@ prepare_appbuilder_project() {
           fi
           if jq -e '.PUBLISH_CLOUD_REMOTE_PATH' "${INPUT_PUBLISH_PROPERTIES}" >/dev/null; then
             if ! xmlstarlet sel -t -v "/app-definition/pwa-manifest/pwa-sub-directory" build.appDef 2>/dev/null; then
+                # Note: The #/ in the variable expansion removes any leading slashes if it exists.
+                #       This makes sure the string begins with a single slash
+                PWA_SUBDIR="/${PUBLISH_CLOUD_REMOTE_PATH#/}"
                 echo "PUBLISH_CLOUD_REMOTE_PATH exists, but PWA Sub Directory is missing."
-                echo "PUBLISH_CLOUD_REMOTE_PATH=${PUBLISH_CLOUD_REMOTE_PATH} so update PWA Sub Directory=/${PUBLISH_CLOUD_REMOTE_PATH}"
+                echo "PUBLISH_CLOUD_REMOTE_PATH=${PUBLISH_CLOUD_REMOTE_PATH} so update PWA Sub Directory=${PWA_SUBDIR}"
                 APPDEF_TMP=$(mktemp)
-                xmlstarlet ed -s "/app-definition/pwa-manifest" -t elem -n "pwa-sub-directory" -v "/${PUBLISH_CLOUD_REMOTE_PATH}" build.appDef > "${APPDEF_TMP}"
+                xmlstarlet ed \
+                  -s "/app-definition" -t elem -n "pwa-manifest" -v "" \
+                  -s "/app-definition/pwa-manifest" -t elem -n "pwa-sub-directory" -v "${PWA_SUBDIR}" \
+                  build.appDef > "${APPDEF_TMP}"
                 cp "${APPDEF_TMP}" build.appDef
             fi
           else
