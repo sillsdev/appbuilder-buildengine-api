@@ -236,6 +236,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
 
         if (strpos($this->targets, "asset-package") !== false) {
             $this->addIfSet($artifacts, self::ARTIFACT_ASSET_PACKAGE, $this->assetPackage());
+            $this->addIfSet($artifacts, self::ARTIFACT_PACKAGE_NAME, $this->packageName());
             $this->addIfSet($artifacts, self::ARTIFACT_ASSET_PREVIEW, $this->assetPreview());
             $this->addIfSet( $artifacts, self::ARTIFACT_ASSET_NOTIFY, $this->assetNotify());
         }
