@@ -410,9 +410,10 @@ post_publish() {
   # contain the keywords: ios, android, google (play), and pwa.  So the system admin
   # should be aware when adding new products.
   WORKFLOW_PRODUCT_NAME_LOWER=$(echo "${WORKFLOW_PRODUCT_NAME}" | awk '{print tolower($0)}')
-  if [[ "${WORKFLOW_TYPE}" == "Startup" && "${PUBLISH_NOTIFY}" != "" ]]; then
-    # See BuildEngineServiceBase::AddProductProperitiesToEnvironment for the list of properties
-    # that are added.
+  if [[ "${PUBLISH_NOTIFY}" != "" ]]; then
+    # See S1: Services/BuildEngine: BuildEngineServiceBase::AddProductProperitiesToEnvironment
+    # See S2: node-server/job-executors/common.build-publish.ts: addProductPropertiesToEnvironment
+    # for the list of properties that are added.
 
     for NOTIFY_SERVER in ${PUBLISH_NOTIFY/,/ }
     do
