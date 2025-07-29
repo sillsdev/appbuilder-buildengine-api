@@ -25,7 +25,7 @@ return [
         'result' => 'SUCCESS',
         'error' => NULL,
         'artifact_url_base' => 'https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/',
-        'artifact_files' => 'about.txt,console.log,package_name.txt,Test-1.0-output.log,Test-1.0.apk,version.json,version_code.txt,whats_new.txt,play-listing/index.html,play-listing/manifest.json',
+        'artifact_files' => 'about.txt,console.log,package_name.txt,Test+1.0-output.log,Test+1.0.apk,version.json,version_code.txt,whats_new.txt,play-listing/index.html,play-listing/manifest.json',
         'created' => Utils::getDatetime(),
         'updated' => Utils::getDatetime(),
         'channel' => 'unpublished',

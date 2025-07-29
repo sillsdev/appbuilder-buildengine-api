@@ -91,4 +91,10 @@ class BuildTest extends UnitTestBase
         $this->assertEquals(2, $numberOfRunningBuilds, " *** Incorrect number of active builds");
 
     }
+    public function testArtifactEncoding() {
+        $this->setContainerObjects();
+        $build = Build::findOne(['id' => 12]);
+        $apks = $build->apks();
+        $this->assertContains("https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Test%2B1.0.apk", $apks, " *** filename not encoded correctly");
+    }
 }

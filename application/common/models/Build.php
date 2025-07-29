@@ -498,11 +498,15 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         return $this->artifact_url_base;
     }
 
+    public function encodeFilename($filename) {
+        return rawurlencode($filename);
+    }
+
     private function getArtifactUrl($pattern) {
         $filename = $this->getArtifactFilename($pattern);
         if (!empty($filename))
         {
-            return $this->artifact_url_base . $filename;
+            return $this->artifact_url_base . $this->encodeFilename($filename);
         }
         return null;
     }
@@ -536,7 +540,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
         {
             $urls = array();
             foreach ($filenames as $filename) {
-                array_push($urls, $this->artifact_url_base . $filename);
+                array_push($urls, $this->artifact_url_base . $this->encodeFilename($filename));
             }
             return $urls;
         }
