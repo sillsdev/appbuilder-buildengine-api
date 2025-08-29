@@ -96,5 +96,7 @@ class BuildTest extends UnitTestBase
         $build = Build::findOne(['id' => 12]);
         $apks = $build->apks();
         $this->assertContains("https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/Test%2B1.0.apk", $apks, " *** filename not encoded correctly");
+        $playListing = $build->playListing();
+        $this->assertContains("https://s3-us-west-2.amazonaws.com/sil-appbuilder-artifacts/testing/jobs/build_scriptureappbuilder_22/1/play-listing/index.html", $playListing, " *** filename not encoded correctly");
     }
 }

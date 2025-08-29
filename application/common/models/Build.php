@@ -499,7 +499,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
 
     public function encodeFilename($filename) {
-        return rawurlencode($filename);
+        return str_replace('%2F', '/', rawurlencode($filename));
     }
 
     private function getArtifactUrl($pattern) {
