@@ -1,3 +1,5 @@
+node_modules
+
 # Vagrant folder
 .vagrant/
 
@@ -6,9 +8,31 @@ local.env
 *.aes
 aws.env
 
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
 # IDE project files
 .idea/
 nbproject/
 
+# OS
+.DS_Store
+Thumbs.db
+
 #yii runtime stuff
 application/runtime/
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
