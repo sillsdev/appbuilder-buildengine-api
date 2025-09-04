@@ -1,0 +1,7 @@
+{
+  "svelte.plugin.css.diagnostics.enable": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+  "typescript.preferences.preferTypeOnlyAutoImports": false
+}
