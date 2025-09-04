@@ -7,7 +7,7 @@ Develop: ![GitHub Status for sillsdev/appbuilder-buildengine-api](https://github
 Master: ![GitHub Status for sillsdev/appbuilder-buildengine-api](https://github.com/sillsdev/appbuilder-buildengine-api/actions/workflows/main.yml/badge.svg?branch=master)
 
 
-## API Specs ##[
+## API Specs ##
 https://docs.google.com/document/d/1TejImnRbPAozWh12FQA5OcffJKRaJHhIyO0ivvjNl2E/edit?usp=drive_link
 
 ## Doorman: Service Provisioning ##
