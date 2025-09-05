@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# A script to make working with docker/compose to have
+# less typing.
+#
+# For local development only.
+
+COMPOSE="docker compose -f deployment/development/docker-compose.yml --project-directory . -p appbuilder-buildengine-api"
+
+function runstuff {
+  # First arg
+  given_command=$1
+  # The rest of the args
+  arguments=${@:2}
+
+  case $given_command in
+    # docker compose proxy
+    dc)       ${COMPOSE} $arguments;;
+    up:build) ${COMPOSE} up --build $arguments ;;
+    up)       ${COMPOSE} up $arguments ;;
+    local)
+      runstuff dc up -d db
+    ;;
+    down)
+      ${COMPOSE} down $arguments
+    ;;
+    build) ${COMPOSE} build $arguments ;;
+
+    bash)     ${COMPOSE} run --rm $arguments bash;;
+    restart)  ${COMPOSE} stop $arguments && ${COMPOSE} start $arguments;;
+
+    db:migrate)
+	    npx prisma migrate dev --schema src/lib/prisma/schema.prisma
+    ;;
+
+    db:reset)
+      npx prisma migrate reset --force --schema src/lib/prisma/schema.prisma
+    ;;
+
+    ################
+    # Host-Machine Utils
+
+    # Don't name any folders bin, obj, tmp, dist, or node_modules
+    clean:all)
+      echo "Cleaning..."
+      shopt -s globstar
+      rm -rf **/out/ && \
+      rm -rf **/dist && \
+      rm -rf **/node_modules && \
+      rm -rf **/tmp
+    ;;
+
+    *) print_help;;
+  esac
+}
+
+function print_help {
+
+  echo ""
+  echo "Available Commands:"
+  echo ""
+  echo "dc             : short for docker compose"
+  echo "up:build       : starts the docker compose services and builds images"
+  echo "up             : starts the docker compose services"
+  echo "down           : stops the docker compose services"
+  echo "local          : starts external services in docker for local development"
+  echo ""
+  echo "bash           : drop into a bash shell in a temporary docker compose service"
+  echo "restart        : restart a specific docker compose service"
+  echo ""
+  echo "db:migrate     : run prisma migrate dev command"
+  echo "db:reset       : run prisma migrate reset command"
+  echo ""
+  echo "clean:all      : recursively removes out, dist, node_modules, and tmp directories"
+}
+
+if [ $1 ]; then
+  runstuff $*
+else
+  print_help
+fi
