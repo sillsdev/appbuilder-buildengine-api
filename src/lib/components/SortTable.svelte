@@ -24,7 +24,7 @@
     /** If this is true, will defer sorting to the server instead */
     serverSide?: boolean;
     onSort?: (field: string, direction: 'asc' | 'desc') => void;
-    row: Snippet<[RowItem]>;
+    row: Snippet<[RowItem, number]>;
   }
 
   let {
@@ -104,8 +104,8 @@
       </tr>
     </thead>
     <tbody>
-      {#each data as d}
-        {@render row(d)}
+      {#each data as d, i}
+        {@render row(d, i)}
       {/each}
     </tbody>
   </table>
