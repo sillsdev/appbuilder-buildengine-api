@@ -19,7 +19,7 @@ function runstuff {
     up:build) ${COMPOSE} up --build $arguments ;;
     up)       ${COMPOSE} up $arguments ;;
     local)
-      runstuff dc up -d db
+      runstuff dc up -d db stg-tunnel
     ;;
     down)
       ${COMPOSE} down $arguments
