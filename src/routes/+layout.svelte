@@ -24,7 +24,6 @@
 			<ul class="menu menu-horizontal px-1">
 				<li><a href="/" class:bg-secondary={isUrlActive("/")}>Home</a></li>
 				<li><a href="/about" class:bg-secondary={isUrlActive("/about")}>About</a></li>
-				<li><a href="/contact" class:bg-secondary={isUrlActive("/contact")}>Contact</a></li>
 			</ul>
 		</div>
 	</nav>
