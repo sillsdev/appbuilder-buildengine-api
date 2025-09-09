@@ -8,22 +8,25 @@
 		<li>App Publishing Service</li>
 	</Breadcrumbs>
 	<div class="prose">
-		<img src="/SILLogoBlue132x184.png" width="132" height="184" alt="SIL International Logo" />
+		<img src="/sil_logo_glyph.png" width="139" height="75" alt="SIL Global Logo" />
 		<h1 class="pl-0">App Publishing Service</h1>
 		<h3 class="pl-0">
-			Copyright 2011-2016 <a href="http://sil.org" class="link">SIL International</a>
+			Copyright 2011-{new Date().getFullYear()} <a href="http://sil.org" class="link">SIL Global</a>
 		</h3>
 		<h3 class="pl-0">Credits</h3>
 		<p>
-			Chris Hubbard&nbsp;(<a href="http://sil.org" class="link">SIL International</a>) :&nbsp;Dev
+			Chris Hubbard&nbsp;(<a href="http://sil.org" class="link">SIL Global</a>) :&nbsp;Dev
 			Lead, Programming
 		</p>
 		<p>
-			David Moore&nbsp;(<a href="http://sil.org" class="link">SIL International</a>)
+			David Moore&nbsp;(<a href="http://sil.org" class="link">SIL Global</a>)
 			:&nbsp;Programming
 		</p>
 		<p>
-			Rick MacLean&nbsp;(<a href="http://sil.org" class="link">SIL International</a>) :&nbsp;Dev Ops
+			Rick MacLean&nbsp;(<a href="http://sil.org" class="link">SIL Global</a>) :&nbsp;Dev Ops
+		</p>
+		<p>
+			Aidan Jones&nbsp;(<a href="http://sil.org" class="link">SIL Global</a>) :&nbsp;Programming
 		</p>
 	</div>
 </div>

@@ -18,7 +18,7 @@
 <header class="bg-primary text-primary-content">
 	<nav class="navbar">
 		<div class="flex-1">
-			<a class="btn text-xl btn-ghost" href="/">SIL International</a>
+			<a class="btn text-xl btn-ghost" href="/">SIL Global</a>
 		</div>
 		<div class="flex-none">
 			<ul class="menu menu-horizontal px-1">
@@ -32,7 +32,7 @@
 	{@render children?.()}
 </main>
 <footer class="flex flex-col sm:flex-row bg-base-200 text-base-content w-full sm:place-items-center">
-	<div class="grow">© SIL International {new Date().getFullYear()}</div>
+	<div class="grow">© SIL Global {new Date().getFullYear()}</div>
 	<div>
 		Powered by&nbsp;<a href="https://kit.svelte.dev" rel="external" class="link">SvelteKit</a>
 	</div>
