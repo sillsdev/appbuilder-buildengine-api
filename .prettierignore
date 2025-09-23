@@ -1,3 +1,13 @@
+.DS_Store
+node_modules
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+/out
+*.js
+
 # Package Managers
 package-lock.json
 pnpm-lock.yaml
@@ -7,3 +17,7 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Old
+/application
+/build
