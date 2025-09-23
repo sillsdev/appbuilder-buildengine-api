@@ -41,3 +41,9 @@
   </LabeledFormInput>
   <input type="submit" class="btn btn-success" value="Create" />
 </form>
+
+<style>
+  .input {
+    width: 100%;
+  }
+</style>

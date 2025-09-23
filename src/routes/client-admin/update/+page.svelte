@@ -47,3 +47,9 @@
   </LabeledFormInput>
   <input type="submit" class="btn btn-success" value="Update" />
 </form>
+
+<style>
+  .input {
+    width: 100%;
+  }
+</style>
