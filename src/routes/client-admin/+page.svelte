@@ -117,6 +117,7 @@
               onclick={(e) => {
                 if (confirm('Are you sure you want to delete this item?')) {
                   (e.currentTarget.parentElement as HTMLFormElement).requestSubmit();
+                  clients = clients.filter((c) => c.id !== client.id)
                 }
               }}
             >
