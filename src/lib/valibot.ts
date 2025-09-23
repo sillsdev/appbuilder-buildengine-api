@@ -7,6 +7,18 @@ export const paramNumber = v.pipe(
   v.transform((s) => parseInt(s))
 );
 
+export function convertEmptyStrToNull() {
+  return v.nullable(
+    v.union([
+      v.pipe(
+        v.literal(''),
+        v.transform(() => null)
+      ),
+      v.string()
+    ])
+  );
+}
+
 /** mostly for product IDs */
 export const stringIdSchema = v.pipe(v.string(), v.uuid());
 
