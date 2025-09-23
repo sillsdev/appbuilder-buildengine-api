@@ -30,7 +30,7 @@
     </div>
   </nav>
 </header>
-<main class="w-full overflow-x-auto grow bg-base-100 ">
+<main class="w-full overflow-x-auto grow bg-base-100">
   <div class="mx-auto w-3xl md:w-5xl max-w-full px-10 text-base-content">
     {@render children?.()}
   </div>
