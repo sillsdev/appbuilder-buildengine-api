@@ -4,7 +4,10 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortTable from '$lib/components/SortTable.svelte';
+  import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
+
+  $title = 'Clients';
 
   interface Props {
     data: PageData;
@@ -34,10 +37,10 @@
 <div class="w-full">
   <Breadcrumbs>
     <li><a href="/" class="link">Home</a></li>
-    <li>Clients</li>
+    <li>{$title}</li>
   </Breadcrumbs>
-  <h1>Clients</h1>
-
+  <h1>{$title}</h1>
+  <a class="btn btn-success mb-2" href="/client-admin/create">Create Client</a>
   <p>
     Showing <b>
       {$form.page.page * $form.page.size + 1}-{Math.min(

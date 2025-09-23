@@ -1,7 +1,9 @@
 <script lang="ts">
   import '../app.css';
+  import { dev } from '$app/environment';
   import { page } from '$app/state';
   import favicon from '$lib/assets/favicon.ico';
+  import { title } from '$lib/stores';
 
   let { children } = $props();
 
@@ -12,7 +14,7 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} />
-  <title>SIL AppBuilder Administration</title>
+  <title>{dev ? '[DEV] ' : ''}{$title || 'SIL AppBuilder Administration'}</title>
 </svelte:head>
 
 <header class="bg-primary text-primary-content">

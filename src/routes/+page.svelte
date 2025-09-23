@@ -1,4 +1,8 @@
 <script>
+  import { title } from '$lib/stores';
+
+  $title = 'SIL AppBuilder Administration';
+
   const cardClasses = 'max-w-full md:max-w-1/2 p-1';
 </script>
 
