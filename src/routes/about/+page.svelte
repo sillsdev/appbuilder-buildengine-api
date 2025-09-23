@@ -1,5 +1,8 @@
 <script>
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import { title } from '$lib/stores';
+
+  $title = 'About';
 </script>
 
 <div class="w-full">
