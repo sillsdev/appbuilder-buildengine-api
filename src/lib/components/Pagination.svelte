@@ -3,10 +3,9 @@
     size: number;
     total: number;
     page?: number;
-    extraSizeOptions?: number[];
   }
 
-  let { size = $bindable(), total, page = $bindable(0), extraSizeOptions = [] }: Props = $props();
+  let { size = $bindable(), total, page = $bindable(0) }: Props = $props();
 
   let pageCount = $derived(Math.ceil(total / size));
   let collapse = $derived(pageCount > 6);
