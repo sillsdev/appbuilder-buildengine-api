@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { enhance } from '$app/forms';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { title } from '$lib/stores';
@@ -24,6 +25,20 @@
 
 <div class="flex flex-row space-x-2 mb-2">
   <a href="/client-admin/update?id={data.client.id}" class="btn btn-primary">Update</a>
+  <form action="?/deleteClient" method="POST" use:enhance>
+    <input type="hidden" name="id" value={data.client.id} />
+    <button
+      type="button"
+      class="btn btn-error"
+      onclick={(e) => {
+        if (confirm('Are you sure you want to delete this item?')) {
+          (e.currentTarget.parentElement as HTMLFormElement).requestSubmit();
+        }
+      }}
+    >
+      Delete
+    </button>
+  </form>
 </div>
 
 <table class="table table-zebra border">

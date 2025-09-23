@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
+  import { enhance } from '$app/forms';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import IconContainer from '$lib/components/IconContainer.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
@@ -18,7 +19,11 @@
 
   let clients = $state(data.clients);
 
-  const { form, enhance, submit } = superForm(data.form, {
+  const {
+    form,
+    enhance: pageEnhance,
+    submit
+  } = superForm(data.form, {
     dataType: 'json',
     resetForm: false,
     onChange() {
@@ -104,14 +109,25 @@
           <a href="/client-admin/update?id={client.id}">
             <IconContainer icon="mdi:pencil" width={16} />
           </a>
-          <a href="/client-admin/view?id={client.id}">
-            <IconContainer icon="mdi:trash" width={16} />
-          </a>
+          <form action="?/deleteClient" method="POST" use:enhance>
+            <input type="hidden" name="id" value={client.id} />
+            <button
+              type="button"
+              class="cursor-pointer"
+              onclick={(e) => {
+                if (confirm('Are you sure you want to delete this item?')) {
+                  (e.currentTarget.parentElement as HTMLFormElement).requestSubmit();
+                }
+              }}
+            >
+              <IconContainer icon="mdi:trash" width={16} />
+            </button>
+          </form>
         </td>
       </tr>
     {/snippet}
   </SortTable>
-  <form method="POST" action="?/page" use:enhance>
+  <form method="POST" action="?/page" use:pageEnhance>
     <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
       <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
     </div>
