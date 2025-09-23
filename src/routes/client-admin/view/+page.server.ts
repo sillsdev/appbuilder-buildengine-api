@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
@@ -32,6 +32,6 @@ export const actions: Actions = {
 
     await prisma.client.delete({ where: { id: form.data.id } });
 
-    return { form, ok: true };
+    redirect(303, `/client-admin`);
   }
 };
