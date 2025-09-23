@@ -6,7 +6,7 @@ import { prisma } from '$lib/server/prisma';
 import { idSchema, tableSchema } from '$lib/valibot';
 
 export const load = (async () => {
-  const clients = await prisma.client.findMany({ take: 20 });
+  const clients = await prisma.client.findMany({ take: 20, orderBy: { id: 'asc' } });
   return {
     clients,
     count: await prisma.client.count(),
@@ -27,7 +27,7 @@ export const actions: Actions = {
     const form = await superValidate(request, valibot(tableSchema));
     if (!form.valid) return fail(400, { form, ok: false });
 
-    const instances = await prisma.client.findMany({
+    const clients = await prisma.client.findMany({
       orderBy: form.data.sort?.field === 'id' ? { id: form.data.sort.direction } : undefined,
       skip: form.data.page.page * form.data.page.size,
       take: form.data.page.size
@@ -37,7 +37,7 @@ export const actions: Actions = {
       form,
       ok: true,
       query: {
-        data: instances
+        data: clients
       }
     };
   },
