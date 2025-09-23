@@ -5,7 +5,7 @@
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
-  $title = 'Client #' + page.url.searchParams.get('id')!;
+  $title = 'View Client: ' + page.url.searchParams.get('id')!;
 
   interface Props {
     data: PageData;
@@ -17,10 +17,14 @@
 <Breadcrumbs>
   <li><a href="/" class="link">Home</a></li>
   <li><a href="/client-admin" class="link">Clients</a></li>
-  <li>{$title}</li>
+  <li>{data.client.id}</li>
 </Breadcrumbs>
 
 <h1>{$title}</h1>
+
+<div class="flex flex-row space-x-2 mb-2">
+  <a href="/client-admin/update?id={data.client.id}" class="btn btn-primary">Update</a>
+</div>
 
 <table class="table table-zebra border">
   <tbody>

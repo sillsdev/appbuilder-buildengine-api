@@ -1,17 +1,18 @@
 import { error } from '@sveltejs/kit';
+import * as v from 'valibot';
 import type { PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
+import { idSchema, paramNumber } from '$lib/valibot';
 
 export const load = (async ({ url }) => {
-  const idString = url.searchParams.get('id');
-  const id = parseInt(idString ?? '');
-  if (!idString || isNaN(id)) {
+  const id = v.safeParse(v.pipe(paramNumber, idSchema), url.searchParams.get('id'));
+  if (!id.success) {
     error(400, `missing id param`);
   }
 
   const client = await prisma.client.findUnique({
     where: {
-      id
+      id: id.output
     }
   });
 

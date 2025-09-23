@@ -2,6 +2,11 @@ import * as v from 'valibot';
 
 export const idSchema = v.pipe(v.number(), v.minValue(0), v.integer());
 
+export const paramNumber = v.pipe(
+  v.string(),
+  v.transform((s) => parseInt(s))
+);
+
 /** mostly for product IDs */
 export const stringIdSchema = v.pipe(v.string(), v.uuid());
 
