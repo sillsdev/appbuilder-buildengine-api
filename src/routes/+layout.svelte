@@ -30,8 +30,10 @@
     </div>
   </nav>
 </header>
-<main class="mx-auto w-3xl max-w-full bg-base-100 px-10 text-base-content md:w-5xl grow">
-  {@render children?.()}
+<main class="w-full overflow-x-auto grow bg-base-100 ">
+  <div class="mx-auto w-3xl md:w-5xl max-w-full px-10 text-base-content">
+    {@render children?.()}
+  </div>
 </main>
 <footer
   class="flex flex-col sm:flex-row bg-base-200 text-base-content w-full sm:place-items-center"
