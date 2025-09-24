@@ -96,6 +96,7 @@
       }
     ]}
     serverSide={true}
+    startDesc={true}
     onSort={(field, direction) => form.update((data) => ({ ...data, sort: { field, direction } }))}
   >
     {#snippet row(client, index)}
