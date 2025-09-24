@@ -6,7 +6,7 @@ import { prisma } from '$lib/server/prisma';
 import { idSchema, tableSchema } from '$lib/valibot';
 
 export const load = (async () => {
-  const clients = await prisma.client.findMany({ take: 20, orderBy: { id: 'asc' } });
+  const clients = await prisma.client.findMany({ take: 20, orderBy: { id: 'desc' } });
   return {
     clients,
     count: await prisma.client.count(),
