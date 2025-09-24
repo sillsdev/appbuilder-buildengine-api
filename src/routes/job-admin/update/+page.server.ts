@@ -57,21 +57,28 @@ export const actions: Actions = {
     const form = await superValidate(request, valibot(jobSchema));
     if (!form.valid) return fail(400, { form, ok: false });
 
-    const job = await prisma.job.update({
-      where: {
-        id: id.output
-      },
-      data: {
-        request_id: form.data.requestId,
-        git_url: form.data.gitUrl,
-        app_id: form.data.appId,
-        publisher_id: form.data.publisherId,
-        client_id: form.data.clientId,
-        existing_version_code: form.data.existingVersion,
-        jenkins_build_url: form.data.jenkinsBuildUrl,
-        jenkins_publish_url: form.data.jenkinsPublishUrl
-      }
-    });
+    let job = { id: 0 };
+
+    try {
+      job = await prisma.job.update({
+        where: {
+          id: id.output
+        },
+        data: {
+          request_id: form.data.requestId,
+          git_url: form.data.gitUrl,
+          app_id: form.data.appId,
+          publisher_id: form.data.publisherId,
+          client_id: form.data.clientId,
+          existing_version_code: form.data.existingVersion,
+          jenkins_build_url: form.data.jenkinsBuildUrl,
+          jenkins_publish_url: form.data.jenkinsPublishUrl
+        }
+      });
+    } catch (e) {
+      console.log(e);
+      return error(400, e as Error);
+    }
 
     redirect(303, `/job-admin/view?id=${job.id}`);
   }
