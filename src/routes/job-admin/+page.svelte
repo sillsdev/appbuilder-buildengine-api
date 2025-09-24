@@ -17,11 +17,7 @@
 
   let jobs = $state(data.jobs);
 
-  const {
-    form,
-    enhance: pageEnhance,
-    submit
-  } = superForm(data.form, {
+  const { form, enhance, submit } = superForm(data.form, {
     dataType: 'json',
     resetForm: false,
     onChange() {
@@ -120,7 +116,7 @@
       </tr>
     {/snippet}
   </SortTable>
-  <form method="POST" action="?/page" use:pageEnhance>
+  <form method="POST" action="?/page" use:enhance>
     <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
       <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
     </div>
