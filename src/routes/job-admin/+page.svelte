@@ -64,28 +64,34 @@
         compare: () => 0
       },
       {
-        id: 'requestId',
-        header: 'Request Id'
+        id: 'request_id',
+        header: 'Request Id',
+        compare: () => 0
       },
       {
-        id: 'gitUrl',
-        header: 'Git Url'
+        id: 'git_url',
+        header: 'Git Url',
+        compare: () => 0
       },
       {
-        id: 'appId',
-        header: 'App ID'
+        id: 'app_id',
+        header: 'App ID',
+        compare: () => 0
       },
       {
-        id: 'publisherId',
-        header: 'Publisher ID'
+        id: 'publisher_id',
+        header: 'Publisher ID',
+        compare: () => 0
       },
       {
-        id: 'clientId',
-        header: 'Client ID'
+        id: 'client_id',
+        header: 'Client ID',
+        compare: () => 0
       },
       {
-        id: 'versionCode',
-        header: 'Existing Version Code'
+        id: 'existing_version_code',
+        header: 'Existing Version Code',
+        compare: () => 0
       },
       {
         id: 'menu',

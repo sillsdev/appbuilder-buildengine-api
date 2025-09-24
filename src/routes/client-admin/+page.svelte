@@ -71,20 +71,24 @@
         compare: () => 0
       },
       {
-        id: 'token',
-        header: 'Access Token'
+        id: 'access_token',
+        header: 'Access Token',
+        compare: () => 0
       },
       {
         id: 'prefix',
-        header: 'Prefix'
+        header: 'Prefix',
+        compare: () => 0
       },
       {
         id: 'created',
-        header: 'Created'
+        header: 'Created',
+        compare: () => 0
       },
       {
         id: 'updated',
-        header: 'Updated'
+        header: 'Updated',
+        compare: () => 0
       },
       {
         id: 'menu',
