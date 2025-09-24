@@ -92,7 +92,11 @@ export function artifacts(
   return artifacts;
 }
 
-function getArtifactUrl(pattern: RegExp, base: string | null, artifact_files: string | null) {
+export function getArtifactUrl(
+  pattern: RegExp,
+  base: string | null,
+  artifact_files: string | null
+) {
   const filename = getArtifactFilename(pattern, artifact_files);
   if (filename) {
     return (base ?? '') + encodeFilename(filename);
