@@ -2,22 +2,10 @@ import { error, redirect } from '@sveltejs/kit';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
+import { clientSchema } from '../valibot';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
-import { idSchema, paramNumber } from '$lib/valibot';
-
-const clientSchema = v.object({
-  accessToken: v.pipe(
-    v.string(),
-    v.transform((s) => s.trim()),
-    v.minLength(1)
-  ),
-  prefix: v.pipe(
-    v.string(),
-    v.transform((s) => s.trim()),
-    v.minLength(1)
-  )
-});
+import { idSchema, paramNumber, selectFrom } from '$lib/valibot';
 
 export const load = (async ({ url }) => {
   const id = v.safeParse(v.pipe(paramNumber, idSchema), url.searchParams.get('id'));
@@ -28,16 +16,14 @@ export const load = (async ({ url }) => {
   const client = await prisma.client.findUnique({
     where: {
       id: id.output
-    }
+    },
+    select: selectFrom(clientSchema.entries)
   });
 
   if (!client) error(404);
 
   return {
-    form: await superValidate(
-      { accessToken: client.access_token, prefix: client.prefix },
-      valibot(clientSchema)
-    )
+    form: await superValidate(client, valibot(clientSchema))
   };
 }) satisfies PageServerLoad;
 
@@ -54,10 +40,7 @@ export const actions: Actions = {
       where: {
         id: id.output
       },
-      data: {
-        access_token: form.data.accessToken,
-        prefix: form.data.prefix
-      }
+      data: form.data
     });
 
     redirect(303, `/client-admin/view?id=${client.id}`);
