@@ -1,5 +1,118 @@
 <script lang="ts">
+  import { type FormResult, superForm } from 'sveltekit-superforms';
+  import type { PageData } from './$types';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import IconContainer from '$lib/components/IconContainer.svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
+  import SortTable from '$lib/components/SortTable.svelte';
   import { title } from '$lib/stores';
 
   $title = 'Builds';
+
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
+
+  let builds = $state(data.builds);
+
+  const { form, enhance, submit } = superForm(data.form, {
+    dataType: 'json',
+    resetForm: false,
+    onChange() {
+      submit();
+    },
+    onUpdate(event) {
+      const data = event.result.data as FormResult<{
+        query: { data: PageData['builds']; count: number };
+      }>;
+      if (event.form.valid && data.query) {
+        builds = data.query.data;
+      }
+    }
+  });
 </script>
+
+<div class="w-full">
+  <Breadcrumbs>
+    <li><a href="/" class="link">Home</a></li>
+    <li>{$title}</li>
+  </Breadcrumbs>
+  <h1>{$title}</h1>
+  <p>
+    Showing <b>
+      {$form.page.page * $form.page.size + 1}-{Math.min(
+        ($form.page.page + 1) * $form.page.size,
+        data.count
+      )}
+    </b>
+    of
+    <b>{data.count}</b>
+    items
+  </p>
+  <SortTable
+    data={builds}
+    columns={[
+      {
+        id: 'index',
+        header: '#'
+      },
+      {
+        id: 'id',
+        header: 'Id',
+        compare: () => 0
+      },
+      {
+        id: 'job_id',
+        header: 'Job ID',
+        compare: () => 0
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        compare: () => 0
+      },
+      {
+        id: 'result',
+        header: 'Result',
+        compare: () => 0
+      },
+      {
+        id: 'build_guid',
+        header: 'Build GUID',
+        compare: () => 0
+      },
+      {
+        id: 'menu',
+        header: ''
+      }
+    ]}
+    serverSide={true}
+    onSort={(field, direction) => form.update((data) => ({ ...data, sort: { field, direction } }))}
+  >
+    {#snippet row(build, index)}
+      <tr>
+        <td>{index + 1}</td>
+        <td>{build.id}</td>
+        <td><a class="link" href="/job-admin/view?id={build.job_id}">{build.job_id}</a></td>
+        <td>{build.status}</td>
+        <td>{build.result}</td>
+        <td><a class="link" href={build.codebuild_url}>{build.build_guid}</a></td>
+        <td class="flex flex-row flex-wrap p-1 space-x-2">
+          <a href="/build-admin/view?id={build.id}">
+            <IconContainer icon="mdi:eye" width={16} />
+          </a>
+          <a href="/build-admin/update?id={build.id}">
+            <IconContainer icon="mdi:pencil" width={16} />
+          </a>
+        </td>
+      </tr>
+    {/snippet}
+  </SortTable>
+  <form method="POST" action="?/page" use:enhance>
+    <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
+      <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
+    </div>
+  </form>
+</div>
