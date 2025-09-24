@@ -15,9 +15,9 @@ import {
 const buildSchema = v.object({
   job_id: idSchema,
   status: convertEmptyStrToNull(),
-  build_guid: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), stringIdSchema))),
+  build_guid: v.pipe(convertEmptyStrToNull(), v.nullable(stringIdSchema)),
   result: convertEmptyStrToNull(),
-  error: convertEmptyStrToNull(),
+  error: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
   artifact_url_base: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
   artifact_files: convertEmptyStrToNull(),
   channel: convertEmptyStrToNull(),

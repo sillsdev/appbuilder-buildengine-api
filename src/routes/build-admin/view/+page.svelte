@@ -6,7 +6,7 @@
   import { artifacts } from '$lib/utils/artifacts';
   import { getTimeDateString } from '$lib/utils/time';
 
-  $title = 'View build: ' + page.url.searchParams.get('id')!;
+  $title = 'View Build: ' + page.url.searchParams.get('id')!;
 
   interface Props {
     data: PageData;
@@ -53,7 +53,7 @@
     </tr>
     <tr>
       <th>Error</th>
-      <td>{data.build.error}</td>
+      <td><a class="link" href={data.build.error}>{data.build.error}</a></td>
     </tr>
     <tr>
       <th>Artifacts</th>

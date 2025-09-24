@@ -9,7 +9,7 @@
   const id = $derived(page.url.searchParams.get('id')!);
 
   $effect(() => {
-    $title = 'Update Job: ' + id;
+    $title = 'Update Build: ' + id;
   });
 
   interface Props {
@@ -54,7 +54,7 @@
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Error">
-    <input class="input input-bordered validator" type="text" bind:value={$form.error} />
+    <input class="input input-bordered validator" type="url" bind:value={$form.error} />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Artifact URL Base">
@@ -79,6 +79,10 @@
   </LabeledFormInput>
   <LabeledFormInput label="Version Code">
     <input class="input input-bordered validator" type="number" bind:value={$form.version_code} />
+    <span class="validator-hint">&nbsp;</span>
+  </LabeledFormInput>
+  <LabeledFormInput label="Targets">
+    <input class="input input-bordered validator" type="text" bind:value={$form.targets} />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Environment">
