@@ -80,7 +80,11 @@
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Jenkins Publish Url">
-    <input class="input input-bordered validator" type="url" bind:value={$form.jenkins_publish_url} />
+    <input
+      class="input input-bordered validator"
+      type="url"
+      bind:value={$form.jenkins_publish_url}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <input type="submit" class="btn btn-success" value="Update" />
