@@ -23,6 +23,8 @@
     className?: string;
     /** If this is true, will defer sorting to the server instead */
     serverSide?: boolean;
+    /** Initial sorting direction */
+    startDesc?: boolean;
     onSort?: (field: string, direction: 'asc' | 'desc') => void;
     row: Snippet<[RowItem, number]>;
   }
@@ -32,6 +34,7 @@
     columns,
     className = '',
     serverSide = false,
+    startDesc = false,
     onSort,
     row
   }: Props = $props();
@@ -40,7 +43,7 @@
 
   /** Current field being sorted. Defaults to first field that can be sorted */
   let current = $state(columns.find((c) => c.compare !== undefined)!);
-  let descending = $state(false);
+  let descending = $state(startDesc);
 
   function sortColByDirection(key: (typeof columns)[0]) {
     if (current.id !== key.id) {
