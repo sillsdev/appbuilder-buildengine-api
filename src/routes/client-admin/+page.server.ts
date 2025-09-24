@@ -28,7 +28,7 @@ export const actions: Actions = {
     if (!form.valid) return fail(400, { form, ok: false });
 
     const clients = await prisma.client.findMany({
-      orderBy: form.data.sort?.field === 'id' ? { id: form.data.sort.direction } : undefined,
+      orderBy: form.data.sort ? { [form.data.sort.field]: form.data.sort.direction } : undefined,
       skip: form.data.page.page * form.data.page.size,
       take: form.data.page.size
     });
