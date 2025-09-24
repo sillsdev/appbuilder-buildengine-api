@@ -30,7 +30,7 @@
     <input
       class="input input-bordered validator"
       type="text"
-      bind:value={$form.accessToken}
+      bind:value={$form.access_token}
       required
     />
     <span class="validator-hint">&nbsp;</span>

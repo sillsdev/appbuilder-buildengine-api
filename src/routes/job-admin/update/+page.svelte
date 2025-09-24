@@ -36,24 +36,24 @@
     <input
       class="input input-bordered validator"
       type="text"
-      bind:value={$form.requestId}
+      bind:value={$form.request_id}
       required
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Git Url">
-    <input class="input input-bordered validator" type="url" bind:value={$form.gitUrl} required />
+    <input class="input input-bordered validator" type="url" bind:value={$form.git_url} required />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="App ID">
-    <input class="input input-bordered validator" type="text" bind:value={$form.appId} required />
+    <input class="input input-bordered validator" type="text" bind:value={$form.app_id} required />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Publisher ID">
     <input
       class="input input-bordered validator"
       type="text"
-      bind:value={$form.publisherId}
+      bind:value={$form.publisher_id}
       required
     />
     <span class="validator-hint">&nbsp;</span>
@@ -62,7 +62,7 @@
     <input
       class="input input-bordered validator"
       type="number"
-      bind:value={$form.clientId}
+      bind:value={$form.client_id}
       required
     />
     <span class="validator-hint">&nbsp;</span>
@@ -71,16 +71,16 @@
     <input
       class="input input-bordered validator"
       type="number"
-      bind:value={$form.existingVersion}
+      bind:value={$form.existing_version_code}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Jenkins Build Url">
-    <input class="input input-bordered validator" type="url" bind:value={$form.jenkinsBuildUrl} />
+    <input class="input input-bordered validator" type="url" bind:value={$form.jenkins_build_url} />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Jenkins Publish Url">
-    <input class="input input-bordered validator" type="url" bind:value={$form.jenkinsPublishUrl} />
+    <input class="input input-bordered validator" type="url" bind:value={$form.jenkins_publish_url} />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <input type="submit" class="btn btn-success" value="Update" />

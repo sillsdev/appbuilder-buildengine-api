@@ -4,17 +4,23 @@ import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
-import { convertEmptyStrToNull, idSchema, paramNumber, stringIdSchema } from '$lib/valibot';
+import {
+  convertEmptyStrToNull,
+  idSchema,
+  paramNumber,
+  selectFrom,
+  stringIdSchema
+} from '$lib/valibot';
 
-const jobSchema = v.object({
-  requestId: stringIdSchema,
-  gitUrl: v.pipe(v.string(), v.url()),
-  appId: v.string(),
-  publisherId: v.string(),
-  clientId: v.nullable(idSchema),
-  existingVersion: v.nullable(idSchema),
-  jenkinsBuildUrl: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  jenkinsPublishUrl: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url())))
+const jobSchema = v.strictObject({
+  request_id: stringIdSchema,
+  git_url: v.pipe(v.string(), v.url()),
+  app_id: v.string(),
+  publisher_id: v.string(),
+  client_id: v.nullable(idSchema),
+  existing_version_code: v.nullable(idSchema),
+  jenkins_build_url: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
+  jenkins_publish_url: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url())))
 });
 
 export const load = (async ({ url }) => {
@@ -26,25 +32,14 @@ export const load = (async ({ url }) => {
   const job = await prisma.job.findUnique({
     where: {
       id: id.output
-    }
+    },
+    select: selectFrom(jobSchema.entries)
   });
 
   if (!job) error(404);
 
   return {
-    form: await superValidate(
-      {
-        requestId: job.request_id,
-        gitUrl: job.git_url,
-        appId: job.app_id,
-        publisherId: job.publisher_id,
-        clientId: job.client_id,
-        existingVersion: job.existing_version_code,
-        jenkinsBuildUrl: job.jenkins_build_url,
-        jenkinsPublishUrl: job.jenkins_publish_url
-      },
-      valibot(jobSchema)
-    )
+    form: await superValidate(job, valibot(jobSchema))
   };
 }) satisfies PageServerLoad;
 
@@ -64,16 +59,7 @@ export const actions: Actions = {
         where: {
           id: id.output
         },
-        data: {
-          request_id: form.data.requestId,
-          git_url: form.data.gitUrl,
-          app_id: form.data.appId,
-          publisher_id: form.data.publisherId,
-          client_id: form.data.clientId,
-          existing_version_code: form.data.existingVersion,
-          jenkins_build_url: form.data.jenkinsBuildUrl,
-          jenkins_publish_url: form.data.jenkinsPublishUrl
-        }
+        data: form.data
       });
     } catch (e) {
       console.log(e);

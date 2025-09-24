@@ -27,6 +27,12 @@ export const paginateSchema = v.object({
   size: idSchema
 });
 
+export function selectFrom<T extends Record<string, unknown>>(entries: T) {
+  return Object.fromEntries(Object.keys(entries).map((k) => [k, true])) as {
+    [Property in keyof T]: true;
+  };
+}
+
 export const tableSchema = v.object({
   page: paginateSchema,
   sort: v.nullable(
