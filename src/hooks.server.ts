@@ -11,6 +11,13 @@ export const handle: Handle = async ({ event, resolve }) => {
     if (!access_token) {
       return ErrorResponse(401, 'Missing Header Authorization: Bearer <token>');
     }
+    const client = await prisma.client.findFirst({ where: { access_token } });
+    if (!client) {
+      return ErrorResponse(403, 'Invalid Access Token');
+    }
+    event.locals.clientId = client.id;
+  } else {
+    event.locals.clientId = 0;
   }
   return resolve(event);
 };
