@@ -20,6 +20,8 @@ const ARTIFACT_ASSET_PREVIEW = 'asset-preview';
 const ARTIFACT_ASSET_NOTIFY = 'asset-notify';
 const ARTIFACT_DATA_SAFETY_CSV = 'data-safety-csv';
 
+const ARTIFACT_PUBLISH_URL = 'publishUrl';
+
 export function artifacts(
   build: Prisma.buildGetPayload<{
     select: {
@@ -90,6 +92,23 @@ export function artifacts(
   }
 
   return artifacts;
+}
+
+export function releaseArtifacts(
+  release: Prisma.releaseGetPayload<{
+    select: {
+      artifact_url_base: true;
+      console_text_url: true;
+      artifact_files: true;
+    };
+  }>
+) {
+  const { artifact_url_base: base, artifact_files: files } = release;
+  return {
+    [ARTIFACT_VERSION]: getArtifactUrl(/version\.json/, base, files),
+    [ARTIFACT_CLOUD_WATCH]: release.console_text_url,
+    [ARTIFACT_PUBLISH_URL]: getArtifactUrl(/console\.log/, base, files)
+  } as Record<string, string | undefined>;
 }
 
 export function getArtifactUrl(
