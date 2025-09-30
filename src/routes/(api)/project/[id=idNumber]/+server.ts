@@ -22,10 +22,10 @@ export const GET: RequestHandler = async ({ params }) => {
 
 // PUT /project/[id]
 export const PUT: RequestHandler = async () => {
-  return ErrorResponse(405, 'PUT /project/[id] is not supported at this time');
+  return ErrorResponse(405, 'PUT /project/[id] is not supported at this time', { Allow: 'GET' });
 };
 
 // DELETE /project/[id]
 export const DELETE: RequestHandler = async () => {
-  return ErrorResponse(405, 'DELETE /project/[id] is not supported at this time');
+  return ErrorResponse(405, 'DELETE /project/[id] is not supported at this time', { Allow: 'GET' });
 };

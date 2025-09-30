@@ -33,10 +33,10 @@ export const GET: RequestHandler = async ({ params }) => {
 
 // PUT /job/[id]
 export const PUT: RequestHandler = async () => {
-  return ErrorResponse(405, 'PUT /job/[id] is not supported at this time');
+  return ErrorResponse(405, 'PUT /job/[id] is not supported at this time', { Allow: 'GET' });
 };
 
 // DELETE /job/[id]
 export const DELETE: RequestHandler = async () => {
-  return ErrorResponse(405, 'DELETE /job/[id] is not supported at this time');
+  return ErrorResponse(405, 'DELETE /job/[id] is not supported at this time', { Allow: 'GET' });
 };
