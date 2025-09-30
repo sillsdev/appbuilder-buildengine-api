@@ -37,6 +37,12 @@ export const PUT: RequestHandler = async () => {
 };
 
 // DELETE /job/[id]
-export const DELETE: RequestHandler = async () => {
-  return ErrorResponse(405, 'DELETE /job/[id] is not supported at this time', { Allow: 'GET' });
+export const DELETE: RequestHandler = async ({ params }) => {
+  const job_id = Number(params.jobId);
+  await prisma.$transaction([
+    prisma.release.deleteMany({ where: { build: { job_id } } }),
+    prisma.build.deleteMany({ where: { job_id } }),
+    prisma.job.deleteMany({ where: { id: job_id } })
+  ]);
+  return new Response(JSON.stringify({}));
 };
