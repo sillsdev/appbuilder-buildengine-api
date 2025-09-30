@@ -12,10 +12,7 @@ const buildSchema = v.strictObject({
 // POST /job/[id]/build
 export const POST: RequestHandler = async ({ request, params }) => {
   const parsed = v.safeParse(buildSchema, await request.json());
-  if (!parsed.success) {
-    const ret = ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
-    return ret;
-  }
+  if (!parsed.success) return ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
   const job = await prisma.job.findUnique({
     where: { id: Number(params.jobId) },
     select: { id: true }

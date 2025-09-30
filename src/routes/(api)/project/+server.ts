@@ -21,13 +21,7 @@ const projectSchema = v.strictObject({
 // POST project (create project)
 export const POST: RequestHandler = async ({ request, locals }) => {
   const parsed = v.safeParse(projectSchema, await request.json());
-  console.log(parsed.success);
-  if (!parsed.success) {
-    console.log(v.flatten(parsed.issues));
-    const ret = ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
-    console.log(ret.status);
-    return ret;
-  }
+  if (!parsed.success) return ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
   // TODO enqueue project creation job
   const project = await prisma.project.create({
     data: { ...parsed.output, status: 'initialized', client_id: locals.clientId }
