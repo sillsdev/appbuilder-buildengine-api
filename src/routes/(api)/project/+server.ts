@@ -28,6 +28,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     console.log(ret.status);
     return ret;
   }
+  // TODO enqueue project creation job
   const project = await prisma.project.create({
     data: { ...parsed.output, status: 'initialized', client_id: locals.clientId }
   });
@@ -44,4 +45,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   );
 };
 
-// GET project TODO
+// GET /project
+export const GET: RequestHandler = async () => {
+  return ErrorResponse(405, 'GET /project is not supported at this time');
+};
