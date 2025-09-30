@@ -4,9 +4,9 @@ import { ErrorResponse } from '$lib/utils';
 
 // GET /project/[id]
 export const GET: RequestHandler = async ({ params }) => {
-  const id = parseInt(params.id);
+  const id = Number(params.id);
   const project = await prisma.project.findUnique({ where: { id } });
-  if (isNaN(id) || !project) return ErrorResponse(404, 'Project not found');
+  if (!project) return ErrorResponse(404, 'Project not found');
   return new Response(
     JSON.stringify({
       ...project,
