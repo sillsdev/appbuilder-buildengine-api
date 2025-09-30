@@ -47,5 +47,5 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 // GET /project
 export const GET: RequestHandler = async () => {
-  return ErrorResponse(405, 'GET /project is not supported at this time');
+  return ErrorResponse(405, 'GET /project is not supported at this time', { Allow: 'POST' });
 };

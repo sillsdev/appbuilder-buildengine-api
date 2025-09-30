@@ -8,10 +8,14 @@ export const GET: RequestHandler = async () => {
 
 // PUT /job/[id]/build/[id]
 export const PUT: RequestHandler = async () => {
-  return ErrorResponse(405, 'PUT /job/[id]/build/[id] is not supported at this time');
+  return ErrorResponse(405, 'PUT /job/[id]/build/[id] is not supported at this time', {
+    Allow: 'GET'
+  });
 };
 
 // DELETE /job/[id]/build/[id]
 export const DELETE: RequestHandler = async () => {
-  return ErrorResponse(405, 'DELETE /job/[id]/build/[id] is not supported at this time');
+  return ErrorResponse(405, 'DELETE /job/[id]/build/[id] is not supported at this time', {
+    Allow: 'GET'
+  });
 };

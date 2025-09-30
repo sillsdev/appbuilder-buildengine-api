@@ -8,5 +8,5 @@ export const POST: RequestHandler = async () => {
 
 // GET /job/[id]/build
 export const GET: RequestHandler = async () => {
-  return ErrorResponse(405, 'GET /job/[id]/build is not supported at this time');
+  return ErrorResponse(405, 'GET /job/[id]/build is not supported at this time', { Allow: 'POST' });
 };
