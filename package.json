@@ -45,6 +45,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"@aws-sdk/client-sts": "^3.907.0",
 		"@prisma/client": "^6.15.0",
 		"prisma": "^6.15.0"
 	}
