@@ -11,21 +11,11 @@ export class STS extends AWSCommon {
     this.stsClient = STS.getStsClient();
   }
 
-  /**
-   * Configure and get the S3 Client
-   * @return \Aws\Sts\StsClient
-   */
   public static getStsClient() {
     // version was set by PHP code to 2011-06-15 ???
     return new STSClient({ region: AWSCommon.getArtifactsBucketRegion() });
   }
 
-  /**
-   * @param string name - name of federated user
-   * @param string policy - IAM policy in json format
-   * @param bool readOnly - is it readonly
-   * @return array - array of credentials needed for using AWS resources
-   */
   public async getFederationToken(Name: string, Policy: string, ReadOnly: boolean) {
     const result = await this.stsClient.send(new GetFederationTokenCommand({ Name, Policy }));
     return {
@@ -55,10 +45,6 @@ export class STS extends AWSCommon {
     return await this.getFederationToken(tokenName, policy, readOnly);
   }
 
-  /**
-   * @param Project project
-   * @return string
-   */
   public static getReadWritePolicy(project: Prisma.projectGetPayload<{ select: { url: true } }>) {
     // Note: s3 arns cannot contain region or account id
     return STS.getPolicy(
@@ -95,10 +81,7 @@ export class STS extends AWSCommon {
       })
     );
   }
-  /**
-   * @param Project project
-   * @return string
-   */
+
   public static getReadOnlyPolicy(project: Prisma.projectGetPayload<{ select: { url: true } }>) {
     return STS.getPolicy(
       project,
@@ -125,10 +108,6 @@ export class STS extends AWSCommon {
     );
   }
 
-  /**
-   * @param Project project
-   * @return string
-   */
   public static getPolicy(
     project: Prisma.projectGetPayload<{ select: { url: true } }>,
     policy: string
