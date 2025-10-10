@@ -48,7 +48,7 @@ export class AWSCommon {
   /**
    *  Get the project name which is the prd or stg plus build_app or publish_app
    *
-   * @param string $baseName build_app or publish_app
+   * @param string baseName build_app or publish_app
    * @return string app name
    */
   public static getCodeBuildProjectName(baseName: string) {
