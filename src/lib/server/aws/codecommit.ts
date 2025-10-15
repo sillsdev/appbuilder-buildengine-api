@@ -4,6 +4,7 @@ import {
   GetRepositoryCommand
 } from '@aws-sdk/client-codecommit';
 import { AWSCommon } from './common';
+import { Utils } from '$lib/server/utils';
 
 export class CodeCommit extends AWSCommon {
   public codeCommitClient;
@@ -28,7 +29,7 @@ export class CodeCommit extends AWSCommon {
    * @return string http codecommit url
    */
   public async getSourceURL(git_url: string) {
-    console.log(`[${new Date().toISOString()}] getSourceURL URL: ${git_url}`);
+    console.log(`[${Utils.getPrefix()}] getSourceURL URL: ${git_url}`);
     const repo = git_url.substring(git_url.indexOf('/') + 1);
     const repoInfo = await this.codeCommitClient.send(
       new GetRepositoryCommand({
@@ -46,7 +47,7 @@ export class CodeCommit extends AWSCommon {
    * @return string http codecommit url
    */
   public async getSourceSshURL(git_url: string) {
-    console.log(`[${new Date().toISOString()}] getSourceURL URL: ${git_url}`);
+    console.log(`[${Utils.getPrefix()}] getSourceURL URL: ${git_url}`);
     const repo = git_url.substring(git_url.indexOf('/') + 1);
     const repoInfo = await this.codeCommitClient.send(
       new GetRepositoryCommand({
@@ -66,7 +67,7 @@ export class CodeCommit extends AWSCommon {
    * @return string commit id
    */
   public async getCommitId(git_url: string, branch: string) {
-    console.log(`[${new Date().toISOString()}] getCommitId URL: ${git_url} Branch: ${branch}`);
+    console.log(`[${Utils.getPrefix()}] getCommitId URL: ${git_url} Branch: ${branch}`);
     const repo = git_url.substring(git_url.indexOf('/') + 1);
     const result = await this.codeCommitClient.send(
       new GetBranchCommand({
