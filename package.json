@@ -47,6 +47,7 @@
 	"dependencies": {
 		"@aws-sdk/client-codebuild": "^3.907.0",
 		"@aws-sdk/client-codecommit": "^3.910.0",
+		"@aws-sdk/client-iam": "^3.911.0",
 		"@aws-sdk/client-s3": "^3.907.0",
 		"@aws-sdk/client-sts": "^3.907.0",
 		"@prisma/client": "^6.15.0",
