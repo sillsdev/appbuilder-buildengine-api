@@ -1,38 +1,43 @@
 import type { Prisma } from '@prisma/client';
+import { env } from '$env/dynamic/private';
 
 export class AWSCommon {
   public static getArtifactsBucketRegion() {
-    return process.env.BUILD_ENGINE_ARTIFACTS_BUCKET_REGION;
+    return env.BUILD_ENGINE_ARTIFACTS_BUCKET_REGION;
+  }
+
+  public static getAwsRegion() {
+    return env.AWS_REGION;
   }
 
   public static getArtifactsBucket() {
-    return process.env.BUILD_ENGINE_ARTIFACTS_BUCKET;
+    return env.BUILD_ENGINE_ARTIFACTS_BUCKET;
   }
 
   public static getAWSUserAccount() {
-    return process.env.AWS_USER_ID;
+    return env.AWS_USER_ID;
   }
 
   public static getAppEnv() {
-    return process.env.APP_ENV;
+    return env.APP_ENV;
   }
 
   public static getSecretsBucket() {
-    return process.env.BUILD_ENGINE_SECRETS_BUCKET;
+    return env.BUILD_ENGINE_SECRETS_BUCKET;
   }
 
   public static getProjectsBucket() {
-    return process.env.BUILD_ENGINE_PROJECTS_BUCKET;
+    return env.BUILD_ENGINE_PROJECTS_BUCKET;
   }
 
   public static getCodeBuildImageTag() {
-    return process.env.CODE_BUILD_IMAGE_TAG;
+    return env.CODE_BUILD_IMAGE_TAG;
   }
   public static getCodeBuildImageRepo() {
-    return process.env.CODE_BUILD_IMAGE_REPO;
+    return env.CODE_BUILD_IMAGE_REPO;
   }
   public static getScriptureEarthKey() {
-    return process.env.SCRIPTURE_EARTH_KEY;
+    return env.SCRIPTURE_EARTH_KEY;
   }
 
   public static getBuildScriptPath() {
