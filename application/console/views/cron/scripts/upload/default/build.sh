@@ -635,9 +635,9 @@ complete_successful_build() {
   fi
   if [[ "${VERSION_CODE}" != "" ]]; then
       echo "${VERSION_CODE}" > "$OUTPUT_DIR"/version_code.txt
-      echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\" } " > "$OUTPUT_DIR"/version.json
+      echo "{ \"version\" : \"${VERSION_NAME} (${VERSION_CODE})\", \"versionName\" : \"${VERSION_NAME}\", \"versionCode\" : \"${VERSION_CODE}\", \"appbuilderVersion\": \"${APPBUILDER_SCRIPT_VERSION}\" } " > "$OUTPUT_DIR"/version.json
   else
-      echo "{ \"version\" : \"${VERSION_NAME}\", \"versionName\" : \"${VERSION_NAME}\" } " > "$OUTPUT_DIR"/version.json
+      echo "{ \"version\" : \"${VERSION_NAME}\", \"versionName\" : \"${VERSION_NAME}\", \"appbuilderVersion\": \"${APPBUILDER_SCRIPT_VERSION}\" } " > "$OUTPUT_DIR"/version.json
   fi
 
   echo "ls -lR ${OUTPUT_DIR}"
