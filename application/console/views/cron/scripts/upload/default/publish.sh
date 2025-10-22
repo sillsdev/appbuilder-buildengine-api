@@ -5,6 +5,9 @@ set -x
 LOG_FILE="${OUTPUT_DIR}"/console.log
 exec > >(tee "${LOG_FILE}") 2>&1
 
+# Scriptoria 1 uses UI_URL and Scriptoria 2 uses ORIGIN
+export SERVER_URL="${ORIGIN:-${UI_URL:-}}"
+
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 sync_secrets() {
@@ -105,7 +108,7 @@ publish_google_play() {
     PERMALINK_URL=""
   else
     PUBLISH_SIZE="$(stat --format="%s" "${APK_FILES[0]}")"
-    PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+    PERMALINK_URL="${SERVER_URL}/api/products/${PRODUCT_ID}/files/published/apk"
   fi
   PUBLISH_URL="https://play.google.com/store/apps/details?id=${PACKAGE_NAME}"
   echo "${PUBLISH_URL}" > "${OUTPUT_DIR}/publish_url.txt"
@@ -138,13 +141,13 @@ publish_s3_bucket() {
     # apk: publish all the apks
     PUBLISH_S3_INCLUDE="*.apk"
     PUBLISH_S3_SOURCH_PATH="${ARTIFACTS_DIR}"
-    PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+    PERMALINK_URL="${SERVER_URL}/api/products/${PRODUCT_ID}/files/published/apk"
     SRC_FILE="${APK_FILES[0]}"
   elif [[ "${#ZIP_FILES[@]}" -gt 0 ]]; then
     # asset-package: publish all the zip files
     PUBLISH_S3_INCLUDE="*.zip"
     PUBLISH_S3_SOURCH_PATH="${ARTIFACTS_DIR}/asset-package"
-    PERMALINK_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/asset-package"
+    PERMALINK_URL="${SERVER_URL}/api/products/${PRODUCT_ID}/files/published/asset-package"
     SRC_FILE="${ZIP_FILES[0]}"
   fi
   PUBLISH_SIZE="$(stat --format="%s" "${SRC_FILE}")"
@@ -403,6 +406,14 @@ publish_base_update_json() {
     '. + { project_url: $project_url, project_name: $project_name, product_name: $product_name, project_language: $project_language, project_repo: $project_repo, publish_url: $publish_url, permalink_url: $permalink_url, size: $size, app_builder: $app_builder, app_builder_version: $app_builder_version }'
 }
 
+is_production() {
+  # Return success if SERVER_URL contains the production domain
+  if [[ -n "${SERVER_URL}" && "${SERVER_URL}" == *"app.scriptoria.io"* ]]; then
+    return 0
+  fi
+  return 1
+}
+
 post_publish() {
   PUBLISH_JSON="$(publish_base_update_json "${PUBLISH_JSON}")"
 
@@ -410,7 +421,7 @@ post_publish() {
   # contain the keywords: ios, android, google (play), and pwa.  So the system admin
   # should be aware when adding new products.
   WORKFLOW_PRODUCT_NAME_LOWER=$(echo "${WORKFLOW_PRODUCT_NAME}" | awk '{print tolower($0)}')
-  if [[ "${PUBLISH_NOTIFY}" != "" ]]; then
+  if is_production && [[ "${PUBLISH_NOTIFY}" != "" ]]; then
     # See S1: Services/BuildEngine: BuildEngineServiceBase::AddProductProperitiesToEnvironment
     # See S2: node-server/job-executors/common.build-publish.ts: addProductPropertiesToEnvironment
     # for the list of properties that are added.
@@ -426,12 +437,12 @@ post_publish() {
           NOTIFY_TYPE="ios"
           # change protocol to "asset://" so that container app will recognize as asset-package
           # shellcheck disable=SC2001
-          NOTIFY_URL="$(sed -e 's/https*:/asset:/' <<< "$UI_URL")/api/products/${PRODUCT_ID}/files/published/asset-package"
+          NOTIFY_URL="$(sed -e 's/https*:/asset:/' <<< "$SERVER_URL")/api/products/${PRODUCT_ID}/files/published/asset-package"
           NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
         elif [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"android"* ]]; then
           # Send Notification for Android app to Google Play
           NOTIFY_TYPE="apk"
-          NOTIFY_URL="${UI_URL}/api/products/${PRODUCT_ID}/files/published/apk"
+          NOTIFY_URL="${SERVER_URL}/api/products/${PRODUCT_ID}/files/published/apk"
           NOTIFY_JSON="$(notify_scripture_earth_update_json "${NOTIFY_JSON}" "${NOTIFY_TYPE}" "${NOTIFY_URL}")"
           if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"google"* ]]; then
             # Send additional notification for Android app to Google Play
