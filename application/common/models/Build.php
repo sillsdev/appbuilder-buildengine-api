@@ -428,7 +428,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $file = "asset-package/preview.html";
         } else if (preg_match("/asset-package\/notify\.json$/", $key)) {
             $type = self::ARTIFACT_ASSET_NOTIFY;
-            $file = "asset-package/preview.html";
+            $file = "asset-package/notify.json";
         } else if (preg_match("/play-listing\/index\.html$/", $key)) {
             $type = self::ARTIFACT_PLAY_LISTING;
             $file = "play-listing/index.html";
