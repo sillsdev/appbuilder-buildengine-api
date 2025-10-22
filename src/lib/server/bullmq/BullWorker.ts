@@ -27,6 +27,12 @@ export class Builds<J extends BullMQ.BuildJob> extends BullWorker<J> {
     super(BullMQ.QueueName.Builds);
   }
   async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.Build_Product:
+        return Executor.Build.product(job as Job<BullMQ.Build.Product>);
+      case BullMQ.JobType.Build_PostProcess:
+        return Executor.Build.postProcess(job as Job<BullMQ.Build.PostProcess>);
+    }
   }
 }
 
@@ -35,6 +41,12 @@ export class S3<J extends BullMQ.S3Job> extends BullWorker<J> {
     super(BullMQ.QueueName.S3);
   }
   async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.S3_CopyArtifacts:
+        return Executor.S3.save(job as Job<BullMQ.S3.CopyArtifacts>);
+      case BullMQ.JobType.S3_CopyError:
+        return Executor.S3.error(job as Job<BullMQ.S3.CopyErrors>);
+    }
   }
 }
 
@@ -43,6 +55,10 @@ export class Projects<J extends BullMQ.ProjectJob> extends BullWorker<J> {
     super(BullMQ.QueueName.Projects);
   }
   async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.Project_Create:
+        return Executor.Project.create(job as Job<BullMQ.Project.Create>);
+    }
   }
 }
 
@@ -51,6 +67,12 @@ export class Publishing<J extends BullMQ.PublishJob> extends BullWorker<J> {
     super(BullMQ.QueueName.Publishing);
   }
   async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.Publish_Product:
+        return Executor.Publish.product(job as Job<BullMQ.Publish.Product>);
+      case BullMQ.JobType.Publish_PostProcess:
+        return Executor.Publish.postProcess(job as Job<BullMQ.Publish.PostProcess>);
+    }
   }
 }
 
@@ -59,5 +81,11 @@ export class Polling<J extends BullMQ.PollJob> extends BullWorker<J> {
     super(BullMQ.QueueName.Polling);
   }
   async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.Poll_Build:
+        return Executor.Polling.build(job as Job<BullMQ.Polling.Build>);
+      case BullMQ.JobType.Poll_Publish:
+        return Executor.Polling.publish(job as Job<BullMQ.Polling.Publish>);
+    }
   }
 }
