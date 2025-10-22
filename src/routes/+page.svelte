@@ -58,6 +58,17 @@
       </p>
       <a class="btn btn-outline" href="/project-admin">Project Administration »</a>
     </div>
+    <div class={cardClasses}>
+      <h2 class="pl-0">Operation Queue</h2>
+      <p>
+        View, edit, or remove entries from the operation queue table. Entries in this table relate
+        to internal operations that are either queued to be performed, waiting to be retried, or
+        have failed the maximum number of times and are present for reporting purposes only.
+      </p>
+      <a class="btn btn-outline" href="/queue-admin" target="_blank">
+        Operation Queue Administration &raquo;
+      </a>
+    </div>
   </div>
 </div>
 
