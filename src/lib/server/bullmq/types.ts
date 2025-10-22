@@ -104,9 +104,13 @@ export namespace Publish {
 export namespace S3 {
   export interface CopyArtifacts {
     type: JobType.S3_CopyArtifacts;
+    scope: 'build' | 'release';
+    id: number;
   }
   export interface CopyErrors {
     type: JobType.S3_CopyError;
+    scope: 'build' | 'release';
+    id: number;
   }
 }
 

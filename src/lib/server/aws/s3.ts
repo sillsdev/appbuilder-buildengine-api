@@ -14,8 +14,11 @@ import { AWSCommon } from './common';
 import { env } from '$env/dynamic/private';
 import {
   type BuildForPrefix,
+  type ProviderForArtifacts,
   type ProviderForPrefix,
-  getBasePrefixUrl
+  beginArtifacts,
+  getBasePrefixUrl,
+  handleArtifact
 } from '$lib/server/artifacts-provider';
 import { Utils } from '$lib/server/utils';
 
@@ -101,12 +104,12 @@ export class S3 extends AWSCommon {
    *
    * @param Build or Release artifacts_provider - The build or release
    */
-  public async copyS3Folder(artifacts_provider: ProviderForPrefix) {
+  public async copyS3Folder(artifacts_provider: ProviderForPrefix & ProviderForArtifacts) {
     const artifactsBucket = S3.getArtifactsBucket();
     const sourcePrefix = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
     const destPrefix = getBasePrefixUrl(artifacts_provider, S3.getAppEnv()) + '/';
-    const publicBaseUrl = this.s3Client.getObjectUrl(artifactsBucket, destPrefix);
-    artifacts_provider.beginArtifacts(publicBaseUrl);
+    const publicBaseUrl = `https://${artifactsBucket}.s3.amazonaws.com/${destPrefix}`;
+    beginArtifacts(artifacts_provider, publicBaseUrl);
     const destFolderPrefix = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
     try {
       await this.deleteMatchingObjects(artifactsBucket, destFolderPrefix);
@@ -142,7 +145,7 @@ export class S3 extends AWSCommon {
     file: _Object,
     sourcePrefix: string,
     destPrefix: string,
-    artifacts_provider: ProviderForPrefix
+    artifacts_provider: ProviderForPrefix & ProviderForArtifacts
   ) {
     const artifactsBucket = S3.getArtifactsBucket();
     let fileContents = '';
@@ -176,7 +179,11 @@ export class S3 extends AWSCommon {
           MetadataDirective: 'REPLACE'
         })
       );
-      artifacts_provider.handleArtifact(destinationFile, fileContents);
+      if ('build' in artifacts_provider) {
+        handleArtifact(artifacts_provider, destinationFile, fileContents);
+      } else {
+        handleArtifact(artifacts_provider, destinationFile);
+      }
       return ret;
     } catch (e) {
       if (e instanceof Error) {
@@ -190,7 +197,7 @@ export class S3 extends AWSCommon {
   public async writeFileToS3(
     fileContents: string,
     fileName: string,
-    artifacts_provider: ProviderForPrefix
+    artifacts_provider: ProviderForPrefix & ProviderForArtifacts
   ) {
     const fileS3Bucket = S3.getArtifactsBucket();
     const destPrefix: string = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
@@ -206,7 +213,11 @@ export class S3 extends AWSCommon {
       })
     );
 
-    artifacts_provider.handleArtifact(fileS3Key, fileContents);
+    if ('build' in artifacts_provider) {
+      handleArtifact(artifacts_provider, fileS3Key, fileContents);
+    } else {
+      handleArtifact(artifacts_provider, fileS3Key);
+    }
   }
   public async removeCodeBuildFolder(artifacts_provider: ProviderForPrefix) {
     const s3Folder = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
