@@ -43,13 +43,6 @@ export class AWSCommon {
   public static getBuildScriptPath() {
     return `s3://${AWSCommon.getProjectsBucket()}/default`;
   }
-  public static getArtifactPath(
-    job: Prisma.jobGetPayload<{ select: { app_id: true; id: true } }>,
-    productionStage: string,
-    isPublish = false
-  ) {
-    return `${productionStage}/jobs/${isPublish ? 'publish' : 'build'}_${job.app_id}_${job.id}`;
-  }
   /**
    *  Get the project name which is the prd or stg plus build_app or publish_app
    *

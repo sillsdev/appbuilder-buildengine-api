@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { title } from '$lib/stores';
-  import { artifacts } from '$lib/utils/artifacts';
+  import { artifacts } from '$lib/models/artifacts';
   import { getTimeDateString } from '$lib/utils/time';
 
   $title = 'View Build: ' + page.url.searchParams.get('id')!;

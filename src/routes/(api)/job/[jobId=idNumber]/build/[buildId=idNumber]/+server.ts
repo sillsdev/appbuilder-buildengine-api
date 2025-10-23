@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { artifacts, releaseArtifacts } from '$lib/utils/artifacts';
+import { artifacts, releaseArtifacts } from '$lib/models/artifacts';
 
 // GET /job/[id]/build/[id]
 export const GET: RequestHandler = async ({ params }) => {

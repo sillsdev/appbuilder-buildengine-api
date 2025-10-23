@@ -11,8 +11,8 @@ import {
 import type { Prisma } from '@prisma/client';
 import { AWSCommon } from './common';
 import { S3 } from './s3';
-import { type BuildForPrefix, getBasePrefixUrl } from '$lib/server/artifacts-provider';
-import { Job } from '$lib/server/models/job';
+import { type BuildForPrefix, getArtifactPath, getBasePrefixUrl } from '$lib/models/artifacts';
+import { Job } from '$lib/models/job';
 import { Utils } from '$lib/server/utils';
 
 export type ReleaseForCodeBuild = Prisma.releaseGetPayload<{
@@ -84,7 +84,7 @@ export class CodeBuild extends AWSCommon {
     const secretsBucket = CodeBuild.getSecretsBucket();
     const buildApp = CodeBuild.getCodeBuildProjectName('build_app');
     const buildPath = this.getBuildPath(job);
-    const artifactPath = CodeBuild.getArtifactPath(job, 'codebuild-output');
+    const artifactPath = getArtifactPath(job, 'codebuild-output');
     console.log(`Artifacts path: ${artifactPath}`);
     // Leaving all this code together to make it easier to remove when git is no longer supported
     if (codeCommit) {
@@ -282,7 +282,7 @@ export class CodeBuild extends AWSCommon {
     const job = build.job;
     const buildPath = this.getBuildPath(job);
     const artifacts_bucket = CodeBuild.getArtifactsBucket();
-    const artifactPath = CodeBuild.getArtifactPath(job, 'codebuild-output', true);
+    const artifactPath = getArtifactPath(job, 'codebuild-output', true);
     const secretsBucket = CodeBuild.getSecretsBucket();
     const scriptureEarthKey = CodeBuild.getScriptureEarthKey();
     const publishApp = CodeBuild.getCodeBuildProjectName('publish_app');
