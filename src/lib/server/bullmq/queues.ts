@@ -61,14 +61,16 @@ export const QueueConnected = () => _queueConnection?.IsConnected() ?? false;
 export const getWorkerConfig = () => {
   if (!_workerConnection) _workerConnection = new Connection(false);
   return {
-    connection: _workerConnection!.connection()
+    connection: _workerConnection!.connection(),
+    prefix: 'build-engine'
   } as const;
 };
 
 export const getQueueConfig = () => {
   if (!_queueConnection) _queues = createQueues();
   return {
-    connection: _queueConnection!.connection()
+    connection: _queueConnection!.connection(),
+    prefix: 'build-engine'
   } as const;
 };
 let _queues: ReturnType<typeof createQueues> | undefined = undefined;
