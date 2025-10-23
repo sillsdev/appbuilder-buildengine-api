@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { title } from '$lib/stores';
-  import { artifacts } from '$lib/models/artifacts';
+  import { Build } from '$lib/models/build';
   import { getTimeDateString } from '$lib/utils/time';
 
   $title = 'View Build: ' + page.url.searchParams.get('id')!;
@@ -59,7 +59,7 @@
       <th>Artifacts</th>
       <td>
         {#if data.build.artifact_files}
-          {#each Object.entries(artifacts(data.build))
+          {#each Object.entries(Build.artifacts(data.build))
             .filter(([_, url]) => !!url)
             .sort(([a, _1], [b, _2]) => a.localeCompare(b, 'en-US')) as [name, url]}
             <a class="link" href={url}>{name}</a>
