@@ -43,9 +43,7 @@ export enum JobType {
 export namespace Build {
   export interface Product {
     type: JobType.Build_Product;
-    productId: string;
-    defaultTargets: string;
-    environment: Record<string, string>;
+    buildId: number;
   }
 
   export interface PostProcess {
@@ -59,11 +57,7 @@ export namespace Build {
 export namespace Polling {
   export interface Build {
     type: JobType.Poll_Build;
-    organizationId: number;
-    productId: string;
-    jobId: number;
     buildId: number;
-    productBuildId: number;
   }
 
   export interface Publish {
