@@ -11,7 +11,12 @@ import {
 import type { Prisma } from '@prisma/client';
 import { AWSCommon } from './common';
 import { S3 } from './s3';
-import { type BuildForPrefix, getArtifactPath, getBasePrefixUrl } from '$lib/models/artifacts';
+import {
+  type BuildForPrefix,
+  getArtifactFilename,
+  getArtifactPath,
+  getBasePrefixUrl
+} from '$lib/models/artifacts';
 import { Job } from '$lib/models/job';
 import { Utils } from '$lib/server/utils';
 
@@ -25,6 +30,7 @@ export type ReleaseForCodeBuild = Prisma.releaseGetPayload<{
     build: {
       select: {
         id: true;
+        artifact_files: true;
         job: { select: { id: true; app_id: true; publisher_id: true; git_url: true } };
       };
     };
@@ -379,11 +385,11 @@ export class CodeBuild extends AWSCommon {
    */
   private getSourceLocation(
     build: Prisma.buildGetPayload<{
-      select: { id: true; job: { select: { id: true; app_id: true } } };
+      select: { id: true; artifact_files: true; job: { select: { id: true; app_id: true } } };
     }>
   ) {
     const appEnv = S3.getAppEnv();
-    const apkFilename = build.apkFilename();
+    const apkFilename = getArtifactFilename(/\.apk$/, build.artifact_files);
     const sourceLocation = S3.getS3Arn(build, appEnv, apkFilename);
     return sourceLocation;
   }
