@@ -2,10 +2,9 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { title } from '$lib/stores';
-  import { getArtifactUrl } from '$lib/models/artifacts';
-  import { getTimeDateString } from '$lib/utils/time';
   import { Release } from '$lib/models/release';
+  import { title } from '$lib/stores';
+  import { getTimeDateString } from '$lib/utils/time';
 
   $title = 'View Release: ' + page.url.searchParams.get('id')!;
 
@@ -65,7 +64,6 @@
     <tr>
       <th>Artifacts</th>
       <td>
-        
         {#if data.release.artifact_files}
           {#each Object.entries(Release.artifacts(data.release))
             .filter(([_, url]) => !!url)

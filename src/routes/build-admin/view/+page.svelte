@@ -2,8 +2,8 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { title } from '$lib/stores';
   import { Build } from '$lib/models/build';
+  import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
   $title = 'View Build: ' + page.url.searchParams.get('id')!;
