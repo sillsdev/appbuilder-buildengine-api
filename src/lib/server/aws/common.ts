@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import { env } from '$env/dynamic/private';
 
 export class AWSCommon {

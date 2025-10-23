@@ -1,8 +1,8 @@
 import type { Prisma } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
-import { CodeBuild, type ReleaseForCodeBuild } from '../aws/codebuild';
 import { Build } from '../../models/build';
 import { Release } from '../../models/release';
+import { CodeBuild, type ReleaseForCodeBuild } from '../aws/codebuild';
 import { prisma } from '../prisma';
 import { Utils } from '../utils';
 
