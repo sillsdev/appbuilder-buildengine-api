@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { readFile } from 'node:fs/promises';
 import { type BuildForCodeBuild, CodeBuild } from '../aws/codebuild';
 import { CodeCommit } from '../aws/codecommit';
-import { Build } from '../models/build';
+import { Build } from '../../models/build';
 import { prisma } from '../prisma';
 import { Utils } from '../utils';
 

@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { artifacts } from '$lib/utils/artifacts';
+import { artifacts } from '$lib/models/artifacts';
 
 const buildSchema = v.strictObject({
   targets: v.string(),

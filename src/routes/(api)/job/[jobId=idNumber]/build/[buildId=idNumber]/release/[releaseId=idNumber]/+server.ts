@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { releaseArtifacts } from '$lib/utils/artifacts';
+import { releaseArtifacts } from '$lib/models/artifacts';
 
 // GET /job/[id]/build/[id]/release/[id]
 export const GET: RequestHandler = async ({ params }) => {

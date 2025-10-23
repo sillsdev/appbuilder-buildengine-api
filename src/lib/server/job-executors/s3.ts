@@ -1,11 +1,11 @@
 import type { Job } from 'bullmq';
 import { readFile } from 'node:fs/promises';
-import type { BuildForPrefix } from '../artifacts-provider';
-import { S3 } from '../aws/s3';
-import type { BullMQ } from '../bullmq';
-import { Build } from '../models/build';
-import { Release } from '../models/release';
-import { prisma } from '../prisma';
+import type { BuildForPrefix } from '$lib/models/artifacts';
+import { Build } from '$lib/models/build';
+import { Release } from '$lib/models/release';
+import { S3 } from '$lib/server/aws/s3';
+import type { BullMQ } from '$lib/server/bullmq';
+import { prisma } from '$lib/server/prisma';
 
 export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> {
   const id = job.data.id;
