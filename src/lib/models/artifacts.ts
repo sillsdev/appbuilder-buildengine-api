@@ -127,7 +127,7 @@ export function getArtifactUrl(
 function encodeFilename(filename: string) {
   return encodeURI(filename);
 }
-function getArtifactFilename(pattern: RegExp, artifact_files: string | null) {
+export function getArtifactFilename(pattern: RegExp, artifact_files: string | null) {
   return artifact_files?.split(',').find((f) => f.match(pattern)) ?? null;
 }
 function getArtfactFilenameCount(pattern: RegExp, artifact_files: string | null) {

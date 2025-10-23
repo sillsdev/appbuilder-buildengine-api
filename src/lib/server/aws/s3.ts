@@ -56,7 +56,7 @@ export class S3 extends AWSCommon {
    * @param string filename - Name of s3 file that arn is requested for
    * @return string prefix
    */
-  public static getS3Arn(build: BuildForPrefix, productStage: string, filename: string) {
+  public static getS3Arn(build: BuildForPrefix, productStage: string, filename: string | null) {
     return `arn:aws:s3:::${S3.getArtifactsBucket()}/${getBasePrefixUrl(build, productStage)}/${filename ?? ''}`;
   }
   /**
