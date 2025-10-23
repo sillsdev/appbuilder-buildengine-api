@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
+import { Build } from '$lib/models/build';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { artifacts } from '$lib/models/artifacts';
 
 const buildSchema = v.strictObject({
   targets: v.string(),
@@ -43,7 +43,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
   return new Response(
     JSON.stringify({
       ...build,
-      artifacts: artifacts(build),
+      artifacts: Build.artifacts(build),
       client_id: undefined,
       artifact_url_base: undefined,
       console_text_url: undefined,

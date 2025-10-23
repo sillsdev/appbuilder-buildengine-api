@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
+import { Release } from '$lib/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { releaseArtifacts } from '$lib/models/artifacts';
 
 // GET /job/[id]/build/[id]/release/[id]
 export const GET: RequestHandler = async ({ params }) => {
@@ -44,7 +44,7 @@ export const GET: RequestHandler = async ({ params }) => {
   return new Response(
     JSON.stringify({
       ...release,
-      artifacts: releaseArtifacts(release),
+      artifacts: Release.artifacts(release),
       artifact_url_base: undefined,
       console_text_url: undefined,
       artifact_files: undefined,

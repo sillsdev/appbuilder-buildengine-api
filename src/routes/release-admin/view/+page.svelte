@@ -5,6 +5,7 @@
   import { title } from '$lib/stores';
   import { getArtifactUrl } from '$lib/models/artifacts';
   import { getTimeDateString } from '$lib/utils/time';
+  import { Release } from '$lib/models/release';
 
   $title = 'View Release: ' + page.url.searchParams.get('id')!;
 
@@ -64,29 +65,15 @@
     <tr>
       <th>Artifacts</th>
       <td>
-        <a class="link" href={data.release.console_text_url}>cloudWatch</a>
-        ,&nbsp;
-        <a
-          class="link"
-          href={getArtifactUrl(
-            /\.log$/,
-            data.release.artifact_url_base,
-            data.release.artifact_files
-          )}
-        >
-          consoleText
-        </a>
-        ,&nbsp;
-        <a
-          class="link"
-          href={getArtifactUrl(
-            /publish_url\.txt$/,
-            data.release.artifact_url_base,
-            data.release.artifact_files
-          )}
-        >
-          publishUrl
-        </a>
+        
+        {#if data.release.artifact_files}
+          {#each Object.entries(Release.artifacts(data.release))
+            .filter(([_, url]) => !!url)
+            .sort(([a, _1], [b, _2]) => a.localeCompare(b, 'en-US')) as [name, url]}
+            <a class="link" href={url}>{name}</a>
+            ,&nbsp;
+          {/each}
+        {/if}
       </td>
     </tr>
     <tr>
