@@ -53,6 +53,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     const ARTIFACT_ASSET_PREVIEW="asset-preview";
     const ARTIFACT_ASSET_NOTIFY="asset-notify";
     const ARTIFACT_DATA_SAFETY_CSV="data-safety-csv";
+    const ARTIFACT_PLAY_LISTING_DOWNLOAD="play-listing-download";
 
      /**
      * Array of valid status transitions. The key is the starting
@@ -220,6 +221,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING,$this->playListing());
             $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING, $this->playListing());
             $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING_MANIFEST, $this->playListingManifest());
+            $this->addIfSet($artifacts, self::ARTIFACT_PLAY_LISTING_DOWNLOAD, $this->playListingDownload());
             $this->addIfSet($artifacts, self::ARTIFACT_VERSION_CODE, $this->versionCode());
             $this->addIfSet($artifacts, self::ARTIFACT_PACKAGE_NAME, $this->packageName());
             $this->addIfSet($artifacts, self::ARTIFACT_PUBLISH_PROPERTIES, $this->publishProperties());
@@ -437,6 +439,8 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             $file = "play-listing/manifest.json";
         } else if (preg_match("/data_safety\.csv$/", $key)) {
             $type = self::ARTIFACT_DATA_SAFETY_CSV;
+        } else if (preg_match("/play-listing\.zip$/", $key)) {
+            $type = self::ARTIFACT_PLAY_LISTING_DOWNLOAD;
         }
 
         return array($type, $file);
@@ -485,6 +489,7 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
             case self::ARTIFACT_ASSET_PACKAGE:
             case self::ARTIFACT_ASSET_NOTIFY:
             case self::ARTIFACT_DATA_SAFETY_CSV:
+            case self::ARTIFACT_PLAY_LISTING_DOWNLOAD:
                 break;
 
             default:
@@ -582,6 +587,9 @@ class Build extends BuildBase implements Linkable, ArtifactsProvider
     }
     public function playListingManifest() {
         return $this->getArtifactUrl("/play-listing\/manifest\.json$/");
+    }
+    public function playListingDownload() {
+        return $this->getArtifactUrl("/play-listing\.zip$/");
     }
     public function versionCode() {
         return $this->getArtifactUrl("/version_code\.txt$/");
