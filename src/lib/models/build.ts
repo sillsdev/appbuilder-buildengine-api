@@ -46,7 +46,8 @@ export namespace Build {
     AssetPackage = 'asset-package',
     AssetPreview = 'asset-preview',
     AssetNotify = 'asset-notify',
-    DataSafetyCsv = 'data-safety-csv'
+    DataSafetyCsv = 'data-safety-csv',
+    PlayListingDownload = 'play-listing-download'
   }
 
   export function artifactType(key: string): [Artifact, string] {
@@ -96,6 +97,8 @@ export namespace Build {
       file = 'play-listing/manifest.json';
     } else if (key.match(/data_safety\.csv/)) {
       type = Artifact.DataSafetyCsv;
+    } else if (key.match(/play-listing\.zip$/)) {
+      type = Artifact.PlayListingDownload;
     }
 
     return [type, file];
@@ -153,6 +156,7 @@ export namespace Build {
         files
       );
       artifacts[Artifact.WhatsNew] = getArtifactUrl(/whats_new\.txt/, base, files);
+      artifacts[Artifact.PlayListingDownload] = getArtifactUrl(/play-listing\.zip$/, base, files);
     }
 
     if (targets?.match('play-html')) {
