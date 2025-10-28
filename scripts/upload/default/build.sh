@@ -12,12 +12,20 @@ BUILD_DIR=/tmp/build
 mkdir -p "$BUILD_DIR"
 SCRIPT_OPT="-fp build=${BUILD_DIR}"
 
-sync_secrets() {
+sync_build_secrets() {
   SECRETS_SUBDIR=$1
   SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/build"
-  echo "sync secrets"
+  echo "sync build secrets"
   echo "SECRETS_SUBDIR = ${SECRETS_SUBDIR}"
   aws s3 sync "${SECRETS_S3}/${SECRETS_SUBDIR}" "${SECRETS_DIR}"
+}
+
+sync_publish_secrets() {
+    SECRETS_SUBDIR=$1
+    SECRETS_S3="s3://${SECRETS_BUCKET}/jenkins/publish"
+    echo "sync publish secrets"
+    echo "SECRETS_SUBDIR = ${SECRETS_SUBDIR}"
+    aws s3 sync "${SECRETS_S3}/${SECRETS_SUBDIR}" "${SECRETS_DIR}"
 }
 
 check_audio_sources() {
@@ -122,12 +130,12 @@ build_apk() {
   if [[ "${BUILD_KEYSTORE}" != "" ]]; then
     echo "Using build keystore=${BUILD_KEYSTORE}"
     SECRETS_SUBDIR="google_play_store/${PUBLISHER}/${BUILD_KEYSTORE}"
-    sync_secrets "${SECRETS_SUBDIR}"
+    sync_build_secrets "${SECRETS_SUBDIR}"
     KS="${SECRETS_DIR}/${BUILD_KEYSTORE}.keystore"
   else
     echo "Using publisher keystore=${PUBLISHER}"
     SECRETS_SUBDIR="google_play_store/${PUBLISHER}"
-    sync_secrets "${SECRETS_SUBDIR}"
+    sync_build_secrets "${SECRETS_SUBDIR}"
     KS="${SECRETS_DIR}/${PUBLISHER}.keystore"
   fi
   KSP="$(cat "${SECRETS_DIR}/ksp.txt")"
@@ -414,6 +422,22 @@ EOL
   VERSION_CODE=""
 }
 
+download_play_listing() {
+  # For existing apps being added to Scriptoria, we may need to download the Play Store listing information
+  if [[ "${BUILD_DOWNLOAD_PLAY_LISTING}" == "1" ]]; then
+    if [[ "${PUBLISHER}" != "" && "${APPDEF_PACKAGE_NAME}" != "" ]]; then
+      echo "Downloading existing play listing for Publisher:${PUBLISHER}, Package Name:${APPDEF_PACKAGE_NAME}"
+      SECRETS_SUBDIR="google_play_store/${PUBLISHER}"
+      sync_publish_secrets "${SECRETS_SUBDIR}"
+      export SUPPLY_JSON_KEY="${SECRETS_DIR}/playstore_api.json"
+      export SUPPLY_PACKAGE_NAME="${APPDEF_PACKAGE_NAME}"
+      export SUPPLY_METADATA_PATH="build_data/publish/play-listing"
+      fastlane supply init
+      (cd "${SUPPLY_METADATA_PATH}" && zip -r "${OUTPUT_DIR}/play-listing.zip" .)
+    fi
+  fi
+}
+
 build_play_listing() {
   echo "Build play listing"
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
@@ -421,6 +445,8 @@ build_play_listing() {
   echo "VERSION_CODE=${VERSION_CODE}"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
   cd "$PROJECT_DIR" || exit 1
+
+  download_play_listing
 
   APK_FILES=("${OUTPUT_DIR}"/*.apk)
   AAPT="$(find /opt/android-sdk/build-tools -name aapt | head -n 1)"
