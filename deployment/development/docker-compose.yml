@@ -1,19 +1,19 @@
 volumes:
-  mysql-data:
+  postgres-data:
   valkey-data:
 
 services:
   db:
-    image: mariadb:10.11
+    image: postgres:17
     environment:
-      MYSQL_DATABASE: development
-      MYSQL_USER: appbuilder
-      MYSQL_PASSWORD: 1234
-      MYSQL_ROOT_PASSWORD: 1234
+      POSTGRES_DB: development
+      POSTGRES_USER: db-user
+      POSTGRES_PASSWORD: 1234
+      PGDATA: /var/lib/postgresql/data
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql-data:/var/lib/mysql/data
+      - postgres-data:/var/lib/postgresql/data
 
   valkey:
     image: valkey/valkey:latest

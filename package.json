@@ -13,9 +13,6 @@
 		"format": "eslint --fix .",
 		"lint": "eslint ."
 	},
-	"prisma": {
-		"schema": "src/lib/prisma/schema.prisma"
-	},
 	"devDependencies": {
 		"@bull-board/api": "^6.13.1",
 		"@bull-board/hono": "^6.13.1",
