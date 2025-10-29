@@ -13,8 +13,8 @@ model build {
   status            String?   @db.VarChar(255)
   result            String?   @db.VarChar(255)
   error             String?   @db.VarChar(2083)
-  created           DateTime? @db.Timestamp(6)
-  updated           DateTime? @db.Timestamp(6)
+  created           DateTime? @default(now()) @db.Timestamp(6)
+  updated           DateTime? @updatedAt @db.Timestamp(6)
   channel           String?   @db.VarChar(255)
   version_code      Int?
   artifact_url_base String?   @db.VarChar(2083)
