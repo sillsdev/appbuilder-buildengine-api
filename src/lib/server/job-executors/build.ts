@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import type { Job } from 'bullmq';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { Build } from '../../models/build';
 import { CodeBuild } from '../aws/codebuild';
 import { CodeCommit } from '../aws/codecommit';
@@ -45,7 +46,9 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       if (!commitId) throw new Error('No commitId found!');
       job.updateProgress(25);
 
-      const script = (await readFile('scripts/appbuilders_build.yml')).toString();
+      const script = (
+        await readFile(join(process.cwd(), './scripts/appbuilders_build.yml'))
+      ).toString();
       job.updateProgress(50);
       // Start the build
       const codeBuild = new CodeBuild();
@@ -79,7 +82,9 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       };
     } else {
       job.log('Starting build with CodeBuild');
-      const script = (await readFile('scripts/appbuilders_s3_build.yml')).toString();
+      const script = (
+        await readFile(join(process.cwd(), './scripts/appbuilders_s3_build.yml'))
+      ).toString();
       job.updateProgress(50);
       // Start the build
       const codeBuild = new CodeBuild();
