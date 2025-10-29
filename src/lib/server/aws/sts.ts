@@ -114,7 +114,7 @@ export class STS extends AWSCommon {
   ) {
     const path = project.url!.substring(5);
     return policy
-      .replace('BUCKET', path.split('/')[0])
-      .replace('FOLDER', path.split('/').slice(1).join('/'));
+      .replace(/BUCKET/g, path.split('/')[0])
+      .replace(/FOLDER/g, path.split('/').slice(1).join('/'));
   }
 }
