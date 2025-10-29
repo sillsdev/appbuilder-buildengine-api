@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { Build } from '$lib/models/build';
+import { BullMQ, getQueues } from '$lib/server/bullmq';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 
@@ -39,6 +40,10 @@ export const POST: RequestHandler = async ({ request, params }) => {
       console_text_url: true,
       artifact_files: true
     }
+  });
+  await getQueues().Builds.add(`Start Build #${build.id} for Job ${build.job_id}`, {
+    type: BullMQ.JobType.Build_Product,
+    buildId: build.id
   });
   return new Response(
     JSON.stringify({
