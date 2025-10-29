@@ -1,7 +1,7 @@
 import type { Job } from 'bullmq';
 import { Worker } from 'bullmq';
 import * as Executor from '../job-executors';
-import { getWorkerConfig } from './queues';
+import { getQueues, getWorkerConfig } from './queues';
 import * as BullMQ from './types';
 import { building } from '$app/environment';
 
@@ -20,6 +20,37 @@ export abstract class BullWorker<T extends BullMQ.Job> {
     }
   }
   abstract run(job: Job<T>): Promise<unknown>;
+}
+
+export class SystemStartup<J extends BullMQ.SystemJob> extends BullWorker<J> {
+  private jobsLeft = 0;
+  constructor() {
+    super(BullMQ.QueueName.System_Startup);
+    const startupJobs = [
+      [
+        'Create CodeBuild Project (Startup)',
+        {
+          type: BullMQ.JobType.System_CreateCodeBuildProject
+        }
+      ]
+    ] as const;
+    startupJobs.forEach(([name, data]) => {
+      getQueues().SystemStartup.add(name, data);
+    });
+    this.jobsLeft = startupJobs.length;
+  }
+  async run(job: Job<J>) {
+    // Close the worker after running the startup jobs
+    // This prevents this worker from taking startup jobs when a new instance is started
+    // The worker will not actually be closed until all processing jobs are complete
+    if (--this.jobsLeft === 0) this.worker?.close();
+    switch (job.data.type) {
+      case BullMQ.JobType.System_CreateCodeBuildProject:
+        return Executor.System.createCodeBuildProject(
+          job as Job<BullMQ.System.CreateCodeBuildProject>
+        );
+    }
+  }
 }
 
 export class Builds<J extends BullMQ.BuildJob> extends BullWorker<J> {

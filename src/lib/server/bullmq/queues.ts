@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
-import type { BuildJob, PollJob, ProjectJob, PublishJob, S3Job } from './types';
+import type { BuildJob, PollJob, ProjectJob, PublishJob, S3Job, SystemJob } from './types';
 import { QueueName } from './types';
 
 class Connection {
@@ -89,12 +89,15 @@ function createQueues() {
   const Publishing = new Queue<PublishJob>(QueueName.Publishing, getQueueConfig());
   /** Queue for jobs that poll BuildEngine, such as checking the status of a build */
   const Polling = new Queue<PollJob>(QueueName.Polling, getQueueConfig());
+  /** Queue for jobs that run on startup, such as creating the CodeBuild project */
+  const SystemStartup = new Queue<SystemJob>(QueueName.System_Startup, getQueueConfig());
   return {
     Builds,
     S3,
     Projects,
     Publishing,
-    Polling
+    Polling,
+    SystemStartup
   };
 }
 export function getQueues() {

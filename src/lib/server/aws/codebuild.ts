@@ -414,7 +414,7 @@ export class CodeBuild extends AWSCommon {
    * @param Array source Strings defining the source parameter of the build
    *
    */
-  public createProject(
+  public async createProject(
     base_name: string,
     role_arn: string,
     cache: ProjectCache,
@@ -423,7 +423,7 @@ export class CodeBuild extends AWSCommon {
     const project_name = CodeBuild.getCodeBuildProjectName(base_name);
     const artifacts_bucket = CodeBuild.getArtifactsBucket();
     console.log(`Bucket: ${artifacts_bucket}`);
-    this.codeBuildClient.send(
+    return await this.codeBuildClient.send(
       new CreateProjectCommand({
         artifacts: {
           // REQUIRED
