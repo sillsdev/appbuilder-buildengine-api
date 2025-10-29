@@ -71,7 +71,8 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
       where: { id: job.data.buildId },
       data: {
         result: Build.Result.Failure,
-        status: Build.Status.Completed
+        status: Build.Status.Completed,
+        error: String(e)
       }
     });
   }
