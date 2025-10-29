@@ -10,6 +10,7 @@ import {
   type _Object
 } from '@aws-sdk/client-s3';
 import { basename, dirname, extname } from 'node:path';
+import { S3SyncClient } from 's3-sync-client';
 import { AWSCommon } from './common';
 import { env } from '$env/dynamic/private';
 import {
@@ -224,6 +225,11 @@ export class S3 extends AWSCommon {
     const s3Bucket = S3.getArtifactsBucket();
     console.log(`Deleting S3 bucket: ${s3Bucket} key: ${s3Folder}`);
     return this.deleteMatchingObjects(s3Bucket, s3Folder);
+  }
+
+  public async uploadFolder(folderName: string, bucket: string) {
+    const client = new S3SyncClient({ client: this.getS3ClientWithCredentials() });
+    return await client.sync(folderName, bucket);
   }
 
   private getFileType(fileName: string) {

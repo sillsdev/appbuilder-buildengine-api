@@ -20,7 +20,8 @@ export enum QueueName {
   S3 = 'S3',
   Projects = 'Projects',
   Publishing = 'Publishing',
-  Polling = 'Polling'
+  Polling = 'Polling',
+  System_Startup = 'System (Startup)'
 }
 
 export enum JobType {
@@ -37,7 +38,9 @@ export enum JobType {
   Publish_PostProcess = 'Postprocess Publish',
   // S3 Jobs
   S3_CopyArtifacts = 'Copy Artifacts to S3',
-  S3_CopyError = 'Copy Errors to S3'
+  S3_CopyError = 'Copy Errors to S3',
+  // System Jobs
+  System_CreateCodeBuildProject = 'Create CodeBuild Project'
 }
 
 export namespace Build {
@@ -108,6 +111,12 @@ export namespace S3 {
   }
 }
 
+export namespace System {
+  export interface CreateCodeBuildProject {
+    type: JobType.System_CreateCodeBuildProject;
+  }
+}
+
 export type Job = JobTypeMap[keyof JobTypeMap];
 
 export type BuildJob = JobTypeMap[JobType.Build_Product | JobType.Build_PostProcess];
@@ -115,6 +124,7 @@ export type S3Job = JobTypeMap[JobType.S3_CopyArtifacts | JobType.S3_CopyError];
 export type PublishJob = JobTypeMap[JobType.Publish_Product | JobType.Publish_PostProcess];
 export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Publish];
 export type ProjectJob = JobTypeMap[JobType.Project_Create];
+export type SystemJob = JobTypeMap[JobType.System_CreateCodeBuildProject];
 
 export type JobTypeMap = {
   [JobType.Build_Product]: Build.Product;
@@ -126,5 +136,6 @@ export type JobTypeMap = {
   [JobType.Publish_PostProcess]: Publish.PostProcess;
   [JobType.S3_CopyArtifacts]: S3.CopyArtifacts;
   [JobType.S3_CopyError]: S3.CopyErrors;
+  [JobType.System_CreateCodeBuildProject]: System.CreateCodeBuildProject;
   // Add more mappings here as needed
 };
