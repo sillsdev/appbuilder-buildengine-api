@@ -431,8 +431,17 @@ download_play_listing() {
       sync_publish_secrets "${SECRETS_SUBDIR}"
       export SUPPLY_JSON_KEY="${SECRETS_DIR}/playstore_api.json"
       export SUPPLY_PACKAGE_NAME="${APPDEF_PACKAGE_NAME}"
-      export SUPPLY_METADATA_PATH="build_data/publish/play-listing"
+      DOWNLOAD_TMP_DIR=$(mktemp -d)
+      DOWNLOAD_TARGET_DIR="build_data/publish/play-listing"
+      export SUPPLY_METADATA_PATH="${DOWNLOAD_TMP_DIR}/metadata"
+
       fastlane supply init
+
+      # Ensure metadata dir exists and remove any default files/dirs AppBuilder may have created.
+      mkdir -p "${DOWNLOAD_TARGET_DIR}"
+      rm -rf -- "${DOWNLOAD_TARGET_DIR:?}"/*
+      cp -a "${SUPPLY_METADATA_PATH}/." "${DOWNLOAD_TARGET_DIR}/"
+
       (cd "${SUPPLY_METADATA_PATH}" && zip -r "${OUTPUT_DIR}/play-listing.zip" .)
     fi
   fi
