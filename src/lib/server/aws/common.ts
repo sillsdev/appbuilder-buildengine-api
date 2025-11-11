@@ -2,7 +2,7 @@ import { env } from '$env/dynamic/private';
 
 export class AWSCommon {
   public static getArtifactsBucketRegion() {
-    return env.BUILD_ENGINE_ARTIFACTS_BUCKET_REGION;
+    return env.BUILD_ENGINE_ARTIFACTS_BUCKET_REGION || 'us-east-1';
   }
 
   public static getAwsRegion() {
@@ -30,10 +30,10 @@ export class AWSCommon {
   }
 
   public static getCodeBuildImageTag() {
-    return env.CODE_BUILD_IMAGE_TAG;
+    return env.CODE_BUILD_IMAGE_TAG || 'production';
   }
   public static getCodeBuildImageRepo() {
-    return env.CODE_BUILD_IMAGE_REPO;
+    return env.CODE_BUILD_IMAGE_REPO || 'sillsdev/appbuilder-agent';
   }
   public static getScriptureEarthKey() {
     return env.SCRIPTURE_EARTH_KEY;
