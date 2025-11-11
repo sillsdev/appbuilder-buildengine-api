@@ -5,6 +5,8 @@ $FRONT_COOKIE_KEY = getenv('FRONT_COOKIE_KEY') ?: null;
 $BASE_URL = getenv('API_BASE_URL') ?: null;
 $BUILD_ENGINE_PROJECTS_BUCKET = getenv('BUILD_ENGINE_PROJECTS_BUCKET') ?: "unset";
 $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION = getenv('BUILD_ENGINE_ARTIFACTS_BUCKET_REGION') ?: "us-east-1";
+$CODE_BUILD_IMAGE_REPO = getenv('CODE_BUILD_IMAGE_REPO') ?: "sillsdev/appbuilder-agent";
+$CODE_BUILD_IMAGE_TAG = getenv('CODE_BUILD_IMAGE_TAG') ?: "production";
 
 return [
     'id' => 'app-frontend',
@@ -89,5 +91,7 @@ return [
     'params' => [
         'buildEngineProjectsBucket' => $BUILD_ENGINE_PROJECTS_BUCKET,
         'buildEngineArtifactsBucketRegion' => $BUILD_ENGINE_ARTIFACTS_BUCKET_REGION,
+        'codeBuildImageRepo' => $CODE_BUILD_IMAGE_REPO,
+        'codeBuildImageTag' => $CODE_BUILD_IMAGE_TAG,
     ],
 ];
