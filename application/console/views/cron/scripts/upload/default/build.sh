@@ -111,12 +111,10 @@ build_apk() {
   fi
 
   # if building APK for Google Play, then include data safety CSV in output
-  echo "APPBUILDER_SCRIPT_VERSION=${APPBUILDER_SCRIPT_VERSION}"
-  if dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" ge "10.3"; then
-    if [[ "${TARGETS}" == *"play-listing"* ]]; then
-      SCRIPT_OPT="${SCRIPT_OPT} -data-safety-csv"
-    fi
+  if [[ "${TARGETS}" == *"play-listing"* ]]; then
+    SCRIPT_OPT="${SCRIPT_OPT} -data-safety-csv"
   fi
+
 
   process_audio_sources
   process_audio_download
