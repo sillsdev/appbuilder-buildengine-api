@@ -15,6 +15,9 @@ on:
   schedule:
     - cron: "0 0 * * 0" # weekly
 
+env:
+  BUILD_TAG: "build-engine-api:latest"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,12 +41,13 @@ jobs:
         run: |
           make test
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Build docker image
+        uses: docker/build-push-action@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          push: false
+          tags: ${{ env.BUILD_TAG }}
+          context: .
+          load: true
 
       - name: Determine branch tag
         id: branch
@@ -52,13 +56,36 @@ jobs:
           case $BRANCH in develop) DOCKER_TAG="staging" ;; master) DOCKER_TAG="production" ;; *) DOCKER_TAG="${BRANCH//\//-}" ;; esac
           echo "DockerTag=${DOCKER_TAG}" >> $GITHUB_OUTPUT
 
-      - name: Build and push Docker images
-        uses: docker/build-push-action@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          push: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch') && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/github-builds') }}
-          tags: |
-            ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
-          context: .
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to GHCR
+        run: |
+          docker tag ${{ env.BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
+          docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
+
+      - name: Configure AWS credentials (SIL)
+        id: aws_sil
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.SIL__AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.SIL__AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.SIL__AWS_DEFAULT_REGION }}
+
+      - name: Login to AWS ECR (SIL)
+        id: ecr_sil
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ secrets.SIL__AWS_ECR_ACCOUNT }}
+
+      - name: Push to AWS ECR (SIL)
+        run: |
+          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
 
       - name: Clean up older packages
         uses: actions/delete-package-versions@v4
