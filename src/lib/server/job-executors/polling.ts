@@ -30,6 +30,7 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
       job.updateProgress(50);
 
       if (codeBuild.isBuildComplete(buildStatus)) {
+        await getQueues().Polling.removeJobScheduler(job.name);
         build.status = Build.Status.PostProcessing;
         status = codeBuild.getStatus(buildStatus);
         switch (status) {
