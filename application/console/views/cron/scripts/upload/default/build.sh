@@ -146,11 +146,19 @@ build_apk() {
 
   cd "$PROJECT_DIR" || exit 1
 
-  # shellcheck disable=SC2086
-  $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
-  if [[ "${BUILD_ANDROID_AAB}" == "1" ]]; then
+  echo "APPBUILDER_SCRIPT_VERSION=${APPBUILDER_SCRIPT_VERSION}"
+  # If AppBuilder >= 13.3, building AAB will also build APK, so no need for a separate APK build
+  if [[ "${BUILD_ANDROID_AAB}" == "1" ]] && dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" ge "13.3"; then
     # shellcheck disable=SC2086
     $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -app-bundle ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
+  else
+    # If AppBuilder < 13.3, regular APK build and possible AAB build
+    # shellcheck disable=SC2086
+    $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
+    if [[ "${BUILD_ANDROID_AAB}" == "1" ]]; then
+      # shellcheck disable=SC2086
+      $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build -app-bundle ${KS_OPT} -fp apk.output="$OUTPUT_DIR" -vc "$VERSION_CODE" -vn "$VERSION_NAME" ${SCRIPT_OPT}
+    fi
   fi
 
   # verify output -- AAPT2 is failing during appbuilder build but error is not getting back to script
