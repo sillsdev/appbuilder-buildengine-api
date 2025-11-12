@@ -107,11 +107,10 @@ export class S3 extends AWSCommon {
    */
   public async copyS3Folder(artifacts_provider: ProviderForPrefix & ProviderForArtifacts) {
     const artifactsBucket = S3.getArtifactsBucket();
-    const sourcePrefix = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
-    const destPrefix = getBasePrefixUrl(artifacts_provider, S3.getAppEnv()) + '/';
-    const publicBaseUrl = `https://${artifactsBucket}.s3.amazonaws.com/${destPrefix}`;
-    beginArtifacts(artifacts_provider, publicBaseUrl);
     const destFolderPrefix = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
+    const sourcePrefix = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
+    const destPrefix = destFolderPrefix + '/';
+    beginArtifacts(artifacts_provider, `https://${artifactsBucket}.s3.amazonaws.com/${destPrefix}`);
     try {
       await this.deleteMatchingObjects(artifactsBucket, destFolderPrefix);
     } catch (e) {
@@ -259,13 +258,15 @@ export class S3 extends AWSCommon {
         Prefix
       })
     );
-    return await this.s3Client.send(
-      new DeleteObjectsCommand({
-        Bucket,
-        Delete: {
-          Objects: existing.Contents?.map(({ Key }) => ({ Key }))
-        }
-      })
-    );
+    if (existing.Contents) {
+      return await this.s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket,
+          Delete: {
+            Objects: existing.Contents?.map(({ Key }) => ({ Key }))
+          }
+        })
+      );
+    }
   }
 }
