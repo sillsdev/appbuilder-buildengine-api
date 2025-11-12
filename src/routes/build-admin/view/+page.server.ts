@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import type { PageServerLoad } from './$types';
+import { Build } from '$lib/models/build';
 import { prisma } from '$lib/server/prisma';
 import { idSchema, paramNumber } from '$lib/valibot';
 
@@ -19,6 +20,7 @@ export const load = (async ({ url }) => {
   if (!build) error(404);
 
   return {
-    build
+    build,
+    artifacts: build.artifact_files ? Build.artifacts(build) : {}
   };
 }) satisfies PageServerLoad;
