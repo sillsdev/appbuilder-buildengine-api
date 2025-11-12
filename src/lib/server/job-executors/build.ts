@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Build } from '../../models/build';
 import { CodeBuild } from '../aws/codebuild';
 import { CodeCommit } from '../aws/codecommit';
-import type { BullMQ } from '../bullmq';
+import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
 
 export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> {
@@ -110,6 +110,14 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
           }
         });
       }
+      const name = `Check status of Build #${build.id}`;
+      await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
+        name,
+        data: {
+          type: BullMQ.JobType.Poll_Build,
+          buildId: build.id
+        }
+      });
       job.updateProgress(100);
       return {
         versionCode,
