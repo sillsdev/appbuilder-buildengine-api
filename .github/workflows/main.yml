@@ -93,13 +93,75 @@ jobs:
 
       - name: Push to AWS ECR (SIL)
         run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"          
+          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
           docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ github.sha }}"
           docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
           docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ github.sha }}"
 
       - name: Deploy to ECS (SIL)
         if: ${{ steps.branch.outputs.EcsCluster != 'none' }}
+        run: |
+          echo "Deploying ${{ github.sha }} to ${{ steps.branch.outputs.EcsCluster }}"
+          # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
+          ecs-deploy -c ${{ steps.branch.outputs.EcsCluster }} -n buildengine -i ignore -to ${{ github.sha }} --max-definitions 20 --timeout 600
+          echo "Deployment initiated successfully."
+
+      - name: Configure AWS credentials (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        id: aws_fcbh
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
+
+      - name: Login to AWS ECR (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        id: ecr_fcbh
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
+
+      - name: Push to AWS ECR (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        run: |
+          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ github.sha }}"
+          docker push "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker push "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ github.sha }}"
+
+      - name: Deploy to ECS (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
+        run: |
+          echo "Deploying ${{ github.sha }} to ${{ steps.branch.outputs.EcsCluster }}"
+          # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
+          ecs-deploy -c ${{ steps.branch.outputs.EcsCluster }} -n buildengine -i ignore -to ${{ github.sha }} --max-definitions 20 --timeout 600
+          echo "Deployment initiated successfully."
+
+      - name: Configure AWS credentials (LU)
+        id: aws_lu
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.LU__AWS_DEFAULT_REGION }}
+
+      - name: Login to AWS ECR (LU)
+        id: ecr_lu
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ secrets.LU__AWS_ECR_ACCOUNT }}
+
+      - name: Push to AWS ECR (LU)
+        run: |
+          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ github.sha }}"
+          docker push "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker push "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ github.sha }}"
+
+      - name: Deploy to ECS (LU)
+        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
         run: |
           echo "Deploying ${{ github.sha }} to ${{ steps.branch.outputs.EcsCluster }}"
           # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
