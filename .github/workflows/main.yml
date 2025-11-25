@@ -108,6 +108,8 @@ jobs:
           echo "Deployment initiated successfully."
 
       - name: Configure AWS credentials (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
         id: aws_fcbh
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -116,12 +118,16 @@ jobs:
           aws-region: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
 
       - name: Login to AWS ECR (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
         id: ecr_fcbh
         uses: aws-actions/amazon-ecr-login@v2
         with:
           registries: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
 
       - name: Push to AWS ECR (FCBH)
+        if: false # Temporarily disabled - remove this line to re-enable
+        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
         run: |
           docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
           docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
@@ -138,6 +144,7 @@ jobs:
           echo "Deployment initiated successfully."
 
       - name: Configure AWS credentials (LU)
+        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
         id: aws_lu
         uses: aws-actions/configure-aws-credentials@v4
         with:
