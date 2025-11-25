@@ -18,10 +18,6 @@ use Aws\Exception\AwsException;
  */
 class SystemController extends Controller
 {
-    // Cache key prefix for version cache
-    const VERSION_CACHE_PREFIX = 'ecr_image_versions_';
-    const VERSION_CACHE_DURATION = 3600; // 1 hour
-
     public function actionCheck()
     {
         // Verify DB connectivity first
@@ -34,7 +30,6 @@ class SystemController extends Controller
         // Prepare default response structure
         $versions = [];
         $imageHash = null;
-        $createdFromCache = null;
 
         // Prefer params from frontend config/main.php (no getenv fallback)
         $repoConfig = Yii::$app->params['codeBuildImageRepo'] ?? null;
@@ -112,53 +107,18 @@ class SystemController extends Controller
                             continue;
                         }
 
+                        // Extract versions for all apps from the image manifest/config
+                        $appVersions = $this->fetchAllAppVersionsFromManifest($client, $repoName, $imgTag, $appNames);
 
-                        // Check cache first using the image digest if available
-                        if ($imageDigest) {
-                            $cacheKey = self::VERSION_CACHE_PREFIX . $imageDigest;
-                            $cachedData = Yii::$app->cache->get($cacheKey);
+                        if (!empty($appVersions)) {
+                            $imageHash = $imageDigest;
 
-                            if ($cachedData !== false) {
-                                Yii::info('SystemController::actionCheck - returning cached versions for digest ' . $imageDigest . ' (tag ' . $imgTag . ') - skipping manifest fetch');
-                                $appVersions = $cachedData['versions'] ?? [];
-                                $imageHash = $imageDigest;
-                                $createdFromCache = $cachedData['created'] ?? null;
-
-                                if (!empty($appVersions)) {
-                                    foreach ($appVersions as $app => $version) {
-                                        $versions[$app] = $version;
-                                        Yii::info('SystemController::actionCheck - cached version for tag ' . $imgTag . ' => ' . $app . ' ' . $version);
-                                    }
-                                }
-                                break 2; // break out of image and tag loops since we found a match.
+                            foreach ($appVersions as $app => $version) {
+                                $versions[$app] = $version;
+                                Yii::info('SystemController::actionCheck - manifest-derived version for tag ' . $imgTag . ' => ' . $app . ' ' . $version);
                             }
-
-                            // Extract versions for all apps from the image manifest/config
-                            $appVersions = $this->fetchAllAppVersionsFromManifest($client, $repoName, $imgTag, $appNames);
-
-                            if (!empty($appVersions)) {
-                                // Cache the results using the image digest as the key
-                                $created = (new \DateTime('now', new \DateTimeZone('UTC')))->format('c');
-                                if ($imageDigest) {
-                                    $cacheData = [
-                                        'versions' => $appVersions,
-                                        'created' => $created,
-                                        'cached_at' => time()
-                                    ];
-                                    Yii::$app->cache->set($cacheKey, $cacheData, self::VERSION_CACHE_DURATION);
-                                    Yii::info('SystemController::actionCheck - cached versions for digest ' . $imageDigest . ' (tag ' . $imgTag . ') for ' . self::VERSION_CACHE_DURATION . ' seconds');
-                                }
-
-                                $imageHash = $imageDigest;
-                                $createdFromCache = $created;
-
-                                foreach ($appVersions as $app => $version) {
-                                    $versions[$app] = $version;
-                                    Yii::info('SystemController::actionCheck - manifest-derived version for tag ' . $imgTag . ' => ' . $app . ' ' . $version);
-                                }
-                            } else {
-                                Yii::info('SystemController::actionCheck - no app versions found in manifest for tag ' . $imgTag);
-                            }
+                        } else {
+                            Yii::info('SystemController::actionCheck - no app versions found in manifest for tag ' . $imgTag);
                         }
                     }
                 }
@@ -177,9 +137,7 @@ class SystemController extends Controller
         }
 
         // Build timestamps - use cached creation date if available, otherwise current time
-        $now = (new \DateTime('now', new \DateTimeZone('UTC')))->format('c');
-        $created = $createdFromCache ?: $now;
-        $updated = $now;
+        $created = (new \DateTime('now', new \DateTimeZone('UTC')))->format('c');
 
         // Debug logging
         Yii::info('SystemController::actionCheck - Final $versions structure: ' . json_encode($versions));
@@ -187,7 +145,7 @@ class SystemController extends Controller
         $response = [
             'versions' => (object) $versions, // cast to object to ensure JSON object even when empty
             'created' => $created,
-            'updated' => $updated,
+            'updated' => $created,
             'imageHash' => $imageHash,
             '_links' => [
                 'self' => [
