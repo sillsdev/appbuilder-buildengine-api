@@ -369,13 +369,14 @@ notify_scripture_earth_update_json() {
   echo "${i_json}" | jq \
     --arg type "${i_type}" \
     --arg idx "${SCRIPTURE_EARTH_ID}" \
+    --arg desc "${SCRIPTURE_EARTH_DESCRIPTION}" \
     --arg url "${i_url}" \
     --arg email "${PROJECT_OWNER_EMAIL}" \
     --arg projectName "${PROJECT_NAME}" \
     --arg username "${PROJECT_OWNER_NAME}" \
     --arg organization "${PROJECT_ORGANIZATION}" \
     --arg project "${PROJECT_URL}" \
-    '. + [ { type: $type, idx: $idx, url: $url, email: $email, projectName: $projectName, username: $username, organization: $organization}]'
+    '. + [ { type: $type, idx: $idx, url: $url, email: $email, projectName: $projectName, description: $desc, username: $username, organization: $organization}]'
 }
 
 notify_scripture_earth() {
