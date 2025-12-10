@@ -614,7 +614,7 @@ prepare_appbuilder_project() {
             INPUT_PUBLISH_PROPERTIES=$OUTPUT_PUBLISH_PROPERTIES
           fi
           if jq -e '.PUBLISH_CLOUD_REMOTE_PATH' "${INPUT_PUBLISH_PROPERTIES}" >/dev/null; then
-            if ! xmlstarlet sel -t -v "/app-definition/pwa-manifest/pwa-sub-directory" build.appDef 2>/dev/null; then
+            if ! xmlstarlet sel -t -v "count(/app-definition//pwa-sub-directory)" build.appDef 2>/dev/null; then
                 # Note: The #/ in the variable expansion removes any leading slashes if it exists.
                 #       This makes sure the string begins with a single slash
                 PWA_SUBDIR="/${PUBLISH_CLOUD_REMOTE_PATH#/}"
@@ -622,13 +622,12 @@ prepare_appbuilder_project() {
                 echo "PUBLISH_CLOUD_REMOTE_PATH=${PUBLISH_CLOUD_REMOTE_PATH} so update PWA Sub Directory=${PWA_SUBDIR}"
                 APPDEF_TMP=$(mktemp)
                 xmlstarlet ed \
-                  -s "/app-definition" -t elem -n "pwa-manifest" -v "" \
-                  -s "/app-definition/pwa-manifest" -t elem -n "pwa-sub-directory" -v "${PWA_SUBDIR}" \
+                  -s "/app-definition" -t elem -n "pwa-sub-directory" -v "${PWA_SUBDIR}" \
                   build.appDef > "${APPDEF_TMP}"
                 cp "${APPDEF_TMP}" build.appDef
             fi
           else
-            PWA_SUBDIR=$(xmllint --xpath "/app-definition/pwa-manifest/pwa-sub-directory/text()" build.appDef 2>/dev/null || echo "")
+            PWA_SUBDIR=$(xmllint --xpath "/app-definition//pwa-sub-directory/text()" build.appDef 2>/dev/null || echo "")
             if [ "$PWA_SUBDIR" != "" ]; then
               echo "PUBLISH_CLOUD_REMOTE_PATH does not exist, but PWA Sub Directory is set."
               echo "PWA Sub Directory=${PWA_SUBDIR} so update PUBLISH_CLOUD_REMOTE_PATH=${PWA_SUBDIR#/}"
