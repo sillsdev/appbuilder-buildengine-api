@@ -582,7 +582,8 @@ prepare_appbuilder_project() {
         PUBLISH_NOTIFY_SCRIPTURE_EARTH=$(xmlstarlet sel -t -v "/app-definition/publishing/scripture-earth/@notify" build.appDef || true)
         PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID=$(jq -r '.["0"].relationships.idx' "${PUBLISH_SE_RECORD}")
         if [[ "${PUBLISH_NOTIFY_SCRIPTURE_EARTH}" == "true" ]]; then
-          echo "Notify Scripture Earth: id=${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}"
+          SCRIPTURE_EARTH_DESCRIPTION=$(xmlstarlet sel -t -v "/app-definition/publishing/scripture-earth/@description" build.appDef || echo "")
+          echo "Notify Scripture Earth: id=${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID} with description='${SCRIPTURE_EARTH_DESCRIPTION}'"
           # If the "Notify Scripture Earth" property is enabled in the AppDef
           PUBLISH_TMP=$(mktemp)
           PUBLISH_NOTIFY_TYPE=$(jq -r '.PUBLISH_NOTIFY | type' "${PUBLISH_PROPERTIES}")
@@ -601,7 +602,7 @@ prepare_appbuilder_project() {
             jq -cM --arg cur "${PUBLISH_NOTIFY_CURRENT}" '.PUBLISH_NOTIFY += ",SCRIPTURE_EARTH"' "${PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
           fi
           cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
-          jq -cM --arg idx "${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}" '.SCRIPTURE_EARTH_ID = $idx' "${OUTPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
+          jq -cM --arg idx "${PUBLISH_NOTIFY_SCRIPTURE_EARTH_ID}" --arg desc "${SCRIPTURE_EARTH_DESCRIPTION}" '.SCRIPTURE_EARTH_ID = $idx | .SCRIPTURE_EARTH_DESCRIPTION = $desc' "${OUTPUT_PUBLISH_PROPERTIES}" > "${PUBLISH_TMP}"
           cp "${PUBLISH_TMP}" "${OUTPUT_PUBLISH_PROPERTIES}"
         fi
       fi
