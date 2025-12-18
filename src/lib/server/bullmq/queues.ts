@@ -2,14 +2,16 @@ import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import type { BuildJob, PollJob, ProjectJob, PublishJob, S3Job, SystemJob } from './types';
 import { QueueName } from './types';
+import { env } from '$env/dynamic/private';
 
 class Connection {
   private conn: Redis;
   private connected: boolean;
-  constructor(isQueueConnection = false) {
+  constructor(isQueueConnection = false, keyPrefix?: string) {
     this.conn = new Redis({
       host: process.env.NODE_ENV === 'development' ? 'localhost' : process.env.VALKEY_HOST,
-      maxRetriesPerRequest: isQueueConnection ? undefined : null
+      maxRetriesPerRequest: isQueueConnection ? undefined : null,
+      keyPrefix
     });
     this.connected = false;
     this.conn.on('close', () => {
@@ -55,14 +57,20 @@ class Connection {
 
 let _workerConnection: Connection | undefined = undefined;
 let _queueConnection: Connection | undefined = undefined;
+let _authConnection: Connection | undefined = undefined;
 
 export const QueueConnected = () => _queueConnection?.IsConnected() ?? false;
+
+export const getAuthConnection = () => {
+  if (!_authConnection) _authConnection = new Connection(false, env.APP_ENV + '_be_auth');
+  return _authConnection.connection();
+};
 
 export const getWorkerConfig = () => {
   if (!_workerConnection) _workerConnection = new Connection(false);
   return {
     connection: _workerConnection!.connection(),
-    prefix: 'build-engine'
+    prefix: env.APP_ENV + '_build-engine'
   } as const;
 };
 
@@ -70,7 +78,7 @@ export const getQueueConfig = () => {
   if (!_queueConnection) _queues = createQueues();
   return {
     connection: _queueConnection!.connection(),
-    prefix: 'build-engine'
+    prefix: env.APP_ENV + '_build-engine'
   } as const;
 };
 let _queues: ReturnType<typeof createQueues> | undefined = undefined;
