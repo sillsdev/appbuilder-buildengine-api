@@ -1,8 +1,9 @@
-import { redirect } from '@sveltejs/kit';
 import { error } from 'console';
 import { EncryptJWT, jwtVerify } from 'jose';
 import type { RequestHandler } from './$types';
-import { env } from '$env/dynamic/private';
+import { env as secrets } from '$env/dynamic/private';
+import { env } from '$env/dynamic/public';
+import { returnTo } from '$lib/server/auth';
 import { QueueConnected } from '$lib/server/bullmq';
 import { getAuthConnection } from '$lib/server/bullmq/queues';
 
@@ -27,19 +28,22 @@ export const GET: RequestHandler = async (event) => {
       /* empty */
     }
 
-    const res: { id_token?: string } = await fetch(`${env.SCRIPTORIA_URL}/api/auth/exchange`, {
-      method: 'POST',
-      body: JSON.stringify({
-        code,
-        verify
-      })
-    }).then((r) => r.json());
+    const res: { id_token?: string } = await fetch(
+      `${env.PUBLIC_SCRIPTORIA_URL}/api/auth/exchange`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          code,
+          verify
+        })
+      }
+    ).then((r) => r.json());
 
     if (!res.id_token) {
       throw error(401, 'Authentication failed');
     }
 
-    const key = new TextEncoder().encode(env.AUTH0_SECRET);
+    const key = new TextEncoder().encode(secrets.AUTH0_SECRET);
 
     const token = await jwtVerify(res.id_token, key);
 
@@ -49,13 +53,7 @@ export const GET: RequestHandler = async (event) => {
 
     event.cookies.set('scriptoria.session-token', encryptedToken, { path: '/' });
 
-    const redirectUrl = decodeURIComponent(event.url.searchParams.get('returnTo') ?? '');
-    throw redirect(
-      302,
-      redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
-        ? redirectUrl
-        : '/'
-    );
+    throw returnTo(event);
   } else {
     throw error(503, 'Service Unavailable');
   }
