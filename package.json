@@ -58,7 +58,7 @@
 		"prisma": "^6.15.0",
 		"s3-sync-client": "^4.3.1"
 	},
-	"//auth": "@auth/core has a peerDep on v6, but it is never used",
+	"//cookie": "sveltekit depends on v0.6, which is insecure",
 	"overrides": {
 		"cookie": "^0.7.0"
 	}
