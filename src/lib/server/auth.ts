@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { type RequestEvent, redirect } from '@sveltejs/kit';
+import { type RequestEvent, error, redirect } from '@sveltejs/kit';
 import { jwtDecrypt } from 'jose';
 import { createHash, randomUUID } from 'node:crypto';
 import { getAuthConnection } from './bullmq/queues';
@@ -20,6 +20,11 @@ export async function tryVerifyCookie(event: RequestEvent, gotoLoginPage = true)
     }
   } catch {
     /* empty */
+  }
+
+  if (token && token.payload.scope !== 'admin') {
+    invalidateLogin(event, false);
+    throw error(401, 'Bad Login');
   }
 
   if (!cookie || !token) {
@@ -68,9 +73,11 @@ export function returnTo(event: RequestEvent) {
   );
 }
 
-export function invalidateLogin(event: RequestEvent) {
+export function invalidateLogin(event: RequestEvent, redirectToLogin = true) {
   event.cookies.set('scriptoria.session-token', '', { path: '/' });
-  throw redirect(302, '/login');
+  if (redirectToLogin) {
+    throw redirect(302, '/login');
+  }
 }
 
 export async function tryVerifyAPIToken(
