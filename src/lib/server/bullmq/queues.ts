@@ -94,7 +94,7 @@ function createQueues() {
   /** Queue for miscellaneous jobs in BuildEngine such as Product and Project Creation */
   const Projects = new Queue<ProjectJob>(QueueName.Projects, getQueueConfig());
   /** Queue for Product Publishing  */
-  const Publishing = new Queue<PublishJob>(QueueName.Publishing, getQueueConfig());
+  const Releases = new Queue<PublishJob>(QueueName.Releases, getQueueConfig());
   /** Queue for jobs that poll BuildEngine, such as checking the status of a build */
   const Polling = new Queue<PollJob>(QueueName.Polling, getQueueConfig());
   /** Queue for jobs that run on startup, such as creating the CodeBuild project */
@@ -103,7 +103,7 @@ function createQueues() {
     Builds,
     S3,
     Projects,
-    Publishing,
+    Releases,
     Polling,
     SystemStartup
   };

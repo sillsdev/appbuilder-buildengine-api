@@ -4,6 +4,7 @@ import { Build } from '../../models/build';
 import { CodeBuild } from '../aws/codebuild';
 import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
+import { Release } from '$lib/models/release';
 
 export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
   try {
@@ -38,11 +39,11 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
           case CodeBuild.Status.Fault:
           case CodeBuild.Status.TimedOut:
             build.result = Build.Result.Failure;
-            await handleFailure(build);
+            await handleBuildFailure(build);
             break;
           case CodeBuild.Status.Stopped:
             build.result = Build.Result.Aborted;
-            await handleFailure(build);
+            await handleBuildFailure(build);
             break;
           case CodeBuild.Status.Succeeded:
             await getQueues().S3.add(`Save Build ${job.data.buildId} to S3`, {
@@ -79,11 +80,7 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
   }
 }
 
-export async function publish(job: Job<BullMQ.Polling.Publish>): Promise<unknown> {
-  return;
-}
-
-async function handleFailure(
+async function handleBuildFailure(
   build: Prisma.buildGetPayload<{ select: { error: true; id: true; console_text_url: true } }>
 ) {
   build.error = build.console_text_url;
@@ -91,5 +88,90 @@ async function handleFailure(
     type: BullMQ.JobType.S3_CopyError,
     scope: 'build',
     id: build.id
+  });
+}
+
+export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown> {
+  try {
+    const release = await prisma.release.findUnique({
+      where: { id: job.data.releaseId },
+      include: { build: true }
+    });
+
+    if (release?.build) {
+      const codeBuild = new CodeBuild();
+
+      const buildStatus = await codeBuild.getBuildStatus(
+        release.build_guid!,
+        CodeBuild.getCodeBuildProjectName('publish_app')
+      );
+      const phase = buildStatus?.currentPhase;
+      let status = buildStatus?.buildStatus;
+      job.log(` phase: ${phase} status: ${status}`);
+      if (codeBuild.isBuildComplete(buildStatus)) {
+        job.log(' Build Complete');
+      } else {
+        job.log(' Build Incomplete');
+      }
+
+      if (codeBuild.isBuildComplete(buildStatus)) {
+        release.status = Build.Status.PostProcessing;
+        status = codeBuild.getStatus(buildStatus);
+        switch (status) {
+          case CodeBuild.Status.Failed:
+          case CodeBuild.Status.Fault:
+          case CodeBuild.Status.TimedOut:
+            release.result = Build.Result.Failure;
+            await handleReleaseFailure(release);
+            break;
+          case CodeBuild.Status.Stopped:
+            release.result = Build.Result.Aborted;
+            await handleReleaseFailure(release);
+            break;
+          case CodeBuild.Status.Succeeded:
+            release.result = Build.Result.Success;
+            await prisma.build.update({
+              where: { id: release.build.id },
+              data: { channel: release.channel }
+            });
+            await getQueues().S3.add(`Save Release ${release.id} to S3`, {
+              type: BullMQ.JobType.S3_CopyArtifacts,
+              scope: 'release',
+              id: release.id
+            });
+            break;
+        }
+      }
+      await prisma.release.update({
+        where: { id: release.id },
+        data: {
+          status: release.status,
+          result: release.result
+        }
+      });
+      return {
+        status: release.status
+      };
+    }
+  } catch (e) {
+    job.log(`${e}`);
+    await prisma.release.update({
+      where: { id: job.data.releaseId },
+      data: { result: Build.Result.Failure, status: Release.Status.Completed }
+    });
+  }
+}
+
+async function handleReleaseFailure(
+  release: Prisma.releaseGetPayload<{ select: { id: true; console_text_url: true } }>
+) {
+  await prisma.release.update({
+    where: { id: release.id },
+    data: { error: release.console_text_url }
+  });
+  await getQueues().S3.add(`Save Errors for Release ${release.id} to S3`, {
+    type: BullMQ.JobType.S3_CopyError,
+    scope: 'release',
+    id: release.id
   });
 }

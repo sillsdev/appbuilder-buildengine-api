@@ -19,7 +19,7 @@ export enum QueueName {
   Builds = 'Builds',
   S3 = 'S3',
   Projects = 'Projects',
-  Publishing = 'Publishing',
+  Releases = 'Releases',
   Polling = 'Polling',
   System_Startup = 'System (Startup)'
 }
@@ -27,15 +27,13 @@ export enum QueueName {
 export enum JobType {
   // Build Jobs
   Build_Product = 'Build Product',
-  Build_PostProcess = 'Postprocess Build',
   // Polling Jobs
   Poll_Build = 'Check Product Build',
-  Poll_Publish = 'Check Product Publish',
+  Poll_Release = 'Check Product Release',
   // Project Jobs
   Project_Create = 'Create Project',
   // Publishing Jobs
-  Publish_Product = 'Publish Product',
-  Publish_PostProcess = 'Postprocess Publish',
+  Release_Product = 'Release Product',
   // S3 Jobs
   S3_CopyArtifacts = 'Copy Artifacts to S3',
   S3_CopyError = 'Copy Errors to S3',
@@ -48,13 +46,6 @@ export namespace Build {
     type: JobType.Build_Product;
     buildId: number;
   }
-
-  export interface PostProcess {
-    type: JobType.Build_PostProcess;
-    productId: string;
-    productBuildId: number;
-    build: unknown;
-  }
 }
 
 export namespace Polling {
@@ -63,8 +54,8 @@ export namespace Polling {
     buildId: number;
   }
 
-  export interface Publish {
-    type: JobType.Poll_Publish;
+  export interface Release {
+    type: JobType.Poll_Release;
     organizationId: number;
     productId: string;
     jobId: number;
@@ -81,20 +72,10 @@ export namespace Project {
   }
 }
 
-export namespace Publish {
+export namespace Release {
   export interface Product {
-    type: JobType.Publish_Product;
-    productId: string;
-    defaultChannel: string;
-    defaultTargets: string;
-    environment: Record<string, string>;
-  }
-
-  export interface PostProcess {
-    type: JobType.Publish_PostProcess;
-    productId: string;
-    publicationId: number;
-    release: unknown;
+    type: JobType.Release_Product;
+    releaseId: number;
   }
 }
 
@@ -119,21 +100,19 @@ export namespace System {
 
 export type Job = JobTypeMap[keyof JobTypeMap];
 
-export type BuildJob = JobTypeMap[JobType.Build_Product | JobType.Build_PostProcess];
+export type BuildJob = JobTypeMap[JobType.Build_Product];
 export type S3Job = JobTypeMap[JobType.S3_CopyArtifacts | JobType.S3_CopyError];
-export type PublishJob = JobTypeMap[JobType.Publish_Product | JobType.Publish_PostProcess];
-export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Publish];
+export type PublishJob = JobTypeMap[JobType.Release_Product];
+export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Release];
 export type ProjectJob = JobTypeMap[JobType.Project_Create];
 export type SystemJob = JobTypeMap[JobType.System_CreateCodeBuildProject];
 
 export type JobTypeMap = {
   [JobType.Build_Product]: Build.Product;
-  [JobType.Build_PostProcess]: Build.PostProcess;
   [JobType.Poll_Build]: Polling.Build;
-  [JobType.Poll_Publish]: Polling.Publish;
+  [JobType.Poll_Release]: Polling.Release;
   [JobType.Project_Create]: Project.Create;
-  [JobType.Publish_Product]: Publish.Product;
-  [JobType.Publish_PostProcess]: Publish.PostProcess;
+  [JobType.Release_Product]: Release.Product;
   [JobType.S3_CopyArtifacts]: S3.CopyArtifacts;
   [JobType.S3_CopyError]: S3.CopyErrors;
   [JobType.System_CreateCodeBuildProject]: System.CreateCodeBuildProject;

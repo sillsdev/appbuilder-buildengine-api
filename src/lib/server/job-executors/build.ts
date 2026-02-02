@@ -137,10 +137,6 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
   }
 }
 
-export async function postProcess(job: Job<BullMQ.Build.PostProcess>): Promise<unknown> {
-  return;
-}
-
 async function getVersionCode(
   job: Prisma.jobGetPayload<{ select: { id: true; existing_version_code: true } }>
 ) {
