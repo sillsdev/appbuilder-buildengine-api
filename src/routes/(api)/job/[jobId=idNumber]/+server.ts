@@ -1,3 +1,4 @@
+import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
@@ -31,9 +32,41 @@ export const GET: RequestHandler = async ({ params }) => {
   );
 };
 
+const updateSchema = v.strictObject({
+  publisher_id: v.string()
+});
+
 // PUT /job/[id]
-export const PUT: RequestHandler = async () => {
-  return ErrorResponse(405, 'PUT /job/[id] is not supported at this time', { Allow: 'GET' });
+export const PUT: RequestHandler = async ({ request, params }) => {
+  const id = Number(params.jobId);
+  const parsed = v.safeParse(updateSchema, await request.json());
+  if (!parsed.success) return ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
+  const job = await prisma.job.update({
+    where: {
+      id
+    },
+    data: { ...parsed.output },
+    select: {
+      id: true,
+      request_id: true,
+      git_url: true,
+      app_id: true,
+      publisher_id: true,
+      created: true,
+      updated: true
+    }
+  });
+  return new Response(
+    JSON.stringify({
+      ...job,
+      client_id: undefined,
+      _links: {
+        self: {
+          href: `${process.env.ORIGIN || 'http://localhost:8443'}/job/${job.id}`
+        }
+      }
+    })
+  );
 };
 
 // DELETE /job/[id]
