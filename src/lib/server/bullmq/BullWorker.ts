@@ -61,8 +61,6 @@ export class Builds<J extends BullMQ.BuildJob> extends BullWorker<J> {
     switch (job.data.type) {
       case BullMQ.JobType.Build_Product:
         return Executor.Build.product(job as Job<BullMQ.Build.Product>);
-      case BullMQ.JobType.Build_PostProcess:
-        return Executor.Build.postProcess(job as Job<BullMQ.Build.PostProcess>);
     }
   }
 }
@@ -93,16 +91,14 @@ export class Projects<J extends BullMQ.ProjectJob> extends BullWorker<J> {
   }
 }
 
-export class Publishing<J extends BullMQ.PublishJob> extends BullWorker<J> {
+export class Releases<J extends BullMQ.PublishJob> extends BullWorker<J> {
   constructor() {
-    super(BullMQ.QueueName.Publishing);
+    super(BullMQ.QueueName.Releases);
   }
   async run(job: Job<J>) {
     switch (job.data.type) {
-      case BullMQ.JobType.Publish_Product:
-        return Executor.Publish.product(job as Job<BullMQ.Publish.Product>);
-      case BullMQ.JobType.Publish_PostProcess:
-        return Executor.Publish.postProcess(job as Job<BullMQ.Publish.PostProcess>);
+      case BullMQ.JobType.Release_Product:
+        return Executor.Release.product(job as Job<BullMQ.Release.Product>);
     }
   }
 }
@@ -115,8 +111,8 @@ export class Polling<J extends BullMQ.PollJob> extends BullWorker<J> {
     switch (job.data.type) {
       case BullMQ.JobType.Poll_Build:
         return Executor.Polling.build(job as Job<BullMQ.Polling.Build>);
-      case BullMQ.JobType.Poll_Publish:
-        return Executor.Polling.publish(job as Job<BullMQ.Polling.Publish>);
+      case BullMQ.JobType.Poll_Release:
+        return Executor.Polling.release(job as Job<BullMQ.Polling.Release>);
     }
   }
 }

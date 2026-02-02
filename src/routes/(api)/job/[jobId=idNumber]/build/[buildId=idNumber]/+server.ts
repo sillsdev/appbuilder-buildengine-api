@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { Build } from '$lib/models/build';
 import { Release } from '$lib/models/release';
+import { BullMQ, getQueues } from '$lib/server/bullmq';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 
@@ -107,6 +108,14 @@ export const PUT: RequestHandler = async ({ request, params }) => {
       artifact_files: true
     }
   });
+
+  await getQueues().Releases.add(
+    `Start Release #${release.id} for Build ${build.id} of Job ${job.id}`,
+    {
+      type: BullMQ.JobType.Release_Product,
+      releaseId: release.id
+    }
+  );
 
   return new Response(
     JSON.stringify({
