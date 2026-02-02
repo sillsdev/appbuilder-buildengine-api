@@ -32,6 +32,7 @@ export const GET: RequestHandler = async (event) => {
       `${env.PUBLIC_SCRIPTORIA_URL}/api/auth/exchange`,
       {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
           verify
