@@ -1,28 +1,25 @@
 import { type Handle, error } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
+import { tryVerifyAPIToken, tryVerifyCookie } from '$lib/server/auth';
 import { QueueConnected, getQueues } from '$lib/server/bullmq';
 import { bullboardHandle } from '$lib/server/bullmq/BullBoard';
 import { allWorkers } from '$lib/server/bullmq/BullMQ';
-import { DatabaseConnected, prisma } from '$lib/server/prisma';
-import { ErrorResponse } from '$lib/utils';
+import { DatabaseConnected } from '$lib/server/prisma';
 
 const handleAPIRoute: Handle = async ({ event, resolve }) => {
-  if (event.route.id?.split('/')[1] === '(api)') {
-    if (event.request.headers.get('Content-Type') !== 'application/json') {
-      return ErrorResponse(400, 'Missing Header Content-Type: application/json');
-    }
-    const access_token = event.request.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!access_token) {
-      return ErrorResponse(401, 'Missing Header Authorization: Bearer <token>');
-    }
-    const client = await prisma.client.findFirst({ where: { access_token } });
-    if (!client) {
-      return ErrorResponse(403, 'Invalid Access Token');
-    }
-    event.locals.clientId = client.id;
-  } else {
-    event.locals.clientId = 0;
+  const [success, res] = await tryVerifyAPIToken(event);
+  if (!success) {
+    return res;
+  }
+  event.locals.clientId = res.id;
+  return resolve(event);
+};
+
+const handleAuthRoute: Handle = async ({ event, resolve }) => {
+  event.locals.clientId = 0;
+  if (event.route.id?.split('/')?.[1] !== '(auth)') {
+    await tryVerifyCookie(event);
   }
   return resolve(event);
 };
@@ -62,5 +59,11 @@ export const handle: Handle = async ({ event, resolve }) => {
     return new Response('', { status: 404 });
   }
 
-  return await sequence(heartbeat, handleAPIRoute, bullboardHandle)({ event, resolve });
+  return await sequence(
+    heartbeat,
+    (h) => {
+      return event.route.id?.split('/')?.[1] === '(api)' ? handleAPIRoute(h) : handleAuthRoute(h);
+    },
+    bullboardHandle
+  )({ event, resolve });
 };
