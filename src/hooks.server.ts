@@ -41,14 +41,17 @@ if (!building) {
 }
 
 const heartbeat: Handle = async ({ event, resolve }) => {
-  if (!DatabaseConnected()) {
-    console.log(
-      'Database connection error! Connected to Database:',
-      DatabaseConnected(),
-      'Connected to Valkey:',
-      QueueConnected()
-    );
-    throw error(503, 'Database connection error');
+  // don't check db when loading login or root
+  if (!(event.route.id === '/(auth)/login' || event.route.id === '/(ui)')) {
+    if (!DatabaseConnected()) {
+      console.log(
+        'Database connection error! Connected to Database:',
+        DatabaseConnected(),
+        'Connected to Valkey:',
+        QueueConnected()
+      );
+      throw error(503, 'Database connection error');
+    }
   }
   return resolve(event);
 };
