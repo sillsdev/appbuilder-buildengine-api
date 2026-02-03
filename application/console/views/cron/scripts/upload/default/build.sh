@@ -272,7 +272,12 @@ build_modern_pwa() {
 
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-modern-pwa -fp pwa.output="${PWA_OUTPUT_DIR}" ${SCRIPT_OPT}
-  pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}/build"
+  # In 13.4, the output directory changed to not include /build (using rsync instead of cp -r)
+  if [[ -d "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}/build" ]]; then
+    pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}/build"
+  else
+    pushd "${PWA_OUTPUT_DIR}/${APPDEF_PACKAGE_NAME}"
+  fi
   zip -r "${OUTPUT_DIR}/pwa.zip" .
   popd
   VERSION_CODE=""
