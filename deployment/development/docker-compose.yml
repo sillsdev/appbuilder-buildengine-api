@@ -37,3 +37,19 @@ services:
       DATABASE_URL: "postgresql://db-user:1234@db:5432/dev-buildengine?schema=public"
       # MUST be included (the path the application will be accessed on) and MUST NOT have a trailing slash
       ORIGIN: "http://localhost:8443"
+
+  otel:
+    image: otel/opentelemetry-collector-contrib:0.136.0
+    ports:
+      - "6317:6317"   # gRPC
+      - "6318:6318"   # HTTP
+      - "55679:55679" # UI
+    volumes:
+      - ./src/lib/otel/development_config.yml:/etc/development_config.yml
+      - ./src/lib/otel/receivers_config.yml:/etc/receivers_config.yml
+    command: ["--config", "/etc/development_config.yml", "--config", "/etc/receivers_config.yml"]
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:latest
+    ports:
+      - "16686:16686"
