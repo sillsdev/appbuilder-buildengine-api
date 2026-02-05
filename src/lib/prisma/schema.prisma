@@ -104,3 +104,11 @@ model release {
 
   @@index([build_id], map: "idx_release_build_id")
 }
+
+model appVersion {
+  appName   String    @id
+  version   String
+  imageHash String
+  created   DateTime  @default(now()) @db.Timestamp(6)
+  updated   DateTime? @updatedAt @db.Timestamp(6)
+}
