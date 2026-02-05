@@ -2,10 +2,10 @@ import type { Prisma } from '@prisma/client';
 import type { Job } from 'bullmq';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { Build } from '../../models/build';
 import { CodeBuild } from '../aws/codebuild';
 import { CodeCommit } from '../aws/codecommit';
 import { BullMQ, getQueues } from '../bullmq';
+import { Build } from '../models/build';
 import { prisma } from '../prisma';
 
 export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> {

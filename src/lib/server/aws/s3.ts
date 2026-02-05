@@ -20,7 +20,7 @@ import {
   beginArtifacts,
   getBasePrefixUrl,
   handleArtifact
-} from '$lib/models/artifacts';
+} from '$lib/server/models/artifacts';
 import { Utils } from '$lib/server/utils';
 
 export class S3 extends AWSCommon {

@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { Release } from '$lib/models/release';
+import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 

@@ -16,8 +16,8 @@ import {
   getArtifactFilename,
   getArtifactPath,
   getBasePrefixUrl
-} from '$lib/models/artifacts';
-import { Job } from '$lib/models/job';
+} from '$lib/server/models/artifacts';
+import { Job } from '$lib/server/models/job';
 import { Utils } from '$lib/server/utils';
 
 export type ReleaseForCodeBuild = Prisma.releaseGetPayload<{

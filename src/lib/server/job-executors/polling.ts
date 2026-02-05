@@ -1,10 +1,10 @@
 import type { Prisma } from '@prisma/client';
 import type { Job } from 'bullmq';
-import { Build } from '../../models/build';
 import { CodeBuild } from '../aws/codebuild';
 import { BullMQ, getQueues } from '../bullmq';
+import { Build } from '../models/build';
 import { prisma } from '../prisma';
-import { Release } from '$lib/models/release';
+import { Release } from '$lib/server/models/release';
 
 export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
   try {

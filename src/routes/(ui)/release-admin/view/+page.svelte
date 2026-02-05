@@ -2,7 +2,6 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { Release } from '$lib/models/release';
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
@@ -65,7 +64,7 @@
       <th>Artifacts</th>
       <td>
         {#if data.release.artifact_files}
-          {#each Object.entries(Release.artifacts(data.release))
+          {#each Object.entries(data.artifacts)
             .filter(([_, url]) => !!url)
             .sort(([a, _1], [b, _2]) => a.localeCompare(b, 'en-US')) as [name, url]}
             <a class="link" href={url}>{name}</a>

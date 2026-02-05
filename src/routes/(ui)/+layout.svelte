@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import IconContainer from '$lib/components/IconContainer.svelte';
   import type { Snippet } from 'svelte';
   import type { PageData } from './$types';
+  import { page } from '$app/state';
+  import IconContainer from '$lib/components/IconContainer.svelte';
 
   interface Props {
     children: Snippet;
     data: PageData;
   }
 
-  let { children, data } = $props();
+  let { children, data }: Props = $props();
 
   function isUrlActive(route: string) {
     return page.url.pathname === route;
@@ -45,7 +45,7 @@
                   <IconContainer icon="mdi:logout" width="18" />
                 </a>
               </li>
-              </ul>
+            </ul>
           </details>
         </li>
       </ul>
