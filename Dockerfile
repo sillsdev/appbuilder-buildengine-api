@@ -1,46 +1,47 @@
-FROM silintl/php7:7.4
-LABEL maintainer="Chris Hubbard <chris_hubbard@sil.org>"
+# Temporary container to build output
+FROM node:24-alpine3.21 AS builder
 
-ENV REFRESHED_AT 2022-03-17
+WORKDIR /build
+RUN apk add --no-cache openssl
 
-# Install require packages
-RUN apt-get update && apt-get install -y \
-    cron \
-&& apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+# Run npm i before copying all source code because Docker caches each layer
+# and reuses them if nothing has changed. This way if package.json is unchanged,
+# docker will skip the install even if other source files have changed.
+COPY package*.json .
+RUN npm i
 
-COPY build/appbuilder.conf /etc/apache2/sites-enabled/
+# Run prisma generate to rebuild with the correct target, also caching
+COPY src/lib/prisma /build/src/lib/prisma
+COPY prisma.config.ts /build/
+RUN npx prisma generate
 
-# Copy in cron configuration
-COPY build/appbuilder-cron /etc/cron.d/
-RUN chmod 0644 /etc/cron.d/appbuilder-cron
+# Copy all source and run a build
+COPY . /build/
+RUN npm run build
 
-RUN mkdir -p /data
+# Fix sourcemaps
+RUN npm run fix-sourcemaps
 
-RUN curl https://raw.githubusercontent.com/silinternational/s3-expand/master/s3-expand > /usr/local/bin/s3-expand
-RUN chmod a+x /usr/local/bin/s3-expand
+# Real container that will run
+FROM node:24-alpine3.21
 
-# Copy in syslog config
-RUN rm -f /etc/rsyslog.d/*
-COPY build/rsyslog.conf /etc/rsyslog.conf
+WORKDIR /app
+RUN apk add --no-cache openssl
 
-# Copy logrotate file to manage logs
-COPY build/sab /etc/logrotate.d
-RUN chmod 0644 /etc/logrotate.d/sab
+# Bring in package.json and install deps
+COPY --from=builder /build/package*.json /app/
 
-# It is expected that /data is = application/ in project folder
-COPY application/ /data/
+# Install production dependencies
+RUN npm ci
 
-WORKDIR /data
+# Bring in source code
+COPY --from=builder /build/out/build /app
 
-# Fix folder permissions
-RUN chown -R www-data:www-data \
-    console/runtime/ \
-    frontend/runtime/ \
-    frontend/web/assets/
+# Copy prisma data (npm ci nukes node_modules, so this must be last)
+COPY --from=builder /build/node_modules/.prisma /app/node_modules/.prisma
+# Copy prisma migrations
+COPY --from=builder /build/src/lib/prisma/migrations /app/node_modules/.prisma/client/migrations
 
-# Install/cleanup composer dependencies
-RUN composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
-
-EXPOSE 80
-ENTRYPOINT ["s3-expand"]
-CMD ["/data/run.sh"]
+EXPOSE 8443
+ENV PORT=8443
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./node_modules/.prisma/client/schema.prisma && node --enable-source-maps index.js"]
