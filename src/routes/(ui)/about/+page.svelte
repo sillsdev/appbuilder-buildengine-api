@@ -1,8 +1,15 @@
-<script>
+<script lang="ts">
+  import type { PageData } from './$types';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { title } from '$lib/stores';
 
   $title = 'About';
+
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 </script>
 
 <div class="w-full">
@@ -38,5 +45,26 @@
       <a href="http://sil.org" class="link">SIL Global</a>
       ) :&nbsp;Programming
     </p>
+    <h3 class="pl-0">AppBuilder Versions</h3>
+    <p>
+      <b>Hash:</b>
+      {data.appVersions[0].imageHash}
+    </p>
+    <p>
+      <b>Updated:</b>
+      {data.appVersions[0].updated?.toLocaleString()}
+    </p>
+    <div class="my-2 p-2 border w-fit rounded-md">
+      <table>
+        <tbody>
+          {#each data.appVersions.toSorted((a, b) => a.appName.localeCompare(b.appName)) as version}
+            <tr>
+              <td><b>{version.appName}:</b></td>
+              <td class="pl-1">{version.version}</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
