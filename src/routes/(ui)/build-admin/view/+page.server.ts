@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import type { PageServerLoad } from './$types';
-import { Build } from '$lib/models/build';
+import { Build } from '$lib/server/models/build';
 import { prisma } from '$lib/server/prisma';
 import { idSchema, paramNumber } from '$lib/valibot';
 

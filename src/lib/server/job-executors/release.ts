@@ -3,8 +3,8 @@ import { readFile } from 'fs/promises';
 import { CodeBuild } from '../aws/codebuild';
 import type { BullMQ } from '../bullmq';
 import { prisma } from '../prisma';
-import { Build } from '$lib/models/build';
-import { Release } from '$lib/models/release';
+import { Build } from '$lib/server/models/build';
+import { Release } from '$lib/server/models/release';
 
 export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown> {
   try {

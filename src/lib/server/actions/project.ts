@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { IAmWrapper } from '../aws/iamwrapper';
 import { prisma } from '../prisma';
 import { Utils } from '../utils';
-import { Project } from '$lib/models/project';
+import { Project } from '$lib/server/models/project';
 
 export class ProjectUpdateOperation {
   private id;

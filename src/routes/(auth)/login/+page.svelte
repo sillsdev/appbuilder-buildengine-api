@@ -1,17 +1,15 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { browser } from '$app/environment';
-  import ScriptoriaIcon from '$lib/icons/ScriptoriaIcon.svelte';
   import type { PageData } from './$types';
+  import { browser } from '$app/environment';
   import { env } from '$env/dynamic/public';
+  import ScriptoriaIcon from '$lib/icons/ScriptoriaIcon.svelte';
 
   interface Props {
     data: PageData;
   }
 
-  let {
-    data
-  }: Props = $props();
+  let { data }: Props = $props();
 
   let timeout: ReturnType<typeof setInterval> | null = null;
   if (!data.serviceAvailable && browser) {
@@ -48,18 +46,12 @@
         <button class="btn btn-primary w-full">Login with Scriptoria</button>
       </form>
     {:else}
-      <p class="text-red-600 text-center">
-        BuildEngine is currently unavailable
-      </p>
+      <p class="text-red-600 text-center">BuildEngine is currently unavailable</p>
     {/if}
   </div>
 </div>
 
 <div class="my-4 text-center text-white">
-  <span>
-    Like to use our service?
-  </span>
-  <a class="font-bold" href="{env.PUBLIC_SCRIPTORIA_URL}">
-    Visit Scriptoria
-  </a>
+  <span>Like to use our service?</span>
+  <a class="font-bold" href={env.PUBLIC_SCRIPTORIA_URL}>Visit Scriptoria</a>
 </div>

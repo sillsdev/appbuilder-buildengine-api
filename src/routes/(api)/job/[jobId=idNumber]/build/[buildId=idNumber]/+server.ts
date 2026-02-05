@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
-import { Build } from '$lib/models/build';
-import { Release } from '$lib/models/release';
 import { BullMQ, getQueues } from '$lib/server/bullmq';
+import { Build } from '$lib/server/models/build';
+import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 
