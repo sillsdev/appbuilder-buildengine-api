@@ -63,6 +63,11 @@ const heartbeat: Handle = async ({ event, resolve }) => {
 
 const tracer = trace.getTracer('IncomingRequest');
 
+const authSequence: Handle = async ({ event, resolve }) =>
+  event.route.id?.split('/')?.[1] === '(api)'
+    ? handleAPIRoute({ event, resolve })
+    : handleAuthRoute({ event, resolve });
+
 export const handle: Handle = async ({ event, resolve }) => {
   if (event.url.pathname.startsWith('/.well-known/appspecific/')) {
     // Ignore these requests without logging them`
@@ -91,9 +96,28 @@ export const handle: Handle = async ({ event, resolve }) => {
         heartbeat,
         // Handle auth hooks in a separate OTEL span
         (h) => {
-          return event.route.id?.split('/')?.[1] === '(api)'
-            ? handleAPIRoute(h)
-            : handleAuthRoute(h);
+          return tracer.startActiveSpan('Authentication', async (span) => {
+            // Call the auth sequence
+            let spanEnded = false;
+            try {
+              const ret = await authSequence({
+                event,
+                resolve: (...args) => {
+                  if (!spanEnded) {
+                    span.end();
+                    spanEnded = true;
+                  }
+                  return resolve(...args);
+                }
+              });
+              return ret;
+            } finally {
+              if (!spanEnded) {
+                span.end();
+                spanEnded = true;
+              }
+            }
+          });
         },
         bullboardHandle
       )({ event, resolve });

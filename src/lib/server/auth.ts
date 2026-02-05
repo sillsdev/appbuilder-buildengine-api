@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import type { Prisma } from '@prisma/client';
 import { type RequestEvent, error, redirect } from '@sveltejs/kit';
 import { jwtDecrypt } from 'jose';
@@ -17,6 +18,8 @@ export async function tryVerifyCookie(event: RequestEvent, gotoLoginPage = true)
       token = await jwtDecrypt(cookie, new TextEncoder().encode(secrets.AUTH0_SECRET));
 
       event.locals.userEmail = token.payload.email as string;
+
+      trace.getActiveSpan()?.setAttribute('user.email', event.locals.userEmail);
     }
   } catch {
     /* empty */
@@ -40,6 +43,11 @@ export async function tryVerifyCookie(event: RequestEvent, gotoLoginPage = true)
 async function initiateScriptoriaLogin(event: RequestEvent) {
   const verify = randomUUID();
   const requestId = randomUUID();
+
+  trace.getActiveSpan()?.setAttributes({
+    'scriptoria-endpoint': env.PUBLIC_SCRIPTORIA_URL,
+    'request-id': requestId
+  });
 
   await getAuthConnection().set(`${requestId}`, verify, 'EX', 300); // 5 minute (300 s) TTL
 
@@ -97,6 +105,8 @@ export async function tryVerifyAPIToken(
     }
     return [false, ErrorResponse(403, 'Invalid Access Token')];
   }
+
+  trace.getActiveSpan()?.setAttributes({ 'client.id': client.id, 'client.prefix': client.prefix });
 
   return [true, client];
 }
