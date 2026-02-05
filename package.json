@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "eslint --fix .",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"fix-sourcemaps": "node --experimental-strip-types fixSourcemaps.cts"
 	},
 	"devDependencies": {
 		"@bull-board/api": "^6.13.1",
@@ -39,6 +40,7 @@
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
+		"sorcery": "^1.0.0",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"sveltekit-superforms": "^2.26.1",
