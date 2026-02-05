@@ -1,4 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
+import OTEL from '$lib/otel';
 
 export const prisma = new PrismaClient();
 
@@ -14,6 +15,7 @@ class ConnectionChecker {
       await prisma.$queryRaw`SELECT 1`;
       if (!this.connected) {
         this.connected = true;
+        OTEL.instance.logger.info('Database connection established');
       }
     } catch (e) {
       if (
@@ -24,6 +26,9 @@ class ConnectionChecker {
         // As best as I can tell, the only types of PrismaClientKnownRequestError that
         // should be thrown by the above query would involve the database being unreachable.
         if (this.connected) {
+          OTEL.instance.logger.error('Database connection lost', {
+            error: e.message
+          });
           this.connected = false;
           console.log('Error checking database connection:', e);
         }
