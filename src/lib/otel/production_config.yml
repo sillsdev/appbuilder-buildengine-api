@@ -90,12 +90,12 @@ exporters:
     endpoint: api.honeycomb.io:443
     headers:
       'x-honeycomb-team': ${env:HONEYCOMB_API_KEY}
-      'x-honeycomb-dataset': 'appbuilder-portal-metrics'
+      'x-honeycomb-dataset': 'appbuilder-buildengine-api-metrics'
   otlp/logs:
     endpoint: api.honeycomb.io:443
     headers:
       'x-honeycomb-team': ${env:HONEYCOMB_API_KEY}
-      'x-honeycomb-dataset': 'appbuilder-portal-logs'
+      'x-honeycomb-dataset': 'appbuilder-buildengine-api-logs'
 
 service:
   pipelines:
