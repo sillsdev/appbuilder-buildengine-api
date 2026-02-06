@@ -103,7 +103,20 @@ export const getQueueConfig = () => {
   return {
     connection: _queueConnection!.connection(),
     prefix: env.APP_ENV + '_build-engine',
-    telemetry: new BullMQOtel(env.APP_ENV + '_build-engine')
+    telemetry: new BullMQOtel(env.APP_ENV + '_build-engine'),
+    defaultJobOptions: {
+      // https://docs.bullmq.io/guide/queues/auto-removal-of-jobs#keep-a-certain-number-of-jobs
+      removeOnComplete: {
+        // 2 weeks
+        age: 2 * 7 * 24 * 60 * 60,
+        count: 1000
+      },
+      removeOnFail: {
+        // 2 weeks
+        age: 2 * 7 * 24 * 60 * 60,
+        count: 2000
+      }
+    }
   } as const;
 };
 let _queues: ReturnType<typeof createQueues> | undefined = undefined;
