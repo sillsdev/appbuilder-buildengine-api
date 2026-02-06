@@ -12,6 +12,7 @@ import {
   RemoveUserFromGroupCommand,
   UploadSSHPublicKeyCommand
 } from '@aws-sdk/client-iam';
+import { trace } from '@opentelemetry/api';
 import { AWSCommon } from './common';
 import { env } from '$env/dynamic/private';
 
@@ -54,7 +55,6 @@ export class IAmWrapper extends AWSCommon {
   public async doesRoleExist(projectName: string) {
     try {
       const fullRoleName = AWSCommon.getRoleName(projectName);
-      console.log(`Check role ${fullRoleName} exists`);
       await this.iamClient.send(
         new GetRoleCommand({
           RoleName: fullRoleName // REQUIRED
@@ -79,7 +79,7 @@ export class IAmWrapper extends AWSCommon {
         })
       );
       const roleArn = result.Role?.Arn ?? '';
-      console.log(`Role Arn is ${roleArn}`);
+      trace.getActiveSpan()?.setAttribute('iam.role-arn', roleArn);
       return roleArn;
     } catch {
       return '';
