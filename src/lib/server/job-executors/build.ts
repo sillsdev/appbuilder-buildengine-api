@@ -7,6 +7,7 @@ import { CodeCommit } from '../aws/codecommit';
 import { BullMQ, getQueues } from '../bullmq';
 import { Build } from '../models/build';
 import { prisma } from '../prisma';
+import { trimStrings } from '$lib/valibot';
 
 export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> {
   try {
@@ -65,12 +66,15 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       if (lastBuildGuid) {
         await prisma.build.update({
           where: { id: build.id },
-          data: {
-            build_guid: lastBuildGuid,
-            codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
-            console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
-            status: Build.Status.Active
-          }
+          data: trimStrings(
+            {
+              build_guid: lastBuildGuid,
+              codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
+              console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
+              status: Build.Status.Active
+            },
+            'build'
+          )
         });
       }
       const name = `Check status of Build #${build.id}`;
@@ -110,12 +114,15 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       if (lastBuildGuid) {
         await prisma.build.update({
           where: { id: build.id },
-          data: {
-            build_guid: lastBuildGuid,
-            codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
-            console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
-            status: Build.Status.Active
-          }
+          data: trimStrings(
+            {
+              build_guid: lastBuildGuid,
+              codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
+              console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
+              status: Build.Status.Active
+            },
+            'build'
+          )
         });
       }
       const name = `Check status of Build #${build.id}`;
@@ -136,11 +143,14 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
     job.log(`${e}`);
     await prisma.build.update({
       where: { id: job.data.buildId },
-      data: {
-        result: Build.Result.Failure,
-        status: Build.Status.Completed,
-        error: String(e)
-      }
+      data: trimStrings(
+        {
+          result: Build.Result.Failure,
+          status: Build.Status.Completed,
+          error: String(e)
+        },
+        'build'
+      )
     });
   }
 }

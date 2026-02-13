@@ -6,6 +6,7 @@ import type { BuildForPrefix } from '$lib/server/models/artifacts';
 import { Build } from '$lib/server/models/build';
 import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
+import { trimStrings } from '$lib/valibot';
 
 export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> {
   const id = job.data.id;
@@ -104,12 +105,15 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
       }
       await prisma.build.update({
         where: { id },
-        data: {
-          ...build,
-          status: Build.Status.Completed,
-          result: Build.Result.Success,
-          job: undefined
-        }
+        data: trimStrings(
+          {
+            ...build,
+            status: Build.Status.Completed,
+            result: Build.Result.Success,
+            job: undefined
+          },
+          'build'
+        )
       });
       await s3.removeCodeBuildFolder(build);
       job.updateProgress(100);
