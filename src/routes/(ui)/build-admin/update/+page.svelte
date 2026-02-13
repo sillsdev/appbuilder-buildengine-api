@@ -5,6 +5,7 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import LabeledFormInput from '$lib/components/LabeledFormInput.svelte';
   import { title } from '$lib/stores';
+  import { stringLimits } from '$lib/valibot';
 
   const id = $derived(page.url.searchParams.get('id')!);
 
@@ -42,19 +43,39 @@
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Status">
-    <input class="input input-bordered validator" type="text" bind:value={$form.status} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.status}
+      maxlength={stringLimits.build.status}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Build GUID">
-    <input class="input input-bordered validator" type="text" bind:value={$form.build_guid} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.build_guid}
+      maxlength={stringLimits.build.build_guid}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Result">
-    <input class="input input-bordered validator" type="text" bind:value={$form.result} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.result}
+      maxlength={stringLimits.build.result}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Error">
-    <input class="input input-bordered validator" type="url" bind:value={$form.error} />
+    <input
+      class="input input-bordered validator"
+      type="url"
+      bind:value={$form.error}
+      maxlength={stringLimits.build.error}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Artifact URL Base">
@@ -63,6 +84,7 @@
       type="url"
       bind:value={$form.artifact_url_base}
       required
+      maxlength={stringLimits.build.artifact_url_base}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
@@ -70,11 +92,17 @@
     <textarea
       class="textarea input-bordered validator"
       bind:value={$form.artifact_files}
+      maxlength={stringLimits.build.artifact_files}
     ></textarea>
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Channel">
-    <input class="input input-bordered validator" type="text" bind:value={$form.channel} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.channel}
+      maxlength={stringLimits.build.channel}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Version Code">
@@ -82,7 +110,12 @@
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Targets">
-    <input class="input input-bordered validator" type="text" bind:value={$form.targets} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.targets}
+      maxlength={stringLimits.build.targets}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Environment">

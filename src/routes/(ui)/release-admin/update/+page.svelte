@@ -5,6 +5,7 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import LabeledFormInput from '$lib/components/LabeledFormInput.svelte';
   import { title } from '$lib/stores';
+  import { stringLimits } from '$lib/valibot';
 
   const id = $derived(page.url.searchParams.get('id')!);
 
@@ -42,39 +43,85 @@
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Status">
-    <input class="input input-bordered validator" type="text" bind:value={$form.status} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.status}
+      maxlength={stringLimits.release.status}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Result">
-    <input class="input input-bordered validator" type="text" bind:value={$form.result} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.result}
+      maxlength={stringLimits.release.result}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Error">
-    <input class="input input-bordered validator" type="url" bind:value={$form.error} />
+    <input
+      class="input input-bordered validator"
+      type="url"
+      bind:value={$form.error}
+      maxlength={stringLimits.release.error}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Channel">
-    <input class="input input-bordered validator" type="text" bind:value={$form.channel} required />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.channel}
+      required
+      maxlength={stringLimits.release.channel}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Title">
-    <input class="input input-bordered validator" type="text" bind:value={$form.title} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.title}
+      maxlength={stringLimits.release.title}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Default Language">
-    <input class="input input-bordered validator" type="text" bind:value={$form.defaultLanguage} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.defaultLanguage}
+      maxlength={stringLimits.release.defaultLanguage}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Build GUID">
-    <input class="input input-bordered validator" type="text" bind:value={$form.build_guid} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.build_guid}
+      maxlength={stringLimits.release.build_guid}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Promote From">
-    <input class="input input-bordered validator" type="text" bind:value={$form.promote_from} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.promote_from}
+      maxlength={stringLimits.release.promote_from}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Targets">
-    <input class="input input-bordered validator" type="text" bind:value={$form.targets} />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.targets}
+      maxlength={stringLimits.release.targets}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Environment">
@@ -87,6 +134,7 @@
       type="url"
       bind:value={$form.artifact_url_base}
       required
+      maxlength={stringLimits.release.artifact_url_base}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
@@ -94,6 +142,7 @@
     <textarea
       class="textarea input-bordered validator"
       bind:value={$form.artifact_files}
+      maxlength={stringLimits.release.artifact_files}
     ></textarea>
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
