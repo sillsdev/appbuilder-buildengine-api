@@ -73,7 +73,8 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
               console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
               status: Build.Status.Active
             },
-            'build'
+            'build',
+            job.log
           )
         });
       }
@@ -121,7 +122,8 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
               console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
               status: Build.Status.Active
             },
-            'build'
+            'build',
+            job.log
           )
         });
       }
@@ -149,7 +151,8 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
           status: Build.Status.Completed,
           error: String(e)
         },
-        'build'
+        'build',
+        job.log
       )
     });
   }

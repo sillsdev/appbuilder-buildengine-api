@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { type Logger, defaultLogger } from './utils';
 
 export const idSchema = v.pipe(v.number(), v.minValue(0), v.integer());
 
@@ -99,7 +100,8 @@ export const stringLimits = {
 
 export function trimStrings<T extends Record<string, unknown>>(
   obj: T,
-  scope: keyof typeof stringLimits
+  scope: keyof typeof stringLimits,
+  log: Logger = defaultLogger
 ) {
   for (const [key, limit] of Object.entries(stringLimits[scope])) {
     const raw = obj[key];
@@ -109,7 +111,7 @@ export function trimStrings<T extends Record<string, unknown>>(
         val = val.substring(0, val.length - 1);
       }
       if (raw !== val) {
-        console.log(`trimStrings ${scope}: "${raw}" => "${val}"`);
+        log(`trimStrings ${scope}: "${raw}" => "${val}"`);
         //@ts-expect-error this should be fine...
         obj[key] = val;
       }

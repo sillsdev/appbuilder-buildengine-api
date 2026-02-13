@@ -32,7 +32,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
     if (build?.job) {
       await s3.copyS3Folder(build);
       let defaultLanguage = await s3.readS3File(build, 'play-listing/default-language.txt');
-      console.log(`getExtraContent defaultLanguage: ${defaultLanguage}`);
+      job.log(`getExtraContent defaultLanguage: ${defaultLanguage}`);
       const manifestFileContent = await s3.readS3File(build, 'manifest.txt');
       let manifest: Record<string, string | string[] | Record<string, string>> = {};
       if (manifestFileContent) {
@@ -112,7 +112,8 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
             result: Build.Result.Success,
             job: undefined
           },
-          'build'
+          'build',
+          job.log
         )
       });
       await s3.removeCodeBuildFolder(build);

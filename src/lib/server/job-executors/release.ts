@@ -40,7 +40,8 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
             console_text_url: CodeBuild.getConsoleTextUrl('publish_app', lastBuildGuid),
             status: Release.Status.Active
           },
-          'release'
+          'release',
+          job.log
         )
       });
     }
@@ -64,7 +65,8 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
           status: Release.Status.Completed,
           error: String(e)
         },
-        'release'
+        'release',
+        job.log
       )
     });
   }
