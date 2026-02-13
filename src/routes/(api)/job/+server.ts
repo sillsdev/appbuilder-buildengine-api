@@ -2,13 +2,13 @@ import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { stringIdSchema } from '$lib/valibot';
+import { stringIdSchema, stringLimits } from '$lib/valibot';
 
 const jobSchema = v.strictObject({
   request_id: stringIdSchema,
-  git_url: v.pipe(v.string(), v.url()),
-  app_id: v.string(),
-  publisher_id: v.string()
+  git_url: v.pipe(v.string(), v.url(), v.maxBytes(stringLimits.job.git_url)),
+  app_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.app_id)),
+  publisher_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.publisher_id))
 });
 
 // POST /job

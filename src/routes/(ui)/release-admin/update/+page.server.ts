@@ -9,23 +9,30 @@ import {
   idSchema,
   paramNumber,
   selectFrom,
-  stringIdSchema
+  stringIdSchema,
+  stringLimits
 } from '$lib/valibot';
 
 const releaseSchema = v.object({
   build_id: idSchema,
-  status: convertEmptyStrToNull(),
-  result: convertEmptyStrToNull(),
-  error: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  channel: v.string(),
-  title: convertEmptyStrToNull(),
-  defaultLanguage: convertEmptyStrToNull(),
+  status: convertEmptyStrToNull(stringLimits.release.status),
+  result: convertEmptyStrToNull(stringLimits.release.result),
+  error: v.pipe(
+    convertEmptyStrToNull(stringLimits.release.error),
+    v.nullable(v.pipe(v.string(), v.url()))
+  ),
+  channel: v.pipe(v.string(), v.maxBytes(stringLimits.release.channel)),
+  title: convertEmptyStrToNull(stringLimits.release.title),
+  defaultLanguage: convertEmptyStrToNull(stringLimits.release.defaultLanguage),
   build_guid: v.pipe(convertEmptyStrToNull(), v.nullable(stringIdSchema)),
-  promote_from: convertEmptyStrToNull(),
-  targets: convertEmptyStrToNull(),
+  promote_from: convertEmptyStrToNull(stringLimits.release.promote_from),
+  targets: convertEmptyStrToNull(stringLimits.release.targets),
   environment: convertEmptyStrToNull(),
-  artifact_url_base: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  artifact_files: convertEmptyStrToNull()
+  artifact_url_base: v.pipe(
+    convertEmptyStrToNull(stringLimits.release.artifact_url_base),
+    v.nullable(v.pipe(v.string(), v.url()))
+  ),
+  artifact_files: convertEmptyStrToNull(stringLimits.release.artifact_files)
 });
 
 export const load = (async ({ url }) => {
