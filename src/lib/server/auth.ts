@@ -82,7 +82,7 @@ export function invalidateLogin(event: RequestEvent, redirectToLogin = true) {
 
 export async function tryVerifyAPIToken(
   event: RequestEvent
-): Promise<[true, Prisma.clientGetPayload<true>] | [false, Response]> {
+): Promise<[true, Prisma.clientGetPayload<true> | null] | [false, Response]> {
   if (event.request.headers.get('Content-Type') !== 'application/json') {
     return [false, ErrorResponse(400, 'Missing Header Content-Type: application/json')];
   }
@@ -92,6 +92,9 @@ export async function tryVerifyAPIToken(
   }
   const client = await prisma.client.findFirst({ where: { access_token } });
   if (!client) {
+    if (access_token === secrets.API_ACCESS_TOKEN) {
+      return [true, null];
+    }
     return [false, ErrorResponse(403, 'Invalid Access Token')];
   }
 
