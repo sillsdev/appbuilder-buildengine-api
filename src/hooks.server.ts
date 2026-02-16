@@ -12,12 +12,12 @@ const handleAPIRoute: Handle = async ({ event, resolve }) => {
   if (!success) {
     return res;
   }
-  event.locals.clientId = res.id;
+  event.locals.clientId = res?.id ?? null;
   return resolve(event);
 };
 
 const handleAuthRoute: Handle = async ({ event, resolve }) => {
-  event.locals.clientId = 0;
+  event.locals.clientId = null;
   if (event.route.id?.split('/')?.[1] !== '(auth)') {
     await tryVerifyCookie(event);
   }
