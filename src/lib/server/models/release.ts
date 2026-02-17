@@ -26,7 +26,7 @@ export namespace Release {
     let type = Artifact.Unknown;
     if (file === 'cloudWatch') {
       type = Artifact.CloudWatch;
-    } else if (ext === 'log') {
+    } else if (ext === '.log') {
       type = Artifact.ConsoleText;
     } else if (file === 'publish_url.txt') {
       type = Artifact.PublishUrl;
