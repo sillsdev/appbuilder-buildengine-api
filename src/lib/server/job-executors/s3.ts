@@ -28,96 +28,92 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
       where: { id },
       include: { job: true }
     });
-    if (build) {
-      if (build.job) {
-        s3.copyS3Folder(build);
-        await s3.copyS3Folder(build);
-        let defaultLanguage = await s3.readS3File(build, 'play-listing/default-language.txt');
-        console.log(`getExtraContent defaultLanguage: ${defaultLanguage}`);
-        const manifestFileContent = await s3.readS3File(build, 'manifest.txt');
-        let manifest: Record<string, string | string[] | Record<string, string>> = {};
-        if (manifestFileContent) {
-          const manifestFiles = manifestFileContent.split('\n');
-          if (manifestFiles.length > 0) {
-            // Copy index.html to destination folder
-            const path = './preview/playlisting/index.html';
+    if (build?.job) {
+      await s3.copyS3Folder(build);
+      let defaultLanguage = await s3.readS3File(build, 'play-listing/default-language.txt');
+      console.log(`getExtraContent defaultLanguage: ${defaultLanguage}`);
+      const manifestFileContent = await s3.readS3File(build, 'manifest.txt');
+      let manifest: Record<string, string | string[] | Record<string, string>> = {};
+      if (manifestFileContent) {
+        const manifestFiles = manifestFileContent.split('\n');
+        if (manifestFiles.length > 0) {
+          // Copy index.html to destination folder
+          const path = './preview/playlisting/index.html';
 
-            const indexContents = (await readFile(path)).toString();
-            await s3.writeFileToS3(indexContents, 'play-listing/index.html', build);
-          }
-          if (!defaultLanguage) {
-            // If defaultLanguage was not found, use first entry with icon
-            for (const playListingFile of manifestFiles) {
-              const matches = playListingFile.match(/([^/]*)\/images\/icon.png/);
-              if (matches) {
-                defaultLanguage = matches[1];
-                break;
-              }
-            }
-          }
-
-          const playEncodedRelativePaths: string[] = [];
-          const languages = new Set<string>();
-          let publishIndex = '<html><body><ul>';
-          const ignoreFiles = [
-            'default-language.txt',
-            'primary-color.txt',
-            'download-apk-strings.json'
-          ];
-          for (const path of manifestFiles) {
-            if (ignoreFiles.includes(path)) {
-              continue;
-            }
-            if (path) {
-              // collect files
-              const encodedPath = encodeURI('play-listing/' + path);
-              publishIndex += `<li><a href="${encodedPath}">play-listing/${path}</a></p></li>`;
-              playEncodedRelativePaths.push(encodeURI(path));
-
-              // collect languages
-              const langMatches = path.match(/([^/]*)\//);
-              if (langMatches) {
-                languages.add(langMatches[1]);
-              }
-            }
-          }
-          publishIndex += '</ul></body></html>';
-          await s3.writeFileToS3(publishIndex, 'play-listing.html', build);
-          manifest = {
-            files: playEncodedRelativePaths,
-            languages: Array.from(languages),
-            color:
-              (await s3.readS3File(build, 'play-listing/primary-color.txt')).trim() || '#cce2ff',
-            package: (await s3.readS3File(build, 'package_name.txt')).trim(),
-            'download-apk-strings': await getDownloadApkStrings(
-              s3,
-              build,
-              languages,
-              defaultLanguage
-            ),
-            url: build.artifact_url_base + 'play-listing/'
-          };
-          if (defaultLanguage) {
-            manifest['default-language'] = defaultLanguage;
-            manifest['icon'] = 'defaultLanguage/images/icon.png';
-          }
-          const json = JSON.stringify(manifest);
-          const jsonFileName = 'play-listing/manifest.json';
-          await s3.writeFileToS3(json, jsonFileName, build);
+          const indexContents = (await readFile(path)).toString();
+          await s3.writeFileToS3(indexContents, 'play-listing/index.html', build);
         }
-        await prisma.build.update({
-          where: { id },
-          data: {
-            ...build,
-            status: Build.Status.Completed,
-            result: Build.Result.Success,
-            job: undefined
+        if (!defaultLanguage) {
+          // If defaultLanguage was not found, use first entry with icon
+          for (const playListingFile of manifestFiles) {
+            const matches = playListingFile.match(/([^/]*)\/images\/icon.png/);
+            if (matches) {
+              defaultLanguage = matches[1];
+              break;
+            }
           }
-        });
-        await s3.removeCodeBuildFolder(build);
-        job.updateProgress(100);
-        return { manifest };
+        }
+
+        const playEncodedRelativePaths: string[] = [];
+        const languages = new Set<string>();
+        let publishIndex = '<html><body><ul>';
+        const ignoreFiles = [
+          'default-language.txt',
+          'primary-color.txt',
+          'download-apk-strings.json'
+        ];
+        for (const path of manifestFiles) {
+          if (ignoreFiles.includes(path)) {
+            continue;
+          }
+          if (path) {
+            // collect files
+            const encodedPath = encodeURI('play-listing/' + path);
+            publishIndex += `<li><a href="${encodedPath}">play-listing/${path}</a></p></li>`;
+            playEncodedRelativePaths.push(encodeURI(path));
+
+            // collect languages
+            const langMatches = path.match(/([^/]*)\//);
+            if (langMatches) {
+              languages.add(langMatches[1]);
+            }
+          }
+        }
+        publishIndex += '</ul></body></html>';
+        await s3.writeFileToS3(publishIndex, 'play-listing.html', build);
+        manifest = {
+          files: playEncodedRelativePaths,
+          languages: Array.from(languages),
+          color: (await s3.readS3File(build, 'play-listing/primary-color.txt')).trim() || '#cce2ff',
+          package: (await s3.readS3File(build, 'package_name.txt')).trim(),
+          'download-apk-strings': await getDownloadApkStrings(
+            s3,
+            build,
+            languages,
+            defaultLanguage
+          ),
+          url: build.artifact_url_base + 'play-listing/'
+        };
+        if (defaultLanguage) {
+          manifest['default-language'] = defaultLanguage;
+          manifest['icon'] = 'defaultLanguage/images/icon.png';
+        }
+        const json = JSON.stringify(manifest);
+        const jsonFileName = 'play-listing/manifest.json';
+        await s3.writeFileToS3(json, jsonFileName, build);
       }
+      await prisma.build.update({
+        where: { id },
+        data: {
+          ...build,
+          status: Build.Status.Completed,
+          result: Build.Result.Success,
+          job: undefined
+        }
+      });
+      await s3.removeCodeBuildFolder(build);
+      job.updateProgress(100);
+      return { manifest };
     }
   }
   job.updateProgress(100);
