@@ -1,7 +1,7 @@
 import type { Job } from 'bullmq';
 import { readFile } from 'fs/promises';
 import { CodeBuild } from '../aws/codebuild';
-import type { BullMQ } from '../bullmq';
+import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
 import { Build } from '$lib/server/models/build';
 import { Release } from '$lib/server/models/release';
@@ -40,6 +40,14 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
         }
       });
     }
+    const name = `Check status of Release #${release.id}`;
+    await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
+      name,
+      data: {
+        type: BullMQ.JobType.Poll_Release,
+        releaseId: release.id
+      }
+    });
     job.updateProgress(100);
     return { lastBuildGuid };
   } catch (e) {
