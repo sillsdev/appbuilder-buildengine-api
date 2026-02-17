@@ -31,6 +31,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
     if (build) {
       if (build.job) {
         s3.copyS3Folder(build);
+        await s3.copyS3Folder(build);
         let defaultLanguage = await s3.readS3File(build, 'play-listing/default-language.txt');
         console.log(`getExtraContent defaultLanguage: ${defaultLanguage}`);
         const manifestFileContent = await s3.readS3File(build, 'manifest.txt');
@@ -42,7 +43,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
             const path = './preview/playlisting/index.html';
 
             const indexContents = (await readFile(path)).toString();
-            s3.writeFileToS3(indexContents, 'play-listing/index.html', build);
+            await s3.writeFileToS3(indexContents, 'play-listing/index.html', build);
           }
           if (!defaultLanguage) {
             // If defaultLanguage was not found, use first entry with icon
@@ -81,7 +82,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
             }
           }
           publishIndex += '</ul></body></html>';
-          s3.writeFileToS3(publishIndex, 'play-listing.html', build);
+          await s3.writeFileToS3(publishIndex, 'play-listing.html', build);
           manifest = {
             files: playEncodedRelativePaths,
             languages: Array.from(languages),
@@ -102,7 +103,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
           }
           const json = JSON.stringify(manifest);
           const jsonFileName = 'play-listing/manifest.json';
-          s3.writeFileToS3(json, jsonFileName, build);
+          await s3.writeFileToS3(json, jsonFileName, build);
         }
         await prisma.build.update({
           where: { id },
