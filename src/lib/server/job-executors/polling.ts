@@ -115,6 +115,7 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
       }
 
       if (codeBuild.isBuildComplete(buildStatus)) {
+        await getQueues().Polling.removeJobScheduler(job.name);
         release.status = Build.Status.PostProcessing;
         status = codeBuild.getStatus(buildStatus);
         switch (status) {
