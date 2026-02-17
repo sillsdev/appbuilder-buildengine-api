@@ -53,7 +53,7 @@ export function getBasePrefixUrl(artifacts_provider: ProviderForPrefix, productS
   const artifactPath =
     'build' in artifacts_provider
       ? getArtifactPath(artifacts_provider.build.job, productStage, true)
-      : getArtifactPath(artifacts_provider.job, productStage, true);
+      : getArtifactPath(artifacts_provider.job, productStage);
   return `${artifactPath}/${artifacts_provider.id}`;
 }
 
