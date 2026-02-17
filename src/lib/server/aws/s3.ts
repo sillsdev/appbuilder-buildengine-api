@@ -233,17 +233,17 @@ export class S3 extends AWSCommon {
 
   private getFileType(fileName: string) {
     switch (extname(fileName)) {
-      case 'html':
+      case '.html':
         return 'text/html';
-      case 'png':
+      case '.png':
         return 'image/png';
-      case 'jpg':
-      case 'jpeg':
+      case '.jpg':
+      case '.jpeg':
         return 'image/jpeg';
-      case 'txt':
-      case 'log':
+      case '.txt':
+      case '.log':
         return 'text/plain';
-      case 'json':
+      case '.json':
         return 'application/json';
       default:
         return 'application/octet-stream';

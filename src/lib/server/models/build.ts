@@ -56,11 +56,11 @@ export namespace Build {
     let type = Artifact.Unknown;
     if (file === 'cloudWatch') {
       type = Artifact.CloudWatch;
-    } else if (ext === 'log') {
+    } else if (ext === '.log') {
       type = Artifact.ConsoleText;
-    } else if (ext === 'aab') {
+    } else if (ext === '.aab') {
       type = Artifact.AAB;
-    } else if (ext === 'apk') {
+    } else if (ext === '.apk') {
       type = Artifact.APK;
     } else if (file === 'version_code.txt') {
       type = Artifact.VersionCode;
