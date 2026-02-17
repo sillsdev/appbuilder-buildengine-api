@@ -127,9 +127,15 @@ export class S3 extends AWSCommon {
         Prefix: sourcePrefix
       })
     );
-    result.Contents?.forEach((file) =>
-      this.copyS3File(file, sourcePrefix, destPrefix, artifacts_provider)
-    );
+    (
+      await Promise.all(
+        result.Contents?.map((file) =>
+          this.copyS3File(file, sourcePrefix, destPrefix, artifacts_provider)
+        ) ?? []
+      )
+    )
+      .filter((r) => !!r)
+      .forEach((r) => handleArtifact(artifacts_provider, r.file, r.contents));
   }
 
   /**
@@ -141,7 +147,7 @@ export class S3 extends AWSCommon {
    * @param string destPrefix - The AWS path to the destination folder
    * @param ArtifactsProvider artifacts_provider - Successful build associated with the copy
    */
-  public async copyS3File(
+  private async copyS3File(
     file: _Object,
     sourcePrefix: string,
     destPrefix: string,
@@ -169,7 +175,7 @@ export class S3 extends AWSCommon {
     const sourceFile = artifactsBucket + '/' + sourceDir + '/' + encodeURI(sourceBasename);
     const destinationFile = destPrefix + fileName;
     try {
-      const ret = await this.s3Client.send(
+      await this.s3Client.send(
         new CopyObjectCommand({
           Bucket: artifactsBucket,
           CopySource: sourceFile,
@@ -179,12 +185,7 @@ export class S3 extends AWSCommon {
           MetadataDirective: 'REPLACE'
         })
       );
-      if ('build' in artifacts_provider) {
-        handleArtifact(artifacts_provider, destinationFile, fileContents);
-      } else {
-        handleArtifact(artifacts_provider, destinationFile);
-      }
-      return ret;
+      return { file: fileName, contents: fileContents };
     } catch (e) {
       if (e instanceof Error) {
         console.error(`File was not renamed ${sourceFile}\nexception: ${e.stack}`);
@@ -212,18 +213,13 @@ export class S3 extends AWSCommon {
         ContentType: this.getFileType(fileName)
       })
     );
-
-    if ('build' in artifacts_provider) {
-      handleArtifact(artifacts_provider, fileS3Key, fileContents);
-    } else {
-      handleArtifact(artifacts_provider, fileS3Key);
-    }
+    handleArtifact(artifacts_provider, fileS3Key, fileContents);
   }
   public async removeCodeBuildFolder(artifacts_provider: ProviderForPrefix) {
     const s3Folder = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
     const s3Bucket = S3.getArtifactsBucket();
     console.log(`Deleting S3 bucket: ${s3Bucket} key: ${s3Folder}`);
-    return this.deleteMatchingObjects(s3Bucket, s3Folder);
+    return await this.deleteMatchingObjects(s3Bucket, s3Folder);
   }
 
   public async uploadFolder(folderName: string, bucket: string) {
