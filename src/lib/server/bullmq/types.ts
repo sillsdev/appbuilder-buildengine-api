@@ -56,12 +56,7 @@ export namespace Polling {
 
   export interface Release {
     type: JobType.Poll_Release;
-    organizationId: number;
-    productId: string;
-    jobId: number;
-    buildId: number;
     releaseId: number;
-    publicationId: number;
   }
 }
 
