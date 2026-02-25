@@ -5,6 +5,7 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import LabeledFormInput from '$lib/components/LabeledFormInput.svelte';
   import { title } from '$lib/stores';
+  import { stringLimits } from '$lib/valibot';
 
   const id = $derived(page.url.searchParams.get('id')!);
 
@@ -38,15 +39,28 @@
       type="text"
       bind:value={$form.request_id}
       required
+      maxlength={stringLimits.job.request_id}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Git Url">
-    <input class="input input-bordered validator" type="url" bind:value={$form.git_url} required />
+    <input
+      class="input input-bordered validator"
+      type="url"
+      bind:value={$form.git_url}
+      required
+      maxlength={stringLimits.job.request_id}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="App ID">
-    <input class="input input-bordered validator" type="text" bind:value={$form.app_id} required />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.app_id}
+      required
+      maxlength={stringLimits.job.app_id}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Publisher ID">
@@ -55,6 +69,7 @@
       type="text"
       bind:value={$form.publisher_id}
       required
+      maxlength={stringLimits.job.publisher_id}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
@@ -76,7 +91,12 @@
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Jenkins Build Url">
-    <input class="input input-bordered validator" type="url" bind:value={$form.jenkins_build_url} />
+    <input
+      class="input input-bordered validator"
+      type="url"
+      bind:value={$form.jenkins_build_url}
+      maxlength={stringLimits.job.jenkins_build_url}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Jenkins Publish Url">
@@ -84,6 +104,7 @@
       class="input input-bordered validator"
       type="url"
       bind:value={$form.jenkins_publish_url}
+      maxlength={stringLimits.job.jenkins_publish_url}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>

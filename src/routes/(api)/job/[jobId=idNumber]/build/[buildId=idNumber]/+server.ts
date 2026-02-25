@@ -5,6 +5,7 @@ import { Build } from '$lib/server/models/build';
 import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
+import { stringLimits } from '$lib/valibot';
 
 // GET /job/[id]/build/[id]
 export const GET: RequestHandler = async ({ params }) => {
@@ -55,7 +56,7 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 const releaseSchema = v.strictObject({
-  targets: v.string(),
+  targets: v.pipe(v.string(), v.maxBytes(stringLimits.release.targets)),
   channel: v.pipe(v.string(), v.picklist(['alpha', 'beta', 'production'])),
   environment: v.record(v.string(), v.string())
 });

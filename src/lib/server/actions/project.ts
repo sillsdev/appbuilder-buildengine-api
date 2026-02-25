@@ -3,6 +3,7 @@ import { IAmWrapper } from '../aws/iamwrapper';
 import { prisma } from '../prisma';
 import { Utils } from '../utils';
 import { Project } from '$lib/server/models/project';
+import { trimStrings } from '$lib/valibot';
 
 export class ProjectUpdateOperation {
   private id;
@@ -66,11 +67,14 @@ export class ProjectUpdateOperation {
     const url = this.adjustUrl(project.url!, publicKeyId!);
     await prisma.project.update({
       where: { id: project.id },
-      data: {
-        user_id,
-        publishing_key,
-        url
-      }
+      data: trimStrings(
+        {
+          user_id,
+          publishing_key,
+          url
+        },
+        'project'
+      )
     });
   }
   private adjustUrl(url: string, newPublicKeyId: string) {

@@ -9,18 +9,25 @@ import {
   idSchema,
   paramNumber,
   selectFrom,
-  stringIdSchema
+  stringIdSchema,
+  stringLimits
 } from '$lib/valibot';
 
 const jobSchema = v.strictObject({
   request_id: stringIdSchema,
-  git_url: v.pipe(v.string(), v.url()),
-  app_id: v.string(),
-  publisher_id: v.string(),
+  git_url: v.pipe(v.string(), v.url(), v.maxBytes(stringLimits.job.git_url)),
+  app_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.app_id)),
+  publisher_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.publisher_id)),
   client_id: v.nullable(idSchema),
   existing_version_code: v.nullable(idSchema),
-  jenkins_build_url: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  jenkins_publish_url: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url())))
+  jenkins_build_url: v.pipe(
+    convertEmptyStrToNull(stringLimits.job.jenkins_build_url),
+    v.nullable(v.pipe(v.string(), v.url()))
+  ),
+  jenkins_publish_url: v.pipe(
+    convertEmptyStrToNull(stringLimits.job.jenkins_publish_url),
+    v.nullable(v.pipe(v.string(), v.url()))
+  )
 });
 
 export const load = (async ({ url }) => {

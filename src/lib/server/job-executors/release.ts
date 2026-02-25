@@ -5,6 +5,7 @@ import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
 import { Build } from '$lib/server/models/build';
 import { Release } from '$lib/server/models/release';
+import { trimStrings } from '$lib/valibot';
 
 export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown> {
   try {
@@ -32,12 +33,16 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
     if (lastBuildGuid) {
       await prisma.release.update({
         where: { id: job.data.releaseId },
-        data: {
-          build_guid: lastBuildGuid,
-          codebuild_url: CodeBuild.getCodeBuildUrl('publish_app', lastBuildGuid),
-          console_text_url: CodeBuild.getConsoleTextUrl('publish_app', lastBuildGuid),
-          status: Release.Status.Active
-        }
+        data: trimStrings(
+          {
+            build_guid: lastBuildGuid,
+            codebuild_url: CodeBuild.getCodeBuildUrl('publish_app', lastBuildGuid),
+            console_text_url: CodeBuild.getConsoleTextUrl('publish_app', lastBuildGuid),
+            status: Release.Status.Active
+          },
+          'release',
+          job.log
+        )
       });
     }
     const name = `Check status of Release #${release.id}`;
@@ -54,11 +59,15 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
     job.log(`${e}`);
     await prisma.release.update({
       where: { id: job.data.releaseId },
-      data: {
-        result: Build.Result.Failure,
-        status: Release.Status.Completed,
-        error: String(e)
-      }
+      data: trimStrings(
+        {
+          result: Build.Result.Failure,
+          status: Release.Status.Completed,
+          error: String(e)
+        },
+        'release',
+        job.log
+      )
     });
   }
 }
