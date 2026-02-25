@@ -95,7 +95,7 @@ export const handle: Handle = async ({ event, resolve }) => {
       const response = await sequence(
         heartbeat,
         // Handle auth hooks in a separate OTEL span
-        (h) => {
+        async ({ event, resolve }) => {
           return tracer.startActiveSpan('Authentication', async (span) => {
             // Call the auth sequence
             let spanEnded = false;
