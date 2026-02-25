@@ -1,6 +1,14 @@
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
-import type { BuildJob, PollJob, ProjectJob, PublishJob, S3Job, SystemJob } from './types';
+import type {
+  BuildJob,
+  PollJob,
+  ProjectJob,
+  PublishJob,
+  RecurringJob,
+  S3Job,
+  StartupJob
+} from './types';
 import { QueueName } from './types';
 import { env } from '$env/dynamic/private';
 
@@ -98,14 +106,17 @@ function createQueues() {
   /** Queue for jobs that poll BuildEngine, such as checking the status of a build */
   const Polling = new Queue<PollJob>(QueueName.Polling, getQueueConfig());
   /** Queue for jobs that run on startup, such as creating the CodeBuild project */
-  const SystemStartup = new Queue<SystemJob>(QueueName.System_Startup, getQueueConfig());
+  const SystemStartup = new Queue<StartupJob>(QueueName.System_Startup, getQueueConfig());
+  /** Queue for default recurring jobs such as refreshing the cached AppVersions */
+  const SystemRecurring = new Queue<RecurringJob>(QueueName.System_Recurring, getQueueConfig());
   return {
     Builds,
     S3,
     Projects,
     Releases,
     Polling,
-    SystemStartup
+    SystemStartup,
+    SystemRecurring
   };
 }
 export function getQueues() {

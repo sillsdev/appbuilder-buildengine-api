@@ -21,7 +21,8 @@ export enum QueueName {
   Projects = 'Projects',
   Releases = 'Releases',
   Polling = 'Polling',
-  System_Startup = 'System (Startup)'
+  System_Startup = 'System (Startup)',
+  System_Recurring = 'System (Recurring)'
 }
 
 export enum JobType {
@@ -38,7 +39,12 @@ export enum JobType {
   S3_CopyArtifacts = 'Copy Artifacts to S3',
   S3_CopyError = 'Copy Errors to S3',
   // System Jobs
-  System_CreateCodeBuildProject = 'Create CodeBuild Project'
+  System_CreateCodeBuildProject = 'Create CodeBuild Project',
+  System_RefreshAppVersions = 'Refresh AppVersions'
+}
+
+export enum JobSchedulerId {
+  RefreshAppVersions = 'RefreshAppVersions'
 }
 
 export namespace Build {
@@ -91,6 +97,9 @@ export namespace System {
   export interface CreateCodeBuildProject {
     type: JobType.System_CreateCodeBuildProject;
   }
+  export interface RefreshAppVersions {
+    type: JobType.System_RefreshAppVersions;
+  }
 }
 
 export type Job = JobTypeMap[keyof JobTypeMap];
@@ -100,7 +109,10 @@ export type S3Job = JobTypeMap[JobType.S3_CopyArtifacts | JobType.S3_CopyError];
 export type PublishJob = JobTypeMap[JobType.Release_Product];
 export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Release];
 export type ProjectJob = JobTypeMap[JobType.Project_Create];
-export type SystemJob = JobTypeMap[JobType.System_CreateCodeBuildProject];
+export type StartupJob = JobTypeMap[
+  | JobType.System_CreateCodeBuildProject
+  | JobType.System_RefreshAppVersions];
+export type RecurringJob = JobTypeMap[JobType.System_RefreshAppVersions];
 
 export type JobTypeMap = {
   [JobType.Build_Product]: Build.Product;
@@ -111,5 +123,6 @@ export type JobTypeMap = {
   [JobType.S3_CopyArtifacts]: S3.CopyArtifacts;
   [JobType.S3_CopyError]: S3.CopyErrors;
   [JobType.System_CreateCodeBuildProject]: System.CreateCodeBuildProject;
+  [JobType.System_RefreshAppVersions]: System.RefreshAppVersions;
   // Add more mappings here as needed
 };

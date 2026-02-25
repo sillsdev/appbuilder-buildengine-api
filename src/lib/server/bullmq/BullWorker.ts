@@ -22,7 +22,7 @@ export abstract class BullWorker<T extends BullMQ.Job> {
   abstract run(job: Job<T>): Promise<unknown>;
 }
 
-export class SystemStartup<J extends BullMQ.SystemJob> extends BullWorker<J> {
+export class SystemStartup<J extends BullMQ.StartupJob> extends BullWorker<J> {
   private jobsLeft = 0;
   constructor() {
     super(BullMQ.QueueName.System_Startup);
@@ -31,6 +31,12 @@ export class SystemStartup<J extends BullMQ.SystemJob> extends BullWorker<J> {
         'Create CodeBuild Project (Startup)',
         {
           type: BullMQ.JobType.System_CreateCodeBuildProject
+        }
+      ],
+      [
+        'Refresh AppVersions (Startup)',
+        {
+          type: BullMQ.JobType.System_RefreshAppVersions
         }
       ]
     ] as const;
@@ -49,6 +55,33 @@ export class SystemStartup<J extends BullMQ.SystemJob> extends BullWorker<J> {
         return Executor.System.createCodeBuildProject(
           job as Job<BullMQ.System.CreateCodeBuildProject>
         );
+      case BullMQ.JobType.System_RefreshAppVersions:
+        return Executor.System.refreshAppVersions(job as Job<BullMQ.System.RefreshAppVersions>);
+    }
+  }
+}
+
+export class SystemRecurring<J extends BullMQ.RecurringJob> extends BullWorker<J> {
+  constructor() {
+    super(BullMQ.QueueName.System_Recurring);
+    getQueues().SystemRecurring.upsertJobScheduler(
+      BullMQ.JobSchedulerId.RefreshAppVersions,
+      {
+        pattern: '@hourly',
+        immediately: false
+      },
+      {
+        name: 'Refresh AppVersions',
+        data: {
+          type: BullMQ.JobType.System_RefreshAppVersions
+        }
+      }
+    );
+  }
+  async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.System_RefreshAppVersions:
+        return Executor.System.refreshAppVersions(job as Job<BullMQ.System.RefreshAppVersions>);
     }
   }
 }
