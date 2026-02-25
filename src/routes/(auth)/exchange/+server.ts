@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import { error } from 'console';
 import { EncryptJWT, jwtVerify } from 'jose';
 import type { RequestHandler } from './$types';
@@ -15,6 +16,8 @@ export const GET: RequestHandler = async (event) => {
     if (!requestId || !code) {
       throw error(400, 'Missing URL Search Params');
     }
+
+    trace.getActiveSpan()?.setAttribute('request-id', requestId);
 
     const verify = await getAuthConnection().get(requestId);
     if (!verify) {
@@ -47,6 +50,8 @@ export const GET: RequestHandler = async (event) => {
     const key = new TextEncoder().encode(secrets.AUTH0_SECRET);
 
     const token = await jwtVerify(res.id_token, key);
+
+    trace.getActiveSpan()?.setAttribute('user.email', token.payload.email as string);
 
     const encryptedToken = await new EncryptJWT(token.payload)
       .setProtectedHeader({ alg: 'dir', enc: 'A256CBC-HS512' })
