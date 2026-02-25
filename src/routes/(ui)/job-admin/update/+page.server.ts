@@ -1,3 +1,4 @@
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { error, redirect } from '@sveltejs/kit';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
@@ -69,8 +70,12 @@ export const actions: Actions = {
         data: form.data
       });
     } catch (e) {
-      console.log(e);
-      return error(400, e as Error);
+      trace.getActiveSpan()?.recordException(e as Error);
+      trace.getActiveSpan()?.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: (e as Error).message
+      });
+      return error(400, (e as Error).message);
     }
 
     redirect(303, `/job-admin/view?id=${job.id}`);
