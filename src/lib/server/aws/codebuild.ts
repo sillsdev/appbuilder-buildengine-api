@@ -6,7 +6,8 @@ import {
   CreateProjectCommand,
   type ProjectCache,
   type ProjectSource,
-  StartBuildCommand
+  StartBuildCommand,
+  StopBuildCommand
 } from '@aws-sdk/client-codebuild';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import type { Prisma } from '@prisma/client';
@@ -216,6 +217,28 @@ export class CodeBuild extends AWSCommon {
           });
           return buildGuid;
         }
+      } catch (e) {
+        span.recordException(e as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: (e as Error).message
+        });
+      } finally {
+        span.end();
+      }
+    });
+  }
+
+  public async cancelBuild(guid: string, buildProcess: string) {
+    return tracer.startActiveSpan(`CodeBuild - CancelBuild`, async (span) => {
+      try {
+        const existing = await this.getBuildStatus(guid, buildProcess);
+        if (existing?.id) {
+          span.setAttribute('code-build.build-status', this.getStatus(existing) ?? '(missing)');
+          await this.codeBuildClient.send(new StopBuildCommand({ id: existing.id }));
+        }
+
+        return existing;
       } catch (e) {
         span.recordException(e as Error);
         span.setStatus({

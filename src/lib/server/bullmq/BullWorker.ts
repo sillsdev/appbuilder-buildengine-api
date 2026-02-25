@@ -116,6 +116,8 @@ export class Builds<J extends BullMQ.BuildJob> extends BullWorker<J> {
     switch (job.data.type) {
       case BullMQ.JobType.Build_Product:
         return Executor.Build.product(job as Job<BullMQ.Build.Product>);
+      case BullMQ.JobType.Build_Cancel:
+        return Executor.Build.cancel(job as Job<BullMQ.Build.Cancel>);
     }
   }
 }
@@ -154,6 +156,8 @@ export class Releases<J extends BullMQ.PublishJob> extends BullWorker<J> {
     switch (job.data.type) {
       case BullMQ.JobType.Release_Product:
         return Executor.Release.product(job as Job<BullMQ.Release.Product>);
+      case BullMQ.JobType.Release_Cancel:
+        return Executor.Release.cancel(job as Job<BullMQ.Release.Cancel>);
     }
   }
 }

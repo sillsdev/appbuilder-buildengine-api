@@ -71,7 +71,7 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
     }
   } catch (e) {
     job.log(`${e}`);
-    await prisma.build.update({
+    await prisma.build.updateMany({
       where: { id: job.data.buildId },
       data: trimStrings(
         {
@@ -162,7 +162,7 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
     }
   } catch (e) {
     job.log(`${e}`);
-    await prisma.release.update({
+    await prisma.release.updateMany({
       where: { id: job.data.releaseId },
       data: { result: Build.Result.Failure, status: Release.Status.Completed }
     });

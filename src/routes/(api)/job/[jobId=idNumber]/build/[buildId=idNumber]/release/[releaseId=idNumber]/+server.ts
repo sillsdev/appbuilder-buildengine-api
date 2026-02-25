@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { BullMQ, getQueues } from '$lib/server/bullmq';
 import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
@@ -54,10 +55,39 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 // DELETE /job/[id]/build/[id]/release/[id]
-export const DELETE: RequestHandler = async () => {
-  return ErrorResponse(
-    405,
-    'DELETE /job/[id]/build/[id]/release/[id] is not supported at this time',
-    { Allow: 'GET' }
-  );
+export const DELETE: RequestHandler = async ({ params }) => {
+  const release = await prisma.release.findUnique({
+    where: {
+      id: Number(params.releaseId)
+    },
+    select: {
+      id: true,
+      status: true,
+      build_guid: true,
+      build: {
+        select: {
+          job: {
+            select: {
+              id: true,
+              app_id: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!release) return ErrorResponse(404, 'Release not found');
+
+  await prisma.build.delete({ where: { id: release.id } });
+
+  if (release.build_guid && release.status !== Release.Status.Completed) {
+    await getQueues().Releases.add(`Cancel Release #${release.id}`, {
+      type: BullMQ.JobType.Release_Cancel,
+      guid: release.build_guid,
+      release
+    });
+  }
+
+  return new Response(JSON.stringify({}));
 };
