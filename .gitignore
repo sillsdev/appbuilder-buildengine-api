@@ -14,7 +14,7 @@ aws.env
 .netlify
 .wrangler
 /.svelte-kit
-/build
+/out/build
 
 # IDE project files
 .idea/
