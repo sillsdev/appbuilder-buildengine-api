@@ -9,20 +9,27 @@ import {
   idSchema,
   paramNumber,
   selectFrom,
-  stringIdSchema
+  stringIdSchema,
+  stringLimits
 } from '$lib/valibot';
 
 const buildSchema = v.object({
   job_id: idSchema,
-  status: convertEmptyStrToNull(),
+  status: v.pipe(convertEmptyStrToNull(stringLimits.build.status)),
   build_guid: v.pipe(convertEmptyStrToNull(), v.nullable(stringIdSchema)),
-  result: convertEmptyStrToNull(),
-  error: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  artifact_url_base: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  artifact_files: convertEmptyStrToNull(),
-  channel: convertEmptyStrToNull(),
+  result: convertEmptyStrToNull(stringLimits.build.result),
+  error: v.pipe(
+    convertEmptyStrToNull(stringLimits.build.error),
+    v.nullable(v.pipe(v.string(), v.url()))
+  ),
+  artifact_url_base: v.pipe(
+    convertEmptyStrToNull(stringLimits.build.artifact_url_base),
+    v.nullable(v.pipe(v.string(), v.url()))
+  ),
+  artifact_files: convertEmptyStrToNull(stringLimits.build.artifact_files),
+  channel: convertEmptyStrToNull(stringLimits.build.channel),
   version_code: v.nullable(idSchema),
-  targets: convertEmptyStrToNull(),
+  targets: convertEmptyStrToNull(stringLimits.build.targets),
   environment: convertEmptyStrToNull()
 });
 

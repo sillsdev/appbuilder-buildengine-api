@@ -4,6 +4,7 @@ import type { RequestHandler } from './$types';
 import { AWSCommon } from '$lib/server/aws/common';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
+import { stringLimits } from '$lib/valibot';
 
 const projectSchema = v.strictObject({
   app_id: v.pipe(
@@ -15,8 +16,8 @@ const projectSchema = v.strictObject({
       'keyboardappbuilder'
     ])
   ),
-  project_name: v.string(),
-  language_code: v.string(),
+  project_name: v.pipe(v.string(), v.maxBytes(stringLimits.project.project_name)),
+  language_code: v.pipe(v.string(), v.maxBytes(stringLimits.project.language_code)),
   storage_type: v.literal('s3')
 });
 

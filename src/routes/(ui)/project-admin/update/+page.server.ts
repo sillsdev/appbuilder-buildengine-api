@@ -4,20 +4,29 @@ import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
-import { convertEmptyStrToNull, idSchema, paramNumber, selectFrom } from '$lib/valibot';
+import {
+  convertEmptyStrToNull,
+  idSchema,
+  paramNumber,
+  selectFrom,
+  stringLimits
+} from '$lib/valibot';
 
 const projectSchema = v.object({
-  status: convertEmptyStrToNull(),
-  result: convertEmptyStrToNull(),
-  error: convertEmptyStrToNull(),
-  url: v.pipe(convertEmptyStrToNull(), v.nullable(v.pipe(v.string(), v.url()))),
-  user_id: convertEmptyStrToNull(),
-  group_id: convertEmptyStrToNull(),
-  app_id: convertEmptyStrToNull(),
+  status: convertEmptyStrToNull(stringLimits.project.status),
+  result: convertEmptyStrToNull(stringLimits.project.result),
+  error: convertEmptyStrToNull(stringLimits.project.error),
+  url: v.pipe(
+    convertEmptyStrToNull(stringLimits.project.url),
+    v.nullable(v.pipe(v.string(), v.url()))
+  ),
+  user_id: convertEmptyStrToNull(stringLimits.project.user_id),
+  group_id: convertEmptyStrToNull(stringLimits.project.group_id),
+  app_id: convertEmptyStrToNull(stringLimits.project.app_id),
   client_id: v.nullable(idSchema),
-  project_name: convertEmptyStrToNull(),
-  language_code: convertEmptyStrToNull(),
-  publishing_key: convertEmptyStrToNull()
+  project_name: convertEmptyStrToNull(stringLimits.project.project_name),
+  language_code: convertEmptyStrToNull(stringLimits.project.language_code),
+  publishing_key: convertEmptyStrToNull(stringLimits.project.publishing_key)
 });
 
 export const load = (async ({ url }) => {

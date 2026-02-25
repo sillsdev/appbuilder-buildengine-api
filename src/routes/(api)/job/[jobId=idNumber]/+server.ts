@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
+import { stringLimits } from '$lib/valibot';
 
 // GET /job/[id]
 export const GET: RequestHandler = async ({ params }) => {
@@ -33,7 +34,7 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 const updateSchema = v.strictObject({
-  publisher_id: v.string()
+  publisher_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.publisher_id))
 });
 
 // PUT /job/[id]
