@@ -9,6 +9,7 @@ import {
   S3ServiceException,
   type _Object
 } from '@aws-sdk/client-s3';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { basename, dirname, extname } from 'node:path';
 import { S3SyncClient } from 's3-sync-client';
 import { AWSCommon } from './common';
@@ -21,7 +22,6 @@ import {
   getBasePrefixUrl,
   handleArtifact
 } from '$lib/server/models/artifacts';
-import { Utils } from '$lib/server/utils';
 
 export class S3 extends AWSCommon {
   public s3Client;
@@ -80,17 +80,25 @@ export class S3 extends AWSCommon {
       );
       fileContents = await result.Body!.transformToString();
     } catch (e) {
+      const span = trace.getActiveSpan();
+      span?.recordException(e as Error);
       // There is not a good way to check for file exists.  If file doesn't exist,
       // it will be caught here and an empty string returned.
       if (e instanceof NoSuchKey) {
-        console.error(
-          `Error from S3 while getting object "${filePath}" from "${bucket}". No such key exists.`
-        );
+        span?.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: `Error from S3 while getting object "${filePath}" from "${bucket}". No such key exists.`
+        });
       } else if (e instanceof S3ServiceException) {
-        console.error(
-          `Error from S3 while getting object from ${bucket}.  ${e.name}: ${e.message}`
-        );
+        span?.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: `Error from S3 while getting object from ${bucket}.  ${e.name}: ${e.message}`
+        });
       } else {
+        span?.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: (e as Error).message
+        });
         throw e;
       }
     }
@@ -106,18 +114,26 @@ export class S3 extends AWSCommon {
    * @param Build or Release artifacts_provider - The build or release
    */
   public async copyS3Folder(artifacts_provider: ProviderForPrefix & ProviderForArtifacts) {
+    const span = trace.getActiveSpan();
     const artifactsBucket = S3.getArtifactsBucket();
     const destFolderPrefix = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
     const sourcePrefix = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
     const destPrefix = destFolderPrefix + '/';
     beginArtifacts(artifacts_provider, `https://${artifactsBucket}.s3.amazonaws.com/${destPrefix}`);
+    span?.addEvent(`S3 - Copy Folder`, {
+      's3.bucket': artifactsBucket,
+      's3.source': sourcePrefix,
+      's3.dest': destPrefix
+    });
     try {
       await this.deleteMatchingObjects(artifactsBucket, destFolderPrefix);
     } catch (e) {
-      if (e instanceof S3ServiceException) {
-        console.error(`[${[Utils.getPrefix()]}] copyS3Build
-            Folder: Exception:\n${e}`);
-      } else {
+      span?.recordException(e as Error);
+      span?.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: (e as Error).message
+      });
+      if (!(e instanceof S3ServiceException)) {
         throw e;
       }
     }
@@ -153,21 +169,23 @@ export class S3 extends AWSCommon {
     destPrefix: string,
     artifacts_provider: ProviderForPrefix & ProviderForArtifacts
   ) {
+    const span = trace.getActiveSpan();
     const artifactsBucket = S3.getArtifactsBucket();
     let fileContents = '';
     const fileNameWithPrefix = file['Key']!;
     const fileName = fileNameWithPrefix.substring(sourcePrefix.length);
+    span?.addEvent(`S3 - Copy File`, {
+      's3.bucket': artifactsBucket,
+      's3.source': sourcePrefix,
+      's3.file': fileName
+    });
     switch (fileName) {
       case 'manifest.txt':
-        return;
       case 'play-listing/default-language.txt':
         return;
       //case: 'version.json': FUTURE: get versionCode from version.json
       case 'version_code.txt':
         fileContents = await this.readS3File(artifacts_provider, fileName);
-        break;
-      default:
-        console.log(fileName);
         break;
     }
     const sourceDir = dirname(fileNameWithPrefix);
@@ -187,9 +205,17 @@ export class S3 extends AWSCommon {
       );
       return { file: fileName, contents: fileContents };
     } catch (e) {
+      span?.recordException(e as Error);
       if (e instanceof Error) {
-        console.error(`File was not renamed ${sourceFile}\nexception: ${e.stack}`);
+        span?.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: `File was not renamed ${sourceFile}\nexception: ${e.message}`
+        });
       } else {
+        span?.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: (e as Error).message
+        });
         throw e;
       }
     }
@@ -203,6 +229,12 @@ export class S3 extends AWSCommon {
     const fileS3Bucket = S3.getArtifactsBucket();
     const destPrefix: string = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
     const fileS3Key = destPrefix + '/' + fileName;
+
+    trace.getActiveSpan()?.addEvent(`S3 - Write File`, {
+      's3.bucket': fileS3Bucket,
+      's3.dest': destPrefix,
+      's3.file': fileName
+    });
 
     await this.s3Client.send(
       new PutObjectCommand({
@@ -218,11 +250,18 @@ export class S3 extends AWSCommon {
   public async removeCodeBuildFolder(artifacts_provider: ProviderForPrefix) {
     const s3Folder = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
     const s3Bucket = S3.getArtifactsBucket();
-    console.log(`Deleting S3 bucket: ${s3Bucket} key: ${s3Folder}`);
+    trace.getActiveSpan()?.addEvent(`S3 - Remove CodeBuild Folder`, {
+      's3.bucket': s3Bucket,
+      's3.folder': s3Folder
+    });
     return await this.deleteMatchingObjects(s3Bucket, s3Folder);
   }
 
   public async uploadFolder(folderName: string, bucket: string) {
+    trace.getActiveSpan()?.addEvent(`S3 - Upload Folder`, {
+      's3.bucket': bucket,
+      's3.folder': folderName
+    });
     const client = new S3SyncClient({ client: this.getS3ClientWithCredentials() });
     return await client.sync(folderName, bucket);
   }
@@ -247,6 +286,10 @@ export class S3 extends AWSCommon {
   }
 
   private async deleteMatchingObjects(Bucket: string, Prefix: string) {
+    trace.getActiveSpan()?.addEvent(`S3 - Delete Objects`, {
+      's3.bucket': Bucket,
+      's3.prefix': Prefix
+    });
     // If destination folder already exists from some previous build, delete
     const existing = await this.s3Client.send(
       new ListObjectsV2Command({

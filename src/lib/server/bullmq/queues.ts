@@ -1,4 +1,5 @@
 import { Queue } from 'bullmq';
+import { BullMQOtel } from 'bullmq-otel';
 import { Redis } from 'ioredis';
 import type {
   BuildJob,
@@ -11,6 +12,7 @@ import type {
 } from './types';
 import { QueueName } from './types';
 import { env } from '$env/dynamic/private';
+import OTEL from '$lib/otel';
 
 class Connection {
   private conn: Redis;
@@ -23,12 +25,22 @@ class Connection {
     });
     this.connected = false;
     this.conn.on('close', () => {
+      OTEL.instance.logger.info('Valkey connection closed', {
+        isQueueConnection
+      });
       this.connected = false;
     });
     this.conn.on('connect', () => {
+      OTEL.instance.logger.info('Valkey connection established', {
+        isQueueConnection
+      });
       this.connected = true;
     });
     this.conn.on('error', (err) => {
+      OTEL.instance.logger.error('Valkey connection error', {
+        error: err.message,
+        isQueueConnection
+      });
       this.connected = false;
       if (err.message.includes('ENOTFOUND')) {
         console.error('Fatal Valkey connection', err);
@@ -49,6 +61,10 @@ class Connection {
               console.error(err);
               console.log('Valkey disconnected');
               this.connected = false;
+              OTEL.instance.logger.error('Valkey disconnected', {
+                error: err.message,
+                isQueueConnection
+              });
             }
           });
       }
@@ -86,7 +102,21 @@ export const getQueueConfig = () => {
   if (!_queueConnection) _queues = createQueues();
   return {
     connection: _queueConnection!.connection(),
-    prefix: env.APP_ENV + '_build-engine'
+    prefix: env.APP_ENV + '_build-engine',
+    telemetry: new BullMQOtel(env.APP_ENV + '_build-engine'),
+    defaultJobOptions: {
+      // https://docs.bullmq.io/guide/queues/auto-removal-of-jobs#keep-a-certain-number-of-jobs
+      removeOnComplete: {
+        // 2 weeks
+        age: 2 * 7 * 24 * 60 * 60,
+        count: 1000
+      },
+      removeOnFail: {
+        // 2 weeks
+        age: 2 * 7 * 24 * 60 * 60,
+        count: 2000
+      }
+    }
   } as const;
 };
 let _queues: ReturnType<typeof createQueues> | undefined = undefined;

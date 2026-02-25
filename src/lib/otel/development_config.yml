@@ -1,0 +1,21 @@
+processors:
+  batch:
+exporters:
+  debug:
+    # verbosity: detailed
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug,otlp]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
