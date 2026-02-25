@@ -4,9 +4,10 @@ import { BullMQ, getQueues } from '$lib/server/bullmq';
 import { Build } from '$lib/server/models/build';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
+import { stringLimits } from '$lib/valibot';
 
 const buildSchema = v.strictObject({
-  targets: v.string(),
+  targets: v.pipe(v.string(), v.maxBytes(stringLimits.build.targets)),
   environment: v.record(v.string(), v.string())
 });
 

@@ -4,6 +4,7 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import LabeledFormInput from '$lib/components/LabeledFormInput.svelte';
   import { title } from '$lib/stores';
+  import { stringLimits } from '$lib/valibot';
 
   $title = 'Create Client';
 
@@ -32,11 +33,18 @@
       type="text"
       bind:value={$form.access_token}
       required
+      maxlength={stringLimits.client.access_token}
     />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <LabeledFormInput label="Prefix">
-    <input class="input input-bordered validator" type="text" bind:value={$form.prefix} required />
+    <input
+      class="input input-bordered validator"
+      type="text"
+      bind:value={$form.prefix}
+      required
+      maxlength={stringLimits.client.prefix}
+    />
     <span class="validator-hint">&nbsp;</span>
   </LabeledFormInput>
   <input type="submit" class="btn btn-success" value="Create" />

@@ -5,6 +5,8 @@ import { BullMQ, getQueues } from '../bullmq';
 import { Build } from '../models/build';
 import { prisma } from '../prisma';
 import { Release } from '$lib/server/models/release';
+import type { Logger } from '$lib/utils';
+import { trimStrings } from '$lib/valibot';
 
 export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
   try {
@@ -56,7 +58,7 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
       }
       await prisma.build.update({
         where: { id: build.id },
-        data: { ...build, job: undefined }
+        data: trimStrings({ ...build, job: undefined }, 'build', job.log)
       });
       job.updateProgress(100);
       return {
@@ -71,11 +73,15 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
     job.log(`${e}`);
     await prisma.build.update({
       where: { id: job.data.buildId },
-      data: {
-        result: Build.Result.Failure,
-        status: Build.Status.Completed,
-        error: String(e)
-      }
+      data: trimStrings(
+        {
+          result: Build.Result.Failure,
+          status: Build.Status.Completed,
+          error: String(e)
+        },
+        'build',
+        job.log
+      )
     });
   }
 }
@@ -123,11 +129,11 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
           case CodeBuild.Status.Fault:
           case CodeBuild.Status.TimedOut:
             release.result = Build.Result.Failure;
-            await handleReleaseFailure(release);
+            await handleReleaseFailure(release, job.log);
             break;
           case CodeBuild.Status.Stopped:
             release.result = Build.Result.Aborted;
-            await handleReleaseFailure(release);
+            await handleReleaseFailure(release, job.log);
             break;
           case CodeBuild.Status.Succeeded:
             release.result = Build.Result.Success;
@@ -164,11 +170,12 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
 }
 
 async function handleReleaseFailure(
-  release: Prisma.releaseGetPayload<{ select: { id: true; console_text_url: true } }>
+  release: Prisma.releaseGetPayload<{ select: { id: true; console_text_url: true } }>,
+  log: Logger
 ) {
   await prisma.release.update({
     where: { id: release.id },
-    data: { error: release.console_text_url }
+    data: trimStrings({ error: release.console_text_url }, 'release', log)
   });
   await getQueues().S3.add(`Save Errors for Release ${release.id} to S3`, {
     type: BullMQ.JobType.S3_CopyError,
