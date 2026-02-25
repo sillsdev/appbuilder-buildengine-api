@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CodeBuild } from '../aws/codebuild';
 import { CodeCommit } from '../aws/codecommit';
+import { S3 } from '../aws/s3';
 import { BullMQ, getQueues } from '../bullmq';
 import { Build } from '../models/build';
 import { prisma } from '../prisma';
@@ -78,7 +79,7 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
           )
         });
       }
-      const name = `Check status of Build #${build.id}`;
+      const name = pollName(build.id);
       await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
         name,
         data: {
@@ -127,7 +128,7 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
           )
         });
       }
-      const name = `Check status of Build #${build.id}`;
+      const name = pollName(build.id);
       await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
         name,
         data: {
@@ -158,6 +159,23 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
   }
 }
 
+export async function cancel(job: Job<BullMQ.Build.Cancel>): Promise<unknown> {
+  const pollRemoved = await getQueues().Polling.removeJobScheduler(pollName(job.data.build.id));
+  job.updateProgress(10);
+  const codeBuild = new CodeBuild();
+  job.updateProgress(20);
+  const build = await codeBuild.cancelBuild(
+    job.data.guid,
+    CodeBuild.getCodeBuildProjectName('build_app')
+  );
+  job.updateProgress(50);
+  const s3 = new S3();
+  job.updateProgress(60);
+  const objects = await s3.removeCodeBuildFolder(job.data.build);
+  job.updateProgress(100);
+  return { pollRemoved, build, objects };
+}
+
 async function getVersionCode(
   job: Prisma.jobGetPayload<{ select: { id: true; existing_version_code: true } }>
 ) {
@@ -172,4 +190,8 @@ async function getVersionCode(
     }
   });
   return build._max.version_code ?? job.existing_version_code ?? 0;
+}
+
+function pollName(id: number) {
+  return `Check status of Build #${id}`;
 }

@@ -1,6 +1,7 @@
 import type { Job } from 'bullmq';
 import { readFile } from 'fs/promises';
 import { CodeBuild } from '../aws/codebuild';
+import { S3 } from '../aws/s3';
 import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
 import { Build } from '$lib/server/models/build';
@@ -45,7 +46,7 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
         )
       });
     }
-    const name = `Check status of Release #${release.id}`;
+    const name = pollName(release.id);
     await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
       name,
       data: {
@@ -70,4 +71,25 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
       )
     });
   }
+}
+
+export async function cancel(job: Job<BullMQ.Release.Cancel>): Promise<unknown> {
+  const pollRemoved = await getQueues().Polling.removeJobScheduler(pollName(job.data.release.id));
+  job.updateProgress(10);
+  const codeBuild = new CodeBuild();
+  job.updateProgress(20);
+  const release = await codeBuild.cancelBuild(
+    job.data.guid,
+    CodeBuild.getCodeBuildProjectName('publish_app')
+  );
+  job.updateProgress(50);
+  const s3 = new S3();
+  job.updateProgress(60);
+  const objects = await s3.removeCodeBuildFolder(job.data.release);
+  job.updateProgress(100);
+  return { pollRemoved, release, objects };
+}
+
+function pollName(id: number) {
+  return `Check status of Release #${id}`;
 }

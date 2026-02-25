@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import type { RepeatOptions } from 'bullmq';
+import type { BuildForPrefix, ReleaseForPrefix } from '../models/artifacts';
 
 /** Retry a job for 72 hours every 10 minutes. Useful for build engine tasks */
 export const Retry0f600 = {
@@ -28,6 +29,7 @@ export enum QueueName {
 export enum JobType {
   // Build Jobs
   Build_Product = 'Build Product',
+  Build_Cancel = 'Cancel Build',
   // Polling Jobs
   Poll_Build = 'Check Product Build',
   Poll_Release = 'Check Product Release',
@@ -35,6 +37,7 @@ export enum JobType {
   Project_Create = 'Create Project',
   // Publishing Jobs
   Release_Product = 'Release Product',
+  Release_Cancel = 'Cancel Release',
   // S3 Jobs
   S3_CopyArtifacts = 'Copy Artifacts to S3',
   S3_CopyError = 'Copy Errors to S3',
@@ -51,6 +54,12 @@ export namespace Build {
   export interface Product {
     type: JobType.Build_Product;
     buildId: number;
+  }
+
+  export interface Cancel {
+    type: JobType.Build_Cancel;
+    guid: string;
+    build: BuildForPrefix;
   }
 }
 
@@ -78,6 +87,12 @@ export namespace Release {
     type: JobType.Release_Product;
     releaseId: number;
   }
+
+  export interface Cancel {
+    type: JobType.Release_Cancel;
+    guid: string;
+    release: ReleaseForPrefix;
+  }
 }
 
 export namespace S3 {
@@ -104,9 +119,9 @@ export namespace System {
 
 export type Job = JobTypeMap[keyof JobTypeMap];
 
-export type BuildJob = JobTypeMap[JobType.Build_Product];
+export type BuildJob = JobTypeMap[JobType.Build_Product | JobType.Build_Cancel];
 export type S3Job = JobTypeMap[JobType.S3_CopyArtifacts | JobType.S3_CopyError];
-export type PublishJob = JobTypeMap[JobType.Release_Product];
+export type PublishJob = JobTypeMap[JobType.Release_Product | JobType.Release_Cancel];
 export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Release];
 export type ProjectJob = JobTypeMap[JobType.Project_Create];
 export type StartupJob = JobTypeMap[
@@ -116,10 +131,12 @@ export type RecurringJob = JobTypeMap[JobType.System_RefreshAppVersions];
 
 export type JobTypeMap = {
   [JobType.Build_Product]: Build.Product;
+  [JobType.Build_Cancel]: Build.Cancel;
   [JobType.Poll_Build]: Polling.Build;
   [JobType.Poll_Release]: Polling.Release;
   [JobType.Project_Create]: Project.Create;
   [JobType.Release_Product]: Release.Product;
+  [JobType.Release_Cancel]: Release.Cancel;
   [JobType.S3_CopyArtifacts]: S3.CopyArtifacts;
   [JobType.S3_CopyError]: S3.CopyErrors;
   [JobType.System_CreateCodeBuildProject]: System.CreateCodeBuildProject;

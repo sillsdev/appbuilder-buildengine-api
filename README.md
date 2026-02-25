@@ -354,7 +354,8 @@ Create the following policies:
                 "codebuild:CreateProject",
                 "codebuild:BatchGetProjects",
                 "codebuild:BatchGetBuilds",
-                "codebuild:StartBuild"
+                "codebuild:StartBuild",
+                "codebuild:StopBuild"
             ],
             "Resource": ""
         },

@@ -131,8 +131,35 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 };
 
 // DELETE /job/[id]/build/[id]
-export const DELETE: RequestHandler = async () => {
-  return ErrorResponse(405, 'DELETE /job/[id]/build/[id] is not supported at this time', {
-    Allow: 'GET'
+export const DELETE: RequestHandler = async ({ params }) => {
+  const build = await prisma.build.findUnique({
+    where: {
+      id: Number(params.buildId)
+    },
+    select: {
+      id: true,
+      status: true,
+      build_guid: true,
+      job: {
+        select: {
+          id: true,
+          app_id: true
+        }
+      }
+    }
   });
+
+  if (!build) return ErrorResponse(404, 'Build not found');
+
+  await prisma.build.delete({ where: { id: build.id } });
+
+  if (build.build_guid && build.status !== Build.Status.Completed) {
+    await getQueues().Builds.add(`Cancel Build #${build.id}`, {
+      type: BullMQ.JobType.Build_Cancel,
+      guid: build.build_guid,
+      build
+    });
+  }
+
+  return new Response(JSON.stringify({}));
 };
