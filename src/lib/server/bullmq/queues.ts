@@ -1,15 +1,7 @@
 import { Queue } from 'bullmq';
 import { BullMQOtel } from 'bullmq-otel';
 import { Redis } from 'ioredis';
-import type {
-  BuildJob,
-  PollJob,
-  ProjectJob,
-  PublishJob,
-  RecurringJob,
-  S3Job,
-  StartupJob
-} from './types';
+import type { BuildJob, PollJob, PublishJob, RecurringJob, S3Job, StartupJob } from './types';
 import { QueueName } from './types';
 import { env } from '$env/dynamic/private';
 import OTEL from '$lib/otel';
@@ -129,8 +121,6 @@ function createQueues() {
   const Builds = new Queue<BuildJob>(QueueName.Builds, getQueueConfig());
   /** Queue for S3 jobs */
   const S3 = new Queue<S3Job>(QueueName.S3, getQueueConfig());
-  /** Queue for miscellaneous jobs in BuildEngine such as Product and Project Creation */
-  const Projects = new Queue<ProjectJob>(QueueName.Projects, getQueueConfig());
   /** Queue for Product Publishing  */
   const Releases = new Queue<PublishJob>(QueueName.Releases, getQueueConfig());
   /** Queue for jobs that poll BuildEngine, such as checking the status of a build */
@@ -142,7 +132,6 @@ function createQueues() {
   return {
     Builds,
     S3,
-    Projects,
     Releases,
     Polling,
     SystemStartup,

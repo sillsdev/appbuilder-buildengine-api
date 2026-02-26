@@ -6,7 +6,6 @@ export const allWorkers = building
   : [
       new Workers.Builds(),
       new Workers.S3(),
-      new Workers.Projects(),
       new Workers.Releases(),
       new Workers.Polling(),
       new Workers.SystemStartup()

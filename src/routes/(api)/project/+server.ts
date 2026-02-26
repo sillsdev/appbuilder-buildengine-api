@@ -25,7 +25,7 @@ const projectSchema = v.strictObject({
 export const POST: RequestHandler = async ({ request, locals }) => {
   const parsed = v.safeParse(projectSchema, await request.json());
   if (!parsed.success) return ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
-  // TODO enqueue project creation job
+
   const withoutStorage = { ...parsed.output, storage_type: undefined };
   const project = await prisma.project.create({
     data: {
@@ -54,7 +54,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     })
   );
 };
-// TODO create bucket???
+
 function getS3Folder(
   project: Prisma.projectGetPayload<{
     select: {
