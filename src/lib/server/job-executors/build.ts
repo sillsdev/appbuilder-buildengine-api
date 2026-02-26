@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { CodeBuild } from '../aws/codebuild';
 import { CodeCommit } from '../aws/codecommit';
 import { S3 } from '../aws/s3';
+import { AWSVars } from '../aws/vars';
 import { BullMQ, getQueues } from '../bullmq';
 import { Build } from '../models/build';
 import { prisma } from '../prisma';
@@ -22,18 +23,6 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
     });
     job.updateProgress(10);
 
-    // Don't start job if a job for this build is currently running
-    const builds = await prisma.build.count({
-      where: {
-        job_id: build.job_id,
-        status: { in: [Build.Status.Active, Build.Status.PostProcessing] }
-      }
-    });
-    if (builds > 0) {
-      job.log('Existing active builds found. Build cancelled');
-      // TODO retry after???
-      return { existing: builds };
-    }
     const gitUrl = build.job.git_url;
     // Check to see if codebuild project
     const codeCommitProject = gitUrl.startsWith('ssh://');
@@ -164,10 +153,7 @@ export async function cancel(job: Job<BullMQ.Build.Cancel>): Promise<unknown> {
   job.updateProgress(10);
   const codeBuild = new CodeBuild();
   job.updateProgress(20);
-  const build = await codeBuild.cancelBuild(
-    job.data.guid,
-    CodeBuild.getCodeBuildProjectName('build_app')
-  );
+  const build = await codeBuild.cancelBuild(job.data.guid, AWSVars.projectName('build_app'));
   job.updateProgress(50);
   const s3 = new S3();
   job.updateProgress(60);

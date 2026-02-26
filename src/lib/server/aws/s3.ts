@@ -12,7 +12,7 @@ import {
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { basename, dirname, extname } from 'node:path';
 import { S3SyncClient } from 's3-sync-client';
-import { AWSCommon } from './common';
+import { AWSVars } from './vars';
 import { env } from '$env/dynamic/private';
 import {
   type BuildForPrefix,
@@ -23,29 +23,11 @@ import {
   handleArtifact
 } from '$lib/server/models/artifacts';
 
-export class S3 extends AWSCommon {
+export class S3 {
   public s3Client;
   public constructor() {
-    super();
-    this.s3Client = S3.getS3Client();
-  }
-
-  /**
-   * Configure and get the S3 Client
-   * @return \Aws\S3\S3Client
-   */
-  public static getS3Client() {
-    return new S3Client({
-      region: AWSCommon.getArtifactsBucketRegion()
-    });
-  }
-  public getS3ClientWithCredentials() {
-    return new S3Client({
-      region: AWSCommon.getArtifactsBucketRegion(),
-      credentials: {
-        accessKeyId: env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: env.AWS_SECRET_ACCESS_KEY
-      }
+    this.s3Client = new S3Client({
+      region: AWSVars.artifactsRegion()
     });
   }
 
@@ -58,7 +40,7 @@ export class S3 extends AWSCommon {
    * @return string prefix
    */
   public static getS3Arn(build: BuildForPrefix, productStage: string, filename: string | null) {
-    return `arn:aws:s3:::${S3.getArtifactsBucket()}/${getBasePrefixUrl(build, productStage)}/${filename ?? ''}`;
+    return `arn:aws:s3:::${AWSVars.artifacts()}/${getBasePrefixUrl(build, productStage)}/${filename ?? ''}`;
   }
   /**
    * This reads a file from the build output
@@ -69,7 +51,7 @@ export class S3 extends AWSCommon {
    */
   public async readS3File(artifacts_provider: ProviderForPrefix, fileName: string) {
     let fileContents = '';
-    const bucket = S3.getArtifactsBucket();
+    const bucket = AWSVars.artifacts();
     const filePath = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/' + fileName;
     try {
       const result = await this.s3Client.send(
@@ -115,8 +97,8 @@ export class S3 extends AWSCommon {
    */
   public async copyS3Folder(artifacts_provider: ProviderForPrefix & ProviderForArtifacts) {
     const span = trace.getActiveSpan();
-    const artifactsBucket = S3.getArtifactsBucket();
-    const destFolderPrefix = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
+    const artifactsBucket = AWSVars.artifacts();
+    const destFolderPrefix = getBasePrefixUrl(artifacts_provider, AWSVars.appEnv());
     const sourcePrefix = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
     const destPrefix = destFolderPrefix + '/';
     beginArtifacts(artifacts_provider, `https://${artifactsBucket}.s3.amazonaws.com/${destPrefix}`);
@@ -170,7 +152,7 @@ export class S3 extends AWSCommon {
     artifacts_provider: ProviderForPrefix & ProviderForArtifacts
   ) {
     const span = trace.getActiveSpan();
-    const artifactsBucket = S3.getArtifactsBucket();
+    const artifactsBucket = AWSVars.artifacts();
     let fileContents = '';
     const fileNameWithPrefix = file['Key']!;
     const fileName = fileNameWithPrefix.substring(sourcePrefix.length);
@@ -226,8 +208,8 @@ export class S3 extends AWSCommon {
     fileName: string,
     artifacts_provider: ProviderForPrefix & ProviderForArtifacts
   ) {
-    const fileS3Bucket = S3.getArtifactsBucket();
-    const destPrefix: string = getBasePrefixUrl(artifacts_provider, S3.getAppEnv());
+    const fileS3Bucket = AWSVars.artifacts();
+    const destPrefix: string = getBasePrefixUrl(artifacts_provider, AWSVars.appEnv());
     const fileS3Key = destPrefix + '/' + fileName;
 
     trace.getActiveSpan()?.addEvent(`S3 - Write File`, {
@@ -249,7 +231,7 @@ export class S3 extends AWSCommon {
   }
   public async removeCodeBuildFolder(artifacts_provider: ProviderForPrefix) {
     const s3Folder = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
-    const s3Bucket = S3.getArtifactsBucket();
+    const s3Bucket = AWSVars.artifacts();
     trace.getActiveSpan()?.addEvent(`S3 - Remove CodeBuild Folder`, {
       's3.bucket': s3Bucket,
       's3.folder': s3Folder
@@ -262,7 +244,15 @@ export class S3 extends AWSCommon {
       's3.bucket': bucket,
       's3.folder': folderName
     });
-    const client = new S3SyncClient({ client: this.getS3ClientWithCredentials() });
+    const client = new S3SyncClient({
+      client: new S3Client({
+        region: AWSVars.artifactsRegion(),
+        credentials: {
+          accessKeyId: env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: env.AWS_SECRET_ACCESS_KEY
+        }
+      })
+    });
     return await client.sync(folderName, bucket);
   }
 

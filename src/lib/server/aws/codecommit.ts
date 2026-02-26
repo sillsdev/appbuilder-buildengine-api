@@ -4,13 +4,12 @@ import {
   GetRepositoryCommand
 } from '@aws-sdk/client-codecommit';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
-import { AWSCommon } from './common';
+import { AWSVars } from './vars';
 
-export class CodeCommit extends AWSCommon {
+export class CodeCommit {
   public codeCommitClient;
 
   public constructor() {
-    super();
     this.codeCommitClient = CodeCommit.getCodeCommitClient();
   }
   /**
@@ -22,7 +21,7 @@ export class CodeCommit extends AWSCommon {
     let client: CodeCommitClient | null = null;
     try {
       client = new CodeCommitClient({
-        region: AWSCommon.getArtifactsBucketRegion()
+        region: AWSVars.artifactsRegion()
       });
     } catch (e) {
       span?.recordException(e as Error);

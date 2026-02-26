@@ -1,6 +1,7 @@
 import type { Job } from 'bullmq';
 import { readFile } from 'fs/promises';
 import { CodeBuild } from '../aws/codebuild';
+import { AWSVars } from '../aws/vars';
 import { S3 } from '../aws/s3';
 import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
@@ -78,10 +79,7 @@ export async function cancel(job: Job<BullMQ.Release.Cancel>): Promise<unknown> 
   job.updateProgress(10);
   const codeBuild = new CodeBuild();
   job.updateProgress(20);
-  const release = await codeBuild.cancelBuild(
-    job.data.guid,
-    CodeBuild.getCodeBuildProjectName('publish_app')
-  );
+  const release = await codeBuild.cancelBuild(job.data.guid, AWSVars.projectName('publish_app'));
   job.updateProgress(50);
   const s3 = new S3();
   job.updateProgress(60);

@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
-import { AWSCommon } from '$lib/server/aws/common';
+import { AWSVars } from '$lib/server/aws/vars';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 import { stringLimits } from '$lib/valibot';
@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       client: true
     }
   });
-  const url = `s3://${AWSCommon.getProjectsBucket()}/${getS3Folder(project)}`;
+  const url = `s3://${AWSVars.projects()}/${getS3Folder(project)}`;
   await prisma.project.update({ where: { id: project.id }, data: { url } });
   return new Response(
     JSON.stringify({

@@ -16,7 +16,7 @@ import { IAmWrapper } from '../aws/iamwrapper';
 import { S3 } from '../aws/s3';
 import type { BullMQ } from '../bullmq';
 import { prisma } from '../prisma';
-import { AWSCommon } from '$lib/server/aws/common';
+import { AWSVars } from '$lib/server/aws/vars';
 
 type Logger = (msg: string) => void;
 
@@ -27,7 +27,7 @@ export async function createCodeBuildProject(
     const build = await createProject(
       'build_app',
       {
-        location: S3.getArtifactsBucket() + '/codebuild-cache',
+        location: AWSVars.artifacts() + '/codebuild-cache',
         type: 'S3'
       },
       {
@@ -45,7 +45,7 @@ export async function createCodeBuildProject(
     // Copy default file
     const project = copyFolder(
       join(process.cwd(), './scripts/project_default'),
-      's3://' + S3.getArtifactsBucket(),
+      's3://' + AWSVars.artifacts(),
       (msg) => job.log(msg)
     );
 
@@ -59,7 +59,7 @@ export async function createCodeBuildProject(
       {
         buildspec: 'version: 0.2',
         gitCloneDepth: 1,
-        location: `arn:aws:s3:::${S3.getArtifactsBucket()}/default/default.zip`,
+        location: `arn:aws:s3:::${AWSVars.artifacts()}/default/default.zip`,
         type: 'S3'
       },
       (msg) => job.log(msg)
@@ -69,7 +69,7 @@ export async function createCodeBuildProject(
 
     const scripts = await copyFolder(
       join(process.cwd(), './scripts/upload'),
-      's3://' + S3.getProjectsBucket(),
+      's3://' + AWSVars.projects(),
       (msg) => job.log(msg)
     );
 
@@ -135,9 +135,9 @@ export async function refreshAppVersions(
   let versions: Map<App, string> | null = null;
   let imageHash: string | null = null;
 
-  const repoConfig = AWSCommon.getCodeBuildImageRepo();
-  const tagFilter = AWSCommon.getCodeBuildImageTag();
-  const region = AWSCommon.getArtifactsBucketRegion();
+  const repoConfig = AWSVars.imageRepo();
+  const tagFilter = AWSVars.imageTag();
+  const region = AWSVars.artifactsRegion();
 
   // Status: log repo config presence
   job.log(`repoConfig=${repoConfig ?? '(none)'}`);
