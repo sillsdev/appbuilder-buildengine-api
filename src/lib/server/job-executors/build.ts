@@ -3,7 +3,6 @@ import type { Job } from 'bullmq';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CodeBuild } from '../aws/codebuild';
-import { CodeCommit } from '../aws/codecommit';
 import { S3 } from '../aws/s3';
 import { AWSVars } from '../aws/vars';
 import { BullMQ, getQueues } from '../bullmq';
@@ -24,113 +23,45 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
     job.updateProgress(10);
 
     const gitUrl = build.job.git_url;
-    // Check to see if codebuild project
-    const codeCommitProject = gitUrl.startsWith('ssh://');
-    if (codeCommitProject) {
-      job.log('Starting build with CodeCommit');
-      // Left this block intact to make it easier to remove when codecommit is not supported
-      const codecommit = new CodeCommit();
-      const branch = 'master';
-      const repoUrl = await codecommit.getSourceURL(gitUrl);
-      if (!repoUrl) throw new Error('No repoUrl found!');
-      const commitId = await codecommit.getCommitId(gitUrl, branch);
-      if (!commitId) throw new Error('No commitId found!');
-      job.updateProgress(25);
 
-      const script = (
-        await readFile(join(process.cwd(), './scripts/appbuilders_build.yml'))
-      ).toString();
-      job.updateProgress(50);
-      // Start the build
-      const codeBuild = new CodeBuild();
-      const versionCode = (await getVersionCode(build.job)) + 1;
-      const lastBuildGuid = await codeBuild.startBuild(
-        repoUrl,
-        commitId,
-        build,
-        script,
-        versionCode,
-        codeCommitProject
-      );
-      job.updateProgress(75);
-      if (lastBuildGuid) {
-        await prisma.build.update({
-          where: { id: build.id },
-          data: trimStrings(
-            {
-              build_guid: lastBuildGuid,
-              codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
-              console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
-              status: Build.Status.Active
-            },
-            'build',
-            job.log
-          )
-        });
-      }
-      const name = pollName(build.id);
-      await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
-        name,
-        data: {
-          type: BullMQ.JobType.Poll_Build,
-          buildId: build.id
-        }
+    job.log('Starting build with CodeBuild');
+    const script = (
+      await readFile(join(process.cwd(), './scripts/appbuilders_s3_build.yml'))
+    ).toString();
+    job.updateProgress(50);
+    // Start the build
+    const codeBuild = new CodeBuild();
+    const versionCode = await getVersionCode(build.job); // Is there a reason this is not incremented here??
+    const lastBuildGuid = await codeBuild.startBuild(gitUrl, build, script, versionCode);
+    job.updateProgress(75);
+    if (lastBuildGuid) {
+      await prisma.build.update({
+        where: { id: build.id },
+        data: trimStrings(
+          {
+            build_guid: lastBuildGuid,
+            codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
+            console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
+            status: Build.Status.Active
+          },
+          'build',
+          job.log
+        )
       });
-      job.updateProgress(100);
-      return {
-        repoUrl,
-        commitId,
-        versionCode,
-        lastBuildGuid
-      };
-    } else {
-      job.log('Starting build with CodeBuild');
-      const script = (
-        await readFile(join(process.cwd(), './scripts/appbuilders_s3_build.yml'))
-      ).toString();
-      job.updateProgress(50);
-      // Start the build
-      const codeBuild = new CodeBuild();
-      const commitId = ''; // TODO: Remove when git is removed
-      const versionCode = await getVersionCode(build.job); // Is there a reason this is not incremented here??
-      const lastBuildGuid = await codeBuild.startBuild(
-        gitUrl,
-        commitId,
-        build,
-        script,
-        versionCode,
-        codeCommitProject
-      );
-      job.updateProgress(75);
-      if (lastBuildGuid) {
-        await prisma.build.update({
-          where: { id: build.id },
-          data: trimStrings(
-            {
-              build_guid: lastBuildGuid,
-              codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
-              console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
-              status: Build.Status.Active
-            },
-            'build',
-            job.log
-          )
-        });
-      }
-      const name = pollName(build.id);
-      await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
-        name,
-        data: {
-          type: BullMQ.JobType.Poll_Build,
-          buildId: build.id
-        }
-      });
-      job.updateProgress(100);
-      return {
-        versionCode,
-        lastBuildGuid
-      };
     }
+    const name = pollName(build.id);
+    await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
+      name,
+      data: {
+        type: BullMQ.JobType.Poll_Build,
+        buildId: build.id
+      }
+    });
+    job.updateProgress(100);
+    return {
+      versionCode,
+      lastBuildGuid
+    };
   } catch (e) {
     job.log(`${e}`);
     await prisma.build.update({
