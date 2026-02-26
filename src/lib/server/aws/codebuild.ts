@@ -11,8 +11,8 @@ import {
 } from '@aws-sdk/client-codebuild';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import type { Prisma } from '@prisma/client';
-import { AWSVars } from './vars';
 import { S3 } from './s3';
+import { AWSVars } from './vars';
 import {
   type BuildForPrefix,
   getArtifactFilename,
@@ -66,11 +66,9 @@ export class CodeBuild {
    */
   public async startBuild(
     repoUrl: string,
-    commitId: string,
     build: BuildForCodeBuild,
     buildSpec: string,
-    versionCode: number,
-    codeCommit: boolean
+    versionCode: number
   ) {
     return tracer.startActiveSpan(`CodeBuild - StartBuild`, async (span) => {
       try {
@@ -79,7 +77,6 @@ export class CodeBuild {
         span.setAttributes({
           'code-build.process': buildProcess,
           'code-build.repo-url': repoUrl,
-          'code-build.commit-id': commitId,
           'code-build.job-id': job.id,
           'code-build.build-id': build.id,
           'code-build.version-code': versionCode
@@ -90,124 +87,75 @@ export class CodeBuild {
         const buildPath = this.getBuildPath(job);
         const artifactPath = getArtifactPath(job, 'codebuild-output');
         span.setAttribute('code-build.artifact-path', artifactPath);
-        // Leaving all this code together to make it easier to remove when git is no longer supported
-        if (codeCommit) {
-          span.addEvent('StartBuild - CodeCommit');
-          const res = await this.codeBuildClient.send(
-            new StartBuildCommand({
-              projectName: buildApp,
-              artifactsOverride: {
-                location: artifacts_bucket,
-                name: '/',
-                namespaceType: 'NONE',
-                packaging: 'NONE',
-                path: artifactPath,
-                type: 'S3'
-              },
-              buildspecOverride: buildSpec,
-              environmentVariablesOverride: [
-                {
-                  name: 'BUILD_NUMBER',
-                  value: String(build.id)
-                },
-                {
-                  name: 'APP_BUILDER_SCRIPT_PATH',
-                  value: buildPath
-                },
-                {
-                  name: 'PUBLISHER',
-                  value: job.publisher_id
-                },
-                {
-                  name: 'VERSION_CODE',
-                  value: '' + versionCode
-                },
-                {
-                  name: 'SECRETS_BUCKET',
-                  value: secretsBucket
-                }
-              ],
-              sourceLocationOverride: repoUrl,
-              sourceVersion: commitId
-            })
-          );
-          const buildId = res.build?.id;
-          const buildGuid = buildId?.substring(buildId.indexOf(':') + 1);
-          span.setAttributes({
-            'code-build.build.build-id': buildId,
-            'code-build.build.build-guid': buildGuid
-          });
-          return buildGuid;
-        } else {
-          span.addEvent('StartBuild - S3');
-          const targets = build.targets ?? 'apk play-listing';
-          const environmentArray = [
-            // BUILD_NUMBER Must be first for tests
-            {
-              name: 'BUILD_NUMBER',
-              value: String(build.id)
+
+        span.addEvent('StartBuild - S3');
+        const targets = build.targets ?? 'apk play-listing';
+        const environmentArray = [
+          // BUILD_NUMBER Must be first for tests
+          {
+            name: 'BUILD_NUMBER',
+            value: String(build.id)
+          },
+          {
+            name: 'APP_BUILDER_SCRIPT_PATH',
+            value: buildPath
+          },
+          {
+            name: 'PUBLISHER',
+            value: job.publisher_id
+          },
+          {
+            name: 'VERSION_CODE',
+            value: '' + versionCode
+          },
+          {
+            name: 'SECRETS_BUCKET',
+            value: secretsBucket
+          },
+          {
+            name: 'PROJECT_S3',
+            value: repoUrl
+          },
+          {
+            name: 'TARGETS',
+            value: targets
+          },
+          {
+            name: 'SCRIPT_S3',
+            value: AWSVars.scriptsPath()
+          }
+        ];
+        const adjustedEnvironmentArray = this.addEnvironmentToArray(
+          environmentArray,
+          build.environment
+        );
+        const computeType = this.getComputeType(adjustedEnvironmentArray);
+        const imageTag = this.getImageTag(adjustedEnvironmentArray);
+        const result = await this.codeBuildClient.send(
+          new StartBuildCommand({
+            projectName: buildApp,
+            artifactsOverride: {
+              location: artifacts_bucket, // output bucket
+              name: '/', // name of output artifact object
+              namespaceType: 'NONE',
+              packaging: 'NONE',
+              path: artifactPath, // path to output artifacts
+              type: 'S3' // REQUIRED
             },
-            {
-              name: 'APP_BUILDER_SCRIPT_PATH',
-              value: buildPath
-            },
-            {
-              name: 'PUBLISHER',
-              value: job.publisher_id
-            },
-            {
-              name: 'VERSION_CODE',
-              value: '' + versionCode
-            },
-            {
-              name: 'SECRETS_BUCKET',
-              value: secretsBucket
-            },
-            {
-              name: 'PROJECT_S3',
-              value: repoUrl
-            },
-            {
-              name: 'TARGETS',
-              value: targets
-            },
-            {
-              name: 'SCRIPT_S3',
-              value: AWSVars.scriptsPath()
-            }
-          ];
-          const adjustedEnvironmentArray = this.addEnvironmentToArray(
-            environmentArray,
-            build.environment
-          );
-          const computeType = this.getComputeType(adjustedEnvironmentArray);
-          const imageTag = this.getImageTag(adjustedEnvironmentArray);
-          const result = await this.codeBuildClient.send(
-            new StartBuildCommand({
-              projectName: buildApp,
-              artifactsOverride: {
-                location: artifacts_bucket, // output bucket
-                name: '/', // name of output artifact object
-                namespaceType: 'NONE',
-                packaging: 'NONE',
-                path: artifactPath, // path to output artifacts
-                type: 'S3' // REQUIRED
-              },
-              buildspecOverride: buildSpec,
-              environmentVariablesOverride: adjustedEnvironmentArray,
-              sourceTypeOverride: 'NO_SOURCE',
-              computeTypeOverride: computeType,
-              imageOverride: AWSVars.imageRepo() + ':' + imageTag
-            })
-          );
-          const buildId = result.build?.id;
-          const buildGuid = buildId?.substring(buildId.indexOf(':') + 1);
-          span.setAttributes({
-            'code-build.build.build-id': buildId,
-            'code-build.build.build-guid': buildGuid
-          });
-          return buildGuid;
-        }
+            buildspecOverride: buildSpec,
+            environmentVariablesOverride: adjustedEnvironmentArray,
+            sourceTypeOverride: 'NO_SOURCE',
+            computeTypeOverride: computeType,
+            imageOverride: AWSVars.imageRepo() + ':' + imageTag
+          })
+        );
+        const buildId = result.build?.id;
+        const buildGuid = buildId?.substring(buildId.indexOf(':') + 1);
+        span.setAttributes({
+          'code-build.build.build-id': buildId,
+          'code-build.build.build-guid': buildGuid
+        });
+        return buildGuid;
       } catch (e) {
         span.recordException(e as Error);
         span.setStatus({
