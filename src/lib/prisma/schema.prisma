@@ -15,7 +15,7 @@ model build {
   error             String?   @db.VarChar(2083)
   created           DateTime? @default(now()) @db.Timestamp(6)
   updated           DateTime? @updatedAt @db.Timestamp(6)
-  channel           String?   @db.VarChar(255)
+  channel           String?   @db.VarChar(255) // ISSUE #77: remove this?
   version_code      Int?
   artifact_url_base String?   @db.VarChar(2083)
   artifact_files    String?   @db.VarChar(4096)
@@ -52,8 +52,8 @@ model job {
   updated               DateTime? @updatedAt @db.Timestamp(6)
   client_id             Int?
   existing_version_code Int?      @default(0)
-  jenkins_build_url     String?   @db.VarChar(1024)
-  jenkins_publish_url   String?   @db.VarChar(1024)
+  jenkins_build_url     String?   @db.VarChar(1024) // ISSUE #77: remove this?
+  jenkins_publish_url   String?   @db.VarChar(1024) // ISSUE #77: remove this?
   build                 build[]
   client                client?   @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_job_client_id")
 
@@ -67,12 +67,12 @@ model project {
   result         String?   @db.VarChar(255)
   error          String?   @db.VarChar(2083)
   url            String?   @db.VarChar(1024)
-  user_id        String?   @db.VarChar(255)
-  group_id       String?   @db.VarChar(255)
+  user_id        String?   @db.VarChar(255) // ISSUE #77: remove this?
+  group_id       String?   @db.VarChar(255) // ISSUE #77: remove this?
   app_id         String?   @db.VarChar(255)
   project_name   String?   @db.VarChar(255)
   language_code  String?   @db.VarChar(255)
-  publishing_key String?   @db.VarChar(1024)
+  publishing_key String?   @db.VarChar(1024) // ISSUE #77: remove this?
   created        DateTime? @default(now()) @db.Timestamp(6)
   updated        DateTime? @updatedAt @db.Timestamp(6)
   client_id      Int?
@@ -90,7 +90,7 @@ model release {
   result            String?   @db.VarChar(255)
   error             String?   @db.VarChar(2083)
   channel           String    @db.VarChar(255)
-  title             String?   @db.VarChar(30)
+  title             String?   @db.VarChar(30) // ISSUE #77: remove this?
   defaultLanguage   String?   @db.VarChar(255)
   promote_from      String?   @db.VarChar(255)
   build_guid        String?   @db.VarChar(255)
