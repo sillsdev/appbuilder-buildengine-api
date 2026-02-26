@@ -136,18 +136,6 @@ export class S3<J extends BullMQ.S3Job> extends BullWorker<J> {
   }
 }
 
-export class Projects<J extends BullMQ.ProjectJob> extends BullWorker<J> {
-  constructor() {
-    super(BullMQ.QueueName.Projects);
-  }
-  async run(job: Job<J>) {
-    switch (job.data.type) {
-      case BullMQ.JobType.Project_Create:
-        return Executor.Project.create(job as Job<BullMQ.Project.Create>);
-    }
-  }
-}
-
 export class Releases<J extends BullMQ.PublishJob> extends BullWorker<J> {
   constructor() {
     super(BullMQ.QueueName.Releases);

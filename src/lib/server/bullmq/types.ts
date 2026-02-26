@@ -19,7 +19,6 @@ export const RepeatEveryMinute: RepeatOptions = {
 export enum QueueName {
   Builds = 'Builds',
   S3 = 'S3',
-  Projects = 'Projects',
   Releases = 'Releases',
   Polling = 'Polling',
   System_Startup = 'System (Startup)',
@@ -33,8 +32,6 @@ export enum JobType {
   // Polling Jobs
   Poll_Build = 'Check Product Build',
   Poll_Release = 'Check Product Release',
-  // Project Jobs
-  Project_Create = 'Create Project',
   // Publishing Jobs
   Release_Product = 'Release Product',
   Release_Cancel = 'Cancel Release',
@@ -72,13 +69,6 @@ export namespace Polling {
   export interface Release {
     type: JobType.Poll_Release;
     releaseId: number;
-  }
-}
-
-export namespace Project {
-  export interface Create {
-    type: JobType.Project_Create;
-    projectId: number;
   }
 }
 
@@ -123,7 +113,6 @@ export type BuildJob = JobTypeMap[JobType.Build_Product | JobType.Build_Cancel];
 export type S3Job = JobTypeMap[JobType.S3_CopyArtifacts | JobType.S3_CopyError];
 export type PublishJob = JobTypeMap[JobType.Release_Product | JobType.Release_Cancel];
 export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Release];
-export type ProjectJob = JobTypeMap[JobType.Project_Create];
 export type StartupJob = JobTypeMap[
   | JobType.System_CreateCodeBuildProject
   | JobType.System_RefreshAppVersions];
@@ -134,7 +123,6 @@ export type JobTypeMap = {
   [JobType.Build_Cancel]: Build.Cancel;
   [JobType.Poll_Build]: Polling.Build;
   [JobType.Poll_Release]: Polling.Release;
-  [JobType.Project_Create]: Project.Create;
   [JobType.Release_Product]: Release.Product;
   [JobType.Release_Cancel]: Release.Cancel;
   [JobType.S3_CopyArtifacts]: S3.CopyArtifacts;
