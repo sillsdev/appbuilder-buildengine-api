@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import type { Job } from 'bullmq';
 import { CodeBuild } from '../aws/codebuild';
+import { AWSVars } from '../aws/vars';
 import { BullMQ, getQueues } from '../bullmq';
 import { Build } from '../models/build';
 import { prisma } from '../prisma';
@@ -19,7 +20,7 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
       const codeBuild = new CodeBuild();
       const buildStatus = await codeBuild.getBuildStatus(
         build.build_guid!,
-        CodeBuild.getCodeBuildProjectName('build_app')
+        AWSVars.projectName('build_app')
       );
       const phase = buildStatus?.currentPhase;
       let status = buildStatus?.buildStatus;
@@ -109,7 +110,7 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
 
       const buildStatus = await codeBuild.getBuildStatus(
         release.build_guid!,
-        CodeBuild.getCodeBuildProjectName('publish_app')
+        AWSVars.projectName('publish_app')
       );
       const phase = buildStatus?.currentPhase;
       let status = buildStatus?.buildStatus;

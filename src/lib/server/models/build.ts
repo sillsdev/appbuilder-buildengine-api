@@ -115,8 +115,6 @@ export namespace Build {
     }>
   ) {
     const { targets, artifact_url_base: base, artifact_files: files } = build;
-    // We need to at least have one artifact or the current Portal will fail to parse the JSON.
-    // TODO: Treat these like the others once Portal is fixed.
     const artifacts = {
       [Artifact.Version]: getArtifactUrl(/version\.json/, base, files),
       [Artifact.CloudWatch]: build.console_text_url,

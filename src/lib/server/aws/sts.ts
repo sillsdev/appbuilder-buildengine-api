@@ -1,26 +1,20 @@
 import { GetFederationTokenCommand, STSClient } from '@aws-sdk/client-sts';
 import type { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
-import { AWSCommon } from './common';
+import { AWSVars } from './vars';
 
-export class STS extends AWSCommon {
+export class STS {
   public stsClient: STSClient;
 
   public constructor() {
-    super();
-    this.stsClient = STS.getStsClient();
-  }
-
-  public static getStsClient() {
-    // version was set by PHP code to 2011-06-15 ???
-    return new STSClient({ region: AWSCommon.getArtifactsBucketRegion() });
+    this.stsClient = new STSClient({ region: AWSVars.artifactsRegion() });
   }
 
   public async getFederationToken(Name: string, Policy: string, ReadOnly: boolean) {
     const result = await this.stsClient.send(new GetFederationTokenCommand({ Name, Policy }));
     return {
       ...result.Credentials,
-      Region: AWSCommon.getArtifactsBucketRegion(),
+      Region: AWSVars.artifactsRegion(),
       ReadOnly
     };
   }

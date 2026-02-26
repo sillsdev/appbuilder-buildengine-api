@@ -11,7 +11,7 @@ import {
 } from '@aws-sdk/client-codebuild';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import type { Prisma } from '@prisma/client';
-import { AWSCommon } from './common';
+import { AWSVars } from './vars';
 import { S3 } from './s3';
 import {
   type BuildForPrefix,
@@ -48,19 +48,10 @@ export type BuildForCodeBuild = Prisma.buildGetPayload<{
 
 const tracer = trace.getTracer('CodeBuild');
 
-export class CodeBuild extends AWSCommon {
+export class CodeBuild {
   public codeBuildClient;
   public constructor() {
-    super();
-    this.codeBuildClient = CodeBuild.getCodeBuildClient();
-  }
-
-  /**
-   * Configure and get the CodeBuild Client
-   * @return \Aws\CodeBuild\CodeBuildClient
-   */
-  public static getCodeBuildClient() {
-    return new CodeBuildClient({ region: AWSCommon.getArtifactsBucketRegion() });
+    this.codeBuildClient = new CodeBuildClient({ region: AWSVars.artifactsRegion() });
   }
 
   /**
@@ -93,9 +84,9 @@ export class CodeBuild extends AWSCommon {
           'code-build.build-id': build.id,
           'code-build.version-code': versionCode
         });
-        const artifacts_bucket = CodeBuild.getArtifactsBucket();
-        const secretsBucket = CodeBuild.getSecretsBucket();
-        const buildApp = CodeBuild.getCodeBuildProjectName('build_app');
+        const artifacts_bucket = AWSVars.artifacts();
+        const secretsBucket = AWSVars.secrets();
+        const buildApp = AWSVars.projectName('build_app');
         const buildPath = this.getBuildPath(job);
         const artifactPath = getArtifactPath(job, 'codebuild-output');
         span.setAttribute('code-build.artifact-path', artifactPath);
@@ -182,7 +173,7 @@ export class CodeBuild extends AWSCommon {
             },
             {
               name: 'SCRIPT_S3',
-              value: S3.getBuildScriptPath()
+              value: AWSVars.scriptsPath()
             }
           ];
           const adjustedEnvironmentArray = this.addEnvironmentToArray(
@@ -206,7 +197,7 @@ export class CodeBuild extends AWSCommon {
               environmentVariablesOverride: adjustedEnvironmentArray,
               sourceTypeOverride: 'NO_SOURCE',
               computeTypeOverride: computeType,
-              imageOverride: CodeBuild.getCodeBuildImageRepo() + ':' + imageTag
+              imageOverride: AWSVars.imageRepo() + ':' + imageTag
             })
           );
           const buildId = result.build?.id;
@@ -340,11 +331,11 @@ export class CodeBuild extends AWSCommon {
         const build = release.build;
         const job = build.job;
         const buildPath = this.getBuildPath(job);
-        const artifacts_bucket = CodeBuild.getArtifactsBucket();
+        const artifacts_bucket = AWSVars.artifacts();
         const artifactPath = getArtifactPath(job, 'codebuild-output', true);
-        const secretsBucket = CodeBuild.getSecretsBucket();
-        const scriptureEarthKey = CodeBuild.getScriptureEarthKey();
-        const publishApp = CodeBuild.getCodeBuildProjectName('publish_app');
+        const secretsBucket = AWSVars.secrets();
+        const scriptureEarthKey = AWSVars.scriptureEarthKey();
+        const publishApp = AWSVars.projectName('publish_app');
         const promoteFrom = release.promote_from ?? '';
 
         const sourceLocation = this.getSourceLocation(build);
@@ -404,7 +395,7 @@ export class CodeBuild extends AWSCommon {
           },
           {
             name: 'SCRIPT_S3',
-            value: S3.getBuildScriptPath()
+            value: AWSVars.scriptsPath()
           },
           {
             name: 'SCRIPTURE_EARTH_KEY',
@@ -462,7 +453,7 @@ export class CodeBuild extends AWSCommon {
       select: { id: true; artifact_files: true; job: { select: { id: true; app_id: true } } };
     }>
   ) {
-    const appEnv = S3.getAppEnv();
+    const appEnv = AWSVars.appEnv();
     const apkFilename = getArtifactFilename(/\.apk$/, build.artifact_files);
     const sourceLocation = S3.getS3Arn(build, appEnv, apkFilename);
     return sourceLocation;
@@ -474,8 +465,8 @@ export class CodeBuild extends AWSCommon {
    * @return string - s3:// url format for s3 artifacts folder
    */
   private getArtifactsLocation(build: BuildForPrefix) {
-    const artifactsBucket = CodeBuild.getArtifactsBucket();
-    const artifactFolder = getBasePrefixUrl(build, CodeBuild.getAppEnv());
+    const artifactsBucket = AWSVars.artifacts();
+    const artifactFolder = getBasePrefixUrl(build, AWSVars.appEnv());
     return `s3://${artifactsBucket}/${artifactFolder}`;
   }
 
@@ -494,8 +485,8 @@ export class CodeBuild extends AWSCommon {
     cache: ProjectCache,
     source: ProjectSource
   ) {
-    const project_name = CodeBuild.getCodeBuildProjectName(base_name);
-    const artifacts_bucket = CodeBuild.getArtifactsBucket();
+    const project_name = AWSVars.projectName(base_name);
+    const artifacts_bucket = AWSVars.artifacts();
     return await this.codeBuildClient.send(
       new CreateProjectCommand({
         artifacts: {
@@ -511,7 +502,7 @@ export class CodeBuild extends AWSCommon {
         environment: {
           // REQUIRED
           computeType: 'BUILD_GENERAL1_SMALL', // REQUIRED
-          image: CodeBuild.getCodeBuildImageRepo() + ':' + CodeBuild.getCodeBuildImageTag(), // REQUIRED
+          image: AWSVars.imageRepo() + ':' + AWSVars.imageTag(), // REQUIRED
           privilegedMode: false,
           type: 'LINUX_CONTAINER' // REQUIRED
         },
@@ -523,15 +514,15 @@ export class CodeBuild extends AWSCommon {
   }
 
   public static getConsoleTextUrl(baseName: string, guid: string) {
-    const projectName = CodeBuild.getCodeBuildProjectName(baseName);
-    const region = AWSCommon.getArtifactsBucketRegion() ?? 'us-east-1';
+    const projectName = AWSVars.projectName(baseName);
+    const region = AWSVars.artifactsRegion() ?? 'us-east-1';
     const regionUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${region}`;
     const taskExtension = `#logEvent:group=/aws/codebuild/${projectName};stream=${guid}`;
     return `${regionUrl}${taskExtension}`;
   }
   public static getCodeBuildUrl(baseName: string, guid: string) {
-    const projectName = CodeBuild.getCodeBuildProjectName(baseName);
-    const region = AWSCommon.getArtifactsBucketRegion() ?? 'us-east-1';
+    const projectName = AWSVars.projectName(baseName);
+    const region = AWSVars.artifactsRegion() ?? 'us-east-1';
     const regionUrl = `https://console.aws.amazon.com/codebuild/home?region=${region}`;
     const taskExtension = `#/builds/${projectName}:${guid}/view/new`;
     return `${regionUrl}${taskExtension}`;
@@ -545,7 +536,7 @@ export class CodeBuild extends AWSCommon {
   public async projectExists(baseName: string) {
     let exists = false;
     try {
-      const projectName = CodeBuild.getCodeBuildProjectName(baseName);
+      const projectName = AWSVars.projectName(baseName);
       trace?.getActiveSpan()?.setAttribute('code-build.project-name', projectName);
       const result = await this.codeBuildClient.send(
         new BatchGetProjectsCommand({
@@ -590,7 +581,7 @@ export class CodeBuild extends AWSCommon {
   private getImageTag(environmentVariables: { name: string; value: string }[]) {
     return (
       environmentVariables.find(({ name }) => name === 'BUILD_IMAGE_TAG')?.value ??
-      CodeBuild.getCodeBuildImageTag()
+      AWSVars.imageTag()
     );
   }
 
