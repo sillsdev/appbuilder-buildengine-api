@@ -1,59 +1,40 @@
-name: BuildEngine CI
+name: BuildEngine v2 Test and Deploy
 
 on:
   push:
-    branches: [master, develop, github-builds]
-  pull_request:
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: "Log Level"
-        required: true
-        default: "warning"
       tags:
         description: "Tags"
-  schedule:
-    - cron: "0 0 * * 0" # weekly
 
 env:
-  BUILD_TAG: "build-engine-api:${{ github.run_number }}"
+  BUILD_ENGINE_BUILD_TAG: "build-engine-api:${{ github.run_number }}"
+  OTEL_BUILD_TAG: "scriptoria-otel:${{ github.run_number }}"
   BUILD_NUMBER: ${{ github.run_number }}
 
 jobs:
-  build:
+  check:
+    uses: "./.github/workflows/setup.yml"
+    secrets:
+      AUTH0_SECRET: ${{ secrets.AUTH0_SECRET }}
+  deploy-to-ecr:
     runs-on: ubuntu-latest
-
+    needs: check
+    if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Get environment info
-        run: |
-          echo Docker version
-          docker --version
-          echo
-          echo Env
-          env
+      - name: Setup node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
 
-      - name: Setup local.env
-        run: |
-          echo "COMPOSER_AUTH={\"github-oauth\":{\"github.com\":\""${{ secrets.GITHUB_TOKEN }}\""}}" > local.env
-
-      - name: Install dependencies
-        run: |
-          echo "Installing ecs-deploy script..."
-          mkdir -p $HOME/.local/bin
-          curl -o $HOME/.local/bin/ecs-deploy https://raw.githubusercontent.com/silinternational/ecs-deploy/master/ecs-deploy
-          chmod +x $HOME/.local/bin/ecs-deploy
-
-      - name: Tests
-        run: |
-          make test
-
-      - name: Build docker image
+      - name: Build docker images
         uses: docker/build-push-action@v4
         with:
           push: false
-          tags: ${{ env.BUILD_TAG }}
+          tags: ${{ env.BUILD_ENGINE_BUILD_TAG }}
           context: .
           load: true
 
@@ -75,7 +56,7 @@ jobs:
 
       - name: Push to GHCR
         run: |
-          docker tag ${{ env.BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
           docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
 
       - name: Configure AWS credentials (SIL)
@@ -94,8 +75,8 @@ jobs:
 
       - name: Push to AWS ECR (SIL)
         run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
           docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
           docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
 
@@ -129,8 +110,8 @@ jobs:
         if: false # Temporarily disabled - remove this line to re-enable
         # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
         run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
           docker push "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
           docker push "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
 
@@ -162,8 +143,8 @@ jobs:
       - name: Push to AWS ECR (LU)
         if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
         run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
           docker push "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
           docker push "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
 
