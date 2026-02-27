@@ -17,7 +17,3 @@ bun.lockb
 
 # Miscellaneous
 /static/
-
-# Old
-/application
-/build
