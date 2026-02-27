@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: development
+      POSTGRES_USER: db-user
+      POSTGRES_PASSWORD: 1234
+      PGDATA: /var/lib/postgresql/data
+
+  build-engine:
+    depends_on:
+      - db
+      - valkey
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8443:8443"
+    environment:
+      DATABASE_URL: "postgresql://db-user:1234@db:5432/dev-buildengine?schema=public"
+      VALKEY_HOST: "valkey"
+      # MUST be included (the path the application will be accessed on) and MUST NOT have a trailing slash
+      ORIGIN: "http://localhost:8443"
+
+  valkey:
+    image: valkey/valkey:latest
+    command: valkey-server --appendonly yes --appendfilename appendonly.aof --maxmemory-policy noeviction
