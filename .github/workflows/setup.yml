@@ -30,9 +30,6 @@ jobs:
           echo
           echo Docker version
           docker --version
-          echo
-          echo Environment variables
-          env
           BACKUP_AUTH0_SECRET=$(hexdump -vn32 -e'8/4 "%08x" 1 "\n"' /dev/urandom)
           echo "BACKUP_AUTH0_SECRET=${BACKUP_AUTH0_SECRET}" >> $GITHUB_OUTPUT
 

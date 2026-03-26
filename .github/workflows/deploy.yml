@@ -18,43 +18,45 @@ on:
       OTEL_BUILD_TAG:
         type: 'string'
         required: true
+    secrets:
       AWS_ACCESS_KEY_ID:
-        type: 'string'
         required: true
       AWS_SECRET_ACCESS_KEY:
-        type: 'string'
         required: true
       AWS_DEFAULT_REGION:
-        type: 'string'
         required: true
       AWS_ECR_ACCOUNT:
-        type: 'string'
         required: true
 
 jobs:
   deploy-to-ecr:
     runs-on: ubuntu-latest
     steps:
+      - name: Pull from GHCR
+        run: |
+          docker pull ghcr.io/sillsdev/appbuilder-buildengine-api:${{ inputs.DOCKER_TAG }}
+          docker pull ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ inputs.DOCKER_TAG }}
+
       - name: Configure AWS credentials
         id: aws
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Login to AWS ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
         with:
-          registries: ${{ inputs.AWS_ECR_ACCOUNT }}
+          registries: ${{ secrets.AWS_ECR_ACCOUNT }}
       
       - name: Build deployment target variables
         id: vars
         run: |
           echo "Setting up deployment variables..."
-          echo "IMAGE_URL=${{ steps.ecr.outputs.registry }}.amazonaws.com/appbuilder-buildengine-api-origin" >> $GITHUB_OUTPUT
-          echo "OTEL_URL=${{ steps.ecr.outputs.registry }}.amazonaws.com/appbuilder-buildengine-api-otel-collector" >> $GITHUB_OUTPUT
+          echo "IMAGE_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api-origin" >> $GITHUB_OUTPUT
+          echo "OTEL_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api-otel-collector" >> $GITHUB_OUTPUT
 
       - name: Push to AWS ECR
         run: |

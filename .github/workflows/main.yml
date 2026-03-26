@@ -9,16 +9,21 @@ on:
 
 env:
   BUILD_ENGINE_BUILD_TAG: "build-engine-api:${{ github.run_number }}"
-  OTEL_BUILD_TAG: "scriptoria-otel:${{ github.run_number }}"
+  OTEL_BUILD_TAG: "build-engine-otel:${{ github.run_number }}"
 
 jobs:
   check:
     uses: "./.github/workflows/setup.yml"
     secrets:
       AUTH0_SECRET: ${{ secrets.AUTH0_SECRET }}
-  deploy-to-ecr:
+  push-to-ghcr:
     runs-on: ubuntu-latest
     needs: check
+    outputs:
+      DOCKER_TAG: ${{ steps.branch.outputs.DOCKER_TAG }}
+      ECS_CLUSTER: ${{ steps.branch.outputs.ECS_CLUSTER }}
+      BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
     if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') }}
     steps:
       - name: Checkout
@@ -41,7 +46,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: false
-          tags: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+          tags: ${{ env.OTEL_BUILD_TAG }}
           context: .
           load: true
           file: Dockerfile.otel
@@ -52,8 +57,8 @@ jobs:
           if [[ "${GITHUB_HEAD_REF}" != "" ]]; then BRANCH="${GITHUB_HEAD_REF}"; else BRANCH="${GITHUB_REF_NAME}"; fi
           case $BRANCH in develop) DOCKER_TAG="staging" ;; master) DOCKER_TAG="production" ;; *) DOCKER_TAG="${BRANCH//\//-}" ;; esac
           case $BRANCH in develop) ECS_CLUSTER="scriptoria-stg";; master) ECS_CLUSTER="scriptoria-prd" ;; *) ECS_CLUSTER="none" ;; esac
-          echo "DockerTag=${DOCKER_TAG}" >> $GITHUB_OUTPUT
-          echo "EcsCluster=${ECS_CLUSTER}" >> $GITHUB_OUTPUT
+          echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_OUTPUT
+          echo "ECS_CLUSTER=${ECS_CLUSTER}" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -64,56 +69,55 @@ jobs:
 
       - name: Push to GHCR
         run: |
-          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
-          docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
-          # push OTEL???
-      
-      - name: Deploy SIL
-        uses: "./.github/workflows/deploy.yml"
-        with:
-          BUILD_NUMBER: ${{ github.run_number }}
-          ECS_CLUSTER: ${{ steps.branch.outputs.EcsCluster }}
-          DOCKER_TAG: ${{ steps.branch.outputs.DockerTag }}
-          BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
-          OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.SIL__AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SIL__AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.SIL__AWS_DEFAULT_REGION }}
-          AWS_ECR_ACCOUNT: ${{ secrets.SIL__AWS_ECR_ACCOUNT }}
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DOCKER_TAG }}
+          docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DOCKER_TAG }}
 
-      - name: Deploy FCBH
-        if: false # Temporarily disabled - remove this line to re-enable
-        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
-        uses: "./.github/workflows/deploy.yml"
-        with:
-          BUILD_NUMBER: ${{ github.run_number }}
-          ECS_CLUSTER: ${{ steps.branch.outputs.EcsCluster }}
-          DOCKER_TAG: ${{ steps.branch.outputs.DockerTag }}
-          BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
-          OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
-          AWS_ECR_ACCOUNT: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
+          docker tag ${{ env.OTEL_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ steps.branch.outputs.DOCKER_TAG }}
+          docker push ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ steps.branch.outputs.DOCKER_TAG }}
 
-      - name: Deploy LU
-        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
-        uses: "./.github/workflows/deploy.yml"
-        with:
-          BUILD_NUMBER: ${{ github.run_number }}
-          ECS_CLUSTER: ${{ steps.branch.outputs.EcsCluster }}
-          DOCKER_TAG: ${{ steps.branch.outputs.DockerTag }}
-          BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
-          OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.LU__AWS_DEFAULT_REGION }}
-          AWS_ECR_ACCOUNT: ${{ secrets.LU__AWS_ECR_ACCOUNT }}
-
-      - name: Clean up older packages
-        uses: actions/delete-package-versions@v4
-        with:
-          package-name: "appbuilder-buildengine-api"
-          package-type: "container"
-          min-versions-to-keep: 6
-          delete-only-untagged-versions: "true"
+  deploy-sil:
+    needs: push-to-ghcr
+    if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') }}
+    uses: "./.github/workflows/deploy.yml"
+    with:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      BUILD_ENGINE_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_BUILD_TAG }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.SIL__AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SIL__AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.SIL__AWS_DEFAULT_REGION }}
+      AWS_ECR_ACCOUNT: ${{ secrets.SIL__AWS_ECR_ACCOUNT }}
+  deploy-fcbh:
+    needs: push-to-ghcr
+    if: false # Temporarily disabled - remove this line to re-enable
+    # if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}  # Restore this when re-enabling
+    uses: "./.github/workflows/deploy.yml"
+    with:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      BUILD_ENGINE_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_BUILD_TAG }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
+      AWS_ECR_ACCOUNT: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
+  deploy-lu:
+    needs: push-to-ghcr
+    if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-stg' }}
+    uses: "./.github/workflows/deploy.yml"
+    with:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      BUILD_ENGINE_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_BUILD_TAG }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.LU__AWS_DEFAULT_REGION }}
+      AWS_ECR_ACCOUNT: ${{ secrets.LU__AWS_ECR_ACCOUNT }}

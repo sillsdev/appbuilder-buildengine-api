@@ -27,7 +27,9 @@ export function handleArtifact(provider: ProviderForArtifacts, key: string, cont
         provider.artifact_files = name;
       }
 
-      if (type === Build.Artifact.VersionCode) {
+      const code = (contents && parseInt(contents)) || NaN;
+
+      if (type === Build.Artifact.VersionCode && !isNaN(code)) {
         provider.version_code = Number(contents);
       }
     }
