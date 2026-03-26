@@ -23,12 +23,6 @@ services:
       VALKEY_HOST: "valkey"
       # MUST be included (the path the application will be accessed on) and MUST NOT have a trailing slash
       ORIGIN: "http://localhost:8443"
-      # Required for type checking. Leaving empty for now until needed for testing?
-      BUILD_ENGINE_ARTIFACTS_BUCKET: ""
-      AWS_ACCESS_KEY_ID: ""
-      AWS_SECRET_ACCESS_KEY: ""
-      BUILD_ENGINE_SECRETS_BUCKET: ""
-      SCRIPTURE_EARTH_KEY: ""
 
   valkey:
     image: valkey/valkey:latest
