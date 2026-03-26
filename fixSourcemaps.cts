@@ -14,9 +14,9 @@ const { opendir, readFile, writeFile } = require('node:fs/promises');
 const fs = require('node:fs/promises');
 const { join } = require('path');
 
-async function* walk(dir) {
+async function* walk(dir: string): AsyncGenerator<string, undefined, unknown> {
   for await (const file of await opendir(dir)) {
-    const path = join(dir, file.name);
+    const path: string = join(dir, file.name);
     if (file.isDirectory()) {
       yield* walk(path);
     } else {
@@ -34,7 +34,7 @@ async function* walk(dir) {
 
     const content = await readFile(file, 'utf-8');
     const json = JSON.parse(content);
-    json.sources = json.sources.map((source) => {
+    json.sources = json.sources.map((source: string) => {
       if (source.startsWith('../../../')) {
         return source.slice('../'.length);
       }

@@ -1,61 +1,38 @@
-name: BuildEngine CI
+name: BuildEngine v2 Test and Deploy
 
 on:
   push:
-    branches: [master, develop, github-builds]
-  pull_request:
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: "Log Level"
-        required: true
-        default: "warning"
       tags:
         description: "Tags"
-  schedule:
-    - cron: "0 0 * * 0" # weekly
 
 env:
-  BUILD_TAG: "build-engine-api:${{ github.run_number }}"
-  BUILD_NUMBER: ${{ github.run_number }}
+  BUILD_ENGINE_BUILD_TAG: "build-engine-api:${{ github.run_number }}"
+  OTEL_BUILD_TAG: "build-engine-otel:${{ github.run_number }}"
 
 jobs:
-  build:
+  check:
+    uses: "./.github/workflows/setup.yml"
+    secrets:
+      AUTH0_SECRET: ${{ secrets.AUTH0_SECRET }}
+  push-to-ghcr:
     runs-on: ubuntu-latest
-
+    needs: check
+    outputs:
+      DOCKER_TAG: ${{ steps.branch.outputs.DOCKER_TAG }}
+      ECS_CLUSTER: ${{ steps.branch.outputs.ECS_CLUSTER }}
+      BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
+    if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Get environment info
-        run: |
-          echo Docker version
-          docker --version
-          echo
-          echo Env
-          env
-
-      - name: Setup local.env
-        run: |
-          echo "COMPOSER_AUTH={\"github-oauth\":{\"github.com\":\""${{ secrets.GITHUB_TOKEN }}\""}}" > local.env
-
-      - name: Install dependencies
-        run: |
-          echo "Installing ecs-deploy script..."
-          mkdir -p $HOME/.local/bin
-          curl -o $HOME/.local/bin/ecs-deploy https://raw.githubusercontent.com/silinternational/ecs-deploy/master/ecs-deploy
-          chmod +x $HOME/.local/bin/ecs-deploy
-
-      - name: Tests
-        run: |
-          make test
-
-      - name: Build docker image
-        uses: docker/build-push-action@v4
+      - name: Setup node
+        uses: actions/setup-node@v5
         with:
-          push: false
-          tags: ${{ env.BUILD_TAG }}
-          context: .
-          load: true
+          node-version: 24
 
       - name: Determine branch tag
         id: branch
@@ -63,8 +40,15 @@ jobs:
           if [[ "${GITHUB_HEAD_REF}" != "" ]]; then BRANCH="${GITHUB_HEAD_REF}"; else BRANCH="${GITHUB_REF_NAME}"; fi
           case $BRANCH in develop) DOCKER_TAG="staging" ;; master) DOCKER_TAG="production" ;; *) DOCKER_TAG="${BRANCH//\//-}" ;; esac
           case $BRANCH in develop) ECS_CLUSTER="scriptoria-stg";; master) ECS_CLUSTER="scriptoria-prd" ;; *) ECS_CLUSTER="none" ;; esac
-          echo "DockerTag=${DOCKER_TAG}" >> $GITHUB_OUTPUT
-          echo "EcsCluster=${ECS_CLUSTER}" >> $GITHUB_OUTPUT
+          echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_OUTPUT
+          echo "ECS_CLUSTER=${ECS_CLUSTER}" >> $GITHUB_OUTPUT
+      
+      - name: Build Docker images
+        run: |
+          echo "Building Docker images..."
+          docker build -t ${{ env.BUILD_ENGINE_BUILD_TAG}} .
+          docker build -t ${{ env.OTEL_BUILD_TAG}} -f Dockerfile.otel .
+          echo "Docker images built successfully."
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -75,110 +59,54 @@ jobs:
 
       - name: Push to GHCR
         run: |
-          docker tag ${{ env.BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
-          docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
+          docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DOCKER_TAG }}
+          docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DOCKER_TAG }}
 
-      - name: Configure AWS credentials (SIL)
-        id: aws_sil
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.SIL__AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.SIL__AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.SIL__AWS_DEFAULT_REGION }}
+          docker tag ${{ env.OTEL_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ steps.branch.outputs.DOCKER_TAG }}
+          docker push ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ steps.branch.outputs.DOCKER_TAG }}
 
-      - name: Login to AWS ECR (SIL)
-        id: ecr_sil
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registries: ${{ secrets.SIL__AWS_ECR_ACCOUNT }}
-
-      - name: Push to AWS ECR (SIL)
-        run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
-          docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker push "${{ steps.ecr_sil.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
-
-      - name: Deploy to ECS (SIL)
-        if: ${{ steps.branch.outputs.EcsCluster != 'none' }}
-        run: |
-          echo "Deploying ${{ env.BUILD_NUMBER }} to ${{ steps.branch.outputs.EcsCluster }}"
-          # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
-          ecs-deploy -c ${{ steps.branch.outputs.EcsCluster }} -n buildengine -i ignore -to ${{ env.BUILD_NUMBER }} --max-definitions 20 --timeout 600
-          echo "Deployment initiated successfully."
-
-      - name: Configure AWS credentials (FCBH)
-        if: false # Temporarily disabled - remove this line to re-enable
-        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
-        id: aws_fcbh
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
-
-      - name: Login to AWS ECR (FCBH)
-        if: false # Temporarily disabled - remove this line to re-enable
-        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
-        id: ecr_fcbh
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registries: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
-
-      - name: Push to AWS ECR (FCBH)
-        if: false # Temporarily disabled - remove this line to re-enable
-        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
-        run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
-          docker push "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker push "${{ steps.ecr_fcbh.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
-
-      - name: Deploy to ECS (FCBH)
-        if: false # Temporarily disabled - remove this line to re-enable
-        # if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-prd' }}  # Restore this when re-enabling
-        run: |
-          echo "Deploying ${{ env.BUILD_NUMBER }} to ${{ steps.branch.outputs.EcsCluster }}"
-          # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
-          ecs-deploy -c ${{ steps.branch.outputs.EcsCluster }} -n buildengine -i ignore -to ${{ env.BUILD_NUMBER }} --max-definitions 20 --timeout 600
-          echo "Deployment initiated successfully."
-
-      - name: Configure AWS credentials (LU)
-        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
-        id: aws_lu
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.LU__AWS_DEFAULT_REGION }}
-
-      - name: Login to AWS ECR (LU)
-        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
-        id: ecr_lu
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registries: ${{ secrets.LU__AWS_ECR_ACCOUNT }}
-
-      - name: Push to AWS ECR (LU)
-        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
-        run: |
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker tag ${{ env.BUILD_TAG }} "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
-          docker push "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}"
-          docker push "${{ steps.ecr_lu.outputs.registry }}/appbuilder-buildengine-api:${{ env.BUILD_NUMBER }}"
-
-      - name: Deploy to ECS (LU)
-        if: ${{ steps.branch.outputs.EcsCluster == 'scriptoria-stg' }}
-        run: |
-          echo "Deploying ${{ env.BUILD_NUMBER }} to ${{ steps.branch.outputs.EcsCluster }}"
-          # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
-          ecs-deploy -c ${{ steps.branch.outputs.EcsCluster }} -n buildengine -i ignore -to ${{ env.BUILD_NUMBER }} --max-definitions 20 --timeout 600
-          echo "Deployment initiated successfully."
-
-      - name: Clean up older packages
-        uses: actions/delete-package-versions@v4
-        with:
-          package-name: "appbuilder-buildengine-api"
-          package-type: "container"
-          min-versions-to-keep: 6
-          delete-only-untagged-versions: "true"
+  deploy-sil:
+    needs: push-to-ghcr
+    uses: "./.github/workflows/deploy.yml"
+    with:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      BUILD_ENGINE_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_BUILD_TAG }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.SIL__AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SIL__AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.SIL__AWS_DEFAULT_REGION }}
+      AWS_ECR_ACCOUNT: ${{ secrets.SIL__AWS_ECR_ACCOUNT }}
+  deploy-fcbh:
+    needs: push-to-ghcr
+    if: false # Temporarily disabled - remove this line to re-enable
+    # if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}  # Restore this when re-enabling
+    uses: "./.github/workflows/deploy.yml"
+    with:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      BUILD_ENGINE_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_BUILD_TAG }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
+      AWS_ECR_ACCOUNT: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
+  deploy-lu:
+    needs: push-to-ghcr
+    if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-stg' }}
+    uses: "./.github/workflows/deploy.yml"
+    with:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      BUILD_ENGINE_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_BUILD_TAG }}
+      OTEL_BUILD_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_BUILD_TAG }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.LU__AWS_DEFAULT_REGION }}
+      AWS_ECR_ACCOUNT: ${{ secrets.LU__AWS_ECR_ACCOUNT }}

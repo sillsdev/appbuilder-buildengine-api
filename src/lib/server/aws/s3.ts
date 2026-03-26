@@ -15,12 +15,14 @@ import { S3SyncClient } from 's3-sync-client';
 import { AWSVars } from './vars';
 import { env } from '$env/dynamic/private';
 import {
-  type BuildForPrefix,
   type ProviderForArtifacts,
-  type ProviderForPrefix,
   beginArtifacts,
-  getBasePrefixUrl,
   handleArtifact
+} from '$lib/server/models/artifact-handle';
+import {
+  type BuildForPrefix,
+  type ProviderForPrefix,
+  getBasePrefixUrl
 } from '$lib/server/models/artifacts';
 
 export class S3 {

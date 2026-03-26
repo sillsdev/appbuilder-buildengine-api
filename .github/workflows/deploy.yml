@@ -1,0 +1,82 @@
+name: BuildEngine v2 Deploy to AWS
+
+on:
+  workflow_call:
+    inputs:
+      BUILD_NUMBER:
+        type: 'string'
+        required: true
+      ECS_CLUSTER:
+        type: 'string'
+        required: true
+      DOCKER_TAG:
+        type: 'string'
+        required: true
+      BUILD_ENGINE_BUILD_TAG:
+        type: 'string'
+        required: true
+      OTEL_BUILD_TAG:
+        type: 'string'
+        required: true
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_DEFAULT_REGION:
+        required: true
+      AWS_ECR_ACCOUNT:
+        required: true
+
+jobs:
+  deploy-to-ecr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull from GHCR
+        run: |
+          docker pull ghcr.io/sillsdev/appbuilder-buildengine-api:${{ inputs.DOCKER_TAG }}
+          docker pull ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ inputs.DOCKER_TAG }}
+
+      - name: Configure AWS credentials
+        id: aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to AWS ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ secrets.AWS_ECR_ACCOUNT }}
+      
+      - name: Build deployment target variables
+        id: vars
+        run: |
+          echo "Setting up deployment variables..."
+          echo "IMAGE_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api-origin" >> $GITHUB_OUTPUT
+          echo "OTEL_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api-otel-collector" >> $GITHUB_OUTPUT
+
+      - name: Push to AWS ECR
+        run: |
+          docker tag ${{ inputs.BUILD_ENGINE_BUILD_TAG}} "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.DOCKER_TAG }}"
+          docker tag ${{ inputs.BUILD_ENGINE_BUILD_TAG}} "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.BUILD_NUMBER }}"
+          docker tag ${{ inputs.OTEL_BUILD_TAG}} "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.DOCKER_TAG }}"
+          docker tag ${{ inputs.OTEL_BUILD_TAG}} "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.BUILD_NUMBER }}"
+          echo "Docker images tagged as ${{ inputs.DOCKER_TAG }} and ${{ inputs.BUILD_NUMBER }}"
+
+          docker push "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.DOCKER_TAG }}"
+          docker push "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.BUILD_NUMBER }}"
+          echo "Docker images pushed successfully to ${{ steps.vars.outputs.IMAGE_URL }}"
+
+          docker push "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.DOCKER_TAG }}"
+          docker push "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.BUILD_NUMBER }}"
+          echo "Docker images pushed successfully to ${{ steps.vars.outputs.OTEL_URL }}"
+
+      - name: Deploy to ECS
+        if: ${{ inputs.ECS_CLUSTER != 'none' }}
+        run: |
+          echo "Deploying ${{ inputs.BUILD_NUMBER }} to ${{ inputs.ECS_CLUSTER }}"
+          # Deploy to ECS cluster with service name 'build-engine', setting all images to the latest tag
+          ecs-deploy -c ${{ inputs.ECS_CLUSTER }} -n buildengine -i ignore -to ${{ inputs.BUILD_NUMBER }} --max-definitions 20 --timeout 600
