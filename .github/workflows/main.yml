@@ -67,7 +67,6 @@ jobs:
 
   deploy-sil:
     needs: push-to-ghcr
-    if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') }}
     uses: "./.github/workflows/deploy.yml"
     with:
       BUILD_NUMBER: ${{ github.run_number }}
@@ -83,7 +82,7 @@ jobs:
   deploy-fcbh:
     needs: push-to-ghcr
     if: false # Temporarily disabled - remove this line to re-enable
-    # if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}  # Restore this when re-enabling
+    # if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}  # Restore this when re-enabling
     uses: "./.github/workflows/deploy.yml"
     with:
       BUILD_NUMBER: ${{ github.run_number }}
@@ -98,7 +97,7 @@ jobs:
       AWS_ECR_ACCOUNT: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
   deploy-lu:
     needs: push-to-ghcr
-    if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-stg' }}
+    if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-stg' }}
     uses: "./.github/workflows/deploy.yml"
     with:
       BUILD_NUMBER: ${{ github.run_number }}
