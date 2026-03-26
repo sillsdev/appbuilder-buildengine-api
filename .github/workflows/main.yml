@@ -9,6 +9,7 @@ on:
 
 env:
   BUILD_ENGINE_BUILD_TAG: "build-engine-api:${{ github.run_number }}"
+  OTEL_BUILD_TAG: "scriptoria-otel:${{ github.run_number }}"
 
 jobs:
   check:
@@ -36,6 +37,15 @@ jobs:
           context: .
           load: true
 
+      - name: Build OTEL Docker image
+        uses: docker/build-push-action@v4
+        with:
+          push: false
+          tags: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+          context: .
+          load: true
+          file: Dockerfile.otel
+
       - name: Determine branch tag
         id: branch
         run: |
@@ -56,6 +66,7 @@ jobs:
         run: |
           docker tag ${{ env.BUILD_ENGINE_BUILD_TAG }} ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
           docker push ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DockerTag }}
+          # push OTEL???
       
       - name: Deploy SIL
         uses: "./.github/workflows/deploy.yml"
@@ -64,6 +75,7 @@ jobs:
           ECS_CLUSTER: ${{ steps.branch.outputs.EcsCluster }}
           DOCKER_TAG: ${{ steps.branch.outputs.DockerTag }}
           BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+          OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
           AWS_ACCESS_KEY_ID: ${{ secrets.SIL__AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.SIL__AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.SIL__AWS_DEFAULT_REGION }}
@@ -78,6 +90,7 @@ jobs:
           ECS_CLUSTER: ${{ steps.branch.outputs.EcsCluster }}
           DOCKER_TAG: ${{ steps.branch.outputs.DockerTag }}
           BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+          OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
           AWS_ACCESS_KEY_ID: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
@@ -91,6 +104,7 @@ jobs:
           ECS_CLUSTER: ${{ steps.branch.outputs.EcsCluster }}
           DOCKER_TAG: ${{ steps.branch.outputs.DockerTag }}
           BUILD_ENGINE_BUILD_TAG: ${{ env.BUILD_ENGINE_BUILD_TAG }}
+          OTEL_BUILD_TAG: ${{ env.OTEL_BUILD_TAG }}
           AWS_ACCESS_KEY_ID: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.LU__AWS_DEFAULT_REGION }}
