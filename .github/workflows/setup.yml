@@ -108,13 +108,13 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', 'src/lib/prisma/schema.prisma') }}
 
-      - name: Build, Install Playwright dependencies, and seed database
+      - name: Build and seed database
         run: |
           echo "Building .env file..."
           echo "AUTH0_SECRET=" >> .env
           echo "Building the docker project..."
           mkdir -p command-output
-          (./run ci build > command-output/build-output.txt 2>&1) &
+          (./run ci build > command-output/build-output.txt 2>&1 || echo $? > command-output/build-exit-code.txt) &
           echo "Beginning pull of images"
           ./run ci pull valkey > /dev/null &
           echo "Starting database..."
@@ -122,7 +122,7 @@ jobs:
           sleep 1
           echo "Resetting the database..."
           npx prisma migrate reset -f --skip-seed --skip-generate
-          echo "Waiting for build and Playwright installation to finish..."
+          echo "Waiting for build to finish..."
           wait
           if [ -f command-output/build-exit-code.txt ]; then
             BUILD_EXIT_CODE=$(cat command-output/build-exit-code.txt)
@@ -130,7 +130,7 @@ jobs:
             cat command-output/build-output.txt
             exit $BUILD_EXIT_CODE
           fi
-          echo "Build and Playwright installation completed."
+          echo "Build completed."
         env:
           DATABASE_URL: 'postgresql://db-user:1234@localhost:5432/dev-buildengine?schema=public'
 
