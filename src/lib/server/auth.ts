@@ -74,7 +74,7 @@ export function returnTo(event: RequestEvent) {
   let redirectUrl = decodeURIComponent(event.url.searchParams.get('returnTo') ?? '');
   while (redirectUrl?.startsWith('/login')) {
     redirectUrl = decodeURIComponent(
-      new URL(secrets.ORIGIN, redirectUrl).searchParams.get('returnTo') ?? ''
+      new URL(redirectUrl, secrets.ORIGIN).searchParams.get('returnTo') ?? ''
     );
   }
   throw redirect(
@@ -102,12 +102,9 @@ export async function tryVerifyAPIToken(
   }
   const client = await prisma.client.findFirst({ where: { access_token } });
   if (!client) {
-    if (
-      timingSafeEqual(
-        Buffer.from(access_token, 'hex'),
-        Buffer.from(secrets.API_ACCESS_TOKEN, 'hex')
-      )
-    ) {
+    const a = Buffer.from(access_token, 'hex');
+    const b = Buffer.from(secrets.API_ACCESS_TOKEN, 'hex');
+    if (a.length === b.length && timingSafeEqual(a, b)) {
       return [true, null];
     }
     return [false, ErrorResponse(403, 'Invalid Access Token')];
