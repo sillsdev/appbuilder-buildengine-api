@@ -66,7 +66,10 @@ export const PUT: RequestHandler = async ({ request, params }) => {
   const parsed = v.safeParse(releaseSchema, await request.json());
   if (!parsed.success) return ErrorResponse(400, JSON.stringify(v.flatten(parsed.issues)));
   const runningRelease = await prisma.release.findFirst({
-    where: { build_id: Number(params.buildId), status: { in: ['accepted', 'active'] } }
+    where: {
+      build_id: Number(params.buildId),
+      status: { in: [Release.Status.Accepted, Release.Status.Active] }
+    }
   });
   if (runningRelease) {
     return ErrorResponse(500, 'Release already in progress');
@@ -77,7 +80,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
       id: true,
       build: {
         where: { id: Number(params.buildId) },
-        select: { id: true, version_code: true }
+        select: { id: true, channel: true, status: true, result: true }
       }
     }
   });
@@ -85,7 +88,15 @@ export const PUT: RequestHandler = async ({ request, params }) => {
   const build = job.build.at(0);
   if (!build) return ErrorResponse(404, 'Build not found');
 
-  // TODO verify channel
+  if (build.status !== Build.Status.Completed)
+    return ErrorResponse(409, `Build is incomplete. Current Status: ${build.result}`);
+
+  if (build.result !== Build.Result.Success)
+    return ErrorResponse(403, `Build was unsuccessful. Result: ${build.result}`);
+
+  if (!Build.verifyChannel(parsed.output.channel as Build.Channel, build))
+    return ErrorResponse(400, `Cannot promote from ${build.channel} to ${parsed.output.channel}`);
+
   const release = await prisma.release.create({
     data: {
       ...parsed.output,
