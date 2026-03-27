@@ -8,5 +8,6 @@ export const allWorkers = building
       new Workers.S3(),
       new Workers.Releases(),
       new Workers.Polling(),
-      new Workers.SystemStartup()
+      new Workers.SystemStartup(),
+      new Workers.SystemRecurring()
     ];

@@ -37,11 +37,7 @@ if (!building) {
   // Graceful shutdown
   process.on('sveltekit:shutdown', async () => {
     OTEL.instance.logger.info('Shutting down gracefully...');
-    await Promise.all(
-      allWorkers.map((worker) => {
-        worker.worker?.close();
-      })
-    );
+    await Promise.all(allWorkers.map((worker) => worker.worker?.close()));
   });
 }
 
