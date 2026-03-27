@@ -1,5 +1,6 @@
 import type { Job } from 'bullmq';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { S3 } from '$lib/server/aws/s3';
 import type { BullMQ } from '$lib/server/bullmq';
 import type { BuildForPrefix } from '$lib/server/models/artifacts';
@@ -39,9 +40,9 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
         const manifestFiles = manifestFileContent.split('\n');
         if (manifestFiles.length > 0) {
           // Copy index.html to destination folder
-          const path = './preview/playlisting/index.html';
-
-          const indexContents = (await readFile(path)).toString();
+          const indexContents = (
+            await readFile(join(process.cwd(), './preview/playlisting/index.html'))
+          ).toString();
           await s3.writeFileToS3(indexContents, 'play-listing/index.html', build);
         }
         if (!defaultLanguage) {

@@ -42,6 +42,10 @@ COPY --from=builder /build/node_modules/.prisma /app/node_modules/.prisma
 # Copy prisma migrations
 COPY --from=builder /build/src/lib/prisma/migrations /app/node_modules/.prisma/client/migrations
 
+# Copy CodeBuild scripts
+COPY --from=builder /build/scripts /app/scripts
+COPY --from=builder /build/preview /app/preview
+
 EXPOSE 8443
 ENV PORT=8443
 CMD ["sh", "-c", "npx prisma migrate deploy --schema=./node_modules/.prisma/client/schema.prisma && node --enable-source-maps index.js"]
