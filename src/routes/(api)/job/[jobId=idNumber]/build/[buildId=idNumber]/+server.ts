@@ -145,6 +145,13 @@ export const DELETE: RequestHandler = async ({ params }) => {
           id: true,
           app_id: true
         }
+      },
+      release: {
+        select: {
+          id: true,
+          build_guid: true,
+          status: true
+        }
       }
     }
   });
@@ -153,12 +160,27 @@ export const DELETE: RequestHandler = async ({ params }) => {
 
   await prisma.build.delete({ where: { id: build.id } });
 
+  await prisma.$transaction([
+    prisma.release.deleteMany({ where: { build: { id: build.id } } }),
+    prisma.build.deleteMany({ where: { id: build.id } })
+  ]);
+
   if (build.build_guid && build.status !== Build.Status.Completed) {
     await getQueues().Builds.add(`Cancel Build #${build.id}`, {
       type: BullMQ.JobType.Build_Cancel,
       guid: build.build_guid,
       build
     });
+  }
+
+  for (const release of build.release) {
+    if (release.build_guid && release.status !== Release.Status.Completed) {
+      await getQueues().Releases.add(`Cancel Release #${release.id}`, {
+        type: BullMQ.JobType.Release_Cancel,
+        guid: release.build_guid,
+        release: { ...release, build }
+      });
+    }
   }
 
   return new Response(JSON.stringify({}));
