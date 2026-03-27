@@ -12,10 +12,10 @@ on:
       DOCKER_TAG:
         type: 'string'
         required: true
-      BUILD_ENGINE_BUILD_TAG:
+      BUILD_ENGINE_TAG:
         type: 'string'
         required: true
-      OTEL_BUILD_TAG:
+      OTEL_TAG:
         type: 'string'
         required: true
     secrets:
@@ -32,10 +32,24 @@ jobs:
   deploy-to-ecr:
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: |
+          echo "Installing ecs-deploy script..."
+          mkdir -p $HOME/.local/bin
+          curl -o $HOME/.local/bin/ecs-deploy https://raw.githubusercontent.com/silinternational/ecs-deploy/master/ecs-deploy
+          chmod +x $HOME/.local/bin/ecs-deploy
+          
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Pull from GHCR
         run: |
-          docker pull ghcr.io/sillsdev/appbuilder-buildengine-api:${{ inputs.DOCKER_TAG }}
-          docker pull ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ inputs.DOCKER_TAG }}
+          docker pull ghcr.io/${{ inputs.BUILD_ENGINE_TAG }}
+          docker pull ghcr.io/${{ inputs.OTEL_TAG }}
 
       - name: Configure AWS credentials
         id: aws
@@ -55,15 +69,15 @@ jobs:
         id: vars
         run: |
           echo "Setting up deployment variables..."
-          echo "IMAGE_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api-origin" >> $GITHUB_OUTPUT
-          echo "OTEL_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api-otel-collector" >> $GITHUB_OUTPUT
+          echo "IMAGE_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-api" >> $GITHUB_OUTPUT
+          echo "OTEL_URL=${{ steps.ecr.outputs.registry }}/appbuilder-buildengine-otel" >> $GITHUB_OUTPUT
 
       - name: Push to AWS ECR
         run: |
-          docker tag ${{ inputs.BUILD_ENGINE_BUILD_TAG}} "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.DOCKER_TAG }}"
-          docker tag ${{ inputs.BUILD_ENGINE_BUILD_TAG}} "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.BUILD_NUMBER }}"
-          docker tag ${{ inputs.OTEL_BUILD_TAG}} "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.DOCKER_TAG }}"
-          docker tag ${{ inputs.OTEL_BUILD_TAG}} "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.BUILD_NUMBER }}"
+          docker tag ${{ inputs.BUILD_ENGINE_TAG}} "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.DOCKER_TAG }}"
+          docker tag ${{ inputs.BUILD_ENGINE_TAG}} "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.BUILD_NUMBER }}"
+          docker tag ${{ inputs.OTEL_TAG}} "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.DOCKER_TAG }}"
+          docker tag ${{ inputs.OTEL_TAG}} "${{ steps.vars.outputs.OTEL_URL }}:${{ inputs.BUILD_NUMBER }}"
           echo "Docker images tagged as ${{ inputs.DOCKER_TAG }} and ${{ inputs.BUILD_NUMBER }}"
 
           docker push "${{ steps.vars.outputs.IMAGE_URL }}:${{ inputs.DOCKER_TAG }}"
