@@ -52,7 +52,7 @@ jobs:
           docker build -t $OTEL_BUILD_TAG -f Dockerfile.otel .
           echo "Docker images built successfully."
           echo "BUILD_ENGINE_BUILD_TAG=${BUILD_ENGINE_BUILD_TAG}" >> $GITHUB_OUTPUT
-          echo "BUILD_ENGINE_BUILD_TAG=${OTEL_BUILD_TAG}" >> $GITHUB_OUTPUT
+          echo "OTEL_BUILD_TAG=${OTEL_BUILD_TAG}" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
