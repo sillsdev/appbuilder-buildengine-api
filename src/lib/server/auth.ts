@@ -2,7 +2,7 @@ import { trace } from '@opentelemetry/api';
 import type { Prisma } from '@prisma/client';
 import { type RequestEvent, error, redirect } from '@sveltejs/kit';
 import { jwtDecrypt } from 'jose';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { getAuthConnection } from './bullmq/queues';
 import { prisma } from './prisma';
 import { env as secrets } from '$env/dynamic/private';
@@ -102,7 +102,12 @@ export async function tryVerifyAPIToken(
   }
   const client = await prisma.client.findFirst({ where: { access_token } });
   if (!client) {
-    if (access_token === secrets.API_ACCESS_TOKEN) {
+    if (
+      timingSafeEqual(
+        Buffer.from(access_token, 'hex'),
+        Buffer.from(secrets.API_ACCESS_TOKEN, 'hex')
+      )
+    ) {
       return [true, null];
     }
     return [false, ErrorResponse(403, 'Invalid Access Token')];

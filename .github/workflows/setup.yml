@@ -64,6 +64,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ""
       BUILD_ENGINE_SECRETS_BUCKET: ""
       SCRIPTURE_EARTH_KEY: ""
+      ORIGIN: ""
+      API_ACCESS_TOKEN: ""
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
