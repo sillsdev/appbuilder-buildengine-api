@@ -97,7 +97,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
         };
         if (defaultLanguage) {
           manifest['default-language'] = defaultLanguage;
-          manifest['icon'] = 'defaultLanguage/images/icon.png';
+          manifest['icon'] = `${defaultLanguage}/images/icon.png`;
         }
         const json = JSON.stringify(manifest);
         const jsonFileName = 'play-listing/manifest.json';

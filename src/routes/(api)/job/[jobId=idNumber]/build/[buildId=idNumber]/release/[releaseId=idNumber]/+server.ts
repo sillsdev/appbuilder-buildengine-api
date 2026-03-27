@@ -79,7 +79,7 @@ export const DELETE: RequestHandler = async ({ params }) => {
 
   if (!release) return ErrorResponse(404, 'Release not found');
 
-  await prisma.build.delete({ where: { id: release.id } });
+  await prisma.release.delete({ where: { id: release.id } });
 
   if (release.build_guid && release.status !== Release.Status.Completed) {
     await getQueues().Releases.add(`Cancel Release #${release.id}`, {

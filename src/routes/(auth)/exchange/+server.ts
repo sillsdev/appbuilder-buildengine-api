@@ -1,5 +1,5 @@
 import { trace } from '@opentelemetry/api';
-import { error } from 'console';
+import { error } from '@sveltejs/kit';
 import { EncryptJWT, jwtVerify } from 'jose';
 import type { RequestHandler } from './$types';
 import { env as secrets } from '$env/dynamic/private';
