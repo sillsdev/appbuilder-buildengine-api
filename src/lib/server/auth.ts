@@ -73,7 +73,9 @@ async function initiateScriptoriaLogin(event: RequestEvent) {
 export function returnTo(event: RequestEvent) {
   let redirectUrl = decodeURIComponent(event.url.searchParams.get('returnTo') ?? '');
   while (redirectUrl?.startsWith('/login')) {
-    redirectUrl = decodeURIComponent(new URL(redirectUrl).searchParams.get('returnTo') ?? '');
+    redirectUrl = decodeURIComponent(
+      new URL(secrets.ORIGIN, redirectUrl).searchParams.get('returnTo') ?? ''
+    );
   }
   throw redirect(
     302,
