@@ -64,14 +64,14 @@ jobs:
       - name: Push to GHCR
         id: push
         run: |
-          BUILD_ENGINE_TAG="sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DOCKER_TAG }}"
-          docker tag ${{ steps.build.outputs.BUILD_ENGINE_BUILD_TAG }} ghcr.io/${BUILD_ENGINE_TAG}
-          docker push ghcr.io/${BUILD_ENGINE_TAG}
+          BUILD_ENGINE_TAG="ghcr.io/sillsdev/appbuilder-buildengine-api:${{ steps.branch.outputs.DOCKER_TAG }}"
+          docker tag ${{ steps.build.outputs.BUILD_ENGINE_BUILD_TAG }} ${BUILD_ENGINE_TAG}
+          docker push ${BUILD_ENGINE_TAG}
           echo "BUILD_ENGINE_TAG=${BUILD_ENGINE_TAG}" >> $GITHUB_OUTPUT
 
-          OTEL_TAG="sillsdev/appbuilder-buildengine-otel:${{ steps.branch.outputs.DOCKER_TAG }}"
-          docker tag ${{ steps.build.outputs.OTEL_BUILD_TAG }} ghcr.io/${OTEL_TAG}
-          docker push ghcr.io/${OTEL_TAG}
+          OTEL_TAG="ghcr.io/sillsdev/appbuilder-buildengine-otel:${{ steps.branch.outputs.DOCKER_TAG }}"
+          docker tag ${{ steps.build.outputs.OTEL_BUILD_TAG }} ${OTEL_TAG}
+          docker push ${OTEL_TAG}
           echo "OTEL_TAG=${OTEL_TAG}" >> $GITHUB_OUTPUT
 
   deploy-sil:

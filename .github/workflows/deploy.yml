@@ -48,8 +48,9 @@ jobs:
 
       - name: Pull from GHCR
         run: |
-          docker pull ghcr.io/${{ inputs.BUILD_ENGINE_TAG }}
-          docker pull ghcr.io/${{ inputs.OTEL_TAG }}
+          docker pull ${{ inputs.BUILD_ENGINE_TAG }}
+          docker pull ${{ inputs.OTEL_TAG }}
+          docker image list
 
       - name: Configure AWS credentials
         id: aws
