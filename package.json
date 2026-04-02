@@ -14,6 +14,7 @@
 		"lint": "eslint .",
 		"fix-sourcemaps": "node --experimental-strip-types fixSourcemaps.cts"
 	},
+	"//zod": "sveltekit-superforms has a peerDep on zod, but it isn't installed in Docker for some reason",
 	"devDependencies": {
 		"@bull-board/api": "^6.13.1",
 		"@bull-board/hono": "^6.13.1",
@@ -58,7 +59,8 @@
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
 		"valibot": "^1.1.0",
-		"vite": "^7.0.4"
+		"vite": "^7.0.4",
+		"zod": "^3.25.0"
 	},
 	"//grpc": "grpc is marked as a dependeny due to circular imports in libraries it depends on breaking 'sorcery'",
 	"dependencies": {
