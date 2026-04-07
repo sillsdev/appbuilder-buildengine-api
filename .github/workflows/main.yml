@@ -79,8 +79,7 @@ jobs:
     uses: "./.github/workflows/deploy.yml"
     with:
       BUILD_NUMBER: ${{ github.run_number }}
-      ECS_CLUSTER: none # Temporarily disabled - remove this line to re-enable
-      # ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }} # Restore this when re-enabling
+      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }} # Restore this when re-enabling
       DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
       BUILD_ENGINE_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_TAG }}
       OTEL_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_TAG }}
