@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
   import { browser } from '$app/environment';
+  import { page } from '$app/state';
   import { env } from '$env/dynamic/public';
   import ScriptoriaIcon from '$lib/icons/ScriptoriaIcon.svelte';
 
@@ -29,6 +31,15 @@
       timeout = null;
     }
   });
+
+  const { enhance } = superForm(data.form, {
+    onSubmit(event) {
+      const returnTo = page.url.searchParams.get('returnTo');
+      if (returnTo) {
+        event.formData.set('returnTo', returnTo);
+      }
+    }
+  });
 </script>
 
 <div class="card shadow-xl bg-white border p-4">
@@ -42,7 +53,7 @@
       BuildEngine serves as an interface between Scriptoria and the AWS resources it uses.
     </p>
     {#if data.serviceAvailable}
-      <form method="POST" action="?/login" class="w-full">
+      <form method="POST" action="?/login" class="w-full" use:enhance>
         <button class="btn btn-primary w-full">Login with Scriptoria</button>
       </form>
     {:else}
