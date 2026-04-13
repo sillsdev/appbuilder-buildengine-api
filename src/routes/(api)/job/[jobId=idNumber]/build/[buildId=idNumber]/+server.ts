@@ -68,7 +68,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
   const runningRelease = await prisma.release.findFirst({
     where: {
       build_id: Number(params.buildId),
-      status: { in: [Release.Status.Accepted, Release.Status.Active] }
+      status: { in: [Release.Status.Initialized, Release.Status.Accepted, Release.Status.Active] }
     }
   });
   if (runningRelease) {
@@ -89,7 +89,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
   if (!build) return ErrorResponse(404, 'Build not found');
 
   if (build.status !== Build.Status.Completed)
-    return ErrorResponse(409, `Build is incomplete. Current Status: ${build.result}`);
+    return ErrorResponse(409, `Build is incomplete. Current Status: ${build.status}`);
 
   if (build.result !== Build.Result.Success)
     return ErrorResponse(403, `Build was unsuccessful. Result: ${build.result}`);
