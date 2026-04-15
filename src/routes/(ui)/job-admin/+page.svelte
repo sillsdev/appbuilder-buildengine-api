@@ -2,9 +2,10 @@
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import IconContainer from '$lib/components/IconContainer.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortTable from '$lib/components/SortTable.svelte';
+  import { Icons } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
 
   $title = 'Jobs';
@@ -114,10 +115,10 @@
         <td>{job.existing_version_code}</td>
         <td class="flex flex-row flex-wrap p-1 space-x-2">
           <a href="/job-admin/view?id={job.id}">
-            <IconContainer icon="mdi:eye" width={16} />
+            <IconContainer icon={Icons.View} width={16} />
           </a>
           <a href="/job-admin/update?id={job.id}">
-            <IconContainer icon="mdi:pencil" width={16} />
+            <IconContainer icon={Icons.Edit} width={16} />
           </a>
         </td>
       </tr>

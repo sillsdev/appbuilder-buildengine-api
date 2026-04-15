@@ -3,9 +3,10 @@
   import type { PageData } from './$types';
   import { enhance } from '$app/forms';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import IconContainer from '$lib/components/IconContainer.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortTable from '$lib/components/SortTable.svelte';
+  import { Icons } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
@@ -109,10 +110,10 @@
         <td>{getTimeDateString(client.updated)}</td>
         <td class="flex flex-row flex-wrap p-1 space-x-2">
           <a href="/client-admin/view?id={client.id}">
-            <IconContainer icon="mdi:eye" width={16} />
+            <IconContainer icon={Icons.View} width={16} />
           </a>
           <a href="/client-admin/update?id={client.id}">
-            <IconContainer icon="mdi:pencil" width={16} />
+            <IconContainer icon={Icons.Edit} width={16} />
           </a>
           <form action="?/deleteClient" method="POST" use:enhance>
             <input type="hidden" name="id" value={client.id} />
@@ -126,7 +127,7 @@
                 }
               }}
             >
-              <IconContainer icon="mdi:trash" width={16} />
+              <IconContainer icon={Icons.Delete} width={16} />
             </button>
           </form>
         </td>
