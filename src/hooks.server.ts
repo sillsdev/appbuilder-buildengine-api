@@ -10,6 +10,7 @@ import { allWorkers } from '$lib/server/bullmq/BullMQ';
 import { DatabaseConnected } from '$lib/server/prisma';
 
 const handleAPIRoute: Handle = async ({ event, resolve }) => {
+  if (event.route.id === '/(api)/health') return resolve(event);
   const [success, res] = await tryVerifyAPIToken(event);
   if (!success) {
     return res;
