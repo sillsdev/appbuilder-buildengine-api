@@ -2,7 +2,8 @@
   import type { Snippet } from 'svelte';
   import type { PageData } from './$types';
   import { page } from '$app/state';
-  import IconContainer from '$lib/components/IconContainer.svelte';
+  import { Icons } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
 
   interface Props {
     children: Snippet;
@@ -112,7 +113,7 @@
               for="primary-content-drawer"
               class="btn btn-ghost btn-circle p-1 drawer-button lg:hidden text-primary-content hover:text-base-content"
             >
-              <IconContainer icon="mdi:hamburger-menu" width={24} />
+              <IconContainer icon={Icons.Hamburger} width={24} />
             </label>
             <a class="btn text-xl btn-ghost" href="/">SIL Global</a>
           </div>
@@ -123,12 +124,12 @@
               <li>
                 <details class="dropdown dropdown-end">
                   <summary class="btn btn-primary btn-sm btn-square no-animation">
-                    <IconContainer icon="mdi:user" width={24} />
+                    <IconContainer icon={Icons.User} width={24} />
                   </summary>
                   <ul class="dropdown-content menu menu-sm bg-base-100 text-base-content min-w-40">
                     <li>
                       <div class="btn btn-ghost max-w-full overflow-hidden">
-                        <IconContainer icon="mdi:user" width={16} />
+                        <IconContainer icon={Icons.User} width={16} />
                         <span class="select-all">
                           {data.userEmail}
                         </span>
@@ -137,7 +138,7 @@
                     <li>
                       <a class="btn btn-ghost" href="/signout">
                         Sign Out
-                        <IconContainer icon="mdi:logout" width="18" />
+                        <IconContainer icon={Icons.Logout} width="18" />
                       </a>
                     </li>
                   </ul>
