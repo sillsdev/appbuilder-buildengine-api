@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte';
   import type { PageData } from './$types';
   import { page } from '$app/state';
-  import { Icons } from '$lib/icons';
+  import { type IconType, Icons } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
 
   interface Props {
@@ -22,6 +22,14 @@
       drawerToggle.click();
     }
   }
+
+  const links: { target: keyof PageData['count']; icon: IconType; title: string }[] = [
+    { target: 'client', icon: Icons.User, title: 'Clients' },
+    { target: 'project', icon: Icons.Project, title: 'Projects' },
+    { target: 'job', icon: Icons.Product, title: 'Jobs' },
+    { target: 'build', icon: Icons.Build, title: 'Builds' },
+    { target: 'release', icon: Icons.Publish, title: 'Releases' }
+  ];
 </script>
 
 <div class="flex flex-col h-full">
@@ -40,61 +48,20 @@
       >
         <ul class="menu menu-lg p-0 w-full bg-base-100 text-base-content h-full">
           <div class="min-h-full overflow-y-auto">
-            <li>
-              <a
-                class="rounded-none"
-                class:active-menu-item={isUrlActive('/client-admin')}
-                href="/client-admin"
-                onclick={closeDrawer}
-              >
-                <IconContainer icon={Icons.User} width={24} />
-                Clients
-              </a>
-            </li>
-            <li>
-              <a
-                class="rounded-none"
-                class:active-menu-item={isUrlActive('/project-admin')}
-                href="/project-admin"
-                onclick={closeDrawer}
-              >
-                <IconContainer icon={Icons.Project} width={24} />
-                Projects
-              </a>
-            </li>
-            <li>
-              <a
-                class="rounded-none"
-                class:active-menu-item={isUrlActive('/job-admin')}
-                href="/job-admin"
-                onclick={closeDrawer}
-              >
-                <IconContainer icon={Icons.Product} width={24} />
-                Jobs
-              </a>
-            </li>
-            <li>
-              <a
-                class="rounded-none"
-                class:active-menu-item={isUrlActive('/build-admin')}
-                href="/build-admin"
-                onclick={closeDrawer}
-              >
-                <IconContainer icon={Icons.Build} width={24} />
-                Builds
-              </a>
-            </li>
-            <li>
-              <a
-                class="rounded-none"
-                class:active-menu-item={isUrlActive('/release-admin')}
-                href="/release-admin"
-                onclick={closeDrawer}
-              >
-                <IconContainer icon={Icons.Publish} width={24} />
-                Releases
-              </a>
-            </li>
+            {#each links as { target, icon, title }}
+              <li>
+                <a
+                  class="rounded-none flex flex-row"
+                  class:active-menu-item={isUrlActive(`/${target}-admin`)}
+                  href="/{target}-admin"
+                  onclick={closeDrawer}
+                >
+                  <IconContainer {icon} width={24} />
+                  <span class="grow">{title}</span>
+                  <i>{data.count[target]}</i>
+                </a>
+              </li>
+            {/each}
             <li>
               <a
                 class="rounded-none"
