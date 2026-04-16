@@ -105,7 +105,7 @@
   >
     {#snippet row(job, index)}
       <tr>
-        <td>{index + 1}</td>
+        <td>{index + $form.page.page * $form.page.size + 1}</td>
         <td>{job.id}</td>
         <td>{job.request_id}</td>
         <td><a class="link" href={job.git_url}>{job.git_url}</a></td>

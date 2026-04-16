@@ -105,7 +105,7 @@
   >
     {#snippet row(project, index)}
       <tr>
-        <td>{index + 1}</td>
+        <td>{index + $form.page.page * $form.page.size + 1}</td>
         <td>{project.id}</td>
         <td>{project.status}</td>
         <td><a class="link" href={project.url}>{project.url}</a></td>
