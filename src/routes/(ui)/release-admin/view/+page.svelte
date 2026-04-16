@@ -58,7 +58,15 @@
     </tr>
     <tr>
       <th>Error</th>
-      <td><a class="link" href={data.release.error}>{data.release.error}</a></td>
+      <td>
+        {#if data.release.error?.match(/^https?:/)}
+          <a class="link" href={data.release.error}>
+            {data.release.error}
+          </a>
+        {:else}
+          {data.release.error}
+        {/if}
+      </td>
     </tr>
     <tr>
       <th>Artifacts</th>

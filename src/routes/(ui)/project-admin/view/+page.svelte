@@ -42,7 +42,15 @@
     </tr>
     <tr>
       <th>Error</th>
-      <td>{data.project.error}</td>
+      <td>
+        {#if data.project.error?.match(/^https?:/)}
+          <a class="link" href={data.project.error}>
+            {data.project.error}
+          </a>
+        {:else}
+          {data.project.error}
+        {/if}
+      </td>
     </tr>
     <tr>
       <th>Url</th>

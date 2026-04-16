@@ -52,7 +52,15 @@
     </tr>
     <tr>
       <th>Error</th>
-      <td><a class="link" href={data.build.error}>{data.build.error}</a></td>
+      <td>
+        {#if data.build.error?.match(/^https?:/)}
+          <a class="link" href={data.build.error}>
+            {data.build.error}
+          </a>
+        {:else}
+          {data.build.error}
+        {/if}
+      </td>
     </tr>
     <tr>
       <th>Artifacts</th>
