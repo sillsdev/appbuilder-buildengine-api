@@ -47,6 +47,7 @@
                 href="/client-admin"
                 onclick={closeDrawer}
               >
+                <IconContainer icon={Icons.User} width={24} />
                 Clients
               </a>
             </li>
@@ -57,6 +58,7 @@
                 href="/project-admin"
                 onclick={closeDrawer}
               >
+                <IconContainer icon={Icons.Project} width={24} />
                 Projects
               </a>
             </li>
@@ -67,6 +69,7 @@
                 href="/job-admin"
                 onclick={closeDrawer}
               >
+                <IconContainer icon={Icons.Product} width={24} />
                 Jobs
               </a>
             </li>
@@ -77,6 +80,7 @@
                 href="/build-admin"
                 onclick={closeDrawer}
               >
+                <IconContainer icon={Icons.Build} width={24} />
                 Builds
               </a>
             </li>
@@ -87,6 +91,7 @@
                 href="/release-admin"
                 onclick={closeDrawer}
               >
+                <IconContainer icon={Icons.Publish} width={24} />
                 Releases
               </a>
             </li>
@@ -96,8 +101,11 @@
                 class:active-menu-item={isUrlActive('/queue-admin')}
                 href="/queue-admin"
                 onclick={closeDrawer}
+                target="_blank"
               >
+                <IconContainer icon={Icons.Dashboard} width={24} />
                 Queues
+                <IconContainer icon={Icons.Open} width={18} />
               </a>
             </li>
           </div>
