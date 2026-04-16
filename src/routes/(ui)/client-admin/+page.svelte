@@ -102,7 +102,7 @@
   >
     {#snippet row(client, index)}
       <tr>
-        <td>{index + 1}</td>
+        <td>{index + $form.page.page * $form.page.size + 1}</td>
         <td>{client.id}</td>
         <td>{client.access_token}</td>
         <td>{client.prefix}</td>

@@ -100,7 +100,7 @@
   >
     {#snippet row(release, index)}
       <tr>
-        <td>{index + 1}</td>
+        <td>{index + $form.page.page * $form.page.size + 1}</td>
         <td>{release.id}</td>
         <td>
           <a class="link" href="/job-admin/view?id={release.build.job_id}">
