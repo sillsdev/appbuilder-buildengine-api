@@ -80,8 +80,8 @@
       </div>
     </div>
 
-    <div class="drawer-content grow items-start justify-start">
-      <header class="bg-primary text-primary-content">
+    <div class="drawer-content grow items-start justify-start flex flex-col">
+      <header class="bg-primary text-primary-content w-full">
         <nav class="navbar">
           <div class="navbar-start">
             <label
