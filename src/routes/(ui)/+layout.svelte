@@ -12,8 +12,8 @@
 
   let { children, data }: Props = $props();
 
-  function isUrlActive(route: string) {
-    return page.url.pathname.startsWith(route);
+  function isUrlActive(route: string, exact = false) {
+    return exact ? page.url.pathname === route : page.url.pathname.startsWith(route);
   }
 
   let drawerToggle: HTMLInputElement;
@@ -94,7 +94,7 @@
           </div>
           <div class="navbar-end flex-none">
             <ul class="menu menu-horizontal px-1">
-              <li><a href="/" class:bg-secondary={isUrlActive('/')}>Home</a></li>
+              <li><a href="/" class:bg-secondary={isUrlActive('/', true)}>Home</a></li>
               <li><a href="/about" class:bg-secondary={isUrlActive('/about')}>About</a></li>
               <li>
                 <details class="dropdown dropdown-end">
