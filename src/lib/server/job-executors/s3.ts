@@ -21,7 +21,12 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
       await s3.copyS3Folder(release);
       await prisma.release.update({
         where: { id },
-        data: { ...release, status: Release.Status.Completed, build: undefined }
+        data: {
+          ...release,
+          status: Release.Status.Completed,
+          result: Build.Result.Success,
+          build: undefined
+        }
       });
       await s3.removeCodeBuildFolder(release);
     }

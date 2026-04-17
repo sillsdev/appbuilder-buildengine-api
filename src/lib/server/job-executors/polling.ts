@@ -162,7 +162,8 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
         }
       });
       return {
-        status: release.status
+        status: release.status,
+        result: release.result
       };
     }
   } catch (e) {
