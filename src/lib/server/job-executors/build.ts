@@ -50,6 +50,7 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       });
     }
     const name = pollName(build.id);
+    job.log(`repeat opts: ${JSON.stringify(BullMQ.RepeatEveryMinute)}`);
     await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
       name,
       data: {
