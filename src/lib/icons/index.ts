@@ -4,6 +4,8 @@ export const Icons = {
   Delete: 'mdi:trash',
   Edit: 'mdi:pencil',
   Hamburger: 'mdi:hamburger-menu',
+  Invisible: 'mdi:eye-off-outline',
+  Key: 'material-symbols:key',
   Logout: 'mdi:logout',
   Open: 'mdi:open-in-new',
   Product: 'system-uicons:box',
@@ -12,7 +14,8 @@ export const Icons = {
   SortAsc: 'bx:sort-a-z',
   SortDesc: 'bx:sort-z-a',
   User: 'mdi:user',
-  View: 'mdi:eye'
+  View: 'mdi:eye',
+  Visible: 'mdi:eye'
 } as const;
 
 export type IconType = (typeof Icons)[keyof typeof Icons];
