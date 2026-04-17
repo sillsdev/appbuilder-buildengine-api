@@ -71,6 +71,8 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
       };
     }
   } catch (e) {
+    // don't await, in case error throws here
+    getQueues().Polling.removeJobScheduler(job.name);
     job.log(`${e}`);
     await prisma.build.updateMany({
       where: { id: job.data.buildId },
@@ -84,6 +86,8 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
         job.log
       )
     });
+    // rethrow so error makes it to HoneyComb
+    throw e;
   }
 }
 
@@ -162,11 +166,15 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
       };
     }
   } catch (e) {
+    // don't await, in case error throws here
+    getQueues().Polling.removeJobScheduler(job.name);
     job.log(`${e}`);
     await prisma.release.updateMany({
       where: { id: job.data.releaseId },
       data: { result: Build.Result.Failure, status: Release.Status.Completed }
     });
+    // rethrow so error makes it to HoneyComb
+    throw e;
   }
 }
 

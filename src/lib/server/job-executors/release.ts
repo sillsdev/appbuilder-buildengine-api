@@ -71,6 +71,8 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
         job.log
       )
     });
+    // rethrow so error makes it to HoneyComb
+    throw e;
   }
 }
 
