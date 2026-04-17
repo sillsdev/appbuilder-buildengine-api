@@ -50,7 +50,12 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       });
     }
     const name = pollName(build.id);
-    job.log(`repeat opts: ${JSON.stringify(BullMQ.RepeatEveryMinute)}`);
+    /**
+     * For some arcane reason, adding this line prevents RepeatEveryMinute from being transpiled as an empty object???
+     * I have no idea why this is necessary here, but not in Scriptoria...
+     * - Aidan
+     */
+    void BullMQ.RepeatEveryMinute.pattern;
     await getQueues().Polling.upsertJobScheduler(name, BullMQ.RepeatEveryMinute, {
       name,
       data: {
