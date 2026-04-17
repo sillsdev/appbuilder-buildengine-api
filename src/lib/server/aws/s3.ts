@@ -51,7 +51,11 @@ export class S3 {
    * @param string fileName Name of the file without path
    * @return string Contains the contents of the file
    */
-  public async readS3File(artifacts_provider: ProviderForPrefix, fileName: string) {
+  public async readS3File(
+    artifacts_provider: ProviderForPrefix,
+    fileName: string,
+    errorIfNotExists = true
+  ) {
     let fileContents = '';
     const bucket = AWSVars.artifacts();
     const filePath = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/' + fileName;
@@ -69,10 +73,12 @@ export class S3 {
       // There is not a good way to check for file exists.  If file doesn't exist,
       // it will be caught here and an empty string returned.
       if (e instanceof NoSuchKey) {
-        span?.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: `Error from S3 while getting object "${filePath}" from "${bucket}". No such key exists.`
-        });
+        if (errorIfNotExists) {
+          span?.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: `Error from S3 while getting object "${filePath}" from "${bucket}". No such key exists.`
+          });
+        }
       } else if (e instanceof S3ServiceException) {
         span?.setStatus({
           code: SpanStatusCode.ERROR,

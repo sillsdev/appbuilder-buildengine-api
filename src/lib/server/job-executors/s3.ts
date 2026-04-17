@@ -39,7 +39,7 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
       await s3.copyS3Folder(build);
       let defaultLanguage = await s3.readS3File(build, 'play-listing/default-language.txt');
       job.log(`getExtraContent defaultLanguage: ${defaultLanguage}`);
-      const manifestFileContent = await s3.readS3File(build, 'manifest.txt');
+      const manifestFileContent = await s3.readS3File(build, 'manifest.txt', false);
       let manifest: Record<string, string | string[] | Record<string, string>> = {};
       if (manifestFileContent) {
         const manifestFiles = manifestFileContent.split('\n');
@@ -108,6 +108,8 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
         const json = JSON.stringify(manifest);
         const jsonFileName = 'play-listing/manifest.json';
         await s3.writeFileToS3(json, jsonFileName, build);
+      } else {
+        job.log('No manifest found');
       }
       await prisma.build.update({
         where: { id },
