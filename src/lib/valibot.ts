@@ -119,3 +119,11 @@ export function trimStrings<T extends Record<string, unknown>>(
   }
   return obj;
 }
+
+export const applicationTypes = [
+  'scriptureappbuilder',
+  'dictionaryappbuilder',
+  'readingappbuilder',
+  'keyboardappbuilder'
+] as const;
+export type ApplicationType = (typeof applicationTypes)[number];
