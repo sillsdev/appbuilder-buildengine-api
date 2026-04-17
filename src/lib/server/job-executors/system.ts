@@ -17,6 +17,7 @@ import { S3 } from '../aws/s3';
 import type { BullMQ } from '../bullmq';
 import { prisma } from '../prisma';
 import { AWSVars } from '$lib/server/aws/vars';
+import { type ApplicationType, applicationTypes } from '$lib/valibot';
 
 type Logger = (msg: string) => void;
 
@@ -118,21 +119,12 @@ async function copyFolder(sourceFolder: string, bucket: string, log: Logger) {
   }
 }
 
-const appNames = [
-  'scriptureappbuilder',
-  'readingappbuilder',
-  'dictionaryappbuilder',
-  'keyboardappbuilder'
-] as const;
-
-type App = (typeof appNames)[number];
-
 export async function refreshAppVersions(
   job: Job<BullMQ.System.RefreshAppVersions>
 ): Promise<unknown> {
   // db connectivity handled by server hooks
   // Prepare default response structure
-  let versions: Map<App, string> | null = null;
+  let versions: Map<ApplicationType, string> | null = null;
   let imageHash: string | null = null;
 
   const repoConfig = AWSVars.imageRepo();
@@ -305,7 +297,7 @@ async function fetchAllAppVersionsFromManifest(
   repoName: string,
   imageTag: string,
   log: Logger
-): Promise<Map<App, string> | null> {
+): Promise<Map<ApplicationType, string> | null> {
   try {
     log(`batchGetImage for ${imageTag}`);
     const resp = await client.send(
@@ -403,14 +395,14 @@ async function fetchAllAppVersionsFromManifest(
     }
 
     // Extract version for each app from labels
-    const appVersions = new Map<App, string>(
-      appNames
+    const appVersions = new Map<ApplicationType, string>(
+      applicationTypes
         .map((app) => {
           const labelKey = `org.opencontainers.image.version_${app}`;
           if (labels[labelKey]) {
             const version = labels[labelKey];
             log(`found version for ${app}: ${version} (label: ${labelKey}) for ${imageTag}`);
-            return [app, version] as [App, string];
+            return [app, version] as [ApplicationType, string];
           } else {
             log(`no version found for ${app} (looked for label: ${labelKey}) for ${imageTag}`);
             return null;
