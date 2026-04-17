@@ -47,7 +47,7 @@
             {#each data.aggregate[target] as entry}
               <tr>
                 <td>
-                  {('result' in entry ? entry.result : entry.app_id) || 'UNKNOWN'}
+                  {('result' in entry ? (entry.result ?? 'PENDING') : entry.app_id) || 'UNKNOWN'}
                 </td>
                 <td>
                   {entry._count}
