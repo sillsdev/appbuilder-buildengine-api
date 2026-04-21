@@ -1,4 +1,16 @@
+import type { ApplicationType } from '$lib/valibot';
+
+const appIcons = import.meta.glob('/src/lib/icons/app-builders/*.svg', {
+  eager: true,
+  import: 'default'
+}) as Record<string, string>;
+
+export function getAppIcon(type: ApplicationType) {
+  return appIcons[`/src/lib/icons/app-builders/${type}.svg`] ?? '';
+}
+
 export const Icons = {
+  Bucket: 'logos:aws-s3',
   Build: 'material-symbols:build',
   Dashboard: 'clarity:dashboard-line',
   Delete: 'mdi:trash',

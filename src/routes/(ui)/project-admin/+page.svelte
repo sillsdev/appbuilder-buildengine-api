@@ -3,10 +3,10 @@
   import type { PageData } from './$types';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
-  import SortTable from '$lib/components/SortTable.svelte';
-  import { Icons } from '$lib/icons';
+  import { Icons, getAppIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
+  import type { ApplicationType } from '$lib/valibot';
 
   $title = 'Projects';
 
@@ -52,78 +52,37 @@
     <b>{data.count}</b>
     items
   </p>
-  <SortTable
-    data={projects}
-    columns={[
-      {
-        id: 'index',
-        header: '#'
-      },
-      {
-        id: 'id',
-        header: 'Id',
-        compare: () => 0
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        compare: () => 0
-      },
-      {
-        id: 'url',
-        header: 'Url',
-        compare: () => 0
-      },
-      {
-        id: 'user_id',
-        header: 'User ID',
-        compare: () => 0
-      },
-      {
-        id: 'group_id',
-        header: 'Group ID',
-        compare: () => 0
-      },
-      {
-        id: 'app_id',
-        header: 'App ID',
-        compare: () => 0
-      },
-      {
-        id: 'project_name',
-        header: 'Project Name',
-        compare: () => 0
-      },
-      {
-        id: 'menu',
-        header: ''
-      }
-    ]}
-    serverSide={true}
-    startDesc={true}
-    onSort={(field, direction) => form.update((data) => ({ ...data, sort: { field, direction } }))}
-  >
-    {#snippet row(project, index)}
-      <tr>
-        <td>{index + $form.page.page * $form.page.size + 1}</td>
-        <td>{project.id}</td>
-        <td>{project.status}</td>
-        <td><a class="link" href={project.url}>{project.url}</a></td>
-        <td>{project.user_id}</td>
-        <td>{project.group_id}</td>
-        <td>{project.app_id}</td>
-        <td>{project.project_name}</td>
-        <td class="flex flex-row flex-wrap p-1 space-x-2">
-          <a href="/project-admin/view?id={project.id}">
-            <IconContainer icon={Icons.View} width={16} />
-          </a>
-          <a href="/project-admin/update?id={project.id}">
-            <IconContainer icon={Icons.Edit} width={16} />
-          </a>
-        </td>
-      </tr>
-    {/snippet}
-  </SortTable>
+  <div class="flex flex-col gap-2">
+    {#each projects as project}
+      <div class="border rounded-md p-2 flex flex-col gap-1">
+        <div class="flex flex-row">
+          <h3 class="grow flex flex-row gap-2 items-start">
+            <a class="link" href="/project-admin/view?id={project.id}">#{project.id}</a>
+            <img
+              src={getAppIcon(project.app_id as ApplicationType)}
+              width={20}
+              alt={project.app_id}
+            />
+            <i>{project.project_name}</i>
+          </h3>
+        </div>
+        <div class="flex flex-row items-center gap-x-1">
+          {#if project.client}
+            <IconContainer icon={Icons.User} width={16} />
+            <a class="link mr-2" href="/client-admin/view?id={project.client.id}">
+              {project.client.prefix}
+            </a>
+          {/if}
+          {#if project.url}
+            <IconContainer icon={Icons.Bucket} width={16} />
+            <a class="link" href={project.url} target="_blank">
+              S3 Bucket <IconContainer icon={Icons.Open} width={16} />
+            </a>
+          {/if}
+        </div>
+      </div>
+    {/each}
+  </div>
   <form method="POST" action="?/page" use:enhance>
     <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
       <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
