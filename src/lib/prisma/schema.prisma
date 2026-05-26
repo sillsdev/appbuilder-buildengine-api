@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model build {
@@ -62,21 +62,22 @@ model job {
 }
 
 model project {
-  id             Int       @id @default(autoincrement())
-  status         String?   @db.VarChar(255)
-  result         String?   @db.VarChar(255)
-  error          String?   @db.VarChar(2083)
-  url            String?   @db.VarChar(1024)
-  user_id        String?   @db.VarChar(255) // ISSUE #77: remove this?
-  group_id       String?   @db.VarChar(255) // ISSUE #77: remove this?
-  app_id         String?   @db.VarChar(255)
-  project_name   String?   @db.VarChar(255)
-  language_code  String?   @db.VarChar(255)
-  publishing_key String?   @db.VarChar(1024) // ISSUE #77: remove this?
-  created        DateTime? @default(now()) @db.Timestamp(6)
-  updated        DateTime? @updatedAt @db.Timestamp(6)
+  id             Int             @id @default(autoincrement())
+  status         String?         @db.VarChar(255)
+  result         String?         @db.VarChar(255)
+  error          String?         @db.VarChar(2083)
+  url            String?         @db.VarChar(1024)
+  user_id        String?         @db.VarChar(255) // ISSUE #77: remove this?
+  group_id       String?         @db.VarChar(255) // ISSUE #77: remove this?
+  app_id         String?         @db.VarChar(255)
+  project_name   String?         @db.VarChar(255)
+  language_code  String?         @db.VarChar(255)
+  publishing_key String?         @db.VarChar(1024) // ISSUE #77: remove this?
+  created        DateTime?       @default(now()) @db.Timestamp(6)
+  updated        DateTime?       @updatedAt @db.Timestamp(6)
   client_id      Int?
-  client         client?   @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_client_id")
+  gradingResult  gradingResult[]
+  client         client?         @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_client_id")
 
   @@index([client_id], map: "idx_project_client_id")
 }
@@ -111,4 +112,22 @@ model appVersion {
   imageHash String
   created   DateTime  @default(now()) @db.Timestamp(6)
   updated   DateTime? @updatedAt @db.Timestamp(6)
+}
+
+model gradingResult {
+  id                Int       @id @default(autoincrement())
+  project_id        Int
+  status            String?   @db.VarChar(255)
+  result            String?   @db.VarChar(255)
+  error             String?   @db.VarChar(2083)
+  publisher_id      String    @db.VarChar(255)
+  project_url       String    @db.VarChar(1024)
+  lambda_request_id String?   @db.VarChar(255)
+  report_url_base   String?   @db.VarChar(2083)
+  report_files      String?   @db.VarChar(255)
+  created           DateTime? @default(now()) @db.Timestamp(6)
+  updated           DateTime? @db.Timestamp(6)
+  project           project   @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_grading_result_project_id")
+
+  @@index([project_id], map: "idx_grading_result_project_id")
 }
