@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { Grading } from '$lib/server/models/grading';
+import { Grading } from '$lib/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 

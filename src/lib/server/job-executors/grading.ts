@@ -4,8 +4,8 @@ import { Lambda } from '../aws/lambda';
 import { S3 } from '../aws/s3';
 import { AWSVars } from '../aws/vars';
 import type { BullMQ } from '../bullmq';
-import { Grading } from '../models/grading';
 import { prisma } from '../prisma';
+import { Grading } from '$lib/models/grading';
 import { trimStrings } from '$lib/valibot';
 
 export async function generate(job: Job<BullMQ.Grading.Generate>): Promise<unknown> {

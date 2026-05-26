@@ -2,6 +2,8 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import IconContainer from '$lib/components/IconContainer.svelte';
+  import { Grading } from '$lib/models/grading';
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
@@ -24,6 +26,10 @@
 
 <div class="flex flex-row space-x-2 mb-2">
   <a href="/project-admin/update?id={data.project.id}" class="btn btn-primary">Update</a>
+  <a href="/grading-admin/create?project_id={data.project.id}" class="btn btn-primary">
+    New Grading Report
+  </a>
+  <a href="/grading-admin" class="btn btn-outline">Grading Reports</a>
 </div>
 
 <table class="table table-zebra border">
@@ -96,5 +102,51 @@
       <th>Updated</th>
       <td>{getTimeDateString(data.project.updated)}</td>
     </tr>
+  </tbody>
+</table>
+
+<h2>Recent Grading Reports</h2>
+
+<table class="table table-zebra border">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Result</th>
+      <th>Publisher</th>
+      <th>Created</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {#each data.project.gradingResult as gradingResult}
+      {@const reports = Grading.reports(gradingResult)}
+      <tr>
+        <td>{gradingResult.id}</td>
+        <td>{gradingResult.status}</td>
+        <td>{gradingResult.result}</td>
+        <td>{gradingResult.publisher_id}</td>
+        <td>{getTimeDateString(gradingResult.created)}</td>
+        <td class="flex flex-row flex-wrap p-1 space-x-2">
+          {#if reports.html}
+            <a href={reports.html} title="HTML report">
+              <IconContainer icon="mdi:file-document-outline" width={16} />
+            </a>
+          {/if}
+          {#if reports.json}
+            <a href={reports.json} title="JSON report">
+              <IconContainer icon="mdi:code-json" width={16} />
+            </a>
+          {/if}
+          <a href="/grading-admin/view?id={gradingResult.id}" title="View">
+            <IconContainer icon="mdi:eye" width={16} />
+          </a>
+        </td>
+      </tr>
+    {:else}
+      <tr>
+        <td colspan="6">No grading reports</td>
+      </tr>
+    {/each}
   </tbody>
 </table>

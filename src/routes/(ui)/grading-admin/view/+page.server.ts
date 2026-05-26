@@ -10,23 +10,18 @@ export const load = (async ({ url }) => {
     error(400, `missing id param`);
   }
 
-  const project = await prisma.project.findUnique({
+  const gradingResult = await prisma.gradingResult.findUnique({
     where: {
       id: id.output
     },
     include: {
-      gradingResult: {
-        take: 5,
-        orderBy: {
-          id: 'desc'
-        }
-      }
+      project: true
     }
   });
 
-  if (!project) error(404);
+  if (!gradingResult) error(404);
 
   return {
-    project
+    gradingResult
   };
 }) satisfies PageServerLoad;

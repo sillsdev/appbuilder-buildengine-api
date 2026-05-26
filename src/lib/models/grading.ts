@@ -13,8 +13,14 @@ export namespace Grading {
     Failure = 'FAILURE'
   }
 
+  export type ResultRow = Prisma.gradingResultGetPayload<true>;
+
+  export type ResultWithProject = Prisma.gradingResultGetPayload<{
+    include: { project: true };
+  }>;
+
   export type ResponseBody = Omit<
-    Prisma.GradingResultMinAggregateOutputType,
+    ResultRow,
     'publisher_id' | 'project_url' | 'lambda_request_id' | 'report_url_base' | 'report_files'
   > & {
     reports: {
@@ -34,9 +40,7 @@ export namespace Grading {
     return `https://${bucket}.s3.amazonaws.com/${reportPrefix(id)}/`;
   }
 
-  export function reports(
-    row: Pick<Prisma.GradingResultMinAggregateOutputType, 'report_url_base' | 'report_files'>
-  ) {
+  export function reports(row: Pick<ResultRow, 'report_url_base' | 'report_files'>) {
     const base = row.report_url_base;
     const files = row.report_files?.split(',') ?? [];
     return {
@@ -46,7 +50,7 @@ export namespace Grading {
   }
 
   export function response(
-    row: Prisma.GradingResultMinAggregateOutputType,
+    row: ResultRow,
     origin: string,
     extraLinks: Record<string, { href: string }> = {}
   ): ResponseBody {

@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
+import { Grading } from '$lib/models/grading';
 import { BullMQ, getQueues } from '$lib/server/bullmq';
-import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 import { stringLimits } from '$lib/valibot';
