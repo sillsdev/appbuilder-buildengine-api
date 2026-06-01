@@ -24,7 +24,6 @@ export async function generate(job: Job<BullMQ.Grading.Generate>): Promise<unkno
     job.updateProgress(10);
 
     const bucket = AWSVars.artifacts();
-    const region = AWSVars.artifactsRegion();
     const prefix = Grading.reportPrefix(grading.id);
     const htmlKey = `${prefix}/report.html`;
     const jsonKey = `${prefix}/report.json`;
@@ -32,7 +31,6 @@ export async function generate(job: Job<BullMQ.Grading.Generate>): Promise<unkno
     const lambda = new Lambda();
     const lambdaResult = await lambda.invokeJson(functionName, {
       reportId: grading.id,
-      reportPrefix: prefix,
       project: {
         id: grading.project.id,
         appId: grading.project.app_id,
@@ -40,16 +38,8 @@ export async function generate(job: Job<BullMQ.Grading.Generate>): Promise<unkno
         languageCode: grading.project.language_code,
         s3Url: grading.project_url
       },
-      publisherId: grading.publisher_id,
-      secrets: {
-        bucket: AWSVars.secrets()
-      },
-      artifacts: {
-        bucket,
-        region,
-        htmlKey,
-        jsonKey
-      }
+      // Used for secrets
+      publisherId: grading.publisher_id
     });
     job.updateProgress(75);
 
