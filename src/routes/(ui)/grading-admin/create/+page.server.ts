@@ -3,8 +3,8 @@ import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import type { Actions, PageServerLoad } from './$types';
-import { Grading } from '$lib/models/grading';
 import { BullMQ, getQueues } from '$lib/server/bullmq';
+import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { idSchema, paramNumber, stringLimits } from '$lib/valibot';
 
@@ -48,19 +48,18 @@ export const actions: Actions = {
       data: {
         project_id: project.id,
         publisher_id: form.data.publisher_id,
-        project_url: project.url,
         status: Grading.Status.Initialized
       }
     });
 
     await getQueues().Grading.add(
-      `Generate Grading Report #${gradingResult.id} for Project ${project.id}`,
+      `Generate Grading Report #${gradingResult.uuid} for Project ${project.id}`,
       {
         type: BullMQ.JobType.Grading_Generate,
-        gradingResultId: gradingResult.id
+        gradingResultUUID: gradingResult.uuid
       }
     );
 
-    redirect(303, `/grading-admin/view?id=${gradingResult.id}`);
+    redirect(303, `/grading-admin/view?id=${gradingResult.uuid}`);
   }
 };

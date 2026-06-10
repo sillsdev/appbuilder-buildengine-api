@@ -1,27 +1,31 @@
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import type { PageServerLoad } from './$types';
+import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
-import { idSchema, paramNumber } from '$lib/valibot';
 
 export const load = (async ({ url }) => {
-  const id = v.safeParse(v.pipe(paramNumber, idSchema), url.searchParams.get('id'));
+  const id = v.safeParse(v.pipe(v.string(), v.uuid()), url.searchParams.get('id'));
   if (!id.success) {
     error(400, `missing id param`);
   }
 
-  const gradingResult = await prisma.gradingResult.findUnique({
+  const gradingResult = await prisma.gradingResult.findFirst({
     where: {
-      id: id.output
+      uuid: id.output
     },
     include: {
       project: true
+    },
+    orderBy: {
+      created: 'desc'
     }
   });
 
   if (!gradingResult) error(404);
 
   return {
-    gradingResult
+    rawGradingResult: gradingResult,
+    gradingResult: Grading.response(gradingResult)
   };
 }) satisfies PageServerLoad;

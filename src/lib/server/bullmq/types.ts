@@ -91,7 +91,7 @@ export namespace Release {
 export namespace Grading {
   export interface Generate {
     type: JobType.Grading_Generate;
-    gradingResultId: number;
+    gradingResultUUID: string;
   }
 }
 

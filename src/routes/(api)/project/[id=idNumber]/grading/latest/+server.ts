@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     where: {
       project_id: project.id
     },
-    orderBy: [{ created: 'desc' }, { id: 'desc' }]
+    orderBy: [{ created: 'desc' }]
   });
   if (!grading) return ErrorResponse(404, 'Grading result not found');
 

@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import type { PageServerLoad } from './$types';
+import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { idSchema, paramNumber } from '$lib/valibot';
 
@@ -18,7 +19,7 @@ export const load = (async ({ url }) => {
       gradingResult: {
         take: 5,
         orderBy: {
-          id: 'desc'
+          created: 'desc'
         }
       }
     }
@@ -26,7 +27,11 @@ export const load = (async ({ url }) => {
 
   if (!project) error(404);
 
+  const projectToReturn = {
+    ...project,
+    gradingResult: project.gradingResult.map((r) => Grading.response(r))
+  };
   return {
-    project
+    project: projectToReturn
   };
 }) satisfies PageServerLoad;

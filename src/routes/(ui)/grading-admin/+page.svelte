@@ -5,7 +5,6 @@
   import IconContainer from '$lib/components/IconContainer.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import SortTable from '$lib/components/SortTable.svelte';
-  import { Grading } from '$lib/models/grading';
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
@@ -101,10 +100,9 @@
     onSort={(field, direction) => form.update((data) => ({ ...data, sort: { field, direction } }))}
   >
     {#snippet row(gradingResult, index)}
-      {@const reports = Grading.reports(gradingResult)}
       <tr>
         <td>{index + 1}</td>
-        <td>{gradingResult.id}</td>
+        <td>{gradingResult.uuid}</td>
         <td>
           <a class="link" href="/project-admin/view?id={gradingResult.project_id}">
             {gradingResult.project_id}
@@ -115,17 +113,17 @@
         <td>{gradingResult.publisher_id}</td>
         <td>{getTimeDateString(gradingResult.created)}</td>
         <td class="flex flex-row flex-wrap p-1 space-x-2">
-          {#if reports.html}
-            <a href={reports.html} title="HTML report">
+          {#if gradingResult.reports.html}
+            <a href={gradingResult.reports.html} title="HTML report">
               <IconContainer icon="mdi:file-document-outline" width={16} />
             </a>
           {/if}
-          {#if reports.json}
-            <a href={reports.json} title="JSON report">
+          {#if gradingResult.reports.json}
+            <a href={gradingResult.reports.json} title="JSON report">
               <IconContainer icon="mdi:code-json" width={16} />
             </a>
           {/if}
-          <a href="/grading-admin/view?id={gradingResult.id}" title="View">
+          <a href="/grading-admin/view?id={gradingResult.uuid}" title="View">
             <IconContainer icon="mdi:eye" width={16} />
           </a>
         </td>

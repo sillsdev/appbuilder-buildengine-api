@@ -1,16 +1,13 @@
 import type { Prisma } from '@prisma/client';
+import { AWSVars } from '$lib/server/aws/vars';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Grading {
   export enum Status {
     Initialized = 'initialized',
     Active = 'active',
-    Completed = 'completed'
-  }
-
-  export enum Result {
-    Success = 'SUCCESS',
-    Failure = 'FAILURE'
+    Success = 'success',
+    Failure = 'failure'
   }
 
   export type ResultRow = Prisma.gradingResultGetPayload<true>;
@@ -19,10 +16,7 @@ export namespace Grading {
     include: { project: true };
   }>;
 
-  export type ResponseBody = Omit<
-    ResultRow,
-    'publisher_id' | 'project_url' | 'lambda_request_id' | 'report_url_base' | 'report_files'
-  > & {
+  export type ResponseBody = Omit<ResultRow, 'lambda_request_id'> & {
     reports: {
       html?: string;
       json?: string;
@@ -32,40 +26,42 @@ export namespace Grading {
 
   export const reportFiles = ['report.html', 'report.json'] as const;
 
-  export function reportPrefix(id: number) {
-    return `reports/${id}`;
+  export function reportPrefix(uuid: string) {
+    return `reports/${uuid}`;
   }
 
-  export function reportUrlBase(id: number, bucket: string) {
-    return `https://${bucket}.s3.amazonaws.com/${reportPrefix(id)}/`;
+  export function reportUrlBase(uuid: string, bucket: string) {
+    return `https://${bucket}.s3.amazonaws.com/${reportPrefix(uuid)}/`;
   }
 
-  export function reports(row: Pick<ResultRow, 'report_url_base' | 'report_files'>) {
-    const base = row.report_url_base;
-    const files = row.report_files?.split(',') ?? [];
+  export function reports(row: Pick<ResultRow, 'uuid'>) {
+    const base = `https://${AWSVars.artifacts()}.s3.amazonaws.com/${reportPrefix(row.uuid)}/`;
     return {
-      html: base && files.includes('report.html') ? base + 'report.html' : undefined,
-      json: base && files.includes('report.json') ? base + 'report.json' : undefined
+      html: base + 'report.html',
+      json: base + 'report.json'
     };
   }
 
   export function response(
     row: ResultRow,
-    origin: string,
+    origin: string = process.env.ORIGIN || 'http://localhost:8443',
     extraLinks: Record<string, { href: string }> = {}
   ): ResponseBody {
     return {
-      id: row.id,
+      uuid: row.uuid,
       project_id: row.project_id,
       status: row.status,
       result: row.result,
-      error: row.error,
       created: row.created,
       updated: row.updated,
-      reports: reports(row),
+      publisher_id: row.publisher_id,
+      reports:
+        row.status === Grading.Status.Success
+          ? Grading.reports(row)
+          : { html: undefined, json: undefined },
       _links: {
         self: {
-          href: `${origin}/project/${row.project_id}/grading/${row.id}`
+          href: `${origin}/project/${row.project_id}/grading/${row.uuid}`
         },
         project: {
           href: `${origin}/project/${row.project_id}`

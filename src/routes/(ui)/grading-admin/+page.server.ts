@@ -1,17 +1,18 @@
 import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import type { Actions, PageServerLoad } from './$types';
+import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { tableSchema } from '$lib/valibot';
 
 export const load = (async () => {
   const gradingResults = await prisma.gradingResult.findMany({
     take: 20,
-    orderBy: { id: 'desc' },
+    orderBy: { created: 'desc' },
     include: { project: true }
   });
   return {
-    gradingResults,
+    gradingResults: gradingResults.map((r) => Grading.response(r)),
     count: await prisma.gradingResult.count(),
     form: await superValidate(
       {

@@ -98,13 +98,9 @@ export const stringLimits = {
   },
   grading: {
     status: 255,
-    result: 255,
-    error: 2083,
+    result: 2000,
     publisher_id: 255,
-    project_url: 1024,
-    lambda_request_id: 255,
-    report_url_base: 2083,
-    report_files: 255
+    lambda_request_id: 255
   }
 } as const;
 

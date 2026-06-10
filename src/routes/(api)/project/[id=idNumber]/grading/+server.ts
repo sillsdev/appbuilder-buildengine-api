@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
-import { Grading } from '$lib/models/grading';
 import { BullMQ, getQueues } from '$lib/server/bullmq';
+import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
 import { stringLimits } from '$lib/valibot';
@@ -50,17 +50,16 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
     data: {
       project_id: project.id,
       status: Grading.Status.Initialized,
-      publisher_id: parsed.output.publisher_id,
-      project_url: project.url
+      publisher_id: parsed.output.publisher_id
     }
   });
   if (!grading) return ErrorResponse(500, 'Unable to create grading result');
 
   await getQueues().Grading.add(
-    `Generate Grading Report #${grading.id} for Project ${project.id}`,
+    `Generate Grading Report #${grading.uuid} for Project ${project.id}`,
     {
       type: BullMQ.JobType.Grading_Generate,
-      gradingResultId: grading.id
+      gradingResultUUID: grading.uuid
     }
   );
 
@@ -87,7 +86,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
     where: {
       project_id: project.id
     },
-    orderBy: [{ created: 'desc' }, { id: 'desc' }],
+    orderBy: [{ created: 'desc' }],
     take: limit
   });
 

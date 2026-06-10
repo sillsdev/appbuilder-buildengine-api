@@ -2,7 +2,6 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { Grading } from '$lib/models/grading';
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
@@ -13,13 +12,12 @@
   }
 
   let { data }: Props = $props();
-  const reports = $derived(Grading.reports(data.gradingResult));
 </script>
 
 <Breadcrumbs>
   <li><a href="/" class="link">Home</a></li>
   <li><a href="/grading-admin" class="link">Grading Reports</a></li>
-  <li>{data.gradingResult.id}</li>
+  <li>{data.gradingResult.uuid}</li>
 </Breadcrumbs>
 
 <h1>{$title}</h1>
@@ -40,7 +38,7 @@
   <tbody>
     <tr>
       <th>ID</th>
-      <td>{data.gradingResult.id}</td>
+      <td>{data.gradingResult.uuid}</td>
     </tr>
     <tr>
       <th>Project ID</th>
@@ -52,7 +50,7 @@
     </tr>
     <tr>
       <th>Project Name</th>
-      <td>{data.gradingResult.project.project_name}</td>
+      <td>{data.rawGradingResult.project.project_name}</td>
     </tr>
     <tr>
       <th>Publisher</th>
@@ -67,36 +65,20 @@
       <td>{data.gradingResult.result}</td>
     </tr>
     <tr>
-      <th>Error</th>
-      <td>
-        {#if data.gradingResult.error?.match(/^https?:/)}
-          <a class="link" href={data.gradingResult.error}>
-            {data.gradingResult.error}
-          </a>
-        {:else}
-          {data.gradingResult.error}
-        {/if}
-      </td>
-    </tr>
-    <tr>
       <th>Reports</th>
       <td>
-        {#if reports.html}
-          <a class="link" href={reports.html}>HTML</a>
+        {#if data.gradingResult.reports.html}
+          <a class="link" href={data.gradingResult.reports.html}>HTML</a>
           &nbsp;
         {/if}
-        {#if reports.json}
-          <a class="link" href={reports.json}>JSON</a>
+        {#if data.gradingResult.reports.json}
+          <a class="link" href={data.gradingResult.reports.json}>JSON</a>
         {/if}
       </td>
-    </tr>
-    <tr>
-      <th>Project URL</th>
-      <td>{data.gradingResult.project_url}</td>
     </tr>
     <tr>
       <th>Lambda Request ID</th>
-      <td>{data.gradingResult.lambda_request_id}</td>
+      <td>{data.rawGradingResult.lambda_request_id}</td>
     </tr>
     <tr>
       <th>Created</th>

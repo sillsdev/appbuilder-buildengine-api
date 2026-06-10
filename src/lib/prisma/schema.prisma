@@ -115,18 +115,14 @@ model appVersion {
 }
 
 model gradingResult {
-  id                Int       @id @default(autoincrement())
+  uuid              String    @id @default(uuid()) @db.Uuid
   project_id        Int
   status            String?   @db.VarChar(255)
-  result            String?   @db.VarChar(255)
-  error             String?   @db.VarChar(2083)
+  result            String?   @db.VarChar(2000)
   publisher_id      String    @db.VarChar(255)
-  project_url       String    @db.VarChar(1024)
   lambda_request_id String?   @db.VarChar(255)
-  report_url_base   String?   @db.VarChar(2083)
-  report_files      String?   @db.VarChar(255)
   created           DateTime? @default(now()) @db.Timestamp(6)
-  updated           DateTime? @db.Timestamp(6)
+  updated           DateTime? @updatedAt @db.Timestamp(6)
   project           project   @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_grading_result_project_id")
 
   @@index([project_id], map: "idx_grading_result_project_id")

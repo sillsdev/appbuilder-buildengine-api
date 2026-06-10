@@ -3,7 +3,6 @@
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import IconContainer from '$lib/components/IconContainer.svelte';
-  import { Grading } from '$lib/models/grading';
   import { title } from '$lib/stores';
   import { getTimeDateString } from '$lib/utils/time';
 
@@ -120,25 +119,24 @@
   </thead>
   <tbody>
     {#each data.project.gradingResult as gradingResult}
-      {@const reports = Grading.reports(gradingResult)}
       <tr>
-        <td>{gradingResult.id}</td>
+        <td>{gradingResult.uuid}</td>
         <td>{gradingResult.status}</td>
         <td>{gradingResult.result}</td>
         <td>{gradingResult.publisher_id}</td>
         <td>{getTimeDateString(gradingResult.created)}</td>
         <td class="flex flex-row flex-wrap p-1 space-x-2">
-          {#if reports.html}
-            <a href={reports.html} title="HTML report">
+          {#if gradingResult.reports.html}
+            <a href={gradingResult.reports.html} title="HTML report">
               <IconContainer icon="mdi:file-document-outline" width={16} />
             </a>
           {/if}
-          {#if reports.json}
-            <a href={reports.json} title="JSON report">
+          {#if gradingResult.reports.json}
+            <a href={gradingResult.reports.json} title="JSON report">
               <IconContainer icon="mdi:code-json" width={16} />
             </a>
           {/if}
-          <a href="/grading-admin/view?id={gradingResult.id}" title="View">
+          <a href="/grading-admin/view?id={gradingResult.uuid}" title="View">
             <IconContainer icon="mdi:eye" width={16} />
           </a>
         </td>

@@ -20,7 +20,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
   const grading = await prisma.gradingResult.findUnique({
     where: {
-      id: Number(params.gradingResultId)
+      uuid: params.gradingResultId,
+      project_id: project.id
     }
   });
   if (!grading) return ErrorResponse(404, 'Grading result not found');

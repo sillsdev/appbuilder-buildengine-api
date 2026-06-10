@@ -1,19 +1,15 @@
 -- CreateTable
 CREATE TABLE "public"."gradingResult" (
-    "id" SERIAL NOT NULL,
+    "uuid" UUID NOT NULL,
     "project_id" INTEGER NOT NULL,
     "status" VARCHAR(255),
-    "result" VARCHAR(255),
-    "error" VARCHAR(2083),
+    "result" VARCHAR(2000),
     "publisher_id" VARCHAR(255) NOT NULL,
-    "project_url" VARCHAR(1024) NOT NULL,
     "lambda_request_id" VARCHAR(255),
-    "report_url_base" VARCHAR(2083),
-    "report_files" VARCHAR(255),
     "created" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
     "updated" TIMESTAMP(6),
 
-    CONSTRAINT "gradingResult_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "gradingResult_pkey" PRIMARY KEY ("uuid")
 );
 
 -- CreateIndex

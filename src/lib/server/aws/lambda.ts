@@ -38,23 +38,6 @@ export class Lambda {
 
         const body = result.Payload ? Buffer.from(result.Payload).toString('utf8') : '';
         const parsed = body ? this.parsePayload(body) : null;
-        if (result.FunctionError) {
-          throw new Error(`Lambda function error: ${result.FunctionError} ${body}`.trim());
-        }
-        if (!result.StatusCode || result.StatusCode < 200 || result.StatusCode >= 300) {
-          throw new Error(`Lambda invoke failed with status ${result.StatusCode ?? '(missing)'}`);
-        }
-        if (parsed && typeof parsed === 'object') {
-          if ('success' in parsed && parsed.success === false) {
-            throw new Error(`Lambda reported failure: ${JSON.stringify(parsed)}`);
-          }
-          if ('result' in parsed && parsed.result === 'FAILURE') {
-            throw new Error(`Lambda reported failure: ${JSON.stringify(parsed)}`);
-          }
-          if ('status' in parsed && String(parsed.status).toLowerCase() === 'failure') {
-            throw new Error(`Lambda reported failure: ${JSON.stringify(parsed)}`);
-          }
-        }
         return {
           requestId: result.$metadata.requestId ?? null,
           payload: parsed
