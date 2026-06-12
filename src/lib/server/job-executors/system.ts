@@ -43,7 +43,7 @@ export async function createCodeBuildProject(
 
     // Build publish role if necessary
     // Copy default file
-    const project = copyFolder(
+    const project = await copyFolder(
       join(process.cwd(), './scripts/project_default'),
       's3://' + AWSVars.artifacts(),
       (msg) => job.log(msg)
