@@ -1,9 +1,9 @@
 export {
   QueueConnected,
+  closeAllConnections,
+  closeAllQueues,
   getQueueConfig,
   getQueues,
-  getWorkerConfig,
-  closeAllConnections,
-  closeAllQueues
+  getWorkerConfig
 } from './queues';
 export * as BullMQ from './types';

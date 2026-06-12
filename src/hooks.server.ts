@@ -4,7 +4,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { building } from '$app/environment';
 import OTEL from '$lib/otel';
 import { tryVerifyAPIToken, tryVerifyCookie } from '$lib/server/auth';
-import { QueueConnected, getQueues, closeAllConnections } from '$lib/server/bullmq';
+import { QueueConnected, closeAllConnections, getQueues } from '$lib/server/bullmq';
 import { bullboardHandle } from '$lib/server/bullmq/BullBoard';
 import { allWorkers } from '$lib/server/bullmq/BullMQ';
 import { DatabaseConnected, closeDatabaseConnection } from '$lib/server/prisma';
@@ -42,15 +42,15 @@ if (!building) {
       // Close all workers first
       await Promise.all(allWorkers.map((worker) => worker.worker?.close()));
       OTEL.instance.logger.info('All workers closed');
-      
+
       // Close all queue and Redis connections
       await closeAllConnections();
       OTEL.instance.logger.info('All connections closed');
-      
+
       // Close database connection
       await closeDatabaseConnection();
       OTEL.instance.logger.info('Database connection closed');
-      
+
       process.exit(0);
     } catch (error) {
       OTEL.instance.logger.error('Error during shutdown', {
@@ -64,7 +64,7 @@ if (!building) {
   process.on('sveltekit:shutdown', () => shutdown('sveltekit:shutdown'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
-  
+
   // Handle uncaught errors
   process.on('uncaughtException', async (error) => {
     OTEL.instance.logger.error('Uncaught exception', {
@@ -74,7 +74,7 @@ if (!building) {
     console.error('Uncaught exception:', error);
     await shutdown('uncaughtException');
   });
-  
+
   process.on('unhandledRejection', async (reason) => {
     OTEL.instance.logger.error('Unhandled rejection', {
       reason: reason instanceof Error ? reason.message : String(reason)
