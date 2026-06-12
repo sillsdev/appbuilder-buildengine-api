@@ -9,6 +9,7 @@ import OTEL from '$lib/otel';
 class Connection {
   private conn: Redis;
   private connected: boolean;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
   constructor(isQueueConnection = false, keyPrefix?: string) {
     this.conn = new Redis({
       host: process.env.NODE_ENV === 'development' ? 'localhost' : process.env.VALKEY_HOST,
@@ -41,7 +42,7 @@ class Connection {
         console.error('Valkey connection error', err);
       }
     });
-    setInterval(() => {
+    this.heartbeatInterval = setInterval(() => {
       if (this.connected) {
         this.conn
           .ping()
@@ -60,7 +61,9 @@ class Connection {
             }
           });
       }
-    }, 10000).unref(); // Check every 10 seconds
+    }, 10000);
+    // Ensure the interval doesn't prevent Node from exiting
+    this.heartbeatInterval.unref();
   }
   public IsConnected() {
     return this.connected;
@@ -68,6 +71,15 @@ class Connection {
 
   public connection() {
     return this.conn;
+  }
+
+  public async close() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    this.connected = false;
+    await this.conn.quit();
   }
 }
 
@@ -143,4 +155,34 @@ export function getQueues() {
     _queues = createQueues();
   }
   return _queues;
+}
+
+export async function closeAllQueues() {
+  if (_queues) {
+    await Promise.all([
+      _queues.Builds.close(),
+      _queues.S3.close(),
+      _queues.Releases.close(),
+      _queues.Polling.close(),
+      _queues.SystemStartup.close(),
+      _queues.SystemRecurring.close()
+    ]);
+    _queues = undefined;
+  }
+}
+
+export async function closeAllConnections() {
+  await closeAllQueues();
+  if (_workerConnection) {
+    await _workerConnection.close();
+    _workerConnection = undefined;
+  }
+  if (_queueConnection) {
+    await _queueConnection.close();
+    _queueConnection = undefined;
+  }
+  if (_authConnection) {
+    await _authConnection.close();
+    _authConnection = undefined;
+  }
 }

@@ -5,10 +5,13 @@ export const prisma = new PrismaClient();
 
 class ConnectionChecker {
   private connected: boolean;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
   constructor() {
     this.connected = false;
     this.checkConnection();
-    setInterval(async () => this.checkConnection(), 10000).unref(); // Check every 10 seconds
+    this.heartbeatInterval = setInterval(async () => this.checkConnection(), 10000);
+    // Ensure the interval doesn't prevent Node from exiting
+    this.heartbeatInterval.unref();
   }
   private async checkConnection() {
     try {
@@ -40,6 +43,13 @@ class ConnectionChecker {
   public IsConnected() {
     return this.connected;
   }
+  public close() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    this.connected = false;
+  }
 }
 
 let conn: ConnectionChecker | null = null;
@@ -53,3 +63,11 @@ export const DatabaseConnected = () => {
   }
   return conn.IsConnected();
 };
+
+export async function closeDatabaseConnection() {
+  if (conn) {
+    conn.close();
+    conn = null;
+  }
+  await prisma.$disconnect();
+}
