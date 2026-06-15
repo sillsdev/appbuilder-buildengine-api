@@ -144,7 +144,16 @@ export async function error(job: Job<BullMQ.S3.CopyErrors>): Promise<unknown> {
       await s3.copyS3Folder(release);
       await prisma.release.update({
         where: { id },
-        data: { status: Release.Status.Completed }
+        data: trimStrings(
+          {
+            ...release,
+            status: Build.Status.Completed,
+            result: Build.Result.Failure,
+            build: undefined
+          },
+          'release',
+          job.log
+        )
       });
     }
   } else {
@@ -153,7 +162,16 @@ export async function error(job: Job<BullMQ.S3.CopyErrors>): Promise<unknown> {
       await s3.copyS3Folder(build);
       await prisma.build.update({
         where: { id },
-        data: { status: Build.Status.Completed }
+        data: trimStrings(
+          {
+            ...build,
+            status: Build.Status.Completed,
+            result: Build.Result.Failure,
+            job: undefined
+          },
+          'build',
+          job.log
+        )
       });
     }
   }
