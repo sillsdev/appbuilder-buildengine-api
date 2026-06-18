@@ -95,6 +95,12 @@ export const stringLimits = {
     targets: 255,
     artifact_url_base: 255,
     artifact_files: 255
+  },
+  grading: {
+    status: 255,
+    result: 2000,
+    publisher_id: 255,
+    lambda_request_id: 255
   }
 } as const;
 

@@ -20,6 +20,7 @@ export enum QueueName {
   Builds = 'Builds',
   S3 = 'S3',
   Releases = 'Releases',
+  Grading = 'Grading',
   Polling = 'Polling',
   System_Startup = 'System (Startup)',
   System_Recurring = 'System (Recurring)'
@@ -35,6 +36,8 @@ export enum JobType {
   // Publishing Jobs
   Release_Product = 'Release Product',
   Release_Cancel = 'Cancel Release',
+  // Grading Jobs
+  Grading_Generate = 'Generate Grading Report',
   // S3 Jobs
   S3_CopyArtifacts = 'Copy Artifacts to S3',
   S3_CopyError = 'Copy Errors to S3',
@@ -85,6 +88,13 @@ export namespace Release {
   }
 }
 
+export namespace Grading {
+  export interface Generate {
+    type: JobType.Grading_Generate;
+    gradingResultUUID: string;
+  }
+}
+
 export namespace S3 {
   export interface CopyArtifacts {
     type: JobType.S3_CopyArtifacts;
@@ -112,6 +122,7 @@ export type Job = JobTypeMap[keyof JobTypeMap];
 export type BuildJob = JobTypeMap[JobType.Build_Product | JobType.Build_Cancel];
 export type S3Job = JobTypeMap[JobType.S3_CopyArtifacts | JobType.S3_CopyError];
 export type PublishJob = JobTypeMap[JobType.Release_Product | JobType.Release_Cancel];
+export type GradingJob = JobTypeMap[JobType.Grading_Generate];
 export type PollJob = JobTypeMap[JobType.Poll_Build | JobType.Poll_Release];
 export type StartupJob = JobTypeMap[
   | JobType.System_CreateCodeBuildProject
@@ -125,6 +136,7 @@ export type JobTypeMap = {
   [JobType.Poll_Release]: Polling.Release;
   [JobType.Release_Product]: Release.Product;
   [JobType.Release_Cancel]: Release.Cancel;
+  [JobType.Grading_Generate]: Grading.Generate;
   [JobType.S3_CopyArtifacts]: S3.CopyArtifacts;
   [JobType.S3_CopyError]: S3.CopyErrors;
   [JobType.System_CreateCodeBuildProject]: System.CreateCodeBuildProject;
