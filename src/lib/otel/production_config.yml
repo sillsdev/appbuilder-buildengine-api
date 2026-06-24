@@ -11,11 +11,12 @@ processors:
   # N = 2 means 1/2 = 50% of traces sampled
   # N = 1.25 means 1/1.25 = 80% of traces sampled
   # N = 1 means 100% of traces sampled
+  # Note that this must be manually changed to match the sampling percentage in the tail_sampling section below
   attributes/noisy:
     actions:
       - key: SampleRate
         action: insert
-        value: 2
+        value: 20
   attributes/default:
     actions:
       - key: SampleRate
