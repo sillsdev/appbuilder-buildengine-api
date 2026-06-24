@@ -48,4 +48,4 @@ COPY --from=builder /build/preview /app/preview
 
 EXPOSE 8443
 ENV PORT=8443
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=./node_modules/.prisma/client/schema.prisma && node --enable-source-maps index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./node_modules/.prisma/client/schema.prisma && node --max-old-space-size-percentage=75 --enable-source-maps index.js"]
