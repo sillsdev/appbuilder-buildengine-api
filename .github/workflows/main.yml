@@ -90,33 +90,21 @@ jobs:
       AWS_ECR_ACCOUNT: ${{ secrets.SIL__AWS_ECR_ACCOUNT }}
   deploy-fcbh:
     needs: push-to-ghcr
-    if: false # Temporarily disabled - remove this line to re-enable
-    # if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}  # Restore this when re-enabling
+    if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}
     uses: "./.github/workflows/deploy.yml"
     with:
-      BUILD_NUMBER: ${{ github.run_number }}
       ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
       DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
+      PUSH_TO_ECR: false
+
+      # Unused
+      BUILD_NUMBER: ${{ github.run_number }}
+      # Unused
       BUILD_ENGINE_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_TAG }}
+      # Unused
       OTEL_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_TAG }}
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.FCBH__AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.FCBH__AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ secrets.FCBH__AWS_DEFAULT_REGION }}
       AWS_ECR_ACCOUNT: ${{ secrets.FCBH__AWS_ECR_ACCOUNT }}
-  deploy-lu:
-    needs: push-to-ghcr
-    if: false # Temporarily disabled - remove this line to re-enable
-    # if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-stg' }}  # Restore this when re-enabling
-    uses: "./.github/workflows/deploy.yml"
-    with:
-      BUILD_NUMBER: ${{ github.run_number }}
-      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
-      DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
-      BUILD_ENGINE_TAG: ${{ needs.push-to-ghcr.outputs.BUILD_ENGINE_TAG }}
-      OTEL_TAG: ${{ needs.push-to-ghcr.outputs.OTEL_TAG }}
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.LU__AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.LU__AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: ${{ secrets.LU__AWS_DEFAULT_REGION }}
-      AWS_ECR_ACCOUNT: ${{ secrets.LU__AWS_ECR_ACCOUNT }}
