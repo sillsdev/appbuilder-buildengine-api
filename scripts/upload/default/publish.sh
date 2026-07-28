@@ -422,7 +422,7 @@ post_publish() {
   # contain the keywords: ios, android, google (play), and pwa.  So the system admin
   # should be aware when adding new products.
   WORKFLOW_PRODUCT_NAME_LOWER=$(echo "${WORKFLOW_PRODUCT_NAME}" | awk '{print tolower($0)}')
-  if is_production && [[ "${PUBLISH_NOTIFY}" != "" ]]; then
+  if [[ "${PUBLISH_NOTIFY}" != "" ]]; then
     # See S1: Services/BuildEngine: BuildEngineServiceBase::AddProductProperitiesToEnvironment
     # See S2: node-server/job-executors/common.build-publish.ts: addProductPropertiesToEnvironment
     # for the list of properties that are added.
@@ -430,7 +430,7 @@ post_publish() {
     for NOTIFY_SERVER in ${PUBLISH_NOTIFY/,/ }
     do
       # Notify Scripture Earth
-      if [[ "${NOTIFY_SERVER})" == *"SCRIPTURE_EARTH"* && "${SCRIPTURE_EARTH_KEY}" != "" ]]; then
+      if is_production && [[ "${NOTIFY_SERVER})" == *"SCRIPTURE_EARTH"* && "${SCRIPTURE_EARTH_KEY}" != "" ]]; then
         EMPTY_NOTIFY_JSON="[]"
         NOTIFY_JSON=$EMPTY_NOTIFY_JSON
         if [[ $WORKFLOW_PRODUCT_NAME_LOWER == *"ios"* ]]; then
