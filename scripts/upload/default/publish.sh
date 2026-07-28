@@ -173,7 +173,7 @@ publish_s3_bucket() {
   if [ -f "${NOTIFY_ASSET_BASE_JSON}" ]; then
     NOTIFY_ASSET_JSON_TMP=$(mktemp)
     # set the baseurl for the images
-    jq -cM --arg baseurl "${PUBLISH_BASE_URL}" '.image += { baseurl: $baseurl }' "${NOTIFY_ASSET_BASE_JSON}" > "${NOTIFY_ASSET_JSON_TMP}"
+    jq -cM --arg baseurl "${PUBLISH_BASE_URL}" 'if .image then .image += { baseurl: $baseurl } else . end' "${NOTIFY_ASSET_BASE_JSON}" > "${NOTIFY_ASSET_JSON_TMP}"
     jq \
       --arg project_url "${PROJECT_URL}" \
       --arg project_name "${PROJECT_NAME}" \
