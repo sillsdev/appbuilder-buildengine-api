@@ -46,6 +46,7 @@ export const GET: RequestHandler = async ({ params }) => {
     JSON.stringify({
       ...release,
       artifacts: Release.artifacts(release),
+      consoleText: release.console_text_url ?? '',
       artifact_url_base: undefined,
       console_text_url: undefined,
       artifact_files: undefined,
