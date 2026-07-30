@@ -93,7 +93,7 @@ jobs:
     if: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER == 'scriptoria-prd' }}
     uses: "./.github/workflows/deploy.yml"
     with:
-      ECS_CLUSTER: ${{ needs.push-to-ghcr.outputs.ECS_CLUSTER }}
+      ECS_CLUSTER: aps-prd
       DOCKER_TAG: ${{ needs.push-to-ghcr.outputs.DOCKER_TAG }}
       PUSH_TO_ECR: false
 
