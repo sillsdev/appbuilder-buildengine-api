@@ -69,6 +69,8 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
         url_base: build.artifact_url_base,
         files: build.artifact_files
       };
+    } else {
+      await getQueues().Polling.removeJobScheduler(job.name);
     }
   } catch (e) {
     // don't await, in case error throws here
@@ -165,6 +167,8 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
         status: release.status,
         result: release.result
       };
+    } else {
+      await getQueues().Polling.removeJobScheduler(job.name);
     }
   } catch (e) {
     // don't await, in case error throws here
