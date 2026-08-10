@@ -68,9 +68,10 @@ function getS3Folder(
   }>
 ) {
   const s3client = project.client ? project.client.prefix + '/' : '';
+  // Note: use replaceAll for literals, but replace for global regexes.
   const s3folder = `${project.language_code}-${project.id}-${project.project_name}`
-    .replace(' ', '-')
-    .replace(/[^a-zA-Z0-9-]/, '');
+    .replaceAll(' ', '-')
+    .replace(/[^a-zA-Z0-9-]/g, '');
   return `${s3client}${project.app_id}/${s3folder}`;
 }
 

@@ -34,7 +34,7 @@ export class STS {
     const tokenName = `${externalId
       .split('|')
       .at(-1)!
-      .replace(/[^a-zA-Z0-9_=,.@-]/, '_')}.${randomBytes(16).toString('hex')}`.substring(0, 32);
+      .replace(/[^a-zA-Z0-9_=,.@-]/g, '_')}.${randomBytes(16).toString('hex')}`.substring(0, 32);
     const policy = readOnly ? STS.getReadOnlyPolicy(project) : STS.getReadWritePolicy(project);
     return await this.getFederationToken(tokenName, policy, readOnly);
   }
