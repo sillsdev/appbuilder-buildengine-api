@@ -26,6 +26,7 @@ export function getStatusIcon(status: string) {
 
 export const Icons = {
   Build: 'material-symbols:build',
+  Close: 'mdi:close',
   Dashboard: 'clarity:dashboard-line',
   Delete: 'mdi:trash',
   Edit: 'mdi:pencil',

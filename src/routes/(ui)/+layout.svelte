@@ -48,6 +48,19 @@
       >
         <ul class="menu menu-lg p-0 w-full bg-base-100 text-base-content h-full">
           <div class="min-h-full overflow-y-auto">
+            <li class="dark:border-gray-600 border-y top-0 sticky z-10 bg-base-200 h-16 lg:hidden">
+              <div class="flex flex-row flex-nowrap h-full pr-1">
+                <b class="grow">SIL Global</b>
+                <button
+                  class="btn btn-ghost h-full lg:hidden"
+                  type="button"
+                  onclick={() => closeDrawer()}
+                  title="close"
+                >
+                  <IconContainer icon={Icons.Close} width={16} class="opacity-80" />
+                </button>
+              </div>
+            </li>
             {#each links as { target, icon, title }}
               <li>
                 <a
@@ -113,7 +126,7 @@
                     <li>
                       <a class="btn btn-ghost" href="/signout">
                         Sign Out
-                        <IconContainer icon={Icons.Logout} width="18" />
+                        <IconContainer icon={Icons.Logout} width={18} />
                       </a>
                     </li>
                   </ul>
