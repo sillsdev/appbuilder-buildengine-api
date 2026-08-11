@@ -1,3 +1,29 @@
+import type { ApplicationType } from '$lib/valibot';
+
+const appIcons = import.meta.glob('/src/lib/icons/app-builders/*.svg', {
+  eager: true,
+  import: 'default'
+}) as Record<string, string>;
+
+export function getAppIcon(type: ApplicationType) {
+  return appIcons[`/src/lib/icons/app-builders/${type}.svg`] ?? '';
+}
+
+export function getStatusIcon(status: string) {
+  switch (status.toLowerCase()) {
+    case 'success':
+      return { color: 'text-success', icon: 'icon-park-outline:success' };
+    case 'failure':
+      return { color: 'text-error', icon: 'material-symbols:error-outline-rounded' };
+    case 'aborted':
+      return { color: 'text-warning', icon: 'ix:cancelled' };
+    case 'pending':
+      return { icon: 'material-symbols:pending-outline' };
+    default:
+      return { icon: 'carbon:unknown' };
+  }
+}
+
 export const Icons = {
   Build: 'material-symbols:build',
   Dashboard: 'clarity:dashboard-line',
@@ -18,4 +44,7 @@ export const Icons = {
   Visible: 'mdi:eye'
 } as const;
 
-export type IconType = (typeof Icons)[keyof typeof Icons];
+export type IconType =
+  | (typeof Icons)[keyof typeof Icons]
+  | ReturnType<typeof getAppIcon>
+  | ReturnType<typeof getStatusIcon>['icon'];
