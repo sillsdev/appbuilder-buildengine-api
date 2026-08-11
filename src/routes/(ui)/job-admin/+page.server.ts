@@ -1,11 +1,25 @@
+import type { Prisma } from '@prisma/client';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { tableSchema } from '$lib/valibot';
 
+const select: Prisma.jobSelect = {
+  id: true,
+  request_id: true,
+  app_id: true,
+  git_url: true,
+  client: {
+    select: {
+      id: true,
+      prefix: true
+    }
+  }
+};
+
 export const load = (async () => {
-  const jobs = await prisma.job.findMany({ take: 20, orderBy: { id: 'desc' } });
+  const jobs = await prisma.job.findMany({ select, take: 20, orderBy: { id: 'desc' } });
   return {
     jobs,
     count: await prisma.job.count(),
@@ -28,6 +42,7 @@ export const actions: Actions = {
     if (!form.valid) return fail(400, { form, ok: false });
 
     const jobs = await prisma.job.findMany({
+      select,
       orderBy: form.data.sort ? { [form.data.sort.field]: form.data.sort.direction } : undefined,
       skip: form.data.page.page * form.data.page.size,
       take: form.data.page.size

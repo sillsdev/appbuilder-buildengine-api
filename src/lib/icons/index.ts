@@ -28,6 +28,7 @@ export const Icons = {
   Bucket: 'logos:aws-s3',
   Build: 'material-symbols:build',
   Close: 'mdi:close',
+  CodeCommit: 'logos:aws-codecommit',
   Dashboard: 'clarity:dashboard-line',
   Delete: 'mdi:trash',
   Edit: 'mdi:pencil',
