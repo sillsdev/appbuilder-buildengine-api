@@ -26,6 +26,7 @@ export const load = (async () => {
     count: await prisma.client.count(),
     form: await superValidate(
       {
+        sort: { field: 'id', direction: 'desc' },
         page: {
           page: 0,
           size: 20
