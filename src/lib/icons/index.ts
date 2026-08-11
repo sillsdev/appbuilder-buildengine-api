@@ -20,7 +20,7 @@ export function getStatusIcon(status: string) {
     case 'pending':
       return { icon: 'material-symbols:pending-outline' };
     default:
-      return { icon: 'carbon:unknown' };
+      return { icon: Icons.Unknown };
   }
 }
 
@@ -28,6 +28,7 @@ export const Icons = {
   Bucket: 'logos:aws-s3',
   Build: 'material-symbols:build',
   Close: 'mdi:close',
+  CodeBuild: 'logos:aws-codebuild',
   CodeCommit: 'logos:aws-codecommit',
   Dashboard: 'clarity:dashboard-line',
   Delete: 'mdi:trash',
@@ -42,6 +43,7 @@ export const Icons = {
   Publish: 'material-symbols:publish',
   SortAsc: 'bx:sort-a-z',
   SortDesc: 'bx:sort-z-a',
+  Unknown: 'carbon:unknown',
   User: 'mdi:user',
   View: 'mdi:eye',
   Visible: 'mdi:eye'
