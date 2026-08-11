@@ -1,14 +1,28 @@
+import type { Prisma } from '@prisma/client';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { tableSchema } from '$lib/valibot';
 
+const select: Prisma.releaseSelect = {
+  id: true,
+  build: {
+    select: {
+      id: true,
+      job_id: true
+    }
+  },
+  status: true,
+  result: true,
+  codebuild_url: true
+};
+
 export const load = (async () => {
   const releases = await prisma.release.findMany({
+    select,
     take: 20,
-    orderBy: { id: 'desc' },
-    include: { build: true }
+    orderBy: { id: 'desc' }
   });
   return {
     releases,
@@ -32,6 +46,7 @@ export const actions: Actions = {
     if (!form.valid) return fail(400, { form, ok: false });
 
     const releases = await prisma.release.findMany({
+      select,
       orderBy: form.data.sort ? { [form.data.sort.field]: form.data.sort.direction } : undefined,
       skip: form.data.page.page * form.data.page.size,
       take: form.data.page.size
