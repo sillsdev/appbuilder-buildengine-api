@@ -5,6 +5,7 @@
   import { getAppIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
+  import { byString } from '$lib/utils/sorting';
   import { getRelativeTime, getTimeDateString } from '$lib/utils/time';
   import type { ApplicationType } from '$lib/valibot';
 
@@ -59,7 +60,7 @@
     <div class="my-2 p-2 border w-fit rounded-md">
       <table>
         <tbody>
-          {#each data.appVersions.toSorted((a, b) => a.appName.localeCompare(b.appName)) as version}
+          {#each data.appVersions.toSorted((a, b) => byString(a.appName, b.appName)) as version}
             <tr>
               <td>
                 <IconContainer

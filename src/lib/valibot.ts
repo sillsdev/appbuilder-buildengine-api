@@ -35,6 +35,7 @@ export function selectFrom<T extends Record<string, unknown>>(entries: T) {
 }
 
 export const tableSchema = v.object({
+  search: v.string(),
   page: paginateSchema,
   sort: v.nullable(
     v.object({

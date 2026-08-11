@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import type { PageData } from './$types';
   import { page } from '$app/state';
+  import Dropdown from '$lib/components/Dropdown.svelte';
   import { type IconType, Icons } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
 
@@ -96,42 +97,45 @@
     <div class="drawer-content grow items-start justify-start flex flex-col">
       <header class="bg-primary text-primary-content w-full">
         <nav class="navbar">
-          <div class="navbar-start">
+          <div class="navbar-start w-2/5">
             <label
               for="primary-content-drawer"
               class="btn btn-ghost btn-circle p-1 drawer-button lg:hidden text-primary-content hover:text-base-content"
             >
               <IconContainer icon={Icons.Hamburger} width={24} />
             </label>
-            <a class="btn text-xl btn-ghost" href="/">SIL Global</a>
+            <a class="btn text-xl btn-ghost px-2" href="/">SIL Global</a>
           </div>
-          <div class="navbar-end flex-none">
-            <ul class="menu menu-horizontal px-1">
+          <div class="navbar-end flex-none w-3/5">
+            <ul class="menu menu-horizontal px-1 items-center gap-x-1">
               <li><a href="/" class:bg-secondary={isUrlActive('/', true)}>Home</a></li>
               <li><a href="/about" class:bg-secondary={isUrlActive('/about')}>About</a></li>
-              <li>
-                <details class="dropdown dropdown-end">
-                  <summary class="btn btn-primary btn-sm btn-square no-animation">
-                    <IconContainer icon={Icons.User} width={24} />
-                  </summary>
-                  <ul class="dropdown-content menu menu-sm bg-base-100 text-base-content min-w-40">
-                    <li>
-                      <div class="btn btn-ghost max-w-full overflow-hidden">
-                        <IconContainer icon={Icons.User} width={16} />
-                        <span class="select-all">
-                          {data.userEmail}
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <a class="btn btn-ghost" href="/signout">
-                        Sign Out
-                        <IconContainer icon={Icons.Logout} width={18} />
-                      </a>
-                    </li>
-                  </ul>
-                </details>
-              </li>
+              <Dropdown
+                class={{
+                  dropdown: 'dropdown-end',
+                  label: 'btn-circle hover:bg-base-content/10'
+                }}
+              >
+                {#snippet label()}
+                  <IconContainer icon={Icons.User} width={24} />
+                {/snippet}
+                {#snippet content()}
+                  <li>
+                    <div class="btn btn-ghost max-w-full overflow-hidden">
+                      <IconContainer icon={Icons.User} width={16} />
+                      <span class="select-all">
+                        {data.userEmail}
+                      </span>
+                    </div>
+                  </li>
+                  <li>
+                    <a class="btn btn-ghost" href="/signout">
+                      Sign Out
+                      <IconContainer icon={Icons.Logout} width={18} />
+                    </a>
+                  </li>
+                {/snippet}
+              </Dropdown>
             </ul>
           </div>
         </nav>
@@ -158,12 +162,6 @@
   footer {
     border-top: 1px solid #ddd;
     padding: 20px;
-  }
-
-  summary {
-    &:after {
-      display: none;
-    }
   }
 
   .active-menu-item {

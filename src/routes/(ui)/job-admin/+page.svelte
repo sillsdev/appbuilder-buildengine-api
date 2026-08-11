@@ -2,8 +2,10 @@
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
   import { env } from '$env/dynamic/public';
+  import AppTypeSelector from '$lib/components/AppTypeSelector.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import SearchBar from '$lib/components/SearchBar.svelte';
   import { Icons, getAppIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
@@ -18,12 +20,15 @@
   let { data }: Props = $props();
 
   let jobs = $state(data.jobs);
+  let count = $state(data.count);
 
   const { form, enhance, submit } = superForm(data.form, {
     dataType: 'json',
     resetForm: false,
-    onChange() {
-      submit();
+    onChange({ paths }) {
+      if (!paths.includes('search')) {
+        submit();
+      }
     },
     onUpdate(event) {
       const data = event.result.data as FormResult<{
@@ -31,9 +36,12 @@
       }>;
       if (event.form.valid && data.query) {
         jobs = data.query.data;
+        count = data.query.count;
       }
     }
   });
+
+  const mobileSizing = 'w-full md:w-auto';
 </script>
 
 <div class="w-full">
@@ -41,16 +49,38 @@
     <li><a href="/" class="link">Home</a></li>
     <li>{$title}</li>
   </Breadcrumbs>
-  <h1>{$title}</h1>
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <form
+    method="POST"
+    action="?/page"
+    use:enhance
+    onkeydown={(event) => {
+      if (event.key === 'Enter') submit();
+    }}
+  >
+    <div
+      class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center px-4 gap-1 {mobileSizing}"
+    >
+      <div class="inline-block grow {mobileSizing}">
+        <h1 class="py-4 px-2">{$title}</h1>
+      </div>
+      <div
+        class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center gap-1 {mobileSizing}"
+      >
+        <AppTypeSelector bind:value={$form.appType} allowNull class={{ dropdown: 'md:w-auto!' }} />
+        <SearchBar bind:value={$form.search} requestSubmit={submit} class={mobileSizing} />
+      </div>
+    </div>
+  </form>
   <p>
     Showing <b>
       {$form.page.page * $form.page.size + 1}-{Math.min(
         ($form.page.page + 1) * $form.page.size,
-        data.count
+        count
       )}
     </b>
     of
-    <b>{data.count}</b>
+    <b>{count}</b>
     items
   </p>
   <div class="flex flex-col gap-2">
@@ -91,7 +121,7 @@
   </div>
   <form method="POST" action="?/page" use:enhance>
     <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
-      <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
+      <Pagination bind:size={$form.page.size} total={count} bind:page={$form.page.page} />
     </div>
   </form>
 </div>

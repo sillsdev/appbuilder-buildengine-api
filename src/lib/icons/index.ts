@@ -41,6 +41,7 @@ export const Icons = {
   Product: 'system-uicons:box',
   Project: 'material-symbols:credit-card-outline',
   Publish: 'material-symbols:publish',
+  Search: 'mdi:search',
   SortAsc: 'bx:sort-a-z',
   SortDesc: 'bx:sort-z-a',
   Unknown: 'carbon:unknown',
