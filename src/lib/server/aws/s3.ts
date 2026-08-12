@@ -2,6 +2,7 @@ import {
   CopyObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   NoSuchKey,
   PutObjectCommand,
@@ -237,6 +238,25 @@ export class S3 {
     );
     handleArtifact(artifacts_provider, fileS3Key, fileContents);
   }
+
+  public async objectExists(key: string) {
+    const bucket = AWSVars.artifacts();
+    try {
+      await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: bucket,
+          Key: key
+        })
+      );
+      return true;
+    } catch (e) {
+      if (e instanceof S3ServiceException && e.$metadata.httpStatusCode === 404) {
+        return false;
+      }
+      throw e;
+    }
+  }
+
   public async removeCodeBuildFolder(artifacts_provider: ProviderForPrefix) {
     const s3Folder = getBasePrefixUrl(artifacts_provider, 'codebuild-output') + '/';
     const s3Bucket = AWSVars.artifacts();

@@ -59,6 +59,14 @@
       <a class="btn btn-outline" href="/project-admin">Project Administration »</a>
     </div>
     <div class={cardClasses}>
+      <h2 class="pl-0">Grading</h2>
+      <p>
+        View project grading reports, inspect report status, open generated HTML and JSON report
+        files, or request a new grading report for a project.
+      </p>
+      <a class="btn btn-outline" href="/grading-admin">Grading Administration »</a>
+    </div>
+    <div class={cardClasses}>
       <h2 class="pl-0">Operation Queue</h2>
       <p>
         View, edit, or remove entries from the operation queue table. Entries in this table relate

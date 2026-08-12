@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import type { PageServerLoad } from './$types';
+import { Grading } from '$lib/server/models/grading';
 import { prisma } from '$lib/server/prisma';
 import { idSchema, paramNumber } from '$lib/valibot';
 
@@ -13,12 +14,24 @@ export const load = (async ({ url }) => {
   const project = await prisma.project.findUnique({
     where: {
       id: id.output
+    },
+    include: {
+      gradingResult: {
+        take: 5,
+        orderBy: {
+          created: 'desc'
+        }
+      }
     }
   });
 
   if (!project) error(404);
 
+  const projectToReturn = {
+    ...project,
+    gradingResult: project.gradingResult.map((r) => Grading.response(r))
+  };
   return {
-    project
+    project: projectToReturn
   };
 }) satisfies PageServerLoad;

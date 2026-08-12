@@ -67,6 +67,7 @@
 		"@aws-sdk/client-codebuild": "^3.907.0",
 		"@aws-sdk/client-ecr": "^3.981.0",
 		"@aws-sdk/client-iam": "^3.911.0",
+		"@aws-sdk/client-lambda": "^3.907.0",
 		"@aws-sdk/client-s3": "^3.907.0",
 		"@aws-sdk/client-sts": "^3.907.0",
 		"@grpc/grpc-js": "^1.14.3",

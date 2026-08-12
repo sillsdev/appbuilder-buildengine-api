@@ -42,6 +42,10 @@ export class AWSVars {
   public static scriptsPath() {
     return `s3://${AWSVars.projects()}/default`;
   }
+
+  public static gradingLambdaFunctionName() {
+    return env.BUILD_ENGINE_GRADING_LAMBDA_FUNCTION_NAME;
+  }
   /**
    *  Get the project name which is the prd or stg plus build_app or publish_app
    *

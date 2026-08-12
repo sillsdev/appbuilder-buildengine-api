@@ -150,6 +150,18 @@ export class Releases<J extends BullMQ.PublishJob> extends BullWorker<J> {
   }
 }
 
+export class Grading<J extends BullMQ.GradingJob> extends BullWorker<J> {
+  constructor() {
+    super(BullMQ.QueueName.Grading);
+  }
+  async run(job: Job<J>) {
+    switch (job.data.type) {
+      case BullMQ.JobType.Grading_Generate:
+        return Executor.Grading.generate(job as Job<BullMQ.Grading.Generate>);
+    }
+  }
+}
+
 export class Polling<J extends BullMQ.PollJob> extends BullWorker<J> {
   constructor() {
     super(BullMQ.QueueName.Polling);
