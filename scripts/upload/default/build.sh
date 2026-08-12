@@ -469,15 +469,23 @@ extract_about() {
 }
 
 extract_data_management_url() {
-  if [ -f "build_data/firebase/google-services.json" ]; then
     USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
     if [[ "${USER_ACCOUNTS_ENABLED}" == "true" ]]; then
-      CONSOLE_URL=$(jq -r '.project_info.firebase_url' "${PROJECT_DIR}/build_data/firebase/google-services.json")
-      if [[ "${CONSOLE_URL}" != "" ]]; then
-        jq -n --arg console_url "$CONSOLE_URL" '{console_url: $console_url}' > "${OUTPUT_DIR}/data_management.json"
+      if [ -f "${PROJECT_DIR}/build_data/firebase/google-services.json" ]; then
+        # if firebase_url is present, then the project is using the Firebase Realtime Database for data management.
+        DATA_MANAGEMENT_CONSOLE_URL=$(jq -r '.project_info.firebase_url' "${PROJECT_DIR}/build_data/firebase/google-services.json")
+        if [[ "${DATA_MANAGEMENT_CONSOLE_URL}" != "" ]]; then
+          DATA_MANAGEMENT_TYPE='firebase'
+        fi
+      fi
+
+      # FUTURE: If we support Supabase for user accounts, then we can add a check for the Supabase URL here
+      # and set DATA_MANAGEMENT_TYPE='supabase' and DATABASE_MANAGEMENT_CONSOLE_URL to the Supabase console URL.
+
+      if [[ "${DATA_MANAGEMENT_TYPE}" != "" && "${DATA_MANAGEMENT_CONSOLE_URL}" != "" ]]; then
+        jq -n --arg console_url "$DATA_MANAGEMENT_CONSOLE_URL" --arg type "$DATA_MANAGEMENT_TYPE" '{console_url: $console_url, type: $type}' > "${OUTPUT_DIR}/data_management.json"
       fi
     fi
-  fi
 }
 
 build_play_listing() {
