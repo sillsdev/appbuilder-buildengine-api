@@ -43,7 +43,11 @@
   });
 
   function submitSearch() {
-    $form.page.page = 0;
+    if ($form.page.page) {
+      $form.page.page = 0;
+    } else {
+      submit();
+    }
   }
 
   const mobileSizing = 'w-full md:w-auto';
