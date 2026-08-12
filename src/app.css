@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @plugin 'daisyui' {
+  exclude: rootscrollgutter;
   themes:
     light --default,
     dark --prefersdark;
@@ -38,6 +39,8 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
+
+  --color-link: #55f;
 }
 @plugin "daisyui/theme" {
   name: 'dark';
@@ -72,6 +75,8 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
+
+  --color-link: #68f;
 }
 
 /*
@@ -134,7 +139,11 @@
     0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 a.link {
-  color: #55f;
+  color: var(--color-link);
+}
+
+a.link:hover {
+  color: color-mix(in oklab, var(--color-link), #fff 15%);
 }
 
 .toggle {

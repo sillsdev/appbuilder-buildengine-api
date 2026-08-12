@@ -4,18 +4,10 @@ import type { RequestHandler } from './$types';
 import { AWSVars } from '$lib/server/aws/vars';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { stringLimits } from '$lib/valibot';
+import { applicationTypes, stringLimits } from '$lib/valibot';
 
 const projectSchema = v.strictObject({
-  app_id: v.pipe(
-    v.string(),
-    v.picklist([
-      'scriptureappbuilder',
-      'dictionaryappbuilder',
-      'readingappbuilder',
-      'keyboardappbuilder'
-    ])
-  ),
+  app_id: v.pipe(v.string(), v.picklist(applicationTypes)),
   project_name: v.pipe(v.string(), v.maxBytes(stringLimits.project.project_name)),
   language_code: v.pipe(v.string(), v.maxBytes(stringLimits.project.language_code)),
   storage_type: v.literal('s3')

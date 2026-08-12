@@ -1,7 +1,13 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import Tooltip from '$lib/components/Tooltip.svelte';
+  import { getAppIcon } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
+  import { byString } from '$lib/utils/sorting';
+  import { getRelativeTime, getTimeDateString } from '$lib/utils/time';
+  import type { ApplicationType } from '$lib/valibot';
 
   $title = 'About';
 
@@ -10,6 +16,8 @@
   }
 
   let { data }: Props = $props();
+
+  const updated = getRelativeTime(data.appVersions.at(0)?.updated ?? null);
 </script>
 
 <div class="w-full">
@@ -22,27 +30,22 @@
     <h1 class="pl-0">App Publishing Service</h1>
     <h3 class="pl-0">
       Copyright 2011-{new Date().getFullYear()}
-      <a href="http://sil.org" class="link">SIL Global</a>
+      <a href="https://global.sil.org" class="link">SIL Global</a>
     </h3>
     <h3 class="pl-0">Credits</h3>
     <p>
       Chris Hubbard&nbsp;(
-      <a href="http://sil.org" class="link">SIL Global</a>
+      <a href="https://global.sil.org" class="link">SIL Global</a>
       ) :&nbsp;Dev Lead, Programming
     </p>
     <p>
       David Moore&nbsp;(
-      <a href="http://sil.org" class="link">SIL Global</a>
+      <a href="https://global.sil.org" class="link">SIL Global</a>
       ) :&nbsp;Programming
     </p>
     <p>
-      Rick MacLean&nbsp;(
-      <a href="http://sil.org" class="link">SIL Global</a>
-      ) :&nbsp;Dev Ops
-    </p>
-    <p>
       Aidan Jones&nbsp;(
-      <a href="http://sil.org" class="link">SIL Global</a>
+      <a href="https://global.sil.org" class="link">SIL Global</a>
       ) :&nbsp;Programming
     </p>
     <h3 class="pl-0">AppBuilder Versions</h3>
@@ -52,13 +55,20 @@
     </p>
     <p>
       <b>Updated:</b>
-      {data.appVersions[0].updated?.toLocaleString()}
+      <Tooltip tip={getTimeDateString(data.appVersions.at(0)?.updated ?? null)}>{$updated}</Tooltip>
     </p>
     <div class="my-2 p-2 border w-fit rounded-md">
       <table>
         <tbody>
-          {#each data.appVersions.toSorted((a, b) => a.appName.localeCompare(b.appName)) as version}
+          {#each data.appVersions.toSorted((a, b) => byString(a.appName, b.appName)) as version}
             <tr>
+              <td>
+                <IconContainer
+                  icon={getAppIcon(version.appName as ApplicationType)}
+                  width={20}
+                  class="mr-2"
+                />
+              </td>
               <td><b>{version.appName}:</b></td>
               <td class="pl-1">{version.version}</td>
             </tr>

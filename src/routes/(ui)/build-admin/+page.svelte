@@ -2,9 +2,10 @@
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import IconContainer from '$lib/components/IconContainer.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
-  import SortTable from '$lib/components/SortTable.svelte';
+  import SearchBar from '$lib/components/SearchBar.svelte';
+  import { Icons, getStatusIcon } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
 
   $title = 'Builds';
@@ -16,12 +17,15 @@
   let { data }: Props = $props();
 
   let builds = $state(data.builds);
+  let count = $state(data.count);
 
   const { form, enhance, submit } = superForm(data.form, {
     dataType: 'json',
     resetForm: false,
-    onChange() {
-      submit();
+    onChange({ paths }) {
+      if (!paths.includes('search')) {
+        submit();
+      }
     },
     onUpdate(event) {
       const data = event.result.data as FormResult<{
@@ -29,9 +33,20 @@
       }>;
       if (event.form.valid && data.query) {
         builds = data.query.data;
+        count = data.query.count;
       }
     }
   });
+
+  function submitSearch() {
+    if ($form.page.page) {
+      $form.page.page = 0;
+    } else {
+      submit();
+    }
+  }
+
+  const mobileSizing = 'w-full md:w-auto';
 </script>
 
 <div class="w-full">
@@ -39,81 +54,86 @@
     <li><a href="/" class="link">Home</a></li>
     <li>{$title}</li>
   </Breadcrumbs>
-  <h1>{$title}</h1>
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <form
+    method="POST"
+    action="?/page"
+    use:enhance
+    onkeydown={(event) => {
+      if (event.key === 'Enter') submitSearch();
+    }}
+  >
+    <div
+      class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center px-4 gap-1 {mobileSizing}"
+    >
+      <div class="inline-block grow {mobileSizing}">
+        <h1 class="py-4 px-2">{$title}</h1>
+      </div>
+      <div
+        class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center gap-1 {mobileSizing}"
+      >
+        <SearchBar bind:value={$form.search} requestSubmit={submitSearch} class={mobileSizing} />
+      </div>
+    </div>
+  </form>
   <p>
     Showing <b>
       {$form.page.page * $form.page.size + 1}-{Math.min(
         ($form.page.page + 1) * $form.page.size,
-        data.count
+        count
       )}
     </b>
     of
-    <b>{data.count}</b>
+    <b>{count}</b>
     items
   </p>
-  <SortTable
-    data={builds}
-    columns={[
-      {
-        id: 'index',
-        header: '#'
-      },
-      {
-        id: 'id',
-        header: 'Id',
-        compare: () => 0
-      },
-      {
-        id: 'job_id',
-        header: 'Job ID',
-        compare: () => 0
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        compare: () => 0
-      },
-      {
-        id: 'result',
-        header: 'Result',
-        compare: () => 0
-      },
-      {
-        id: 'build_guid',
-        header: 'Build GUID',
-        compare: () => 0
-      },
-      {
-        id: 'menu',
-        header: ''
-      }
-    ]}
-    serverSide={true}
-    startDesc={true}
-    onSort={(field, direction) => form.update((data) => ({ ...data, sort: { field, direction } }))}
-  >
-    {#snippet row(build, index)}
-      <tr>
-        <td>{index + 1}</td>
-        <td>{build.id}</td>
-        <td><a class="link" href="/job-admin/view?id={build.job_id}">{build.job_id}</a></td>
-        <td>{build.status}</td>
-        <td>{build.result}</td>
-        <td><a class="link" href={build.codebuild_url}>{build.build_guid}</a></td>
-        <td class="flex flex-row flex-wrap p-1 space-x-2">
-          <a href="/build-admin/view?id={build.id}">
-            <IconContainer icon="mdi:eye" width={16} />
+  <div class="flex flex-col gap-2">
+    {#each builds as build}
+      {@const status = build.result || build.status}
+      <div class="border rounded-md p-2 flex flex-col gap-1">
+        <div class="flex flex-row">
+          <h3 class="grow flex flex-row gap-2 items-start">
+            <a class="link" href="/build-admin/view?id={build.id}">#{build.id}</a>
+            {#if status}
+              {@const { icon } = getStatusIcon(status)}
+              <b
+                class={[
+                  'badge',
+                  status === 'SUCCESS'
+                    ? 'badge-success'
+                    : status === 'FAILURE'
+                      ? 'badge-error'
+                      : status === 'ABORTED'
+                        ? 'badge-warning'
+                        : 'badge-neutral'
+                ]}
+              >
+                {#if icon !== Icons.Unknown}
+                  <IconContainer {icon} width={20} />
+                {/if}
+                {status}
+              </b>
+            {/if}
+          </h3>
+        </div>
+        <div class="flex flex-row items-center gap-x-1">
+          <IconContainer icon={Icons.Product} width={16} />
+          <a class="link mr-2" href="/job-admin/view?id={build.job_id}">
+            #{build.job_id}
           </a>
-          <a href="/build-admin/update?id={build.id}">
-            <IconContainer icon="mdi:pencil" width={16} />
-          </a>
-        </td>
-      </tr>
-    {/snippet}
-  </SortTable>
+          {#if build.codebuild_url}
+            <IconContainer icon={Icons.CodeBuild} width={16} />
+            <a class="link mr-2" href={build.codebuild_url} target="_blank">
+              CodeBuild <IconContainer icon={Icons.Open} width={16} />
+            </a>
+          {/if}
+        </div>
+      </div>
+    {/each}
+  </div>
   <form method="POST" action="?/page" use:enhance>
     <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
-      <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
+      <Pagination bind:size={$form.page.size} total={count} bind:page={$form.page.page} />
     </div>
   </form>
 </div>

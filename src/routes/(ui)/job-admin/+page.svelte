@@ -1,11 +1,15 @@
 <script lang="ts">
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
+  import { env } from '$env/dynamic/public';
+  import AppTypeSelector from '$lib/components/AppTypeSelector.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import IconContainer from '$lib/components/IconContainer.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
-  import SortTable from '$lib/components/SortTable.svelte';
+  import SearchBar from '$lib/components/SearchBar.svelte';
+  import { Icons, getAppIcon } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
+  import type { ApplicationType } from '$lib/valibot';
 
   $title = 'Jobs';
 
@@ -16,12 +20,17 @@
   let { data }: Props = $props();
 
   let jobs = $state(data.jobs);
+  let count = $state(data.count);
 
   const { form, enhance, submit } = superForm(data.form, {
     dataType: 'json',
     resetForm: false,
-    onChange() {
-      submit();
+    onChange({ paths }) {
+      if (paths.includes('appType')) {
+        submitSearch();
+      } else if (!paths.includes('search')) {
+        submit();
+      }
     },
     onUpdate(event) {
       const data = event.result.data as FormResult<{
@@ -29,9 +38,20 @@
       }>;
       if (event.form.valid && data.query) {
         jobs = data.query.data;
+        count = data.query.count;
       }
     }
   });
+
+  function submitSearch() {
+    if ($form.page.page) {
+      $form.page.page = 0;
+    } else {
+      submit();
+    }
+  }
+
+  const mobileSizing = 'w-full md:w-auto';
 </script>
 
 <div class="w-full">
@@ -39,93 +59,79 @@
     <li><a href="/" class="link">Home</a></li>
     <li>{$title}</li>
   </Breadcrumbs>
-  <h1>{$title}</h1>
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <form
+    method="POST"
+    action="?/page"
+    use:enhance
+    onkeydown={(event) => {
+      if (event.key === 'Enter') submitSearch();
+    }}
+  >
+    <div
+      class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center px-4 gap-1 {mobileSizing}"
+    >
+      <div class="inline-block grow {mobileSizing}">
+        <h1 class="py-4 px-2">{$title}</h1>
+      </div>
+      <div
+        class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center gap-1 {mobileSizing}"
+      >
+        <AppTypeSelector bind:value={$form.appType} allowNull class={{ dropdown: 'md:w-auto!' }} />
+        <SearchBar bind:value={$form.search} requestSubmit={submitSearch} class={mobileSizing} />
+      </div>
+    </div>
+  </form>
   <p>
     Showing <b>
       {$form.page.page * $form.page.size + 1}-{Math.min(
         ($form.page.page + 1) * $form.page.size,
-        data.count
+        count
       )}
     </b>
     of
-    <b>{data.count}</b>
+    <b>{count}</b>
     items
   </p>
-  <SortTable
-    data={jobs}
-    columns={[
-      {
-        id: 'index',
-        header: '#'
-      },
-      {
-        id: 'id',
-        header: 'Id',
-        compare: () => 0
-      },
-      {
-        id: 'request_id',
-        header: 'Request Id',
-        compare: () => 0
-      },
-      {
-        id: 'git_url',
-        header: 'Git Url',
-        compare: () => 0
-      },
-      {
-        id: 'app_id',
-        header: 'App ID',
-        compare: () => 0
-      },
-      {
-        id: 'publisher_id',
-        header: 'Publisher ID',
-        compare: () => 0
-      },
-      {
-        id: 'client_id',
-        header: 'Client ID',
-        compare: () => 0
-      },
-      {
-        id: 'existing_version_code',
-        header: 'Existing Version Code',
-        compare: () => 0
-      },
-      {
-        id: 'menu',
-        header: ''
-      }
-    ]}
-    serverSide={true}
-    startDesc={true}
-    onSort={(field, direction) => form.update((data) => ({ ...data, sort: { field, direction } }))}
-  >
-    {#snippet row(job, index)}
-      <tr>
-        <td>{index + 1}</td>
-        <td>{job.id}</td>
-        <td>{job.request_id}</td>
-        <td><a class="link" href={job.git_url}>{job.git_url}</a></td>
-        <td>{job.app_id}</td>
-        <td>{job.publisher_id}</td>
-        <td><a class="link" href="/client-admin/view?id={job.client_id}">{job.client_id}</a></td>
-        <td>{job.existing_version_code}</td>
-        <td class="flex flex-row flex-wrap p-1 space-x-2">
-          <a href="/job-admin/view?id={job.id}">
-            <IconContainer icon="mdi:eye" width={16} />
-          </a>
-          <a href="/job-admin/update?id={job.id}">
-            <IconContainer icon="mdi:pencil" width={16} />
-          </a>
-        </td>
-      </tr>
-    {/snippet}
-  </SortTable>
+  <div class="flex flex-col gap-2">
+    {#each jobs as job}
+      <div class="border rounded-md p-2 flex flex-col gap-1">
+        <div class="flex flex-row">
+          <h3 class="grow flex flex-row gap-2 items-start">
+            <a class="link" href="/job-admin/view?id={job.id}">#{job.id}</a>
+            <img src={getAppIcon(job.app_id as ApplicationType)} width={20} alt={job.app_id} />
+            <a
+              class="link"
+              href="{env.PUBLIC_SCRIPTORIA_URL}/products/{job.request_id}"
+              target="_blank"
+            >
+              {job.request_id}<IconContainer icon={Icons.Open} width={16} />
+            </a>
+          </h3>
+        </div>
+        <div class="flex flex-row items-center gap-x-1">
+          {#if job.client}
+            <IconContainer icon={Icons.User} width={16} />
+            <a class="link mr-2" href="/client-admin/view?id={job.client.id}">
+              {job.client.prefix}
+            </a>
+          {/if}
+          {#if job.git_url}
+            {@const icon = job.git_url.startsWith('s3') ? Icons.Bucket : Icons.CodeCommit}
+            {@const title = job.git_url.startsWith('s3') ? 'S3 Bucket' : 'CodeCommit Repo'}
+            <IconContainer {icon} width={16} />
+            <a class="link" href={job.git_url} target="_blank">
+              {title}
+              <IconContainer icon={Icons.Open} width={16} />
+            </a>
+          {/if}
+        </div>
+      </div>
+    {/each}
+  </div>
   <form method="POST" action="?/page" use:enhance>
     <div class="space-between-4 flex w-full flex-row flex-wrap place-content-start gap-1 p-4">
-      <Pagination bind:size={$form.page.size} total={data.count} bind:page={$form.page.page} />
+      <Pagination bind:size={$form.page.size} total={count} bind:page={$form.page.page} />
     </div>
   </form>
 </div>

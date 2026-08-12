@@ -3,6 +3,6 @@ import { prisma } from '$lib/server/prisma';
 
 export const load = (async () => {
   return {
-    appVersions: await prisma.appVersion.findMany()
+    appVersions: await prisma.appVersion.findMany({ orderBy: { updated: 'desc' } })
   };
 }) satisfies PageServerLoad;

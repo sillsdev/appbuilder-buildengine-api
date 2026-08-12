@@ -1,9 +1,28 @@
-<script>
+<script lang="ts">
+  import type { PageData } from './$types';
+  import { type IconType, Icons, getAppIcon, getStatusIcon } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
+  import type { ApplicationType } from '$lib/valibot';
+
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 
   $title = 'SIL AppBuilder Administration';
 
-  const cardClasses = 'max-w-full md:max-w-1/2 p-1';
+  const cards: {
+    target: keyof PageData['aggregate'];
+    title: string;
+    icon: IconType;
+  }[] = [
+    { target: 'project', title: 'Projects', icon: Icons.Project },
+    { target: 'job', title: 'Jobs', icon: Icons.Product },
+    { target: 'build', title: 'Builds', icon: Icons.Build },
+    { target: 'release', title: 'Releases', icon: Icons.Publish }
+  ];
 </script>
 
 <div class="pb-2">
@@ -11,69 +30,49 @@
     <h1 class="pb-0 pl-0">App Publishing Service</h1>
     <h1 class="pb-0 pl-0">Administration</h1>
   </div>
-  <div class="flex flex-col flex-wrap lg:flex-row items-center">
-    <div class={cardClasses}>
-      <h2 class="pl-0">Job</h2>
-      <p>
-        View, edit, or remove entries from the job table. Jobs point to the AWS S3 repository that
-        contains the source for the builds and publishes associated with this job. Deleting job
-        entries also deletes any associated builds and releases associated with the job.
-      </p>
-      <a class="btn btn-outline" href="/job-admin">Job Administration »</a>
-    </div>
-    <div class={cardClasses}>
-      <h2 class="pl-0">Build</h2>
-      <p>
-        View, edit, or remove entries from the build table. Each entry in this table contains a url
-        link to the instance of the associated AWS Codebuild build attempt. Deleting the build also
-        deletes any releases associated with this build.
-      </p>
-      <a class="btn btn-outline" href="/build-admin">Build Administration »</a>
-    </div>
-    <div class={cardClasses}>
-      <h2 class="pl-0">Release</h2>
-      <p>
-        View, edit, or remove entries from the release table. Entries in this table relate to
-        attempts to publish builds in Google Play store or other customized locations. Each entry in
-        this table contains a url link to the instance of the associated AWS Codebuild publish
-        attempt.
-      </p>
-      <a class="btn btn-outline" href="/release-admin">Release Administration »</a>
-    </div>
-    <div class={cardClasses}>
-      <h2 class="pl-0">Client</h2>
-      <p>
-        View, edit, or remove entries from the client table. Used if multiple Scriptoria sites are
-        sending requests to the build engine. Access tokens, which are used for the Authentication:
-        Bearer fields of requests are entered along with a prefix that is used in naming jobs
-        associated with this client.
-      </p>
-      <a class="btn btn-outline" href="/client-admin">Client Administration »</a>
-    </div>
-    <div class={cardClasses}>
-      <h2 class="pl-0">Project</h2>
-      <p>
-        View, edit, or remove entries from the project table. Each entry contains a link to be used
-        by Scripture App Builder to create or update a source repository in AWS S3.
-      </p>
-      <a class="btn btn-outline" href="/project-admin">Project Administration »</a>
-    </div>
-    <div class={cardClasses}>
-      <h2 class="pl-0">Operation Queue</h2>
-      <p>
-        View, edit, or remove entries from the operation queue table. Entries in this table relate
-        to internal operations that are either queued to be performed, waiting to be retried, or
-        have failed the maximum number of times and are present for reporting purposes only.
-      </p>
-      <a class="btn btn-outline" href="/queue-admin" target="_blank">
-        Operation Queue Administration &raquo;
-      </a>
-    </div>
+  <div id="cards" class="flex flex-col flex-wrap md:flex-row items-center gap-2">
+    {#each cards as { target, title, icon }}
+      {@const getIcon = target === 'project' || target === 'job' ? getAppIcon : getStatusIcon}
+      <div class="w-full p-2 pt-0 border rounded-md h-56 overflow-y-auto">
+        <div class="top-0 sticky z-[5] bg-base-100 w-full">
+          <h2 class="pl-0 w-full">
+            <IconContainer {icon} width={24} />
+            <a class="link" href="/{target}-admin">
+              {title}
+            </a>
+          </h2>
+        </div>
+        <table class="table table-xs">
+          <tbody>
+            {#each data.aggregate[target] as entry}
+              {@const result =
+                ('result' in entry ? (entry.result ?? 'PENDING') : entry.app_id) || 'UNKNOWN'}
+              {@const icon = getIcon(result as ApplicationType)}
+              <tr>
+                <td>
+                  <IconContainer
+                    icon={typeof icon === 'string' ? icon : icon.icon}
+                    width={24}
+                    class={[typeof icon !== 'string' && icon.color]}
+                  />
+                  {result}
+                </td>
+                <td>
+                  {entry._count}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/each}
   </div>
 </div>
 
 <style>
-  .btn {
-    margin-top: calc(var(--spacing) * 1);
+  @media (width >= 48rem /* 768px */) {
+    #cards > div {
+      max-width: calc(50% - var(--spacing) * 2);
+    }
   }
 </style>

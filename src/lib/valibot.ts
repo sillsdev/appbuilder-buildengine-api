@@ -35,6 +35,7 @@ export function selectFrom<T extends Record<string, unknown>>(entries: T) {
 }
 
 export const tableSchema = v.object({
+  search: v.string(),
   page: paginateSchema,
   sort: v.nullable(
     v.object({
@@ -119,3 +120,11 @@ export function trimStrings<T extends Record<string, unknown>>(
   }
   return obj;
 }
+
+export const applicationTypes = [
+  'scriptureappbuilder',
+  'dictionaryappbuilder',
+  'readingappbuilder',
+  'keyboardappbuilder'
+] as const;
+export type ApplicationType = (typeof applicationTypes)[number];
