@@ -26,7 +26,9 @@
     dataType: 'json',
     resetForm: false,
     onChange({ paths }) {
-      if (!paths.includes('search')) {
+      if (paths.includes('appType')) {
+        submitSearch();
+      } else if (!paths.includes('search')) {
         submit();
       }
     },
@@ -40,6 +42,10 @@
       }
     }
   });
+
+  function submitSearch() {
+    $form.page.page = 0;
+  }
 
   const mobileSizing = 'w-full md:w-auto';
 </script>
@@ -55,7 +61,7 @@
     action="?/page"
     use:enhance
     onkeydown={(event) => {
-      if (event.key === 'Enter') submit();
+      if (event.key === 'Enter') submitSearch();
     }}
   >
     <div
@@ -68,7 +74,7 @@
         class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center gap-1 {mobileSizing}"
       >
         <AppTypeSelector bind:value={$form.appType} allowNull class={{ dropdown: 'md:w-auto!' }} />
-        <SearchBar bind:value={$form.search} requestSubmit={submit} class={mobileSizing} />
+        <SearchBar bind:value={$form.search} requestSubmit={submitSearch} class={mobileSizing} />
       </div>
     </div>
   </form>

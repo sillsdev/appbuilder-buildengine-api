@@ -38,6 +38,10 @@
     }
   });
 
+  function submitSearch() {
+    $form.page.page = 0;
+  }
+
   const mobileSizing = 'w-full md:w-auto';
 </script>
 
@@ -52,7 +56,7 @@
     action="?/page"
     use:enhance
     onkeydown={(event) => {
-      if (event.key === 'Enter') submit();
+      if (event.key === 'Enter') submitSearch();
     }}
   >
     <div
@@ -64,7 +68,7 @@
       <div
         class="flex flex-row flex-wrap md:flex-nowrap place-content-end items-center gap-1 {mobileSizing}"
       >
-        <SearchBar bind:value={$form.search} requestSubmit={submit} class={mobileSizing} />
+        <SearchBar bind:value={$form.search} requestSubmit={submitSearch} class={mobileSizing} />
       </div>
     </div>
   </form>

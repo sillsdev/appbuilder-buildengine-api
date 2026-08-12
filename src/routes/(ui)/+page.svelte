@@ -30,7 +30,7 @@
     <h1 class="pb-0 pl-0">App Publishing Service</h1>
     <h1 class="pb-0 pl-0">Administration</h1>
   </div>
-  <div id="cards" class="flex flex-col flex-wrap lg:flex-row items-center gap-2">
+  <div id="cards" class="flex flex-col flex-wrap md:flex-row items-center gap-2">
     {#each cards as { target, title, icon }}
       {@const getIcon = target === 'project' || target === 'job' ? getAppIcon : getStatusIcon}
       <div class="w-full p-2 pt-0 border rounded-md h-56 overflow-y-auto">
@@ -43,12 +43,6 @@
           </h2>
         </div>
         <table class="table table-xs">
-          <thead>
-            <tr>
-              <th></th>
-              <th></th>
-            </tr>
-          </thead>
           <tbody>
             {#each data.aggregate[target] as entry}
               {@const result =
