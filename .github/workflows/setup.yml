@@ -59,13 +59,13 @@ jobs:
     needs: setup
     env:
       # Required for type checking. Leaving empty for now until needed for testing?
-      BUILD_ENGINE_ARTIFACTS_BUCKET: ""
-      AWS_ACCESS_KEY_ID: ""
-      AWS_SECRET_ACCESS_KEY: ""
-      BUILD_ENGINE_SECRETS_BUCKET: ""
-      SCRIPTURE_EARTH_KEY: ""
-      ORIGIN: ""
-      API_ACCESS_TOKEN: ""
+      BUILD_ENGINE_ARTIFACTS_BUCKET: ''
+      AWS_ACCESS_KEY_ID: ''
+      AWS_SECRET_ACCESS_KEY: ''
+      BUILD_ENGINE_SECRETS_BUCKET: ''
+      SCRIPTURE_EARTH_KEY: ''
+      ORIGIN: ''
+      API_ACCESS_TOKEN: ''
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -87,6 +87,11 @@ jobs:
         run: |
           echo "Running lint..."
           npm run lint
+
+      - name: Run shellcheck
+        run: |
+          echo "Running shellcheck..."
+          npm run shellcheck
 
   # Build and run a smoke test
   build-and-test:
