@@ -458,6 +458,28 @@ download_play_listing() {
   fi
 }
 
+extract_about() {
+  ABOUT_ENABLED=$(xmlstarlet sel -t -v "/app-definition/about/@enabled" "${PROJECT_DIR}/build.appDef" || echo "true")  
+  if [[ "${ABOUT_ENABLED}" == "true" ]]; then
+    ABOUT_FILENAME=$(xmlstarlet sel -t -v "/app-definition/about/filename" "${PROJECT_DIR}/build.appDef" || echo "about.txt")
+    if [ -f "${PROJECT_DIR}/build_data/about/${ABOUT_FILENAME}" ]; then
+      cp "${PROJECT_DIR}/build_data/about/${ABOUT_FILENAME}" "${OUTPUT_DIR}/about.txt"
+    fi
+  fi
+}
+
+extract_data_management_url() {
+  if [ -f "build_data/firebase/google-services.json" ]; then
+    USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
+    if [[ "${USER_ACCOUNTS_ENABLED}" == "true" ]]; then
+      CONSOLE_URL=$(jq -r '.project_info.firebase_url' "${PROJECT_DIR}/build_data/firebase/google-services.json")
+      if [[ "${CONSOLE_URL}" != "" ]]; then
+        jq -n --arg console_url "$CONSOLE_URL" '{console_url: $console_url}' > "${OUTPUT_DIR}/data_management.json"
+      fi
+    fi
+  fi
+}
+
 build_play_listing() {
   echo "Build play listing"
   echo "BUILD_NUMBER=${BUILD_NUMBER}"
@@ -471,9 +493,9 @@ build_play_listing() {
   APK_FILES=("${OUTPUT_DIR}"/*.apk)
   AAPT="$(find /opt/android-sdk/build-tools -name aapt | head -n 1)"
 
-  if [ -f "build_data/about/about.txt" ]; then
-    cp build_data/about/about.txt "$OUTPUT_DIR"/
-  fi
+  extract_about
+  extract_data_management_url
+
   PUBLISH_DIR="build_data/publish"
   PLAY_LISTING_DIR="${PUBLISH_DIR}/play-listing"
   LIST_DIR="${PLAY_LISTING_DIR}/"

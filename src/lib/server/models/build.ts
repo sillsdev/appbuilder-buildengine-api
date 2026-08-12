@@ -47,7 +47,8 @@ export namespace Build {
     AssetPreview = 'asset-preview',
     AssetNotify = 'asset-notify',
     DataSafetyCsv = 'data-safety-csv',
-    PlayListingDownload = 'play-listing-download'
+    PlayListingDownload = 'play-listing-download',
+    DataManagement = 'data-management'
   }
 
   export function artifactType(key: string): [Artifact, string] {
@@ -72,6 +73,8 @@ export namespace Build {
       type = Artifact.PublishProperties;
     } else if (file === 'about.txt') {
       type = Artifact.About;
+    } else if (file === 'data_management.json') {
+      type = Artifact.DataManagement;
     } else if (file === 'whats_new.txt') {
       type = Artifact.WhatsNew;
     } else if (file === 'html.zip') {
@@ -155,9 +158,10 @@ export namespace Build {
       );
       artifacts[Artifact.WhatsNew] = getArtifactUrl(/whats_new\.txt/, base, files);
       artifacts[Artifact.PlayListingDownload] = getArtifactUrl(/play-listing\.zip$/, base, files);
+      artifacts[Artifact.DataManagement] = getArtifactUrl(/data_management\.json/, base, files);
     }
 
-    if (targets?.match('play-html')) {
+    if (targets?.match('html')) {
       artifacts[Artifact.HTML] = getArtifactUrl(/html\.zip/, base, files);
     }
 
