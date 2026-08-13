@@ -9,6 +9,12 @@ export function getAppIcon(type: ApplicationType) {
   return appIcons[`/src/lib/icons/app-builders/${type}.svg`] ?? '';
 }
 
+export function getBucketIcon(url: string) {
+  if (url.startsWith('s3')) return { title: 'S3 Bucket', icon: Icons.Bucket };
+  else if (url.startsWith('ssh')) return { title: 'CodeCommit', icon: Icons.CodeCommit };
+  else return { title: 'URL', icon: Icons.URL };
+}
+
 export function getStatusIcon(status: string) {
   switch (status.toUpperCase()) {
     case Result.Success:
@@ -50,6 +56,7 @@ export const Icons = {
   SortAsc: 'bx:sort-a-z',
   SortDesc: 'bx:sort-z-a',
   Unknown: 'carbon:unknown',
+  URL: 'solar:link-bold',
   User: 'mdi:user',
   View: 'mdi:eye',
   Visible: 'mdi:eye'
@@ -58,4 +65,4 @@ export const Icons = {
 export type IconType =
   | (typeof Icons)[keyof typeof Icons]
   | ReturnType<typeof getAppIcon>
-  | ReturnType<typeof getStatusIcon>['icon'];
+  | ReturnType<typeof getBucketIcon | typeof getStatusIcon>['icon'];

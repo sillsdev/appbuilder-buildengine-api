@@ -5,7 +5,7 @@
   import CopyField from '$lib/components/CopyField.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
   import Tooltip from '$lib/components/Tooltip.svelte';
-  import { Icons, getAppIcon } from '$lib/icons';
+  import { Icons, getAppIcon, getBucketIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
   import { getRelativeTime, getTimeDateString } from '$lib/utils/time';
@@ -74,11 +74,12 @@ Created <Tooltip tip={getTimeDateString(data.project.created)}>
     {/if}
   </div>
   {#if data.project.url}
+    {@const { icon, title } = getBucketIcon(data.project.url)}
     <div>
-      <span>S3 Bucket:</span>
+      <span>{title}:</span>
       <br />
       <div class="flex rounded-md text-nowrap bg-base-200 p-3 pt-2 mt-2">
-        <IconContainer icon={Icons.Bucket} width={20} class="opacity-80 mr-2" />
+        <IconContainer {icon} width={20} class="opacity-80 mr-2" />
         <p>
           {data.project.url?.substring(0, 5)}
         </p>

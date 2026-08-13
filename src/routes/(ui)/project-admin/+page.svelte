@@ -6,7 +6,7 @@
   import Pagination from '$lib/components/Pagination.svelte';
   import PaginationHeader from '$lib/components/PaginationHeader.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
-  import { Icons, getAppIcon } from '$lib/icons';
+  import { Icons, getAppIcon, getBucketIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
   import type { ApplicationType } from '$lib/valibot';
@@ -104,9 +104,11 @@
             </a>
           {/if}
           {#if project.url}
-            <IconContainer icon={Icons.Bucket} width={16} />
+            {@const { icon, title } = getBucketIcon(project.url)}
+            <IconContainer {icon} width={16} />
             <a class="link" href={project.url} target="_blank">
-              S3 Bucket <IconContainer icon={Icons.Open} width={16} />
+              {title}
+              <IconContainer icon={Icons.Open} width={16} />
             </a>
           {/if}
         </div>
