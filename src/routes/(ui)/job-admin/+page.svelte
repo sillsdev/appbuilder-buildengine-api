@@ -5,6 +5,7 @@
   import AppTypeSelector from '$lib/components/AppTypeSelector.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import PaginationHeader from '$lib/components/PaginationHeader.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
   import { Icons, getAppIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
@@ -82,17 +83,7 @@
       </div>
     </div>
   </form>
-  <p>
-    Showing <b>
-      {$form.page.page * $form.page.size + 1}-{Math.min(
-        ($form.page.page + 1) * $form.page.size,
-        count
-      )}
-    </b>
-    of
-    <b>{count}</b>
-    items
-  </p>
+  <PaginationHeader page={$form.page} {count} />
   <div class="flex flex-col gap-2">
     {#each jobs as job}
       <div class="border rounded-md p-2 flex flex-col gap-1">

@@ -3,6 +3,7 @@
   import type { PageData } from './$types';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import PaginationHeader from '$lib/components/PaginationHeader.svelte';
   import SecureDisplay from '$lib/components/SecureDisplay.svelte';
   import Tooltip from '$lib/components/Tooltip.svelte';
   import { Icons } from '$lib/icons';
@@ -47,17 +48,7 @@
   </Breadcrumbs>
   <h1>{$title}</h1>
   <a class="btn btn-success mb-2" href="/client-admin/create">Create Client</a>
-  <p>
-    Showing <b>
-      {$form.page.page * $form.page.size + 1}-{Math.min(
-        ($form.page.page + 1) * $form.page.size,
-        data.count
-      )}
-    </b>
-    of
-    <b>{data.count}</b>
-    items
-  </p>
+  <PaginationHeader page={$form.page} count={data.count} />
   <div class="flex flex-col gap-2">
     {#each clients as client, i}
       <div class="border rounded-md p-2 flex flex-col gap-1">
