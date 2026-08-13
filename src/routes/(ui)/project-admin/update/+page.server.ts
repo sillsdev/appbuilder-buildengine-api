@@ -46,7 +46,8 @@ export const load = (async ({ url }) => {
   if (!project) error(404);
 
   return {
-    form: await superValidate(project, valibot(projectSchema))
+    form: await superValidate(project, valibot(projectSchema)),
+    clients: await prisma.client.findMany({ select: { id: true, prefix: true } })
   };
 }) satisfies PageServerLoad;
 

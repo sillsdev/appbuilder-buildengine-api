@@ -96,17 +96,16 @@
     {#each projects as project}
       <div class="border rounded-md p-2 flex flex-col gap-1">
         <div class="flex flex-row">
-          <h3 class="grow flex flex-row gap-2 items-start">
+          <h3 class="grow flex flex-row gap-2 items-center pl-1">
             <a class="link" href="/project-admin/view?id={project.id}">#{project.id}</a>
-            <img
-              src={getAppIcon(project.app_id as ApplicationType)}
-              width={20}
-              alt={project.app_id}
-            />
+            <span class="badge badge-secondary p-2">
+              <IconContainer icon={Icons.Language} width={16} />{project.language_code}
+            </span>
+            <IconContainer icon={getAppIcon(project.app_id as ApplicationType)} width={20} />
             <i>{project.project_name}</i>
           </h3>
         </div>
-        <div class="flex flex-row items-center gap-x-1">
+        <div class="flex flex-row items-center gap-x-1 pl-1">
           {#if project.client}
             <IconContainer icon={Icons.User} width={16} />
             <a class="link mr-2" href="/client-admin/view?id={project.client.id}">

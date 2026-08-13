@@ -8,6 +8,7 @@ import { applicationTypes, tableSchema } from '$lib/valibot';
 
 const select: Prisma.projectSelect = {
   id: true,
+  language_code: true,
   project_name: true,
   app_id: true,
   client: {
@@ -55,7 +56,8 @@ export const actions: Actions = {
               OR: [
                 { project_name: { contains: form.data.search, mode: 'insensitive' } },
                 { client: { prefix: { contains: form.data.search, mode: 'insensitive' } } },
-                { url: { contains: form.data.search, mode: 'insensitive' } }
+                { url: { contains: form.data.search, mode: 'insensitive' } },
+                { language_code: { contains: form.data.search, mode: 'insensitive' } }
               ]
             }
           : {}

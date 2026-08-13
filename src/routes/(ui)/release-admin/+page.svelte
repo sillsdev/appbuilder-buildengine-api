@@ -4,7 +4,8 @@
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
-  import { Icons, getStatusIcon } from '$lib/icons';
+  import StatusBadge from '$lib/components/StatusBadge.svelte';
+  import { Icons } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
 
@@ -89,31 +90,11 @@
   </p>
   <div class="flex flex-col gap-2">
     {#each releases as release}
-      {@const status = release.result || release.status}
       <div class="border rounded-md p-2 flex flex-col gap-1">
         <div class="flex flex-row">
           <h3 class="grow flex flex-row gap-2 items-start">
             <a class="link" href="/release-admin/view?id={release.id}">#{release.id}</a>
-            {#if status}
-              {@const { icon } = getStatusIcon(status)}
-              <b
-                class={[
-                  'badge',
-                  status === 'SUCCESS'
-                    ? 'badge-success'
-                    : status === 'FAILURE'
-                      ? 'badge-error'
-                      : status === 'ABORTED'
-                        ? 'badge-warning'
-                        : 'badge-neutral'
-                ]}
-              >
-                {#if icon !== Icons.Unknown}
-                  <IconContainer {icon} width={20} />
-                {/if}
-                {status}
-              </b>
-            {/if}
+            <StatusBadge status={release.result || release.status} />
           </h3>
         </div>
         <div class="flex flex-row items-center gap-x-1">

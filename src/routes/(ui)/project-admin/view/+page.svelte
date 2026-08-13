@@ -2,8 +2,14 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import CopyField from '$lib/components/CopyField.svelte';
+  import StatusBadge from '$lib/components/StatusBadge.svelte';
+  import Tooltip from '$lib/components/Tooltip.svelte';
+  import { Icons, getAppIcon } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
-  import { getTimeDateString } from '$lib/utils/time';
+  import { getRelativeTime, getTimeDateString } from '$lib/utils/time';
+  import type { ApplicationType } from '$lib/valibot';
 
   $title = 'View Project: ' + page.url.searchParams.get('id')!;
 
@@ -12,6 +18,8 @@
   }
 
   let { data }: Props = $props();
+
+  const dateCreated = $derived(getRelativeTime(data.project.created));
 </script>
 
 <Breadcrumbs>
@@ -20,81 +28,94 @@
   <li>{data.project.id}</li>
 </Breadcrumbs>
 
-<h1>{$title}</h1>
-
-<div class="flex flex-row space-x-2 mb-2">
-  <a href="/project-admin/update?id={data.project.id}" class="btn btn-primary">Update</a>
+<div class="flex flex-row items-center">
+  <h1 class="p-4 pl-0">{data.project.project_name}</h1>
+  <StatusBadge status={data.project.result || data.project.status} />
+</div>
+Created <Tooltip tip={getTimeDateString(data.project.created)}>
+  {$dateCreated}
+</Tooltip>
+<div class="flex flex-row space-x-2 my-2">
+  <a href="/project-admin/update?id={data.project.id}" class="btn btn-secondary">
+    <IconContainer icon={Icons.Edit} width={20} />Edit Project
+  </a>
 </div>
 
-<table class="table table-zebra border">
-  <tbody>
-    <tr>
-      <th>ID</th>
-      <td>{data.project.id}</td>
-    </tr>
-    <tr>
-      <th>Status</th>
-      <td>{data.project.status}</td>
-    </tr>
-    <tr>
-      <th>Result</th>
-      <td>{data.project.result}</td>
-    </tr>
-    <tr>
-      <th>Error</th>
-      <td>
-        {#if data.project.error?.match(/^https?:/)}
-          <a class="link" href={data.project.error}>
-            {data.project.error}
+<div class="border p-2 rounded-md bg-base-200">
+  <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
+    <div class="flex place-content-between">
+      <span>
+        <IconContainer icon={Icons.Language} width={20} />
+        Language:
+      </span>
+      <span>
+        {data.project.language_code}
+      </span>
+    </div>
+    <div class="flex place-content-between">
+      <span>App ID:</span>
+      <span class="flex flex-row gap-1">
+        <IconContainer icon={getAppIcon(data.project.app_id as ApplicationType)} width={24} />
+        {data.project.app_id}
+      </span>
+    </div>
+    {#if data.project.client}
+      <div class="flex place-content-between">
+        <span>
+          <IconContainer icon={Icons.User} width={20} />
+          Client:
+        </span>
+        <span>
+          <a class="link" href="/client-admin/view?id={data.project.client.id}">
+            {data.project.client.prefix}
           </a>
-        {:else}
+        </span>
+      </div>
+    {/if}
+  </div>
+  {#if data.project.url}
+    <div>
+      <span>S3 Bucket:</span>
+      <br />
+      <div class="flex rounded-md text-nowrap bg-base-200 p-3 pt-2 mt-2">
+        <IconContainer icon={Icons.Bucket} width={20} class="opacity-80 mr-2" />
+        <p>
+          {data.project.url?.substring(0, 5)}
+        </p>
+        <p class="shrink overflow-hidden text-ellipsis">
+          {data.project.url.split('/').slice(2, -1).join('/')}
+        </p>
+        <p class="grow pr-2">
+          /{data.project.url.split('/').pop()}
+        </p>
+        <CopyField value={data.project.url!} />
+      </div>
+    </div>
+  {/if}
+  {#if data.project.error}
+    {@const isURL = !!data.project.error?.match(/^https?:/)}
+    <div>
+      <span>Error:</span>
+      {#if isURL}
+        <a class="link" href={data.project.error}>
           {data.project.error}
-        {/if}
-      </td>
-    </tr>
-    <tr>
-      <th>Url</th>
-      <td>{data.project.url}</td>
-    </tr>
-    <tr>
-      <th>User ID</th>
-      <td>{data.project.user_id}</td>
-    </tr>
-    <tr>
-      <th>Group ID</th>
-      <td>{data.project.group_id}</td>
-    </tr>
-    <tr>
-      <th>App ID</th>
-      <td>{data.project.app_id}</td>
-    </tr>
-    <tr>
-      <th>Project Name</th>
-      <td>{data.project.project_name}</td>
-    </tr>
-    <tr>
-      <th>Language Code</th>
-      <td>{data.project.language_code}</td>
-    </tr>
-    <tr>
-      <th>Client ID</th>
-      <td>
-        <a class="link" href="/client-admin/view?id={data.project.client_id}">
-          {data.project.client_id}
         </a>
-      </td>
-    </tr>
-    <tr>
-      <th>Publishing Key</th>
-      <td>{data.project.publishing_key}</td>
-    </tr>
-    <tr>
-      <th>Created</th>
-      <td>{getTimeDateString(data.project.created)}</td>
-    </tr>
-    <tr>
-      <th>Updated</th>
-      <td>{getTimeDateString(data.project.updated)}</td>
-    </tr>
-  </tbody>
-</table>
+      {:else}
+        <br />
+        <textarea class="textarea w-full min-h-36" readonly>{data.project.error}</textarea>
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .gridcont {
+    grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+  }
+  .gridcont div span:first-child {
+    font-family: Montserrat, sans-serif;
+  }
+  .gridcont div span:last-child {
+    text-align: right;
+  }
+</style>

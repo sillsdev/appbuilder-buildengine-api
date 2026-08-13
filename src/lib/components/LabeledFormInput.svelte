@@ -4,17 +4,18 @@
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import type { ClassValue } from 'svelte/elements';
 
   interface Props {
     label: string;
-    classes?: string;
+    class?: ClassValue;
     children?: Snippet;
   }
 
-  let { label, classes, children }: Props = $props();
+  let { label, class: classes, children }: Props = $props();
 </script>
 
-<label class="flex flex-col w-full {classes}">
+<label class={['flex flex-col w-full', classes]}>
   <div class="label">
     <span class="fieldset-label">
       {label}
