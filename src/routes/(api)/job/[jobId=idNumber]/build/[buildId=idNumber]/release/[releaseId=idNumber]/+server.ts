@@ -3,6 +3,7 @@ import { BullMQ, getQueues } from '$lib/server/bullmq';
 import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
+import { Status } from '$lib/valibot';
 
 // GET /job/[id]/build/[id]/release/[id]
 export const GET: RequestHandler = async ({ params }) => {
@@ -82,7 +83,7 @@ export const DELETE: RequestHandler = async ({ params }) => {
 
   await prisma.release.delete({ where: { id: release.id } });
 
-  if (release.build_guid && release.status !== Release.Status.Completed) {
+  if (release.build_guid && release.status !== Status.Completed) {
     await getQueues().Releases.add(`Cancel Release #${release.id}`, {
       type: BullMQ.JobType.Release_Cancel,
       guid: release.build_guid,

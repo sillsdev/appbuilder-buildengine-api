@@ -4,7 +4,7 @@ import type { RequestHandler } from './$types';
 import { AWSVars } from '$lib/server/aws/vars';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { applicationTypes, stringLimits } from '$lib/valibot';
+import { Result, Status, applicationTypes, stringLimits } from '$lib/valibot';
 
 const projectSchema = v.strictObject({
   app_id: v.pipe(v.string(), v.picklist(applicationTypes)),
@@ -22,8 +22,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   const project = await prisma.project.create({
     data: {
       ...withoutStorage,
-      status: 'completed',
-      result: 'SUCCESS',
+      status: Status.Completed,
+      result: Result.Success,
       client_id: locals.clientId
     },
     include: {

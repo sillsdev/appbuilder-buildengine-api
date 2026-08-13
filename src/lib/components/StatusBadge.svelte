@@ -1,6 +1,7 @@
 <script lang="ts">
   import IconContainer from '../icons/IconContainer.svelte';
   import { Icons, getStatusIcon } from '$lib/icons';
+  import { Result } from '$lib/valibot';
 
   interface Props {
     status: string | null;
@@ -13,11 +14,11 @@
   <b
     class={[
       'badge',
-      status === 'SUCCESS'
+      status === Result.Success
         ? 'badge-success'
-        : status === 'FAILURE'
+        : status === Result.Failure
           ? 'badge-error'
-          : status === 'ABORTED'
+          : status === Result.Aborted
             ? 'badge-warning'
             : 'badge-neutral'
     ]}

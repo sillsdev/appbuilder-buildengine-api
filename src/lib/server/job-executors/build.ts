@@ -6,9 +6,8 @@ import { CodeBuild } from '../aws/codebuild';
 import { S3 } from '../aws/s3';
 import { AWSVars } from '../aws/vars';
 import { BullMQ, getQueues } from '../bullmq';
-import { Build } from '../models/build';
 import { prisma } from '../prisma';
-import { trimStrings } from '$lib/valibot';
+import { Result, Status, trimStrings } from '$lib/valibot';
 
 export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> {
   try {
@@ -42,7 +41,7 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
             build_guid: lastBuildGuid,
             codebuild_url: CodeBuild.getCodeBuildUrl('build_app', lastBuildGuid),
             console_text_url: CodeBuild.getConsoleTextUrl('build_app', lastBuildGuid),
-            status: Build.Status.Active
+            status: Status.Active
           },
           'build',
           job.log
@@ -74,8 +73,8 @@ export async function product(job: Job<BullMQ.Build.Product>): Promise<unknown> 
       where: { id: job.data.buildId },
       data: trimStrings(
         {
-          result: Build.Result.Failure,
-          status: Build.Status.Completed,
+          result: Result.Failure,
+          status: Status.Completed,
           error: String(e)
         },
         'build',
@@ -107,8 +106,8 @@ async function getVersionCode(
   const build = await prisma.build.aggregate({
     where: {
       job_id: job.id,
-      status: Build.Status.Completed,
-      result: Build.Result.Success
+      status: Status.Completed,
+      result: Result.Success
     },
     _max: {
       version_code: true

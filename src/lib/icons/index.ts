@@ -1,4 +1,4 @@
-import type { ApplicationType } from '$lib/valibot';
+import { type ApplicationType, Result } from '$lib/valibot';
 
 const appIcons = import.meta.glob('/src/lib/icons/app-builders/*.svg', {
   eager: true,
@@ -10,14 +10,14 @@ export function getAppIcon(type: ApplicationType) {
 }
 
 export function getStatusIcon(status: string) {
-  switch (status.toLowerCase()) {
-    case 'success':
+  switch (status.toUpperCase()) {
+    case Result.Success:
       return { color: 'text-success', icon: 'icon-park-outline:success' };
-    case 'failure':
+    case Result.Failure:
       return { color: 'text-error', icon: 'material-symbols:error-outline-rounded' };
-    case 'aborted':
+    case Result.Aborted:
       return { color: 'text-warning', icon: 'ix:cancelled' };
-    case 'pending':
+    case 'PENDING':
       return { icon: 'material-symbols:pending-outline' };
     default:
       return { icon: Icons.Unknown };

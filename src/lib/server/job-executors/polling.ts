@@ -3,11 +3,9 @@ import type { Job } from 'bullmq';
 import { CodeBuild } from '../aws/codebuild';
 import { AWSVars } from '../aws/vars';
 import { BullMQ, getQueues } from '../bullmq';
-import { Build } from '../models/build';
 import { prisma } from '../prisma';
-import { Release } from '$lib/server/models/release';
 import type { Logger } from '$lib/utils';
-import { trimStrings } from '$lib/valibot';
+import { Result, Status, trimStrings } from '$lib/valibot';
 
 export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
   try {
@@ -35,17 +33,17 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
 
       if (codeBuild.isBuildComplete(buildStatus)) {
         await getQueues().Polling.removeJobScheduler(job.name);
-        build.status = Build.Status.PostProcessing;
+        build.status = Status.PostProcessing;
         status = codeBuild.getStatus(buildStatus);
         switch (status) {
           case CodeBuild.Status.Failed:
           case CodeBuild.Status.Fault:
           case CodeBuild.Status.TimedOut:
-            build.result = Build.Result.Failure;
+            build.result = Result.Failure;
             await handleBuildFailure(build);
             break;
           case CodeBuild.Status.Stopped:
-            build.result = Build.Result.Aborted;
+            build.result = Result.Aborted;
             await handleBuildFailure(build);
             break;
           case CodeBuild.Status.Succeeded:
@@ -80,8 +78,8 @@ export async function build(job: Job<BullMQ.Polling.Build>): Promise<unknown> {
       where: { id: job.data.buildId },
       data: trimStrings(
         {
-          result: Build.Result.Failure,
-          status: Build.Status.Completed,
+          result: Result.Failure,
+          status: Status.Completed,
           error: String(e)
         },
         'build',
@@ -129,21 +127,21 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
 
       if (codeBuild.isBuildComplete(buildStatus)) {
         await getQueues().Polling.removeJobScheduler(job.name);
-        release.status = Build.Status.PostProcessing;
+        release.status = Status.PostProcessing;
         status = codeBuild.getStatus(buildStatus);
         switch (status) {
           case CodeBuild.Status.Failed:
           case CodeBuild.Status.Fault:
           case CodeBuild.Status.TimedOut:
-            release.result = Build.Result.Failure;
+            release.result = Result.Failure;
             await handleReleaseFailure(release, job.log);
             break;
           case CodeBuild.Status.Stopped:
-            release.result = Build.Result.Aborted;
+            release.result = Result.Aborted;
             await handleReleaseFailure(release, job.log);
             break;
           case CodeBuild.Status.Succeeded:
-            release.result = Build.Result.Success;
+            release.result = Result.Success;
             await prisma.build.update({
               where: { id: release.build.id },
               data: { channel: release.channel }
@@ -176,7 +174,7 @@ export async function release(job: Job<BullMQ.Polling.Release>): Promise<unknown
     job.log(`${e}`);
     await prisma.release.updateMany({
       where: { id: job.data.releaseId },
-      data: { result: Build.Result.Failure, status: Release.Status.Completed }
+      data: { result: Result.Failure, status: Status.Completed }
     });
     // rethrow so error makes it to HoneyComb
     throw e;

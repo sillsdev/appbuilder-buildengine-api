@@ -128,3 +128,20 @@ export const applicationTypes = [
   'keyboardappbuilder'
 ] as const;
 export type ApplicationType = (typeof applicationTypes)[number];
+
+export const Status = {
+  Initialized: 'initialized',
+  Accepted: 'accepted',
+  Active: 'active',
+  Expired: 'expired',
+  PostProcessing: 'postprocessing',
+  Completed: 'completed'
+} as const;
+export type Status = (typeof Status)[keyof typeof Status];
+
+export const Result = {
+  Success: 'SUCCESS',
+  Failure: 'FAILURE',
+  Aborted: 'ABORTED'
+} as const;
+export type Result = (typeof Result)[keyof typeof Result];
