@@ -8,7 +8,7 @@
   import LabeledFormInput from '$lib/components/LabeledFormInput.svelte';
   import SelectWithIcon from '$lib/components/SelectWithIcon.svelte';
   import SubmitButton from '$lib/components/SubmitButton.svelte';
-  import { Icons } from '$lib/icons';
+  import { Icons, getBucketIcon, getStatusIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
   import { stringLimits } from '$lib/valibot';
@@ -40,24 +40,26 @@
 
 <form method="POST" use:enhance>
   <div class="input-fields">
-    <LabeledFormInput label="Status" class="md:w-1/2">
-      <input
-        class="input input-bordered validator"
-        type="text"
-        bind:value={$form.status}
-        maxlength={stringLimits.project.status}
-      />
-      <span class="validator-hint">&nbsp;</span>
-    </LabeledFormInput>
-    <LabeledFormInput label="Result" class="md:w-1/2">
-      <input
-        class="input input-bordered validator"
-        type="text"
-        bind:value={$form.result}
-        maxlength={stringLimits.project.result}
-      />
-      <span class="validator-hint">&nbsp;</span>
-    </LabeledFormInput>
+    <LabeledFormInput
+      label="Status"
+      class="md:w-1/2"
+      input={{
+        maxlength: stringLimits.project.status,
+        icon: getStatusIcon($form.status).icon,
+        iconClass: [getStatusIcon($form.status).color]
+      }}
+      bind:value={$form.status}
+    />
+    <LabeledFormInput
+      label="Result"
+      class="md:w-1/2"
+      input={{
+        maxlength: stringLimits.project.result,
+        icon: getStatusIcon($form.result).icon,
+        iconClass: [getStatusIcon($form.result).color]
+      }}
+      bind:value={$form.result}
+    />
     <LabeledFormInput label="App ID" class="md:w-1/2">
       <AppTypeSelector bind:value={$form.app_id} />
       <span class="validator-hint">&nbsp;</span>
@@ -76,34 +78,28 @@
       </SelectWithIcon>
       <span class="validator-hint">&nbsp;</span>
     </LabeledFormInput>
-    <LabeledFormInput label="Project Name" class="md:w-1/2">
-      <input
-        class="input input-bordered validator"
-        type="text"
-        bind:value={$form.project_name}
-        maxlength={stringLimits.project.project_name}
-      />
-      <span class="validator-hint">&nbsp;</span>
-    </LabeledFormInput>
-    <LabeledFormInput label="Language Code" class="md:w-1/2">
-      <input
-        class="input input-bordered validator"
-        type="text"
-        bind:value={$form.language_code}
-        maxlength={stringLimits.project.language_code}
-      />
-      <span class="validator-hint">&nbsp;</span>
-    </LabeledFormInput>
-  </div>
-  <LabeledFormInput label="Url">
-    <input
-      class="input input-bordered validator w-full"
-      type="url"
-      bind:value={$form.url}
-      maxlength={stringLimits.project.url}
+    <LabeledFormInput
+      label="Project Name"
+      class="md:w-1/2"
+      input={{ maxlength: stringLimits.project.project_name, icon: Icons.Edit }}
+      bind:value={$form.project_name}
     />
-    <span class="validator-hint">&nbsp;</span>
-  </LabeledFormInput>
+    <LabeledFormInput
+      label="Language Code"
+      class="md:w-1/2"
+      input={{ maxlength: stringLimits.project.language_code, icon: Icons.Language }}
+      bind:value={$form.language_code}
+    />
+  </div>
+  <LabeledFormInput
+    label={getBucketIcon($form.url).title}
+    input={{
+      maxlength: stringLimits.project.url,
+      type: 'url',
+      icon: getBucketIcon($form.url).icon
+    }}
+    bind:value={$form.url}
+  />
   <LabeledFormInput label="Error">
     <textarea
       class="textarea w-full min-h-36"
@@ -118,10 +114,6 @@
 </form>
 
 <style>
-  input {
-    width: 100%;
-  }
-
   .input-fields {
     display: flex;
     flex-direction: column;
