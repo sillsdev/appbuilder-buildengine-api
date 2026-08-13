@@ -21,13 +21,10 @@ const projectSchema = v.object({
     convertEmptyStrToNull(stringLimits.project.url),
     v.nullable(v.pipe(v.string(), v.url()))
   ),
-  user_id: convertEmptyStrToNull(stringLimits.project.user_id),
-  group_id: convertEmptyStrToNull(stringLimits.project.group_id),
   app_id: convertEmptyStrToNull(stringLimits.project.app_id),
   client_id: v.nullable(idSchema),
   project_name: convertEmptyStrToNull(stringLimits.project.project_name),
-  language_code: convertEmptyStrToNull(stringLimits.project.language_code),
-  publishing_key: convertEmptyStrToNull(stringLimits.project.publishing_key)
+  language_code: convertEmptyStrToNull(stringLimits.project.language_code)
 });
 
 export const load = (async ({ url }) => {
