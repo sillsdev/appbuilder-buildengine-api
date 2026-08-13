@@ -5,14 +5,7 @@ import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
-import {
-  convertEmptyStrToNull,
-  idSchema,
-  paramNumber,
-  selectFrom,
-  stringIdSchema,
-  stringLimits
-} from '$lib/valibot';
+import { idSchema, paramNumber, selectFrom, stringIdSchema, stringLimits } from '$lib/valibot';
 
 const jobSchema = v.strictObject({
   request_id: stringIdSchema,
@@ -20,15 +13,7 @@ const jobSchema = v.strictObject({
   app_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.app_id)),
   publisher_id: v.pipe(v.string(), v.maxBytes(stringLimits.job.publisher_id)),
   client_id: v.nullable(idSchema),
-  existing_version_code: v.nullable(idSchema),
-  jenkins_build_url: v.pipe(
-    convertEmptyStrToNull(stringLimits.job.jenkins_build_url),
-    v.nullable(v.pipe(v.string(), v.url()))
-  ),
-  jenkins_publish_url: v.pipe(
-    convertEmptyStrToNull(stringLimits.job.jenkins_publish_url),
-    v.nullable(v.pipe(v.string(), v.url()))
-  )
+  existing_version_code: v.nullable(idSchema)
 });
 
 export const load = (async ({ url }) => {
@@ -47,7 +32,8 @@ export const load = (async ({ url }) => {
   if (!job) error(404);
 
   return {
-    form: await superValidate(job, valibot(jobSchema))
+    form: await superValidate(job, valibot(jobSchema)),
+    clients: await prisma.client.findMany({ select: { id: true, prefix: true } })
   };
 }) satisfies PageServerLoad;
 

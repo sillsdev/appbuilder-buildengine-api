@@ -66,9 +66,11 @@ export const Icons = {
   Search: 'mdi:search',
   SortAsc: 'bx:sort-a-z',
   SortDesc: 'bx:sort-z-a',
+  Store: 'ic:twotone-store',
   Unknown: 'carbon:unknown',
   URL: 'solar:link-bold',
   User: 'mdi:user',
+  Version: 'mdi:tag',
   View: 'mdi:eye',
   Visible: 'mdi:eye'
 } as const;
