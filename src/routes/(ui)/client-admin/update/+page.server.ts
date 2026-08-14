@@ -5,7 +5,7 @@ import * as v from 'valibot';
 import { clientSchema } from '../valibot';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
-import { idSchema, paramNumber, selectFrom } from '$lib/valibot';
+import { idSchema, paramNumber } from '$lib/valibot';
 
 export const load = (async ({ url }) => {
   const id = v.safeParse(v.pipe(paramNumber, idSchema), url.searchParams.get('id'));
@@ -17,7 +17,10 @@ export const load = (async ({ url }) => {
     where: {
       id: id.output
     },
-    select: selectFrom(clientSchema.entries)
+    select: {
+      prefix: true,
+      access_token: true
+    }
   });
 
   if (!client) error(404);

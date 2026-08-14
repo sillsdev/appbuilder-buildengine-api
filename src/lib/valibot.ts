@@ -8,18 +8,6 @@ export const paramNumber = v.pipe(
   v.transform((s) => parseInt(s))
 );
 
-export function convertEmptyStrToNull(limit?: number) {
-  return v.nullable(
-    v.union([
-      v.pipe(
-        v.literal(''),
-        v.transform(() => null)
-      ),
-      limit ? v.pipe(v.string(), v.maxBytes(limit)) : v.string()
-    ])
-  );
-}
-
 /** mostly for product IDs */
 export const stringIdSchema = v.pipe(v.string(), v.uuid());
 
@@ -27,12 +15,6 @@ export const paginateSchema = v.object({
   page: idSchema,
   size: idSchema
 });
-
-export function selectFrom<T extends Record<string, unknown>>(entries: T) {
-  return Object.fromEntries(Object.keys(entries).map((k) => [k, true])) as {
-    [Property in keyof T]: true;
-  };
-}
 
 export const tableSchema = v.object({
   search: v.string(),
