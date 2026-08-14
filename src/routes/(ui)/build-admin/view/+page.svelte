@@ -22,9 +22,6 @@
 
 <h1>{$title}</h1>
 
-<div class="flex flex-row space-x-2 mb-2">
-  <a href="/build-admin/update?id={data.build.id}" class="btn btn-primary">Update</a>
-</div>
 
 <table class="table table-zebra border">
   <tbody>
