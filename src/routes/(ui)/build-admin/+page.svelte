@@ -83,21 +83,25 @@
     {#each builds as build}
       <div class="border rounded-md p-2 flex flex-col gap-1">
         <div class="flex flex-row">
-          <h3 class="grow flex flex-row gap-2 items-start">
+          <h3 class="grow flex flex-row gap-2 items-start pl-1">
             <a class="link" href="/build-admin/view?id={build.id}">#{build.id}</a>
             <StatusBadge status={build.result || build.status} />
           </h3>
         </div>
-        <div class="flex flex-row items-center gap-x-1">
+        <div class="flex flex-row items-center gap-x-1 pl-1">
           <IconContainer icon={Icons.Product} width={16} />
           <a class="link mr-2" href="/job-admin/view?id={build.job_id}">
             #{build.job_id}
           </a>
-          {#if build.codebuild_url}
+          {#if build.codebuild_url || build.build_guid}
             <IconContainer icon={Icons.CodeBuild} width={16} />
-            <a class="link mr-2" href={build.codebuild_url} target="_blank">
-              CodeBuild <IconContainer icon={Icons.Open} width={16} />
-            </a>
+            {#if build.codebuild_url}
+              <a class="link" href={build.codebuild_url} target="_blank">
+                CodeBuild <IconContainer icon={Icons.Open} width={16} />
+              </a>
+            {:else}
+              <span>{build.build_guid}</span>
+            {/if}
           {/if}
         </div>
       </div>

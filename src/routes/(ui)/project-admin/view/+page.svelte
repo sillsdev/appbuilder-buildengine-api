@@ -36,7 +36,7 @@ Created <Tooltip tip={getTimeDateString(data.project.created)}>
   {$dateCreated}
 </Tooltip>
 
-<div class="border p-2 rounded-md bg-base-200 mt-2">
+<div class="border p-2 rounded-md bg-base-200 my-2">
   <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
     <div class="flex place-content-between">
       <span>

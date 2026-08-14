@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { type Logger, defaultLogger } from './utils';
+import { byString } from './utils/sorting';
 
 export const idSchema = v.pipe(v.number(), v.minValue(0), v.integer());
 
@@ -26,6 +27,15 @@ export const tableSchema = v.object({
     })
   )
 });
+
+export const JSON2Entries = v.nullable(
+  v.pipe(
+    v.string(),
+    v.parseJson(),
+    v.looseObject({}),
+    v.transform((o) => Object.entries(o).sort(([a, _1], [b, _2]) => byString(a, b)))
+  )
+);
 
 export const stringLimits = {
   build: {

@@ -53,6 +53,8 @@ export const Icons = {
   Dashboard: 'clarity:dashboard-line',
   Delete: 'mdi:trash',
   Edit: 'mdi:pencil',
+  Environment: 'mdi:console',
+  File: 'mdi:file',
   Hamburger: 'mdi:hamburger-menu',
   Invisible: 'mdi:eye-off-outline',
   Key: 'material-symbols:key',
