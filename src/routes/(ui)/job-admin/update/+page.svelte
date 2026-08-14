@@ -67,7 +67,7 @@
         attr={{ name: 'client_id' }}
       >
         {#snippet extra()}
-          <option value={null}><IconContainer icon={Icons.User} width={20} />Default Client</option>
+          <option value={null}><IconContainer icon={Icons.User} width={20} />(Default)</option>
         {/snippet}
       </SelectWithIcon>
       <span class="validator-hint">&nbsp;</span>

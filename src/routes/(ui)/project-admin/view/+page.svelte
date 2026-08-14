@@ -59,19 +59,22 @@ Created <Tooltip tip={getTimeDateString(data.project.created)}>
         {data.project.app_id}
       </span>
     </div>
-    {#if data.project.client}
-      <div class="flex place-content-between">
-        <span>
-          <IconContainer icon={Icons.User} width={20} />
-          Client:
-        </span>
-        <span>
+
+    <div class="flex place-content-between">
+      <span>
+        <IconContainer icon={Icons.User} width={20} />
+        Client:
+      </span>
+      <span>
+        {#if data.project.client}
           <a class="link" href="/client-admin/view?id={data.project.client.id}">
             {data.project.client.prefix}
           </a>
-        </span>
-      </div>
-    {/if}
+        {:else}
+          <span>(Default)</span>
+        {/if}
+      </span>
+    </div>
   </div>
   {#if data.project.url}
     {@const { icon, title } = getBucketIcon(data.project.url)}

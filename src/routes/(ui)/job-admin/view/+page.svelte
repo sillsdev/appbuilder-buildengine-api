@@ -62,19 +62,21 @@ Created <Tooltip tip={getTimeDateString(data.job.created)}>
         {data.job.app_id}
       </span>
     </div>
-    {#if data.job.client}
-      <div class="flex place-content-between">
-        <span>
-          <IconContainer icon={Icons.User} width={20} />
-          Client:
-        </span>
-        <span>
+    <div class="flex place-content-between">
+      <span>
+        <IconContainer icon={Icons.User} width={20} />
+        Client:
+      </span>
+      <span>
+        {#if data.job.client}
           <a class="link" href="/client-admin/view?id={data.job.client.id}">
             {data.job.client.prefix}
           </a>
-        </span>
-      </div>
-    {/if}
+        {:else}
+          <span>(Default)</span>
+        {/if}
+      </span>
+    </div>
     <div class="flex place-content-between">
       <span>
         <IconContainer icon={Icons.Version} width={20} />

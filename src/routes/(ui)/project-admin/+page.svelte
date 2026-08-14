@@ -97,11 +97,13 @@
           </h3>
         </div>
         <div class="flex flex-row items-center gap-x-1 pl-1">
+          <IconContainer icon={Icons.User} width={16} />
           {#if project.client}
-            <IconContainer icon={Icons.User} width={16} />
             <a class="link mr-2" href="/client-admin/view?id={project.client.id}">
               {project.client.prefix}
             </a>
+          {:else}
+            <span class="mr-2">(Default)</span>
           {/if}
           {#if project.url}
             {@const { icon, title } = getBucketIcon(project.url)}
