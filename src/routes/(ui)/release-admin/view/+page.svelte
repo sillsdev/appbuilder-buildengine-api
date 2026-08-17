@@ -25,7 +25,7 @@
 
 <Breadcrumbs>
   <li><a href="/" class="link">Home</a></li>
-  <li><a href="/build-admin" class="link">Builds</a></li>
+  <li><a href="/release-admin" class="link">Releases</a></li>
   <li>{data.release.id}</li>
 </Breadcrumbs>
 
