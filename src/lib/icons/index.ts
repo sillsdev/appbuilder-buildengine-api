@@ -42,6 +42,7 @@ export function getStatusIcon(status: string | null) {
 }
 
 export const Icons = {
+  AddUser: 'mdi:user-add',
   Bucket: 'logos:aws-s3',
   Build: 'material-symbols:build',
   Cancel: 'icon-park-outline:return',
@@ -56,7 +57,9 @@ export const Icons = {
   Edit: 'mdi:pencil',
   Environment: 'mdi:console',
   File: 'mdi:file',
+  Folder: 'material-symbols:folder-outline',
   Hamburger: 'mdi:hamburger-menu',
+  Info: 'mdi:info',
   Invisible: 'mdi:eye-off-outline',
   Key: 'material-symbols:key',
   Language: 'mdi:language',

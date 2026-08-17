@@ -34,6 +34,8 @@ model client {
   id           Int       @id @default(autoincrement())
   access_token String    @db.VarChar(255)
   prefix       String    @db.VarChar(4)
+  description  String?
+  development  Boolean   @default(false)
   created      DateTime? @default(now()) @db.Timestamp(6)
   updated      DateTime? @updatedAt @db.Timestamp(6)
   job          job[]

@@ -19,7 +19,9 @@ export const load = (async ({ url }) => {
     },
     select: {
       prefix: true,
-      access_token: true
+      development: true,
+      access_token: true,
+      description: true
     }
   });
 
