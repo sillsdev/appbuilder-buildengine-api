@@ -1,9 +1,16 @@
 <script lang="ts">
+  import { safeParse } from 'valibot';
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import StatusBadge from '$lib/components/StatusBadge.svelte';
+  import Tooltip from '$lib/components/Tooltip.svelte';
+  import { Icons } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
-  import { getTimeDateString } from '$lib/utils/time';
+  import { byString } from '$lib/utils/sorting';
+  import { getRelativeTime, getTimeDateString } from '$lib/utils/time';
+  import { JSON2Entries } from '$lib/valibot';
 
   $title = 'View Release: ' + page.url.searchParams.get('id')!;
 
@@ -12,98 +19,152 @@
   }
 
   let { data }: Props = $props();
+
+  const dateCreated = $derived(getRelativeTime(data.release.created));
 </script>
 
 <Breadcrumbs>
   <li><a href="/" class="link">Home</a></li>
-  <li><a href="/release-admin" class="link">Releases</a></li>
+  <li><a href="/build-admin" class="link">Builds</a></li>
   <li>{data.release.id}</li>
 </Breadcrumbs>
 
-<h1>{$title}</h1>
+<div class="flex flex-row items-center">
+  <h1 class="p-4 pl-0">
+    Release {data.release.id}
+  </h1>
 
-<table class="table table-zebra border">
-  <tbody>
-    <tr>
-      <th>ID</th>
-      <td>{data.release.id}</td>
-    </tr>
-    <tr>
-      <th>Build ID</th>
-      <td>
+  <StatusBadge status={data.release.result || data.release.status} />
+</div>
+Created <Tooltip tip={getTimeDateString(data.release.created)}>
+  {$dateCreated}
+</Tooltip>
+
+<div class="border p-2 rounded-md bg-base-200 my-2">
+  <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
+    <div>
+      <span>
+        <IconContainer icon={Icons.Build} width={20} />
+        Build ID:
+      </span>
+      <span>
         <a class="link" href="/build-admin/view?id={data.release.build_id}">
-          {data.release.build_id}
+          #{data.release.build_id}
         </a>
-      </td>
-    </tr>
-    <tr>
-      <th>Status</th>
-      <td>{data.release.status}</td>
-    </tr>
-    <tr>
-      <th>Created</th>
-      <td>{getTimeDateString(data.release.created)}</td>
-    </tr>
-    <tr>
-      <th>Updated</th>
-      <td>{getTimeDateString(data.release.updated)}</td>
-    </tr>
-    <tr>
-      <th>Result</th>
-      <td>{data.release.result}</td>
-    </tr>
-    <tr>
-      <th>Error</th>
-      <td>
-        {#if data.release.error?.match(/^https?:/)}
-          <a class="link" href={data.release.error}>
-            {data.release.error}
-          </a>
+      </span>
+    </div>
+    <div>
+      <span>
+        <IconContainer icon={Icons.Targets} width={20} />
+        Targets:
+      </span>
+      <span>
+        {data.release.targets || '(none)'}
+      </span>
+    </div>
+    <div>
+      <span>
+        <IconContainer icon={Icons.Channel} width={20} />
+        Channel:
+      </span>
+      <span>
+        {data.release.channel || '(none)'}
+      </span>
+    </div>
+    <div>
+      <span>
+        <IconContainer icon={Icons.Language} width={20} />
+        Default Language:
+      </span>
+      <span>
+        {data.release.defaultLanguage ?? '(none)'}
+      </span>
+    </div>
+  </div>
+  {#if data.release.codebuild_url || data.release.build_guid}
+    <div>
+      <span>
+        <IconContainer icon={Icons.CodeBuild} width={20} class="mr-1" />Code Build:
+      </span>
+      <span>
+        {#if data.release.codebuild_url}
+          <a class="link" href={data.release.codebuild_url}>{data.release.build_guid}</a>
         {:else}
+          <span>{data.release.build_guid}</span>
+        {/if}
+      </span>
+    </div>
+  {/if}
+  {#if data.release.error}
+    {@const isURL = !!data.release.error?.match(/^https?:/)}
+    <div>
+      <span>Error:</span>
+      {#if isURL}
+        <a class="link" href={data.release.error}>
           {data.release.error}
-        {/if}
-      </td>
-    </tr>
-    <tr>
-      <th>Artifacts</th>
-      <td>
-        {#if data.release.artifact_files}
-          {#each Object.entries(data.artifacts)
-            .filter(([_, url]) => !!url)
-            .sort(([a, _1], [b, _2]) => a.localeCompare(b, 'en-US')) as [name, url]}
-            <a class="link" href={url}>{name}</a>
-            ,&nbsp;
-          {/each}
-        {/if}
-      </td>
-    </tr>
-    <tr>
-      <th>Channel</th>
-      <td>{data.release.channel}</td>
-    </tr>
-    <tr>
-      <th>Title</th>
-      <td>{data.release.title}</td>
-    </tr>
-    <tr>
-      <th>Default Language</th>
-      <td>{data.release.defaultLanguage}</td>
-    </tr>
-    <tr>
-      <th>Build GUID</th>
-      <td><a class="link" href={data.release.codebuild_url}>{data.release.build_guid}</a></td>
-    </tr>
-    <tr>
-      <th>Promote From</th>
-      <td>{data.release.promote_from}</td>
-    </tr>
-    <tr>
-      <th>Targets</th>
-      <td>{data.release.targets}</td>
-    </tr>
-    <tr>
-      <th>Environment</th>
-      <td>{data.release.environment}</td>
-    </tr>
-  </tbody>
-</table>
+        </a>
+      {:else}
+        <br />
+        <textarea class="textarea w-full min-h-36" readonly>{data.release.error}</textarea>
+      {/if}
+    </div>
+  {/if}
+  {#if data.release.artifact_files}
+    {@const artifacts = Object.entries(data.artifacts)
+      .filter(([_, url]) => !!url)
+      .sort(([a, _1], [b, _2]) => byString(a, b))}
+    <div class="mt-1">
+      <span><IconContainer icon={Icons.File} width={20} class="mr-1" />Artifacts:</span>
+      <span class="inline-flex flex-row flex-wrap">
+        {#each artifacts as [name, url], i}
+          <a class="link ml-1" href={url}>{name}</a>
+          {#if i + 1 < artifacts.length}
+            ,
+          {/if}
+        {/each}
+      </span>
+    </div>
+  {/if}
+  {#if data.release.environment}
+    {@const parsed = safeParse(JSON2Entries, data.release.environment)}
+    {#if parsed.success && parsed.output?.length}
+      <div class="mt-1">
+        <span><IconContainer icon={Icons.Environment} width={20} class="mr-1" />Environment:</span>
+        <table class="table table-zebra table-sm">
+          <tbody>
+            {#each parsed.output as [key, value]}
+              <tr class="hidden md:table-row">
+                <th>{key}:</th>
+                <td>{value}</td>
+              </tr>
+              <tr class="md:hidden">
+                <th>{key}:</th>
+              </tr>
+              <tr class="md:hidden">
+                <td>{value}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  {/if}
+</div>
+
+<style>
+  .gridcont {
+    grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+  }
+  .gridcont div {
+    display: flex;
+    place-content: space-between;
+  }
+  .gridcont div span:first-child {
+    font-family: Montserrat, sans-serif;
+    display: flex;
+    gap: calc(var(--spacing) * 1) /* 0.25rem = 4px */;
+  }
+  .gridcont div span:last-child {
+    text-align: right;
+  }
+</style>

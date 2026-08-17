@@ -55,7 +55,8 @@ Created <Tooltip tip={getTimeDateString(data.build.created)}>
     </div>
     <div class="flex place-content-between">
       <span>
-        <IconContainer icon={Icons.Build} width={24} />Targets:
+        <IconContainer icon={Icons.Targets} width={20} />
+        Targets:
       </span>
       <span class="flex flex-row gap-1">
         {data.build.targets || '(none)'}
@@ -63,7 +64,7 @@ Created <Tooltip tip={getTimeDateString(data.build.created)}>
     </div>
     <div class="flex place-content-between">
       <span>
-        <IconContainer icon={Icons.Publish} width={20} />
+        <IconContainer icon={Icons.Channel} width={20} />
         Channel:
       </span>
       <span>

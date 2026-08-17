@@ -83,12 +83,12 @@
     {#each releases as release}
       <div class="border rounded-md p-2 flex flex-col gap-1">
         <div class="flex flex-row">
-          <h3 class="grow flex flex-row gap-2 items-start">
+          <h3 class="grow flex flex-row gap-2 items-start pl-1">
             <a class="link" href="/release-admin/view?id={release.id}">#{release.id}</a>
             <StatusBadge status={release.result || release.status} />
           </h3>
         </div>
-        <div class="flex flex-row items-center gap-x-1">
+        <div class="flex flex-row items-center gap-x-1 pl-1">
           <IconContainer icon={Icons.Product} width={16} />
           <a class="link mr-2" href="/job-admin/view?id={release.build.job_id}">
             #{release.build.job_id}
