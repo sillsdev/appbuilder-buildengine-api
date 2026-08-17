@@ -6,7 +6,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { applicationTypes, tableSchema } from '$lib/valibot';
 
-const select: Prisma.projectSelect = {
+const select = {
   id: true,
   language_code: true,
   project_name: true,
@@ -18,7 +18,7 @@ const select: Prisma.projectSelect = {
     }
   },
   url: true
-};
+} as const satisfies Prisma.projectSelect;
 
 const searchSchema = v.object({
   appType: v.nullable(v.picklist(applicationTypes)),
