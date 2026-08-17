@@ -41,7 +41,7 @@ Created <Tooltip tip={getTimeDateString(data.job.created)}>
 
 <div class="border p-2 rounded-md bg-base-200 my-2">
   <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.Store} width={20} />
         Publisher ID:
@@ -50,14 +50,14 @@ Created <Tooltip tip={getTimeDateString(data.job.created)}>
         {data.job.publisher_id}
       </span>
     </div>
-    <div class="flex place-content-between">
+    <div>
       <span>App ID:</span>
       <span class="flex flex-row gap-1">
         <IconContainer icon={getAppIcon(data.job.app_id as ApplicationType)} width={24} />
         {data.job.app_id}
       </span>
     </div>
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.User} width={20} />
         Client:
@@ -72,7 +72,7 @@ Created <Tooltip tip={getTimeDateString(data.job.created)}>
         {/if}
       </span>
     </div>
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.Version} width={20} />
         Existing Version Code:
@@ -108,8 +108,14 @@ Created <Tooltip tip={getTimeDateString(data.job.created)}>
   .gridcont {
     grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
   }
+  .gridcont div {
+    display: flex;
+    place-content: space-between;
+  }
   .gridcont div span:first-child {
     font-family: Montserrat, sans-serif;
+    display: flex;
+    gap: calc(var(--spacing) * 1) /* 0.25rem = 4px */;
   }
   .gridcont div span:last-child {
     text-align: right;

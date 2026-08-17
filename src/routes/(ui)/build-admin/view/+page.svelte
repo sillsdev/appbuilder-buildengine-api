@@ -42,7 +42,7 @@ Created <Tooltip tip={getTimeDateString(data.build.created)}>
 
 <div class="border p-2 rounded-md bg-base-200 my-2">
   <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.Product} width={20} />
         Job ID:
@@ -53,16 +53,16 @@ Created <Tooltip tip={getTimeDateString(data.build.created)}>
         </a>
       </span>
     </div>
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.Targets} width={20} />
         Targets:
       </span>
-      <span class="flex flex-row gap-1">
+      <span>
         {data.build.targets || '(none)'}
       </span>
     </div>
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.Channel} width={20} />
         Channel:
@@ -71,7 +71,7 @@ Created <Tooltip tip={getTimeDateString(data.build.created)}>
         {data.build.channel || '(none)'}
       </span>
     </div>
-    <div class="flex place-content-between">
+    <div>
       <span>
         <IconContainer icon={Icons.Version} width={20} />
         Version Code:
@@ -155,8 +155,14 @@ Created <Tooltip tip={getTimeDateString(data.build.created)}>
   .gridcont {
     grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
   }
+  .gridcont div {
+    display: flex;
+    place-content: space-between;
+  }
   .gridcont div span:first-child {
     font-family: Montserrat, sans-serif;
+    display: flex;
+    gap: calc(var(--spacing) * 1) /* 0.25rem = 4px */;
   }
   .gridcont div span:last-child {
     text-align: right;
