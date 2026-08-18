@@ -14,6 +14,18 @@ export const load = (async ({ url }) => {
   const release = await prisma.release.findUnique({
     where: {
       id: id.output
+    },
+    include: {
+      build: {
+        select: {
+          job: {
+            select: {
+              client: { select: { development: true } },
+              git_url: true
+            }
+          }
+        }
+      }
     }
   });
 

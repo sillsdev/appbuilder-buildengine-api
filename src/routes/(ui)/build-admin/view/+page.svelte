@@ -3,6 +3,7 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import LinkToScriptoria from '$lib/components/LinkToScriptoria.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
   import Tooltip from '$lib/components/Tooltip.svelte';
   import { Icons } from '$lib/icons';
@@ -36,9 +37,18 @@
 
   <StatusBadge status={data.build.result || data.build.status} />
 </div>
-Created <Tooltip tip={getTimeDateString(data.build.created)}>
-  {$dateCreated}
-</Tooltip>
+<div class="flex gap-1">
+  Created <Tooltip tip={getTimeDateString(data.build.created)}>
+    {$dateCreated}
+  </Tooltip>
+  <LinkToScriptoria
+    client={data.build.job.client}
+    bucket={data.build.job.git_url}
+    scope="build"
+    id={data.build.id}
+    class="ml-4"
+  />
+</div>
 
 <div class="border p-2 rounded-md bg-base-200 my-2">
   <div class="gridcont grid gap-x-6 gap-y-2 mb-2">

@@ -20,7 +20,7 @@ export const load = (async ({ url }) => {
       git_url: true,
       app_id: true,
       publisher_id: true,
-      client: { select: { id: true, prefix: true } },
+      client: { select: { id: true, prefix: true, development: true } },
       existing_version_code: true,
       created: true
     }

@@ -23,7 +23,7 @@ export const load = (async ({ url }) => {
       language_code: true,
       app_id: true,
       url: true,
-      client: { select: { id: true, prefix: true } },
+      client: { select: { id: true, prefix: true, development: true } },
       error: true
     }
   });

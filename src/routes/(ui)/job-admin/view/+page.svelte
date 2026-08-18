@@ -4,6 +4,7 @@
   import { env } from '$env/dynamic/public';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import CopyField from '$lib/components/CopyField.svelte';
+  import LinkToScriptoria from '$lib/components/LinkToScriptoria.svelte';
   import Tooltip from '$lib/components/Tooltip.svelte';
   import { Icons, getAppIcon, getBucketIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
@@ -35,9 +36,18 @@
     </h1>
   </a>
 </div>
-Created <Tooltip tip={getTimeDateString(data.job.created)}>
-  {$dateCreated}
-</Tooltip>
+<div class="flex gap-1">
+  Created <Tooltip tip={getTimeDateString(data.job.created)}>
+    {$dateCreated}
+  </Tooltip>
+  <LinkToScriptoria
+    client={data.job.client}
+    bucket={data.job.git_url}
+    scope="job"
+    id={data.job.id}
+    class="ml-4"
+  />
+</div>
 
 <div class="border p-2 rounded-md bg-base-200 my-2">
   <div class="gridcont grid gap-x-6 gap-y-2 mb-2">

@@ -3,6 +3,7 @@
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import CopyField from '$lib/components/CopyField.svelte';
+  import LinkToScriptoria from '$lib/components/LinkToScriptoria.svelte';
   import StatusBadge from '$lib/components/StatusBadge.svelte';
   import Tooltip from '$lib/components/Tooltip.svelte';
   import { Icons, getAppIcon, getBucketIcon } from '$lib/icons';
@@ -32,9 +33,18 @@
   <h1 class="p-4 pl-0">{data.project.project_name}</h1>
   <StatusBadge status={data.project.result || data.project.status} />
 </div>
-Created <Tooltip tip={getTimeDateString(data.project.created)}>
-  {$dateCreated}
-</Tooltip>
+<div class="flex gap-1">
+  Created <Tooltip tip={getTimeDateString(data.project.created)}>
+    {$dateCreated}
+  </Tooltip>
+  <LinkToScriptoria
+    client={data.project.client}
+    bucket={data.project.url}
+    scope="project"
+    id={data.project.id}
+    class="ml-4"
+  />
+</div>
 
 <div class="border p-2 rounded-md bg-base-200 my-2">
   <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
