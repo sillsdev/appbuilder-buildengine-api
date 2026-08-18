@@ -113,6 +113,9 @@ build_apk() {
   # if building APK for Google Play, then include data safety CSV in output
   if [[ "${TARGETS}" == *"play-listing"* ]]; then
     SCRIPT_OPT="${SCRIPT_OPT} -data-safety-csv"
+
+    # update the data deletion URL in the appDef if not already set
+    update_data_deletion_url
   fi
 
 
@@ -486,6 +489,23 @@ extract_data_management_url() {
         jq -n --arg console_url "$DATA_MANAGEMENT_CONSOLE_URL" --arg type "$DATA_MANAGEMENT_TYPE" '{console_url: $console_url, type: $type}' > "${OUTPUT_DIR}/data_management.json"
       fi
     fi
+}
+
+update_data_deletion_url() {
+  USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
+  if [[ "${USER_ACCOUNTS_ENABLED}" == "true" ]]; then
+    USER_ACCOUNT_DATA_DELETION_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-account-data-deletion-url']/@value" "${PROJECT_DIR}/build.appDef" || echo "")
+    if [[ -z "${USER_ACCOUNT_DATA_DELETION_URL}" ]]; then
+      USER_ACCOUNT_DATA_DELETION_URL="${ORIGIN}/user-data/${PRODUCT_ID}"
+      echo "Setting user-account-data-deletion-url to ${USER_ACCOUNT_DATA_DELETION_URL}"
+      FEATURE_XPATH="/app-definition/features/feature[@name = 'user-account-data-deletion-url']"
+      xmlstarlet ed --inplace \
+        -s "/app-definition/features" -t elem -n "feature" -v "" \
+        -s "/app-definition/features/feature[not(@name)]" -t attr -n "name" -v "user-account-data-deletion-url" \
+        -s "${FEATURE_XPATH}" -t attr -n "value" -v "${USER_ACCOUNT_DATA_DELETION_URL}" \
+        "${PROJECT_DIR}/build.appDef"
+    fi
+  fi
 }
 
 build_play_listing() {
