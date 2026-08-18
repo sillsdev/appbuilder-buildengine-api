@@ -1,7 +1,6 @@
 <script lang="ts">
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
-  import { env } from '$env/dynamic/public';
   import AppTypeSelector from '$lib/components/AppTypeSelector.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
@@ -91,13 +90,9 @@
           <h3 class="grow flex flex-row gap-2 items-start pl-1">
             <a class="link" href="/job-admin/view?id={job.id}">#{job.id}</a>
             <img src={getAppIcon(job.app_id as ApplicationType)} width={20} alt={job.app_id} />
-            <a
-              class="link"
-              href="{env.PUBLIC_SCRIPTORIA_URL}/products/{job.request_id}"
-              target="_blank"
-            >
-              {job.request_id}<IconContainer icon={Icons.Open} width={16} />
-            </a>
+            <div>
+              {job.request_id}
+            </div>
           </h3>
         </div>
         <div class="flex flex-row items-center gap-x-1 pl-1">

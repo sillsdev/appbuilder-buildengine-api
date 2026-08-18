@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { page } from '$app/state';
-  import { env } from '$env/dynamic/public';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import CopyField from '$lib/components/CopyField.svelte';
   import LinkToScriptoria from '$lib/components/LinkToScriptoria.svelte';
@@ -30,11 +29,9 @@
 </Breadcrumbs>
 
 <div class="flex flex-row items-center">
-  <a class="link" href="{env.PUBLIC_SCRIPTORIA_URL}/products/{data.job.request_id}" target="_blank">
-    <h1 class="p-4 pl-0">
-      {data.job.request_id}<IconContainer icon={Icons.Open} width={24} />
-    </h1>
-  </a>
+  <h1 class="p-4 pl-0">
+    Job {data.job.id}
+  </h1>
 </div>
 <div class="flex gap-1">
   Created <Tooltip tip={getTimeDateString(data.job.created)}>
@@ -108,7 +105,16 @@
         <p class="grow pr-2">
           /{data.job.git_url.split('/').pop()}
         </p>
-        <CopyField value={data.job.git_url!} />
+        <CopyField value={data.job.git_url} />
+      </div>
+    </div>
+  {/if}
+  {#if data.job.request_id}
+    <div>
+      <span>Request ID:</span>
+      <div class="flex rounded-md text-nowrap bg-base-200 p-3 pt-2 mt-2">
+        <div class="grow">{data.job.request_id}</div>
+        <CopyField value={data.job.request_id} />
       </div>
     </div>
   {/if}
