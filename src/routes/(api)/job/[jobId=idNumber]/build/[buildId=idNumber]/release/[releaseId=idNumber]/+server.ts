@@ -42,11 +42,13 @@ export const GET: RequestHandler = async ({ params }) => {
   const release = build.release.at(0);
   if (!release) return ErrorResponse(404, 'Release not found');
 
+  const artifacts = Release.artifacts(release);
+
   return new Response(
     JSON.stringify({
       ...release,
-      artifacts: Release.artifacts(release),
-      consoleText: release.console_text_url ?? '',
+      artifacts,
+      consoleText: artifacts['consoleText'] ?? '',
       artifact_url_base: undefined,
       console_text_url: undefined,
       artifact_files: undefined,
