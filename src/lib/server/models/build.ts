@@ -4,21 +4,6 @@ import { getArtfactFilenameCount, getArtifactUrl, getArtifactUrls } from './arti
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Build {
-  export enum Status {
-    Initialized = 'initialized',
-    Accepted = 'accepted',
-    Active = 'active',
-    Expired = 'expired',
-    PostProcessing = 'postprocessing',
-    Completed = 'completed'
-  }
-
-  export enum Result {
-    Success = 'SUCCESS',
-    Failure = 'FAILURE',
-    Aborted = 'ABORTED'
-  }
-
   export enum Channel {
     Unpublished = 'unpublished',
     Alpha = 'alpha',

@@ -13,6 +13,18 @@ export const load = (async ({ url }) => {
   const project = await prisma.project.findUnique({
     where: {
       id: id.output
+    },
+    select: {
+      id: true,
+      project_name: true,
+      created: true,
+      status: true,
+      result: true,
+      language_code: true,
+      app_id: true,
+      url: true,
+      client: { select: { id: true, prefix: true, development: true } },
+      error: true
     }
   });
 

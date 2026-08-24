@@ -5,7 +5,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { tableSchema } from '$lib/valibot';
 
-const select: Prisma.releaseSelect = {
+const select = {
   id: true,
   build: {
     select: {
@@ -16,7 +16,7 @@ const select: Prisma.releaseSelect = {
   status: true,
   result: true,
   codebuild_url: true
-};
+} as const satisfies Prisma.releaseSelect;
 
 export const load = (async () => {
   const releases = await prisma.release.findMany({

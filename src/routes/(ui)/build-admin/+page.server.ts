@@ -5,13 +5,14 @@ import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { tableSchema } from '$lib/valibot';
 
-const select: Prisma.buildSelect = {
+const select = {
   id: true,
   job_id: true,
   status: true,
   result: true,
-  codebuild_url: true
-};
+  codebuild_url: true,
+  build_guid: true
+} as const satisfies Prisma.buildSelect;
 
 export const load = (async () => {
   const builds = await prisma.build.findMany({ select, take: 20, orderBy: { id: 'desc' } });

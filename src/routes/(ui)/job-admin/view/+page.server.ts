@@ -13,6 +13,16 @@ export const load = (async ({ url }) => {
   const job = await prisma.job.findUnique({
     where: {
       id: id.output
+    },
+    select: {
+      id: true,
+      request_id: true,
+      git_url: true,
+      app_id: true,
+      publisher_id: true,
+      client: { select: { id: true, prefix: true, development: true } },
+      existing_version_code: true,
+      created: true
     }
   });
 

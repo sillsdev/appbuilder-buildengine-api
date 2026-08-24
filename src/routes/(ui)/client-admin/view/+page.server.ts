@@ -15,6 +15,9 @@ export const load = (async ({ url }) => {
   const client = await prisma.client.findUnique({
     where: {
       id: id.output
+    },
+    include: {
+      _count: { select: { job: true, project: true } }
     }
   });
 
@@ -30,7 +33,17 @@ export const actions: Actions = {
     const form = await superValidate(request, valibot(v.object({ id: idSchema })));
     if (!form.valid) return fail(400, { form, ok: false });
 
-    await prisma.client.delete({ where: { id: form.data.id } });
+    const deleted = await prisma.client.deleteMany({
+      where: { id: form.data.id, NOT: [{ job: { some: {} } }, { project: { some: {} } }] }
+    });
+
+    if (!deleted.count) {
+      return fail(409, {
+        form,
+        ok: false,
+        message: 'Client is associated with one or more jobs or projects and could not be deleted'
+      });
+    }
 
     redirect(303, `/client-admin`);
   }

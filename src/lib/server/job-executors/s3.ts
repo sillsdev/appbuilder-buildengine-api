@@ -4,10 +4,8 @@ import { join } from 'node:path';
 import { S3 } from '$lib/server/aws/s3';
 import type { BullMQ } from '$lib/server/bullmq';
 import type { BuildForPrefix } from '$lib/server/models/artifacts';
-import { Build } from '$lib/server/models/build';
-import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
-import { trimStrings } from '$lib/valibot';
+import { Result, Status, trimStrings } from '$lib/valibot';
 
 export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> {
   const id = job.data.id;
@@ -23,8 +21,8 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
         where: { id },
         data: {
           ...release,
-          status: Release.Status.Completed,
-          result: Build.Result.Success,
+          status: Status.Completed,
+          result: Result.Success,
           build: undefined
         }
       });
@@ -116,8 +114,8 @@ export async function save(job: Job<BullMQ.S3.CopyArtifacts>): Promise<unknown> 
         data: trimStrings(
           {
             ...build,
-            status: Build.Status.Completed,
-            result: Build.Result.Success,
+            status: Status.Completed,
+            result: Result.Success,
             job: undefined
           },
           'build',
@@ -147,8 +145,8 @@ export async function error(job: Job<BullMQ.S3.CopyErrors>): Promise<unknown> {
         data: trimStrings(
           {
             ...release,
-            status: Build.Status.Completed,
-            result: Build.Result.Failure,
+            status: Status.Completed,
+            result: Result.Failure,
             build: undefined
           },
           'release',
@@ -165,8 +163,8 @@ export async function error(job: Job<BullMQ.S3.CopyErrors>): Promise<unknown> {
         data: trimStrings(
           {
             ...build,
-            status: Build.Status.Completed,
-            result: Build.Result.Failure,
+            status: Status.Completed,
+            result: Result.Failure,
             job: undefined
           },
           'build',

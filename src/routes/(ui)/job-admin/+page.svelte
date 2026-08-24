@@ -1,12 +1,12 @@
 <script lang="ts">
   import { type FormResult, superForm } from 'sveltekit-superforms';
   import type { PageData } from './$types';
-  import { env } from '$env/dynamic/public';
   import AppTypeSelector from '$lib/components/AppTypeSelector.svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import PaginationHeader from '$lib/components/PaginationHeader.svelte';
   import SearchBar from '$lib/components/SearchBar.svelte';
-  import { Icons, getAppIcon } from '$lib/icons';
+  import { Icons, getAppIcon, getBucketIcon } from '$lib/icons';
   import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
   import type { ApplicationType } from '$lib/valibot';
@@ -82,43 +82,30 @@
       </div>
     </div>
   </form>
-  <p>
-    Showing <b>
-      {$form.page.page * $form.page.size + 1}-{Math.min(
-        ($form.page.page + 1) * $form.page.size,
-        count
-      )}
-    </b>
-    of
-    <b>{count}</b>
-    items
-  </p>
+  <PaginationHeader page={$form.page} {count} />
   <div class="flex flex-col gap-2">
     {#each jobs as job}
       <div class="border rounded-md p-2 flex flex-col gap-1">
         <div class="flex flex-row">
-          <h3 class="grow flex flex-row gap-2 items-start">
+          <h3 class="grow flex flex-row gap-2 items-start pl-1">
             <a class="link" href="/job-admin/view?id={job.id}">#{job.id}</a>
             <img src={getAppIcon(job.app_id as ApplicationType)} width={20} alt={job.app_id} />
-            <a
-              class="link"
-              href="{env.PUBLIC_SCRIPTORIA_URL}/products/{job.request_id}"
-              target="_blank"
-            >
-              {job.request_id}<IconContainer icon={Icons.Open} width={16} />
-            </a>
+            <div>
+              {job.request_id}
+            </div>
           </h3>
         </div>
-        <div class="flex flex-row items-center gap-x-1">
+        <div class="flex flex-row items-center gap-x-1 pl-1">
+          <IconContainer icon={Icons.User} width={16} />
           {#if job.client}
-            <IconContainer icon={Icons.User} width={16} />
             <a class="link mr-2" href="/client-admin/view?id={job.client.id}">
               {job.client.prefix}
             </a>
+          {:else}
+            <span class="mr-2">(Default)</span>
           {/if}
           {#if job.git_url}
-            {@const icon = job.git_url.startsWith('s3') ? Icons.Bucket : Icons.CodeCommit}
-            {@const title = job.git_url.startsWith('s3') ? 'S3 Bucket' : 'CodeCommit Repo'}
+            {@const { icon, title } = getBucketIcon(job.git_url)}
             <IconContainer {icon} width={16} />
             <a class="link" href={job.git_url} target="_blank">
               {title}

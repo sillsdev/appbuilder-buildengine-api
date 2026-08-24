@@ -5,9 +5,7 @@ import { S3 } from '../aws/s3';
 import { AWSVars } from '../aws/vars';
 import { BullMQ, getQueues } from '../bullmq';
 import { prisma } from '../prisma';
-import { Build } from '$lib/server/models/build';
-import { Release } from '$lib/server/models/release';
-import { trimStrings } from '$lib/valibot';
+import { Result, Status, trimStrings } from '$lib/valibot';
 
 export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown> {
   try {
@@ -40,7 +38,7 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
             build_guid: lastBuildGuid,
             codebuild_url: CodeBuild.getCodeBuildUrl('publish_app', lastBuildGuid),
             console_text_url: CodeBuild.getConsoleTextUrl('publish_app', lastBuildGuid),
-            status: Release.Status.Active
+            status: Status.Active
           },
           'release',
           job.log
@@ -63,8 +61,8 @@ export async function product(job: Job<BullMQ.Release.Product>): Promise<unknown
       where: { id: job.data.releaseId },
       data: trimStrings(
         {
-          result: Build.Result.Failure,
-          status: Release.Status.Completed,
+          result: Result.Failure,
+          status: Status.Completed,
           error: String(e)
         },
         'release',

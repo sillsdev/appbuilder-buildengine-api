@@ -2,8 +2,14 @@
   import type { PageData } from './$types';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import CopyField from '$lib/components/CopyField.svelte';
+  import LinkToScriptoria from '$lib/components/LinkToScriptoria.svelte';
+  import Tooltip from '$lib/components/Tooltip.svelte';
+  import { Icons, getAppIcon, getBucketIcon } from '$lib/icons';
+  import IconContainer from '$lib/icons/IconContainer.svelte';
   import { title } from '$lib/stores';
-  import { getTimeDateString } from '$lib/utils/time';
+  import { getRelativeTime, getTimeDateString } from '$lib/utils/time';
+  import type { ApplicationType } from '$lib/valibot';
 
   $title = 'View Job: ' + page.url.searchParams.get('id')!;
 
@@ -12,6 +18,8 @@
   }
 
   let { data }: Props = $props();
+
+  const dateCreated = $derived(getRelativeTime(data.job.created));
 </script>
 
 <Breadcrumbs>
@@ -20,61 +28,112 @@
   <li>{data.job.id}</li>
 </Breadcrumbs>
 
-<h1>{$title}</h1>
-
-<div class="flex flex-row space-x-2 mb-2">
-  <a href="/job-admin/update?id={data.job.id}" class="btn btn-primary">Update</a>
+<div class="flex flex-row items-center">
+  <h1 class="p-4 pl-0">
+    Job {data.job.id}
+  </h1>
+</div>
+<div class="flex gap-1">
+  Created <Tooltip tip={getTimeDateString(data.job.created)}>
+    {$dateCreated}
+  </Tooltip>
+  <LinkToScriptoria
+    client={data.job.client}
+    bucket={data.job.git_url}
+    scope="job"
+    id={data.job.id}
+    class="ml-4"
+  />
 </div>
 
-<table class="table table-zebra border">
-  <tbody>
-    <tr>
-      <th>ID</th>
-      <td>{data.job.id}</td>
-    </tr>
-    <tr>
-      <th>Request ID</th>
-      <td>{data.job.request_id}</td>
-    </tr>
-    <tr>
-      <th>Git Url</th>
-      <td><a class="link" href={data.job.git_url}>{data.job.git_url}</a></td>
-    </tr>
-    <tr>
-      <th>App ID</th>
-      <td>{data.job.app_id}</td>
-    </tr>
-    <tr>
-      <th>Publisher ID</th>
-      <td>{data.job.publisher_id}</td>
-    </tr>
-    <tr>
-      <th>Client ID</th>
-      <td>
-        <a class="link" href="/client-admin/view?id={data.job.client_id}">{data.job.client_id}</a>
-      </td>
-    </tr>
-    <tr>
-      <th>Existing Version Code</th>
-      <td>{data.job.existing_version_code}</td>
-    </tr>
-    <tr>
-      <th>Jenkins Build Url</th>
-      <td><a class="link" href={data.job.jenkins_build_url}>{data.job.jenkins_build_url}</a></td>
-    </tr>
-    <tr>
-      <th>Jenkins Publish Url</th>
-      <td>
-        <a class="link" href={data.job.jenkins_publish_url}>{data.job.jenkins_publish_url}</a>
-      </td>
-    </tr>
-    <tr>
-      <th>Created</th>
-      <td>{getTimeDateString(data.job.created)}</td>
-    </tr>
-    <tr>
-      <th>Updated</th>
-      <td>{getTimeDateString(data.job.updated)}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="border p-2 rounded-md bg-base-200 my-2">
+  <div class="gridcont grid gap-x-6 gap-y-2 mb-2">
+    <div>
+      <span>
+        <IconContainer icon={Icons.Store} width={20} />
+        Publisher ID:
+      </span>
+      <span>
+        {data.job.publisher_id}
+      </span>
+    </div>
+    <div>
+      <span>App ID:</span>
+      <span class="flex flex-row gap-1">
+        <IconContainer icon={getAppIcon(data.job.app_id as ApplicationType)} width={24} />
+        {data.job.app_id}
+      </span>
+    </div>
+    <div>
+      <span>
+        <IconContainer icon={Icons.User} width={20} />
+        Client:
+      </span>
+      <span>
+        {#if data.job.client}
+          <a class="link" href="/client-admin/view?id={data.job.client.id}">
+            {data.job.client.prefix}
+          </a>
+        {:else}
+          <span>(Default)</span>
+        {/if}
+      </span>
+    </div>
+    <div>
+      <span>
+        <IconContainer icon={Icons.Version} width={20} />
+        Existing Version Code:
+      </span>
+      <span>
+        {data.job.existing_version_code}
+      </span>
+    </div>
+  </div>
+  {#if data.job.git_url}
+    {@const { icon, title } = getBucketIcon(data.job.git_url)}
+    <div>
+      <span>{title}:</span>
+      <br />
+      <div class="flex rounded-md text-nowrap bg-base-200 p-3 pt-2 mt-2">
+        <IconContainer {icon} width={20} class="opacity-80 mr-2" />
+        <p>
+          {data.job.git_url?.substring(0, 5)}
+        </p>
+        <p class="shrink overflow-hidden text-ellipsis">
+          {data.job.git_url.split('/').slice(2, -1).join('/')}
+        </p>
+        <p class="grow pr-2">
+          /{data.job.git_url.split('/').pop()}
+        </p>
+        <CopyField value={data.job.git_url} />
+      </div>
+    </div>
+  {/if}
+  {#if data.job.request_id}
+    <div>
+      <span>Request ID:</span>
+      <div class="flex rounded-md text-nowrap bg-base-200 p-3 pt-2 mt-2">
+        <div class="grow">{data.job.request_id}</div>
+        <CopyField value={data.job.request_id} />
+      </div>
+    </div>
+  {/if}
+</div>
+
+<style>
+  .gridcont {
+    grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+  }
+  .gridcont div {
+    display: flex;
+    place-content: space-between;
+  }
+  .gridcont div span:first-child {
+    font-family: Montserrat, sans-serif;
+    display: flex;
+    gap: calc(var(--spacing) * 1) /* 0.25rem = 4px */;
+  }
+  .gridcont div span:last-child {
+    text-align: right;
+  }
+</style>

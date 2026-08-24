@@ -22,7 +22,11 @@
     class="w-full"
   />
   {#if value?.length}
-    <button type="button" class="flex flex-row items-center" onclick={() => (visible = !visible)}>
+    <button
+      type="button"
+      class="flex flex-row items-center cursor-pointer"
+      onclick={() => (visible = !visible)}
+    >
       <IconContainer icon={visible ? Icons.Visible : Icons.Invisible} width={16} />
     </button>
   {/if}

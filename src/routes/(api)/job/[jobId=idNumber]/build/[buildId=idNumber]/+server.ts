@@ -5,7 +5,7 @@ import { Build } from '$lib/server/models/build';
 import { Release } from '$lib/server/models/release';
 import { prisma } from '$lib/server/prisma';
 import { ErrorResponse } from '$lib/utils';
-import { stringLimits } from '$lib/valibot';
+import { Status, stringLimits } from '$lib/valibot';
 
 // GET /job/[id]/build/[id]
 export const GET: RequestHandler = async ({ params }) => {
@@ -165,7 +165,7 @@ export const DELETE: RequestHandler = async ({ params }) => {
     prisma.build.deleteMany({ where: { id: build.id } })
   ]);
 
-  if (build.build_guid && build.status !== Build.Status.Completed) {
+  if (build.build_guid && build.status !== Status.Completed) {
     await getQueues().Builds.add(`Cancel Build #${build.id}`, {
       type: BullMQ.JobType.Build_Cancel,
       guid: build.build_guid,
@@ -174,7 +174,7 @@ export const DELETE: RequestHandler = async ({ params }) => {
   }
 
   for (const release of build.release) {
-    if (release.build_guid && release.status !== Release.Status.Completed) {
+    if (release.build_guid && release.status !== Status.Completed) {
       await getQueues().Releases.add(`Cancel Release #${release.id}`, {
         type: BullMQ.JobType.Release_Cancel,
         guid: release.build_guid,

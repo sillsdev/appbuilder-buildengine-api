@@ -1,12 +1,12 @@
 interface NamedEntity {
-  Name: string | null | undefined;
+  name: string | null | undefined;
 }
 
 export function byName(
   a: NamedEntity | null | undefined,
   b: NamedEntity | null | undefined
 ): number {
-  return byString(a?.Name, b?.Name);
+  return byString(a?.name, b?.name);
 }
 
 export function byString(a: string | null | undefined, b: string | null | undefined): number {

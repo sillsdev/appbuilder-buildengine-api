@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { type Logger, defaultLogger } from './utils';
+import { byString } from './utils/sorting';
 
 export const idSchema = v.pipe(v.number(), v.minValue(0), v.integer());
 
@@ -8,18 +9,6 @@ export const paramNumber = v.pipe(
   v.transform((s) => parseInt(s))
 );
 
-export function convertEmptyStrToNull(limit?: number) {
-  return v.nullable(
-    v.union([
-      v.pipe(
-        v.literal(''),
-        v.transform(() => null)
-      ),
-      limit ? v.pipe(v.string(), v.maxBytes(limit)) : v.string()
-    ])
-  );
-}
-
 /** mostly for product IDs */
 export const stringIdSchema = v.pipe(v.string(), v.uuid());
 
@@ -27,12 +16,6 @@ export const paginateSchema = v.object({
   page: idSchema,
   size: idSchema
 });
-
-export function selectFrom<T extends Record<string, unknown>>(entries: T) {
-  return Object.fromEntries(Object.keys(entries).map((k) => [k, true])) as {
-    [Property in keyof T]: true;
-  };
-}
 
 export const tableSchema = v.object({
   search: v.string(),
@@ -44,6 +27,15 @@ export const tableSchema = v.object({
     })
   )
 });
+
+export const JSON2Entries = v.nullable(
+  v.pipe(
+    v.string(),
+    v.parseJson(),
+    v.looseObject({}),
+    v.transform((o) => Object.entries(o).sort(([a, _1], [b, _2]) => byString(a, b)))
+  )
+);
 
 export const stringLimits = {
   build: {
@@ -128,3 +120,20 @@ export const applicationTypes = [
   'keyboardappbuilder'
 ] as const;
 export type ApplicationType = (typeof applicationTypes)[number];
+
+export const Status = {
+  Initialized: 'initialized',
+  Accepted: 'accepted',
+  Active: 'active',
+  Expired: 'expired',
+  PostProcessing: 'postprocessing',
+  Completed: 'completed'
+} as const;
+export type Status = (typeof Status)[keyof typeof Status];
+
+export const Result = {
+  Success: 'SUCCESS',
+  Failure: 'FAILURE',
+  Aborted: 'ABORTED'
+} as const;
+export type Result = (typeof Result)[keyof typeof Result];
