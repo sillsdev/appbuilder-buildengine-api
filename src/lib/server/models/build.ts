@@ -19,11 +19,33 @@ export namespace Build {
     Aborted = 'ABORTED'
   }
 
-  export enum Channel {
-    Unpublished = 'unpublished',
-    Alpha = 'alpha',
-    Beta = 'beta',
-    Production = 'production'
+  export const Channels = {
+    Unpublished: 'unpublished',
+    Alpha: 'alpha',
+    Beta: 'beta',
+    Production: 'production'
+  } as const;
+  export type Channel = (typeof Channels)[keyof typeof Channels];
+
+  const transitions = {
+    [Channels.Unpublished]: [Channels.Alpha, Channels.Beta, Channels.Production],
+    [Channels.Alpha]: [Channels.Alpha, Channels.Beta, Channels.Production],
+    [Channels.Beta]: [Channels.Beta, Channels.Production],
+    [Channels.Production]: [Channels.Production]
+  } as const as Readonly<Record<Channel, Channel[]>>;
+
+  type BuildForChannel = Prisma.buildGetPayload<{
+    select: { channel: true };
+  }>;
+
+  export function verifyChannel(target: Channel, build: BuildForChannel): boolean {
+    return (
+      // if unpublished OK
+      !build.channel ||
+      build.channel === Channels.Unpublished ||
+      // check if transition valid
+      transitions[build.channel as Channel]?.includes(target)
+    );
   }
 
   export enum Artifact {
