@@ -36,6 +36,12 @@
   </h1>
 
   <StatusBadge status={data.build.result || data.build.status} />
+  {#if data.build.job.client?.development}
+    <span class="badge badge-secondary px-2 ml-2 font-bold">
+      <IconContainer icon={Icons.Environment} width={16} />
+      development
+    </span>
+  {/if}
 </div>
 <div class="flex gap-1">
   Created <Tooltip tip={getTimeDateString(data.build.created)}>

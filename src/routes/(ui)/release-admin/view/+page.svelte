@@ -36,6 +36,13 @@
   </h1>
 
   <StatusBadge status={data.release.result || data.release.status} />
+
+  {#if data.release.build.job.client?.development}
+    <span class="badge badge-secondary px-2 ml-2 font-bold">
+      <IconContainer icon={Icons.Environment} width={16} />
+      development
+    </span>
+  {/if}
 </div>
 <div class="flex gap-1">
   Created <Tooltip tip={getTimeDateString(data.release.created)}>

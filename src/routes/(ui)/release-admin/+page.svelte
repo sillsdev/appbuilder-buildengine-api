@@ -86,6 +86,12 @@
           <h3 class="grow flex flex-row gap-2 items-start pl-1">
             <a class="link" href="/release-admin/view?id={release.id}">#{release.id}</a>
             <StatusBadge status={release.result || release.status} />
+            {#if release.build.job.client?.development}
+              <span class="badge badge-secondary px-2">
+                <IconContainer icon={Icons.Environment} width={16} />
+                development
+              </span>
+            {/if}
           </h3>
         </div>
         <div class="flex flex-row items-center gap-x-1 pl-1">

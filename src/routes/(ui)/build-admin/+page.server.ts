@@ -11,7 +11,16 @@ const select = {
   status: true,
   result: true,
   codebuild_url: true,
-  build_guid: true
+  build_guid: true,
+  job: {
+    select: {
+      client: {
+        select: {
+          development: true
+        }
+      }
+    }
+  }
 } as const satisfies Prisma.buildSelect;
 
 export const load = (async () => {

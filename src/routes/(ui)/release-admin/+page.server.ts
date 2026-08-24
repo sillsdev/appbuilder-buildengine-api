@@ -10,7 +10,16 @@ const select = {
   build: {
     select: {
       id: true,
-      job_id: true
+      job_id: true,
+      job: {
+        select: {
+          client: {
+            select: {
+              development: true
+            }
+          }
+        }
+      }
     }
   },
   status: true,
