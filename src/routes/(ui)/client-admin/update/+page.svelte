@@ -40,7 +40,7 @@
   <div class="input-fields">
     <LabeledFormInput
       label="Prefix"
-      class="md:w-24!"
+      class="md:w-28!"
       input={{
         maxlength: stringLimits.client.prefix,
         icon: Icons.Folder,
@@ -102,7 +102,7 @@
     }
 
     .complement-width {
-      width: calc(100% - var(--spacing) * 24) /* 6rem = 96px */;
+      width: calc(100% - var(--spacing) * 28) /* 7rem = 112px */;
     }
   }
 </style>
