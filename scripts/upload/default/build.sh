@@ -492,18 +492,30 @@ extract_data_management_url() {
 }
 
 update_data_deletion_url() {
-  USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
-  if [[ "${USER_ACCOUNTS_ENABLED}" == "true" ]]; then
-    USER_ACCOUNT_DATA_DELETION_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-account-data-deletion-url']/@value" "${PROJECT_DIR}/build.appDef" || echo "")
-    if [[ -z "${USER_ACCOUNT_DATA_DELETION_URL}" ]]; then
-      USER_ACCOUNT_DATA_DELETION_URL="${ORIGIN}/user-data/${PRODUCT_ID}"
-      echo "Setting user-account-data-deletion-url to ${USER_ACCOUNT_DATA_DELETION_URL}"
-      FEATURE_XPATH="/app-definition/features/feature[@name = 'user-account-data-deletion-url']"
-      xmlstarlet ed --inplace \
-        -s "/app-definition/features" -t elem -n "feature" -v "" \
-        -s "/app-definition/features/feature[not(@name)]" -t attr -n "name" -v "user-account-data-deletion-url" \
-        -s "${FEATURE_XPATH}" -t attr -n "value" -v "${USER_ACCOUNT_DATA_DELETION_URL}" \
-        "${PROJECT_DIR}/build.appDef"
+  if dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" ge "14.5"; then
+    USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
+    if [[ "${USER_ACCOUNTS_ENABLED}" == "true" ]]; then
+      # If the Account Deletion URL is already set, then use it. Otherwise, set both deletion URLs using Scriptoria user-data URLs
+      USER_ACCOUNT_ACCOUNT_DELETION_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-account-account-deletion-url']/@value" "${PROJECT_DIR}/build.appDef" || echo "")
+      if [[ -z "${USER_ACCOUNT_ACCOUNT_DELETION_URL}" ]]; then
+        USER_ACCOUNT_ACCOUNT_DELETION_URL="${ORIGIN}/user-data/${PRODUCT_ID}?type=account"
+        echo "Setting user-account-account-deletion-url to ${USER_ACCOUNT_ACCOUNT_DELETION_URL}"
+        FEATURE_XPATH="/app-definition/features/feature[@name = 'user-account-account-deletion-url']"
+        xmlstarlet ed --inplace \
+          -s "/app-definition/features" -t elem -n "feature" -v "" \
+          -s "/app-definition/features/feature[not(@name)]" -t attr -n "name" -v "user-account-account-deletion-url" \
+          -s "${FEATURE_XPATH}" -t attr -n "value" -v "${USER_ACCOUNT_ACCOUNT_DELETION_URL}" \
+          "${PROJECT_DIR}/build.appDef"  
+
+        USER_ACCOUNT_DATA_DELETION_URL="${ORIGIN}/user-data/${PRODUCT_ID}?type=data"
+        echo "Setting user-account-data-deletion-url to ${USER_ACCOUNT_DATA_DELETION_URL}"
+        FEATURE_XPATH="/app-definition/features/feature[@name = 'user-account-data-deletion-url']"
+        xmlstarlet ed --inplace \
+          -s "/app-definition/features" -t elem -n "feature" -v "" \
+          -s "/app-definition/features/feature[not(@name)]" -t attr -n "name" -v "user-account-data-deletion-url" \
+          -s "${FEATURE_XPATH}" -t attr -n "value" -v "${USER_ACCOUNT_DATA_DELETION_URL}" \
+          "${PROJECT_DIR}/build.appDef"
+      fi
     fi
   fi
 }
