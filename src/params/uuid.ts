@@ -1,5 +1,7 @@
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { safeParse } from 'valibot';
+import { stringIdSchema } from '$lib/valibot';
 
 export function match(param: string) {
-  return uuidRegex.test(param);
+  const parsed = safeParse(stringIdSchema, param);
+  return parsed.success;
 }
