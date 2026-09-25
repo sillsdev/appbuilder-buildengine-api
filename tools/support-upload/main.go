@@ -24,7 +24,9 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -92,6 +94,11 @@ func main() {
 	origin := strings.TrimRight(env["ORIGIN"], "/")
 	if origin == "" {
 		log.Fatalf("ORIGIN must be set in %s", *envPath)
+	}
+	if u, err := url.Parse(origin); err != nil || u.Host == "" {
+		log.Fatalf("ORIGIN %q is not a valid URL", origin)
+	} else if err := checkTransport(u); err != nil {
+		log.Fatalf("ORIGIN: %v", err)
 	}
 	apiToken := *bearer
 	if apiToken == "" {
@@ -214,7 +221,16 @@ func requestToken(ctx context.Context, origin, apiToken, id, name string) (*toke
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiToken)
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		// Go keeps Authorization on same-host redirects, including https -> http
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return errors.New("stopped after 10 redirects")
+			}
+			return checkTransport(req.URL)
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("requesting token: %w", err)
@@ -237,6 +253,23 @@ func requestToken(ctx context.Context, origin, apiToken, id, name string) (*toke
 		return nil, fmt.Errorf("token response missing credentials or Url: %s", data)
 	}
 	return &token, nil
+}
+
+// checkTransport rejects URLs that would send the bearer token in cleartext:
+// https is required, except for http to a loopback host (local development).
+func checkTransport(u *url.URL) error {
+	switch u.Scheme {
+	case "https":
+		return nil
+	case "http":
+		host := u.Hostname()
+		if ip := net.ParseIP(host); host == "localhost" || (ip != nil && ip.IsLoopback()) {
+			return nil
+		}
+		return fmt.Errorf("refusing to send bearer token over http to %s; use https", u.Host)
+	default:
+		return fmt.Errorf("unsupported scheme %q in %s", u.Scheme, u.Redacted())
+	}
 }
 
 // zipFolder writes the contents of folder to a temporary zip file and returns its path.
