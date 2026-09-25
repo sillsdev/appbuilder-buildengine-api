@@ -110,24 +110,37 @@ func main() {
 	}
 	log.Printf("token for %s (region %s, expires %s)", token.Url, token.Region, token.Expiration)
 
-	zipPath, err := zipFolder(folder)
-	if err != nil {
-		log.Fatalf("zipping %s: %v", folder, err)
-	}
-	defer os.Remove(zipPath)
-
 	bucket, prefix, err := parseS3Url(token.Url)
 	if err != nil {
 		log.Fatal(err)
 	}
 	key := prefix + "/" + filepath.Base(filepath.Clean(folder)) + ".zip"
 
-	if err := upload(ctx, token, zipPath, bucket, key); err != nil {
-		log.Fatalf("uploading to s3://%s/%s: %v", bucket, key, err)
+	if err := zipAndUpload(ctx, token, folder, bucket, key); err != nil {
+		log.Fatal(err)
 	}
 	log.Printf("uploaded s3://%s/%s", bucket, key)
 
 	fmt.Println(*id)
+}
+
+// zipAndUpload zips folder to a temporary file, uploads it to bucket/key, and
+// removes the temporary file before returning (log.Fatal would skip a defer in main).
+func zipAndUpload(ctx context.Context, token *tokenResponse, folder, bucket, key string) error {
+	zipPath, err := zipFolder(folder)
+	if err != nil {
+		return fmt.Errorf("zipping %s: %w", folder, err)
+	}
+	defer func() {
+		if err := os.Remove(zipPath); err != nil {
+			log.Printf("removing temporary archive %s: %v", zipPath, err)
+		}
+	}()
+
+	if err := upload(ctx, token, zipPath, bucket, key); err != nil {
+		return fmt.Errorf("uploading to s3://%s/%s: %w", bucket, key, err)
+	}
+	return nil
 }
 
 // newUUID returns a random (version 4) UUID.
@@ -232,7 +245,6 @@ func zipFolder(folder string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer tmp.Close()
 
 	zw := zip.NewWriter(tmp)
 	err = filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
@@ -277,8 +289,13 @@ func zipFolder(folder string) (string, error) {
 	if err == nil {
 		err = zw.Close()
 	}
+	if closeErr := tmp.Close(); err == nil {
+		err = closeErr
+	}
 	if err != nil {
-		os.Remove(tmp.Name())
+		if removeErr := os.Remove(tmp.Name()); removeErr != nil {
+			log.Printf("removing temporary archive %s: %v", tmp.Name(), removeErr)
+		}
 		return "", err
 	}
 	return tmp.Name(), nil
