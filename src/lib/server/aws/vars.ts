@@ -29,6 +29,10 @@ export class AWSVars {
     return env.BUILD_ENGINE_PROJECTS_BUCKET;
   }
 
+  public static support() {
+    return env.BUILD_ENGINE_SUPPORT_BUCKET;
+  }
+
   public static imageTag() {
     return env.CODE_BUILD_IMAGE_TAG || 'production';
   }

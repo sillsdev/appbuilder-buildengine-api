@@ -24,6 +24,17 @@ export class STS {
     externalId: string,
     readOnly: boolean
   ) {
+    return await this.getS3AccessToken(project.url!, externalId, readOnly);
+  }
+
+  /**
+   * Get a federated token scoped to the folder described by an s3:// url
+   *
+   * @param url s3://BUCKET/FOLDER
+   * @param externalId name used to identify the token holder
+   * @param readOnly whether to issue a read-only token
+   */
+  public async getS3AccessToken(url: string, externalId: string, readOnly: boolean) {
     // https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sts-2011-06-15.html#getfederationtoken
     // AWS limits the name:
     //   The regex used to validate this parameter is a string of characters consisting of
@@ -35,14 +46,14 @@ export class STS {
       .split('|')
       .at(-1)!
       .replace(/[^a-zA-Z0-9_=,.@-]/g, '_')}.${randomBytes(16).toString('hex')}`.substring(0, 32);
-    const policy = readOnly ? STS.getReadOnlyPolicy(project) : STS.getReadWritePolicy(project);
+    const policy = readOnly ? STS.getReadOnlyPolicy(url) : STS.getReadWritePolicy(url);
     return await this.getFederationToken(tokenName, policy, readOnly);
   }
 
-  public static getReadWritePolicy(project: Prisma.projectGetPayload<{ select: { url: true } }>) {
+  public static getReadWritePolicy(url: string) {
     // Note: s3 arns cannot contain region or account id
     return STS.getPolicy(
-      project,
+      url,
       JSON.stringify({
         Version: '2012-10-17',
         Statement: [
@@ -67,7 +78,8 @@ export class STS {
               's3:PutObjectTagging',
               's3:DeleteObject',
               's3:DeleteObjectVersion',
-              's3:PutLifeCycleConfiguration'
+              's3:AbortMultipartUpload',
+              's3:ListMultipartUploadParts'
             ],
             Resource: ['arn:aws:s3:::BUCKET/FOLDER', 'arn:aws:s3:::BUCKET/FOLDER/*']
           }
@@ -76,9 +88,9 @@ export class STS {
     );
   }
 
-  public static getReadOnlyPolicy(project: Prisma.projectGetPayload<{ select: { url: true } }>) {
+  public static getReadOnlyPolicy(url: string) {
     return STS.getPolicy(
-      project,
+      url,
       JSON.stringify({
         Version: '2012-10-17',
         Statement: [
@@ -102,11 +114,8 @@ export class STS {
     );
   }
 
-  public static getPolicy(
-    project: Prisma.projectGetPayload<{ select: { url: true } }>,
-    policy: string
-  ) {
-    const path = project.url!.substring(5);
+  public static getPolicy(url: string, policy: string) {
+    const path = url.substring(5);
     return policy
       .replace(/BUCKET/g, path.split('/')[0])
       .replace(/FOLDER/g, path.split('/').slice(1).join('/'));
