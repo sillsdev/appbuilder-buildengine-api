@@ -298,6 +298,49 @@ Create the following policies:
 }
 ```
 
+* S3 App Builder Support - upload and download support data via federated tokens
+    + Tokens are issued by `POST /support/[id]/token` and scoped to `CLIENT_PREFIX/SUPPORT_ID` in the support bucket.
+    + A federated token can only grant permissions the Build Engine user already has, so this policy is required.
+    + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
+    + Select "Create Your Own Policy"
+    + Set the Policy Name to "s3-appbuilder-support-APPENV"
+    + Paste in this text and then click on "Create Policy"
+
+```javascript
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::sil-appbuilder-support"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:GetObjectAcl",
+                "s3:PutObjectAcl",
+                "s3:GetObjectTagging",
+                "s3:PutObjectTagging",
+                "s3:DeleteObject",
+                "s3:DeleteObjectVersion",
+                "s3:AbortMultipartUpload",
+                "s3:ListMultipartUploadParts"
+            ],
+            "Resource": [
+                "arn:aws:s3:::sil-appbuilder-support/*"
+            ]
+        }
+    ]
+}
+```
+
 * CodeCommit Repository for project data
     + In [AWS IAM Policies](https://console.aws.amazon.com/iam/home#polices), Create Policy
     + Select "Create Your Own Policy"
@@ -447,6 +490,7 @@ Attach the following policies to the "Build Engine" user:
 
 * s3-appbuilder-secrets-APP_ENV
 * s3-appbuilder-artifacts-APP_ENV
+* s3-appbuilder-support-APP_ENV
 * projects-creation-and-building-APP_ENV
 
 [Back](#development-setup-instructions)
