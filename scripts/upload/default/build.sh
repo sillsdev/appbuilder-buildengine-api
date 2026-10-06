@@ -504,31 +504,39 @@ extract_data_management_url() {
     fi
 }
 
+set_feature_default() {
+  # Set a main feature only if it is missing or has an empty value.
+  # The element is inserted as "new-feature" so the selectors can't match an existing feature.
+  local NAME=$1 VALUE=$2
+  local FEATURES="/app-definition/features[@type = 'main']"
+  local CURRENT
+  CURRENT=$(xmlstarlet sel -t -v "${FEATURES}/feature[@name = '${NAME}']/@value" "${PROJECT_DIR}/build.appDef" || true)
+  [[ -n "${CURRENT}" ]] && return
+  echo "Setting ${NAME} to ${VALUE}"
+  xmlstarlet ed --inplace \
+    -d "${FEATURES}/feature[@name = '${NAME}']" \
+    -s "${FEATURES}" -t elem -n "new-feature" -v "" \
+    -s "${FEATURES}/new-feature" -t attr -n "name" -v "${NAME}" \
+    -s "${FEATURES}/new-feature" -t attr -n "value" -v "${VALUE}" \
+    -r "${FEATURES}/new-feature" -v "feature" \
+    "${PROJECT_DIR}/build.appDef"
+}
+
 update_data_deletion_url() {
   if dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" ge "14.5"; then
-    USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
+    USER_ACCOUNTS_ENABLED=$(xmlstarlet sel -t -v "/app-definition/features[@type = 'main']/feature[@name = 'user-accounts']/@value" "${PROJECT_DIR}/build.appDef" || echo "false")
     if [[ "${USER_ACCOUNTS_ENABLED}" == "true" ]]; then
-      # If the Account Deletion URL is already set, then use it. Otherwise, set both deletion URLs using Scriptoria user-data URLs
-      USER_ACCOUNT_ACCOUNT_DELETION_URL=$(xmlstarlet sel -t -v "/app-definition/features/feature[@name = 'user-account-account-deletion-url']/@value" "${PROJECT_DIR}/build.appDef" || echo "")
-      if [[ -z "${USER_ACCOUNT_ACCOUNT_DELETION_URL}" ]]; then
+      # If either deletion URL is already set, then use the project's URLs. Otherwise, set both deletion URLs using Scriptoria user-data URLs
+      USER_ACCOUNT_ACCOUNT_DELETION_URL=$(xmlstarlet sel -t -v "/app-definition/features[@type = 'main']/feature[@name = 'user-account-account-deletion-url']/@value" "${PROJECT_DIR}/build.appDef" || echo "")
+      USER_ACCOUNT_DATA_DELETION_URL=$(xmlstarlet sel -t -v "/app-definition/features[@type = 'main']/feature[@name = 'user-account-data-deletion-url']/@value" "${PROJECT_DIR}/build.appDef" || echo "")
+      if [[ -z "${USER_ACCOUNT_ACCOUNT_DELETION_URL}" && -z "${USER_ACCOUNT_DATA_DELETION_URL}" ]]; then
         USER_ACCOUNT_ACCOUNT_DELETION_URL="${ORIGIN}/user-data/${PRODUCT_ID}?type=account"
-        echo "Setting user-account-account-deletion-url to ${USER_ACCOUNT_ACCOUNT_DELETION_URL}"
-        FEATURE_XPATH="/app-definition/features/feature[@name = 'user-account-account-deletion-url']"
-        xmlstarlet ed --inplace \
-          -s "/app-definition/features" -t elem -n "feature" -v "" \
-          -s "/app-definition/features/feature[not(@name)]" -t attr -n "name" -v "user-account-account-deletion-url" \
-          -s "${FEATURE_XPATH}" -t attr -n "value" -v "${USER_ACCOUNT_ACCOUNT_DELETION_URL}" \
-          "${PROJECT_DIR}/build.appDef"  
-
         USER_ACCOUNT_DATA_DELETION_URL="${ORIGIN}/user-data/${PRODUCT_ID}?type=data"
-        echo "Setting user-account-data-deletion-url to ${USER_ACCOUNT_DATA_DELETION_URL}"
-        FEATURE_XPATH="/app-definition/features/feature[@name = 'user-account-data-deletion-url']"
-        xmlstarlet ed --inplace \
-          -s "/app-definition/features" -t elem -n "feature" -v "" \
-          -s "/app-definition/features/feature[not(@name)]" -t attr -n "name" -v "user-account-data-deletion-url" \
-          -s "${FEATURE_XPATH}" -t attr -n "value" -v "${USER_ACCOUNT_DATA_DELETION_URL}" \
-          "${PROJECT_DIR}/build.appDef"
+        set_feature_default "user-account-account-deletion-url" "${USER_ACCOUNT_ACCOUNT_DELETION_URL}"
+        set_feature_default "user-account-data-deletion-url" "${USER_ACCOUNT_DATA_DELETION_URL}"
       fi
+      echo "USER_ACCOUNT_ACCOUNT_DELETION_URL=${USER_ACCOUNT_ACCOUNT_DELETION_URL}"
+      echo "USER_ACCOUNT_DATA_DELETION_URL=${USER_ACCOUNT_DATA_DELETION_URL}"
     fi
   fi
 }
