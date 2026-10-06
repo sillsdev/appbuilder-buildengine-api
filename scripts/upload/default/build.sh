@@ -304,6 +304,16 @@ set_default_asset_package() {
     fi
 }
 
+remove_firebase_analytics_provider() {
+  if grep -q 'type="firebase-analytics"' "${PROJECT_DIR}/build.appDef"; then
+    if dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" lt "14.7"; then
+      echo "Work-around: removing firebase-analytics provider from appDef file to avoid App Builders asset package build failure"
+      xmlstarlet ed --inplace -d "//analytics/analytics-provider[@type = 'firebase-analytics']" "${PROJECT_DIR}/build.appDef"
+      xmlstarlet ed --inplace -u "//firebase/features[@type = 'firebase']/feature/@value" -v "false" "${PROJECT_DIR}/build.appDef"
+    fi
+  fi
+}
+
 build_asset_package() {
   echo "Build asset-package"
   echo "OUTPUT_DIR=${OUTPUT_DIR}"
@@ -333,6 +343,9 @@ build_asset_package() {
   echo "APP_TYPE=${APP_TYPE}"
   echo "ASSET_FILENAME=${ASSET_FILENAME}"
   echo "APP_NAME=${APP_NAME}"
+
+  # TEMP: Remove Firebase to work-around build failures in 14.6
+  remove_firebase_analytics_provider
 
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}" -vn "$VERSION_NAME" ${SCRIPT_OPT}
