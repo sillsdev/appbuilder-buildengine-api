@@ -274,7 +274,7 @@ build_modern_pwa() {
   mkdir -p "${PWA_OUTPUT_DIR}"
 
   # TEMP: Remove Firebase to work-around build failures in 14.6
-  remove_firebase_analytics_provider
+  remove_firebase_features_if_no_config "${PROJECT_DIR}/build_data/firebase/firebase-config.js"
 
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-modern-pwa -fp pwa.output="${PWA_OUTPUT_DIR}" ${SCRIPT_OPT}
@@ -307,12 +307,15 @@ set_default_asset_package() {
     fi
 }
 
-remove_firebase_analytics_provider() {
-  if grep -q 'type="firebase-analytics"' "${PROJECT_DIR}/build.appDef"; then
+remove_firebase_features_if_no_config() {
+  FIREBASE_CONFIG_FILE="$1"
+  FIREBASE_ENABLED_COUNT=$(xmlstarlet sel -t -v "count(//analytics/analytics-provider[@type = 'firebase-analytics'] | //firebase/features[@type = 'firebase']/feature[@value = 'true'] | /app-definition/features/feature[@name = 'user-accounts' and @value = 'true'])" "${PROJECT_DIR}/build.appDef")
+  if [[ "${FIREBASE_ENABLED_COUNT}" != "0" && ! -f "${FIREBASE_CONFIG_FILE}" ]]; then
     if dpkg --compare-versions "$APPBUILDER_SCRIPT_VERSION" lt "14.7"; then
-      echo "Work-around: removing firebase-analytics provider from appDef file to avoid App Builders asset package build failure"
+      echo "Work-around: $(basename "${FIREBASE_CONFIG_FILE}") not found; removing firebase-analytics provider and disabling firebase features and user-accounts in appDef file to avoid App Builders build failure"
       xmlstarlet ed --inplace -d "//analytics/analytics-provider[@type = 'firebase-analytics']" "${PROJECT_DIR}/build.appDef"
       xmlstarlet ed --inplace -u "//firebase/features[@type = 'firebase']/feature/@value" -v "false" "${PROJECT_DIR}/build.appDef"
+      xmlstarlet ed --inplace -u "/app-definition/features/feature[@name = 'user-accounts']/@value" -v "false" "${PROJECT_DIR}/build.appDef"
     fi
   fi
 }
@@ -348,7 +351,7 @@ build_asset_package() {
   echo "APP_NAME=${APP_NAME}"
 
   # TEMP: Remove Firebase to work-around build failures in 14.6
-  remove_firebase_analytics_provider
+  remove_firebase_features_if_no_config "${PROJECT_DIR}/build_data/firebase/GoogleService-Info.plist"
 
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-assets -fp ipa.output="${ASSET_OUTPUT_DIR}" -vn "$VERSION_NAME" ${SCRIPT_OPT}
