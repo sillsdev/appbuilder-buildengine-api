@@ -273,6 +273,9 @@ build_modern_pwa() {
   PWA_OUTPUT_DIR=/tmp/output/pwa
   mkdir -p "${PWA_OUTPUT_DIR}"
 
+  # TEMP: Remove Firebase to work-around build failures in 14.6
+  remove_firebase_analytics_provider
+
   # shellcheck disable=SC2086
   $APP_BUILDER_SCRIPT_PATH -load build.appDef -no-save -build-modern-pwa -fp pwa.output="${PWA_OUTPUT_DIR}" ${SCRIPT_OPT}
   # In 13.4, the output directory changed to not include /build (using rsync instead of cp -r)
