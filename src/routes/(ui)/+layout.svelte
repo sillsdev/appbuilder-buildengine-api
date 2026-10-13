@@ -113,7 +113,8 @@
               <Dropdown
                 class={{
                   dropdown: 'dropdown-end',
-                  label: 'btn-circle hover:bg-base-content/10'
+                  label: 'btn-circle hover:bg-base-content/10',
+                  content: 'text-base-content'
                 }}
               >
                 {#snippet label()}
