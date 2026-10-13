@@ -130,7 +130,7 @@
                     </div>
                   </li>
                   <li>
-                    <a class="btn btn-ghost" href="/signout">
+                    <a class="btn btn-ghost" href="/signout" data-sveltekit-reload>
                       Sign Out
                       <IconContainer icon={Icons.Logout} width={18} />
                     </a>
