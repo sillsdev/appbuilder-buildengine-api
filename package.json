@@ -35,7 +35,7 @@
 		"@opentelemetry/sdk-node": "^0.211.0",
 		"@opentelemetry/semantic-conventions": "^1.39.0",
 		"@sveltejs/adapter-node": "^5.2.12",
-		"@sveltejs/kit": "^2.22.0",
+		"@sveltejs/kit": "^3.1.1",
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "^24.12.0",
